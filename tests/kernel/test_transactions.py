@@ -28,6 +28,7 @@ from herzchen.kernel import (
     ClosedStoreError,
     CompositionMismatchError,
     DescriptorDigestMismatchError,
+    DescriptorExpectationMismatchError,
     SchemaMismatchError,
     Store,
     TargetMismatchError,
@@ -56,15 +57,15 @@ class StoreTests(unittest.TestCase):
         store.put_identity(ResourceRef("neutral-store", "record", "record-1"), {"value": "initial"}, version=0, edit_token="edit-1")
         return store
 
-    def domain(self, domain_id: str = "example.domain", *, resource: str = "example.resource", document: str = "example.document", event: str = "example.updated") -> DomainContribution:
+    def domain(self, domain_id: str = "example.domain", *, resource: str = "example.resource", document: str = "example.document", event: str = "example.updated", namespace: str = "example.namespace", operation: str = "example.update") -> DomainContribution:
         return DomainContribution(
             domain_id,
             "1",
             "example-owner",
             (resource,),
             (document,),
-            ("example.namespace",),
-            ("example.update",),
+            (namespace,),
+            (operation,),
             (event,),
             "example.v1",
         )
@@ -214,7 +215,7 @@ class StoreTests(unittest.TestCase):
         digest = store.domain_descriptor_digest
         self.assertNotEqual(digest, hashlib.sha256(b"[]").hexdigest())
         store.close()
-        reopened = Store.open(self.db)
+        reopened = Store.open(self.db, expected_domains=(contribution,), expected_domain_digest=digest)
         self.assertEqual(reopened.registered_domains(), (contribution,))
         self.assertEqual(reopened.domain_descriptor_digest, digest)
         reopened.close()
@@ -266,6 +267,30 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(store.registered_domains(), (contribution,))
         self.assertEqual(store.connection.execute("SELECT COUNT(*) FROM identities WHERE kind = 'domain'").fetchone()[0], 1)
         store.close()
+
+    def test_open_defaults_to_empty_descriptor_set_and_requires_exact_expectation(self) -> None:
+        store = Store.create(self.db)
+        first = self.domain("first.domain", resource="first.resource", document="first.document", event="first.updated")
+        second = self.domain("second.domain", resource="second.resource", document="second.document", event="second.updated", namespace="second.namespace", operation="second.update")
+        store.register_domain(first)
+        store.register_domain(second)
+        digest = store.domain_descriptor_digest
+        store.close()
+
+        with self.assertRaises(DescriptorExpectationMismatchError):
+            Store.open(self.db)
+        with self.assertRaises(DescriptorExpectationMismatchError):
+            Store.open(self.db, expected_domains=(first,))
+        with self.assertRaises(DescriptorExpectationMismatchError):
+            Store.open(self.db, expected_domains=(first, second), expected_domain_digest="0" * 64)
+        with self.assertRaises(DescriptorExpectationMismatchError):
+            Store.open(self.db, expected_domains=(second, first), expected_domain_digest=digest)
+        with self.assertRaises(DescriptorExpectationMismatchError):
+            Store.open(self.db, expected_domains=(first, second), expected_domain_digest=hashlib.sha256(b"[]").hexdigest())
+
+        reopened = Store.open(self.db, expected_domains=(first, second), expected_domain_digest=digest)
+        self.assertEqual(reopened.registered_domains(), (first, second))
+        reopened.close()
 
     def test_kernel_import_boundary_has_no_optional_domain_modules(self) -> None:
         source_root = str(Path(__file__).resolve().parents[2] / "src")

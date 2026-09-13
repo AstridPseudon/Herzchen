@@ -77,6 +77,10 @@ class DescriptorDigestMismatchError(StoreAdmissionError):
     """Persisted optional-domain descriptors do not match their digest."""
 
 
+class DescriptorExpectationMismatchError(StoreAdmissionError):
+    """Caller-supplied descriptor composition is not exactly admitted."""
+
+
 DOMAIN_KIND = "domain"
 DOMAIN_DESCRIPTOR_DIGEST_KEY = "domain_descriptor_digest"
 EMPTY_DOMAIN_DESCRIPTOR_DIGEST = hashlib.sha256(b"[]").hexdigest()
@@ -115,6 +119,25 @@ def _ref_key(ref: ResourceRef) -> str:
 def _descriptor_digest(descriptors: Sequence[DomainContribution]) -> str:
     ordered = sorted(descriptors, key=lambda descriptor: descriptor.domain_id)
     return hashlib.sha256(canonical_json([descriptor.to_dict() for descriptor in ordered]).encode("utf-8")).hexdigest()
+
+
+def _descriptor_expectation(
+    expected_domains: Sequence[DomainContribution],
+    expected_domain_digest: Optional[str] = None,
+) -> Tuple[Tuple[DomainContribution, ...], str]:
+    expected = tuple(expected_domains)
+    if any(not isinstance(descriptor, DomainContribution) for descriptor in expected):
+        raise DescriptorExpectationMismatchError("expected_domains must contain DomainContribution values")
+    registry = DomainRegistry()
+    for descriptor in expected:
+        registry.register(descriptor)
+    canonical = tuple(sorted(expected, key=lambda descriptor: descriptor.domain_id))
+    if expected != canonical:
+        raise DescriptorExpectationMismatchError("expected_domains must be in canonical domain-id order")
+    computed_digest = _descriptor_digest(canonical)
+    if expected_domain_digest is not None and expected_domain_digest != computed_digest:
+        raise DescriptorExpectationMismatchError("expected_domain_digest does not match expected_domains")
+    return canonical, computed_digest
 
 
 def _ref_json(ref: Optional[ResourceRef]) -> Optional[str]:
@@ -244,7 +267,14 @@ class Store:
             raise
 
     @classmethod
-    def open(cls, path: Union[os.PathLike, str], *, authority: str = "neutral-store") -> "Store":
+    def open(
+        cls,
+        path: Union[os.PathLike, str],
+        *,
+        authority: str = "neutral-store",
+        expected_domains: Sequence[DomainContribution] = (),
+        expected_domain_digest: Optional[str] = None,
+    ) -> "Store":
         path_text = os.fspath(path)
         if path_text == ":memory:":
             raise StoreAdmissionError("ordinary open requires a durable database path")
@@ -254,7 +284,7 @@ class Store:
         connection: Optional[sqlite3.Connection] = None
         try:
             connection = cls._connect(path_text)
-            domains = cls._verify(connection, authority)
+            domains = cls._verify(connection, authority, expected_domains, expected_domain_digest)
             return cls(connection, lock_fd, path_text, authority, domains)
         except BaseException:
             if connection is not None:
@@ -304,7 +334,13 @@ class Store:
         return tuple(row[0] for row in rows)
 
     @classmethod
-    def _verify(cls, connection: sqlite3.Connection, authority: str) -> Dict[str, DomainContribution]:
+    def _verify(
+        cls,
+        connection: sqlite3.Connection,
+        authority: str,
+        expected_domains: Sequence[DomainContribution] = (),
+        expected_domain_digest: Optional[str] = None,
+    ) -> Dict[str, DomainContribution]:
         actual = cls._user_tables(connection)
         expected = tuple(sorted(COMPOSITION))
         if actual != expected:
@@ -338,6 +374,10 @@ class Store:
         expected_digest = _descriptor_digest(descriptors.values())
         if rows.get(DOMAIN_DESCRIPTOR_DIGEST_KEY) != expected_digest:
             raise DescriptorDigestMismatchError("stored domain descriptor set does not match metadata digest")
+        expected, caller_digest = _descriptor_expectation(expected_domains, expected_domain_digest)
+        persisted = tuple(descriptors[key] for key in sorted(descriptors))
+        if persisted != expected or caller_digest != expected_digest:
+            raise DescriptorExpectationMismatchError("caller descriptor composition does not match admitted store")
         return descriptors
 
     def _require_open(self) -> None:
@@ -841,6 +881,7 @@ __all__ = [
     "StoreError", "StoreAdmissionError", "StoreExistsError", "SchemaMismatchError",
     "CompositionMismatchError", "WriterBusyError", "ClosedStoreError",
     "TargetMismatchError", "VersionConflictError", "DescriptorDigestMismatchError",
+    "DescriptorExpectationMismatchError",
     "FND02_CONTRACT_REVISION", "FND02_CONTRACT_DIGEST", "DOMAIN_KIND",
     "DOMAIN_DESCRIPTOR_DIGEST_KEY", "EMPTY_DOMAIN_DESCRIPTOR_DIGEST",
 ]

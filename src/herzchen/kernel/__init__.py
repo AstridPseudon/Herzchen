@@ -5,6 +5,7 @@ from .store import (
     ClosedStoreError,
     CompositionMismatchError,
     DescriptorDigestMismatchError,
+    DescriptorExpectationMismatchError,
     FND02_CONTRACT_DIGEST,
     FND02_CONTRACT_REVISION,
     IdentityRecord,
@@ -38,6 +39,7 @@ __all__ = [
     "WriterBusyError",
     "ClosedStoreError",
     "DescriptorDigestMismatchError",
+    "DescriptorExpectationMismatchError",
     "TargetMismatchError",
     "VersionConflictError",
 ]
