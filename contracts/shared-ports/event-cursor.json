@@ -1,0 +1,6 @@
+{
+  "contract_revision": "fnd-02.v1",
+  "type": "event_and_cursor",
+  "cursor": {"authority":"neutral-store","stream":"document:doc-001","sequence":1,"event_id":"event-001","state":"normal"},
+  "event": {"event_id":"event-002","store_authority":"neutral-store","stream":"document:doc-001","subject":{"authority":"neutral-store","kind":"document","id":"doc-001","revision":"rev-8"},"schema_revision":"event.v1","event_type":"document.updated","sequence":2,"actor":{"authority":"neutral-auth","actor":"agent-1","credential_ref":"credential-1","authenticated":true},"operation":"document.update","correlation_id":"corr-1","causation_id":"event-001","recorded_at":"2026-09-13T20:00:00Z","occurred_at":"2026-09-13T19:59:59Z","before_refs":[{"authority":"neutral-store","kind":"document","id":"doc-001","revision":"rev-7"}],"after_refs":[{"authority":"neutral-store","kind":"document","id":"doc-001","revision":"rev-8"}],"effects":{"changed_fields":["title"]}}
+}

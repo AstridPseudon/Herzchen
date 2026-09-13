@@ -1,0 +1,142 @@
+{
+  "contract_revision": "fnd-02.v1",
+  "accountability_rule": "Exactly one accountable owner writes each boundary. Consumers may adapt through a declared port; they do not become a second authority.",
+  "boundaries": [
+    {
+      "id": "identity-reference",
+      "owner": "fnd",
+      "writer": "fnd",
+      "consumers": ["dat", "edt", "pkg", "wrk", "ott", "ast"],
+      "consumer_example": "A document pins authority/kind/id/revision and can be read after its current value changes.",
+      "negative_case": "A filesystem path, blank identity, or matching name across authorities is not a reference or permission grant.",
+      "source_refs": ["architecture/SHARED-CONTRACTS.md:12-16", "work/fnd-01-result.md:42-55"]
+    },
+    {
+      "id": "extension-metadata",
+      "owner": "dat",
+      "writer": "dat",
+      "consumers": ["wrk", "ast", "pkg"],
+      "consumer_example": "A registered namespace update preserves unknown sibling annotations.",
+      "negative_case": "A duplicate namespace or managed field written as free annotation is rejected/routed to its semantic owner.",
+      "source_refs": ["contracts/extension-inventory.md", "architecture/BOUNDARIES.md:B07"]
+    },
+    {
+      "id": "document-revision",
+      "owner": "dat",
+      "writer": "dat",
+      "consumers": ["wrk", "edt", "ast"],
+      "consumer_example": "A candidate or decision document records its exact current/pinned revision and role.",
+      "negative_case": "Unlinking an association does not delete a document and a draft is not automatically a candidate.",
+      "source_refs": ["contracts/extension-inventory.md", "architecture/SHARED-CONTRACTS.md:34-46"]
+    },
+    {
+      "id": "transaction-commands-receipts",
+      "owner": "fnd",
+      "writer": "fnd",
+      "consumers": ["dat", "edt", "wrk", "ott", "ast"],
+      "consumer_example": "A command binds an authenticated actor, expected version/revision, edit token and exact request digest to a receipt.",
+      "negative_case": "A changed replay key conflicts; a request digest never grants authority; failed/unknown receipts are not committed.",
+      "source_refs": ["work/fnd-01-result.md:29-45", "architecture/SHARED-CONTRACTS.md:18-24"]
+    },
+    {
+      "id": "events-cursors",
+      "owner": "fnd",
+      "writer": "fnd",
+      "consumers": ["dat", "edt", "wrk", "ott", "ast", "runtime"],
+      "consumer_example": "A consumer observes a duplicate, reorder or gap in one authority/stream and recovers by reading durable state.",
+      "negative_case": "A cursor gap does not infer missing facts, readiness, completion or dispatch.",
+      "source_refs": ["architecture/BOUNDARIES.md:B09", "contracts/astrid-compatibility.md:1-10"]
+    },
+    {
+      "id": "authoring",
+      "owner": "edt",
+      "writer": "edt",
+      "consumers": ["dat", "wrk", "pkg", "ast"],
+      "consumer_example": "A scoped checkout pins actor/session/token/fence/base revision and exact draft/final snapshots.",
+      "negative_case": "Cleanup is not release; unmanaged writers make deletion unsafe; manual and idle finish do not create two finalization identities.",
+      "source_refs": ["architecture/BOUNDARIES.md:B08", "contracts/authoring-state.md"]
+    },
+    {
+      "id": "domain-contributions",
+      "owner": "fnd",
+      "writer": "fnd",
+      "consumers": ["dat", "wrk", "pkg", "ott", "ast"],
+      "consumer_example": "A domain explicitly registers its resource/document/namespace/operation/event identities and proof refs.",
+      "negative_case": "Duplicate domain IDs, commands or namespaces fail; a domain does not privately mutate another domain's state.",
+      "source_refs": ["architecture/BOUNDARIES.md:B01", "architecture/BOUNDARIES.md:B05"]
+    },
+    {
+      "id": "candidates-decisions",
+      "owner": "dat",
+      "writer": "dat",
+      "consumers": ["wrk", "ast", "ott"],
+      "consumer_example": "A decision pins candidate, criteria and evidence refs and remains readable after a later decision.",
+      "negative_case": "Selection, assessment, acceptance and publication are not collapsed; changed consumed inputs can make applicability stale/uncertain.",
+      "source_refs": ["architecture/BOUNDARIES.md:B10", "plan/catalog.json:C31"]
+    },
+    {
+      "id": "readiness",
+      "owner": "wrk",
+      "writer": "wrk",
+      "consumers": ["fnd", "ott", "ast"],
+      "consumer_example": "A readiness explanation names the missing obligation, owner, exact awaited ref/revision and revisit signal.",
+      "negative_case": "Unknown prerequisites are not reported as ready and a readiness read does not dispatch work.",
+      "source_refs": ["architecture/BOUNDARIES.md:B11", "plan/catalog.json:C32"]
+    },
+    {
+      "id": "attention",
+      "owner": "fnd",
+      "writer": "fnd",
+      "consumers": ["wrk", "ott", "ast"],
+      "consumer_example": "A stable dedupe ID and context cursor make a lost or duplicate delivery recoverable.",
+      "negative_case": "A delivery hint is not handled responsibility and does not select the next action.",
+      "source_refs": ["architecture/SHARED-CONTRACTS.md:48-58", "plan/catalog.json:C32"]
+    },
+    {
+      "id": "optional-host",
+      "owner": "fnd",
+      "writer": "fnd",
+      "consumers": ["ott", "ast", "runtime"],
+      "consumer_example": "An adapter reports supported invoke/resume/send/inspect/cancel/wait operations and observed session identity.",
+      "negative_case": "Unsupported operations are explicit; logical agent identity is not replaced by a physical session and Runtime jobs are not re-queued.",
+      "source_refs": ["architecture/BOUNDARIES.md:B02", "contracts/agent-host-port.md"]
+    },
+    {
+      "id": "pack-resource-boundary",
+      "owner": "pkg",
+      "writer": "pkg",
+      "consumers": ["fnd", "wrk", "ast"],
+      "consumer_example": "A resource-only pack entry preserves an unknown string kind and its source/digest without executing it.",
+      "negative_case": "A resource declaration cannot activate SQL, dynamic DDL, a schema registry or a private writer.",
+      "source_refs": ["contracts/pack-compatibility.md", "architecture/BOUNDARIES.md:B05", "contracts/astrid-compatibility.md:7-9"]
+    },
+    {
+      "id": "product-adapters",
+      "owner": "ast",
+      "writer": "ast",
+      "consumers": ["runtime", "ott", "fnd"],
+      "consumer_example": "Astrid consumes the common port through its existing Runtime-backed client/facade while preserving IDs and receipts.",
+      "negative_case": "No local Astrid/Runtime schema, event log, product database or installed-origin claim is created by this baseline.",
+      "source_refs": ["contracts/astrid-adoption-map.md", "contracts/astrid-compatibility.md"],
+      "notes": "Runtime remains Astrid's current writer until G-OTTO and the later AST transfer/qualification. INT owns cross-product validation in its separate worktree."
+    },
+    {
+      "id": "runtime-current-authority",
+      "owner": "runtime",
+      "writer": "runtime",
+      "consumers": ["ast", "fnd", "ott"],
+      "consumer_example": "Existing Astrid creative commands continue to write through Runtime until an explicit qualified cutover.",
+      "negative_case": "FND does not dual-write Runtime state or import Runtime implementation into the neutral kernel.",
+      "source_refs": ["work/fnd-01-result.md:10-28", "contracts/astrid-compatibility.md:1-10"]
+    },
+    {
+      "id": "cross-source-validation",
+      "owner": "int",
+      "writer": "int",
+      "consumers": ["fnd", "ast", "runtime"],
+      "consumer_example": "INT later validates installed origin and cross-product behavior through its separately owned worktree.",
+      "negative_case": "FND contract tests are not claimed as INT-02 validation or installed product proof.",
+      "source_refs": ["work/ast-01-result.md:17-21", "work/ott-01-result.md:100-107"]
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "contract_revision": "fnd-02.v1",
+  "type": "resource_ref",
+  "value": {"authority":"neutral-store","kind":"document","id":"doc-001","revision":"rev-7"},
+  "current_value": {"authority":"neutral-store","kind":"document","id":"doc-001","revision":null},
+  "pinned_value": {"authority":"neutral-store","kind":"document","id":"doc-001","revision":"rev-7"}
+}

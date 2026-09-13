@@ -1,0 +1,5 @@
+{
+  "contract_revision": "fnd-02.v1",
+  "type": "domain_contribution",
+  "value": {"domain_id":"example.domain","version":"1.0","owner":"example-owner","resource_types":["example.resource"],"document_types":["example.document"],"namespace_types":["example.annotations"],"operation_types":["example.update"],"event_types":["example.updated"],"schema_revision":"example.v1","composition_bindings":["neutral-host"],"proof_refs":[{"authority":"neutral-store","kind":"proof","id":"proof-1","revision":"rev-1"}]}
+}

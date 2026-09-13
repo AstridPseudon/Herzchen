@@ -1,0 +1,6 @@
+{
+  "contract_revision": "fnd-02.v1",
+  "type": "neutral_invocation",
+  "request": {"operation":"invoke","identity":{"logical_agent_id":"agent-fixture","physical_session_id":null},"target":{"authority":"neutral-store","kind":"attention","id":"attention-fixture","revision":"rev-1"},"requested_profile":"fixture-profile","input_refs":[]},
+  "receipt": {"operation":"invoke","outcome":"succeeded","identity":{"logical_agent_id":"agent-fixture","physical_session_id":"session-fixture"},"logical_request_key":"host-request-1","requested_profile":"fixture-profile","observed_runner":"fixture-runner","observed_profile":"fixture-profile","process_id":"process-fixture","unsupported_reason":null,"result_ref":{"authority":"neutral-store","kind":"receipt","id":"receipt-fixture","revision":"rev-1"}}
+}
