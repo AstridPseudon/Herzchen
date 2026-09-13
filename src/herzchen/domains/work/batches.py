@@ -455,9 +455,19 @@ class ProjectBatches:
             ref = item["ref"]
             payload = item["payload"]
             if item["existing"]:
-                next_ref = ResourceRef(ref.authority, ref.kind, ref.id, "rev-" + str(item["version"] + 1))
-                tx.execute("UPDATE identities SET current_revision = ?, version = ?, payload_json = ?, updated_at = ? WHERE authority = ? AND kind = ? AND id = ?", (next_ref.revision, item["version"] + 1, canonical_json(payload), self._now(), ref.authority, ref.kind, ref.id))
-                self.store.put_reference(next_ref, transaction=tx)
+                current = self.store.get_identity(ResourceRef(ref.authority, ref.kind, ref.id))
+                if current is None:
+                    raise WorkNotFoundError(f"task identity disappeared: {ref!r}")
+                revised = self.store.revise_identity(
+                    current.ref,
+                    payload,
+                    revision=self._next_identity_revision(current),
+                    expected_revision=current.ref.revision,
+                    expected_version=current.version,
+                    expected_edit_token=current.edit_token,
+                    transaction=tx,
+                )
+                next_ref = revised.ref
             else:
                 next_ref = ResourceRef(ref.authority, ref.kind, ref.id, "rev-1")
                 self.store.put_identity(next_ref, payload, version=1, transaction=tx)
@@ -473,9 +483,16 @@ class ProjectBatches:
             else:
                 current = self.store.get_identity(link_ref)
                 assert current is not None
-                next_ref = ResourceRef(link_ref.authority, link_ref.kind, link_ref.id, "rev-" + str(current.version + 1))
-                tx.execute("UPDATE identities SET current_revision = ?, version = ?, payload_json = ?, updated_at = ? WHERE authority = ? AND kind = ? AND id = ?", (next_ref.revision, current.version + 1, canonical_json(link["payload"]), self._now(), link_ref.authority, link_ref.kind, link_ref.id))
-                link_ref = next_ref
+                revised = self.store.revise_identity(
+                    current.ref,
+                    link["payload"],
+                    revision=self._next_identity_revision(current),
+                    expected_revision=current.ref.revision,
+                    expected_version=current.version,
+                    expected_edit_token=current.edit_token,
+                    transaction=tx,
+                )
+                link_ref = revised.ref
             self.store.put_reference(link_ref, transaction=tx)
 
     def _write_document_change(self, tx: Any, change: Mapping[str, Any]) -> None:
@@ -489,10 +506,25 @@ class ProjectBatches:
         if current is None:
             self.store.put_identity(ResourceRef(document.authority, document.kind, document.id, revision), head_payload, version=1, transaction=tx)
         else:
-            next_ref = ResourceRef(document.authority, document.kind, document.id, revision)
-            tx.execute("UPDATE identities SET current_revision = ?, version = ?, payload_json = ?, updated_at = ? WHERE authority = ? AND kind = ? AND id = ?", (revision, current.version + 1, canonical_json(head_payload), self._now(), document.authority, document.kind, document.id))
-            self.store.put_reference(next_ref, transaction=tx)
+            next_ref = self.store.revise_identity(
+                current.ref,
+                head_payload,
+                revision=self._next_identity_revision(current),
+                expected_revision=current.ref.revision,
+                expected_version=current.version,
+                expected_edit_token=current.edit_token,
+                transaction=tx,
+            ).ref
         self.store.put_reference(revision_ref, transaction=tx)
+
+    @staticmethod
+    def _next_identity_revision(identity: Any) -> str:
+        """Return the one-step FND identity revision for a current record."""
+
+        current_revision = identity.ref.revision
+        if isinstance(current_revision, str) and current_revision.startswith("rev-") and current_revision[4:].isdigit():
+            return "rev-" + str(int(current_revision[4:]) + 1)
+        return "rev-" + str(identity.version + 1)
 
     def _prepare_documents(self, project: WorkRecord, sheet: Mapping[str, Any], planned: Sequence[Mapping[str, Any]]) -> Dict[str, Any]:
         links: List[Dict[str, Any]] = []

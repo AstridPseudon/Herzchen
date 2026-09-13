@@ -78,6 +78,80 @@ def test_invalid_child_rolls_back_all_rows_events_and_receipt(environment):
     assert graph._resolve("will-rollback") is None
 
 
+def test_injected_child_failure_rolls_back_revisions_associations_and_parent_boundary(environment, monkeypatch):
+    store, actor, graph, project = environment
+    batches = ProjectBatches(store, actor=actor)
+    task = graph.create_task(project, title="Existing", logical_request_key="rollback-task")
+    before = {
+        "identities": store.connection.execute("SELECT COUNT(*) FROM identities").fetchone()[0],
+        "references": store.connection.execute("SELECT COUNT(*) FROM record_references").fetchone()[0],
+        "events": len(store.list_events()),
+    }
+    original_put_reference = store.put_reference
+
+    def fail_association_reference(ref, *, transaction=None):
+        if ref.kind == "dat.content.association" and ref.revision == "rev-2":
+            raise RuntimeError("injected association child failure")
+        return original_put_reference(ref, transaction=transaction)
+
+    monkeypatch.setattr(store, "put_reference", fail_association_reference)
+    sheet = {
+        "tasks": [{"id": task.id, "title": "Revised then rolled back"}],
+        "document_changes": [{"document": "spec", "revision": "r1", "content": {"body": "rolled back"}, "scope": project.id}],
+        "documents": [
+            {"namespace": "work", "key": "spec", "document_ref": "spec", "binding": "pinned", "revision": "r1"},
+            {"namespace": "work", "key": "spec", "document_ref": "spec", "binding": "pinned", "revision": "r1"},
+        ],
+    }
+    with pytest.raises(RuntimeError, match="injected association child failure"):
+        batches.apply_project_sheet(project, sheet, logical_request_key="injected-child")
+
+    assert store.connection.execute("SELECT COUNT(*) FROM identities").fetchone()[0] == before["identities"]
+    assert store.connection.execute("SELECT COUNT(*) FROM record_references").fetchone()[0] == before["references"]
+    assert len(store.list_events()) == before["events"]
+    assert store.get_receipt("injected-child") is None
+    current_task = store.get_identity(task.ref)
+    assert current_task is not None and current_task.ref == task.ref and current_task.version == task.version
+    assert store.get_identity(ResourceRef(store.authority, "dat.content.document", "spec")) is None
+    assert store.connection.execute(
+        "SELECT COUNT(*) FROM identities WHERE kind = 'dat.content.association'"
+    ).fetchone()[0] == 0
+
+
+def test_existing_task_document_head_and_association_revise_through_fnd(environment):
+    store, actor, graph, project = environment
+    batches = ProjectBatches(store, actor=actor)
+    task = graph.create_task(project, title="Existing", logical_request_key="typed-task")
+    first = {
+        "tasks": [{"id": task.id, "title": "First sheet"}],
+        "document_changes": [{"document": "spec", "revision": "r1", "content": {"body": "one"}, "scope": project.id}],
+        "documents": [
+            {"namespace": "work", "key": "spec", "document_ref": "spec", "binding": "pinned", "revision": "r1"},
+            {"namespace": "work", "key": "spec", "document_ref": "spec", "binding": "pinned", "revision": "r1"},
+        ],
+    }
+    batches.apply_project_sheet(project, first, logical_request_key="typed-first")
+
+    second = {
+        "tasks": [{"id": task.id, "title": "Second sheet"}],
+        "document_changes": [{"document": "spec", "revision": "r2", "content": {"body": "two"}, "scope": project.id}],
+        "documents": [{"namespace": "work", "key": "spec", "document_ref": "spec", "binding": "pinned", "revision": "r1"}],
+    }
+    batches.apply_project_sheet(project, second, logical_request_key="typed-second")
+
+    task_identity = store.get_identity(task.ref)
+    document_identity = store.get_identity(ResourceRef(store.authority, "dat.content.document", "spec"))
+    associations = store.connection.execute(
+        "SELECT * FROM identities WHERE authority = ? AND kind = 'dat.content.association'",
+        (store.authority,),
+    ).fetchall()
+    assert task_identity is not None and task_identity.ref.revision == "rev-3"
+    assert document_identity is not None and document_identity.ref.revision == "rev-2"
+    assert sorted(row["current_revision"] for row in associations) == ["rev-1", "rev-2"]
+    assert store.get_reference(ResourceRef(store.authority, task.ref.kind, task.id, "rev-2")) is not None
+    assert store.get_reference(ResourceRef(store.authority, "dat.content.document", "spec", "rev-2")) is not None
+
+
 def test_pending_creation_commits_before_materialisation_and_activation_is_explicit(environment):
     store, actor, graph, project = environment
     batches = ProjectBatches(store, actor=actor)
