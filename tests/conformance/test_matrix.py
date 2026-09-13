@@ -51,8 +51,20 @@ class MatrixTests(unittest.TestCase):
             scenario = scenarios[scenario_id]
             self.assertGreaterEqual(len(scenario["positive_cases"]), 2)
             self.assertGreaterEqual(len(scenario["negative_cases"]), 2)
+            dimensions = scenario["discriminating_dimensions"]
+            self.assertTrue(dimensions)
+            self.assertTrue(all(
+                dimension.get("dimension")
+                and dimension.get("positive_observation")
+                and dimension.get("negative_observation")
+                and dimension["positive_observation"] != dimension["negative_observation"]
+                for dimension in dimensions
+            ))
+            self.assertTrue(set(scenario["positive_cases"]).isdisjoint(scenario["negative_cases"]))
+            self.assertEqual(scenario["proof_class"], "harness_fixture")
+            self.assertEqual(scenario["fixture_vs_product_status"]["fixture"], "planned")
+            self.assertEqual(scenario["fixture_vs_product_status"]["installed_product"], "pending")
             self.assertIn("fresh", scenario["fresh_read_expectation"].lower())
-            self.assertIn("reject", json.dumps(scenario["negative_cases"]).lower())
 
     def test_all_owner_areas_are_represented_by_bindings(self):
         bindings = BINDINGS["bindings"]

@@ -1977,6 +1977,11 @@
         "stale cursor or missing mandate is rejected with omissions",
         "lost/duplicate/out-of-order notification cannot dispatch or erase attention"
       ],
+      "discriminating_dimensions": [
+        {"dimension":"mandate_provenance","positive_observation":"current bounded mandate is present","negative_observation":"mandate is missing"},
+        {"dimension":"context_revision","positive_observation":"current context revision ctx-001","negative_observation":"stale context revision ctx-000-stale"},
+        {"dimension":"attention_cursor","positive_observation":"cursor 11 is current","negative_observation":"cursor 9 requires reread"}
+      ],
       "proof_class": "harness_fixture",
       "expected_observable_effect": "positive and negative contexts differ by observable provenance, cursor and authorization",
       "fresh_read_expectation": "fresh reader sees current amendment and unresolved prior attention without hidden context",
@@ -2021,6 +2026,11 @@
       "negative_cases": [
         "malformed/protected/conflicting update is rejected and differs observably from valid update",
         "presentation hint cannot grant authority or create a second schema"
+      ],
+      "discriminating_dimensions": [
+        {"dimension":"mutation_shape","positive_observation":"valid update matches the pinned definition","negative_observation":"malformed or protected update violates the definition"},
+        {"dimension":"catalog_preservation","positive_observation":"unknown, conditional and pending nodes remain represented","negative_observation":"a presentation hint cannot create authority or a second schema"},
+        {"dimension":"revision_binding","positive_observation":"receipt names the active definition revision","negative_observation":"stale/conflicting revision has no permitted delta"}
       ],
       "proof_class": "harness_fixture",
       "expected_observable_effect": "definition identity and read-only catalog are explicit",
@@ -2067,6 +2077,11 @@
         "prerequisite pass, due timer, checked-in template or custom field only create attention and are rejected as dispatch",
         "automatic advice cannot rewrite plan or accept result"
       ],
+      "discriminating_dimensions": [
+        {"dimension":"selected_action","positive_observation":"manager selects implement-rehearsal-change","negative_observation":"attention-only input has no selected action"},
+        {"dimension":"decision_authority","positive_observation":"choice has manager rationale","negative_observation":"readiness event has no business decision"},
+        {"dimension":"dispatch_effect","positive_observation":"one explicit bounded action is available","negative_observation":"automatic dispatch remains false"}
+      ],
       "proof_class": "harness_fixture",
       "expected_observable_effect": "selected action and attention-only state have different observable fields",
       "fresh_read_expectation": "fresh read preserves available alternatives, rationale, limits and sparse pending work",
@@ -2110,6 +2125,11 @@
       "negative_cases": [
         "normal+xhard stacked sequence is rejected",
         "switching role cannot reset prior calls, evidence or blockers"
+      ],
+      "discriminating_dimensions": [
+        {"dimension":"profile_binding","positive_observation":"one selected role binds its exact model/reasoning profile","negative_observation":"a stacked alternative sequence has no valid single binding"},
+        {"dimension":"review_sequence","positive_observation":"selected leaf has one review role","negative_observation":"normal and xhard are incorrectly combined"},
+        {"dimension":"accounting_continuity","positive_observation":"prior calls and evidence remain attached","negative_observation":"role switching cannot reset consumed accounting or blockers"}
       ],
       "proof_class": "harness_fixture",
       "expected_observable_effect": "alternative profile and invalid stacked pipeline differ in role, sequence and rejection reason",
