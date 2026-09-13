@@ -106,6 +106,56 @@ def test_bundle_is_literal_idempotent_and_retains_origin_namespaces_and_review(h
     assert graph.get(task.ref).title == "literal {{title}}"
 
 
+def test_bundle_rolls_back_later_node_failure_and_replays_once(harness, monkeypatch):
+    store, graph, engine, _ = harness
+    template = work_template(
+        "atomic-bundle",
+        revision="atomic-1",
+        seed={
+            "project": {"title": "Atomic project", "outcome": "Complete atomically"},
+            "tasks": [
+                {"local_id": "first", "title": "First task"},
+                {"local_id": "second", "title": "Second task"},
+            ],
+        },
+    )
+
+    original_create = graph.create
+    calls = 0
+
+    def fail_on_second_node(kind, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise RuntimeError("injected later-node failure")
+        return original_create(kind, **kwargs)
+
+    monkeypatch.setattr(graph, "create", fail_on_second_node)
+    with pytest.raises(RuntimeError, match="injected later-node failure"):
+        engine.instantiate(template, logical_request_key="atomic-request")
+
+    assert graph.list() == ()
+    assert store.list_events() == ()
+    assert store.get_receipt("atomic-request:project") is None
+    assert store.get_receipt("atomic-request:first") is None
+    assert store.get_receipt("atomic-request:second") is None
+
+    monkeypatch.setattr(graph, "create", original_create)
+    result = engine.instantiate(template, logical_request_key="atomic-request")
+    assert [record.title for record in result.records] == ["First task", "Second task"]
+    assert len(graph.list()) == 3
+    assert len(store.list_events()) == 3
+    assert all(store.get_receipt(key) is not None for key in (
+        "atomic-request:project", "atomic-request:first", "atomic-request:second",
+    ))
+
+    replay = engine.instantiate(template, logical_request_key="atomic-request")
+    assert [record.ref for record in replay.records] == [record.ref for record in result.records]
+    assert replay.project.ref == result.project.ref
+    assert len(graph.list()) == 3
+    assert len(store.list_events()) == 3
+
+
 def test_all_invalid_seed_fail_before_any_work_record_is_written(harness):
     store, graph, engine, _ = harness
     project = engine.instantiate("work.blank_project", logical_request_key="owner").project

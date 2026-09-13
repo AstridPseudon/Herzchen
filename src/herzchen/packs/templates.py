@@ -651,7 +651,7 @@ class TemplateEngine:
         project_seed = seed.get("project")
         if project_seed is not None and not isinstance(project_seed, Mapping):
             raise TemplateValidationError("seed project must be an object")
-        if owner_target is None and resource.id != BLANK_TEMPLATE_ID:
+        if owner_target is None and resource.id != BLANK_TEMPLATE_ID and project_seed is None:
             raise TemplateReferenceError("template instantiation requires an existing project owner")
         if owner_target is not None:
             owner_record = self.graph.get(owner_target)
@@ -662,6 +662,7 @@ class TemplateEngine:
         if resource.id == BLANK_TEMPLATE_ID and nodes:
             raise TemplateValidationError("blank project must contain zero work nodes")
         self._validate_seed_references(seed, nodes, owner_record, name_set)
+        ordered = self._ordered_nodes(nodes, edges)
         request = _request_key(logical_request_key, resource, rendered)
 
         # All checks above are intentionally before the first public WRK
@@ -670,53 +671,53 @@ class TemplateEngine:
         receipts: list[Any] = []
         local_refs: dict[str, ResourceRef] = {}
         records: list[WorkRecord] = []
-        if owner_record is None:
-            title = project_seed.get("title") if project_seed else None
-            outcome = project_seed.get("outcome", "") if project_seed else ""
-            metadata = dict(project_seed.get("fields", {})) if project_seed else {}
-            metadata["template_origin"] = _origin(resource)
-            owner_record = self.graph.create_project(title=title, outcome=outcome, metadata=metadata,
-                                                     logical_request_key=request + ":project", actor=actor)
-            receipts.append(self.store.get_receipt(request + ":project"))
-        if resource.id == BLANK_TEMPLATE_ID:
-            return TemplateResult(owner_record, (), {"project": owner_record.ref}, tuple(receipts), rendered, False)
+        with self.store.transaction():
+            if owner_record is None:
+                title = project_seed.get("title") if project_seed else None
+                outcome = project_seed.get("outcome", "") if project_seed else ""
+                metadata = dict(project_seed.get("fields", {})) if project_seed else {}
+                metadata["template_origin"] = _origin(resource)
+                owner_record = self.graph.create_project(title=title, outcome=outcome, metadata=metadata,
+                                                         logical_request_key=request + ":project", actor=actor)
+                receipts.append(self.store.get_receipt(request + ":project"))
+            if resource.id == BLANK_TEMPLATE_ID:
+                return TemplateResult(owner_record, (), {"project": owner_record.ref}, tuple(receipts), rendered, False)
 
-        ordered = self._ordered_nodes(nodes, edges)
-        for node in ordered:
-            name = _local_name(node)
-            kind = node.get("kind")
-            if isinstance(kind, str):
-                kind = kind.removeprefix("work.")
-            try:
-                work_kind = WorkKind(kind)
-            except (TypeError, ValueError) as exc:
-                raise TemplateValidationError(f"unsupported template work kind: {kind!r}") from exc
-            parent = self._resolve_seed_ref(node.get("parent", node.get("parent_ref")), local_refs, owner_record)
-            if parent is None:
-                parent = owner_record
-            dependencies = tuple(self._resolve_seed_ref(ref, local_refs, owner_record, required=True) for ref in node.get("dependencies", node.get("depends_on", [])))
-            fields = dict(node.get("fields", {}))
-            if not isinstance(node.get("fields", {}), Mapping):
-                raise TemplateValidationError(f"fields for {name!r} must be an object")
-            fields.update({key: deepcopy(value) for key, value in node.items() if key in {"namespace", "key", "instructions", "description", "criteria", "documents", "profile_ref", "allowance_ref"}})
-            default_namespace = TASK_NAMESPACE if work_kind is WorkKind.TASK else CRITERION_NAMESPACE if work_kind is WorkKind.CRITERION else "work"
-            namespace = node.get("namespace", namespaces.get(work_kind.value, namespaces.get(work_kind.value + "s", default_namespace)))
-            fields["namespace"] = _text(namespace, "node namespace")
-            fields["key"] = node.get("key", name)
-            choice = _review_choice(node.get("review_choice", node.get("review")))
-            if choice is not None:
-                fields["review_choice"] = choice
-            fields["template_origin"] = dict(_origin(resource), local_id=name)
-            for field in ("profile_ref", "allowance_ref"):
-                if field in node:
-                    fields[field] = _ref_dict(_ref(node[field], field))
-            kwargs = {"title": node.get("title", node.get("name", name)), "name": node.get("name", node.get("title", name)),
-                      "alias": node.get("alias", name), "aliases": tuple(node.get("aliases", ())), "parent": parent,
-                      "dependencies": dependencies, "fields": fields, "logical_request_key": request + ":" + name, "actor": actor}
-            record = self.graph.create(work_kind, project=owner_record, **kwargs)
-            local_refs[name] = record.ref
-            records.append(record)
-            receipts.append(self.store.get_receipt(request + ":" + name))
+            for node in ordered:
+                name = _local_name(node)
+                kind = node.get("kind")
+                if isinstance(kind, str):
+                    kind = kind.removeprefix("work.")
+                try:
+                    work_kind = WorkKind(kind)
+                except (TypeError, ValueError) as exc:
+                    raise TemplateValidationError(f"unsupported template work kind: {kind!r}") from exc
+                parent = self._resolve_seed_ref(node.get("parent", node.get("parent_ref")), local_refs, owner_record)
+                if parent is None:
+                    parent = owner_record
+                dependencies = tuple(self._resolve_seed_ref(ref, local_refs, owner_record, required=True) for ref in node.get("dependencies", node.get("depends_on", [])))
+                fields = dict(node.get("fields", {}))
+                if not isinstance(node.get("fields", {}), Mapping):
+                    raise TemplateValidationError(f"fields for {name!r} must be an object")
+                fields.update({key: deepcopy(value) for key, value in node.items() if key in {"namespace", "key", "instructions", "description", "criteria", "documents", "profile_ref", "allowance_ref"}})
+                default_namespace = TASK_NAMESPACE if work_kind is WorkKind.TASK else CRITERION_NAMESPACE if work_kind is WorkKind.CRITERION else "work"
+                namespace = node.get("namespace", namespaces.get(work_kind.value, namespaces.get(work_kind.value + "s", default_namespace)))
+                fields["namespace"] = _text(namespace, "node namespace")
+                fields["key"] = node.get("key", name)
+                choice = _review_choice(node.get("review_choice", node.get("review")))
+                if choice is not None:
+                    fields["review_choice"] = choice
+                fields["template_origin"] = dict(_origin(resource), local_id=name)
+                for field in ("profile_ref", "allowance_ref"):
+                    if field in node:
+                        fields[field] = _ref_dict(_ref(node[field], field))
+                kwargs = {"title": node.get("title", node.get("name", name)), "name": node.get("name", node.get("title", name)),
+                          "alias": node.get("alias", name), "aliases": tuple(node.get("aliases", ())), "parent": parent,
+                          "dependencies": dependencies, "fields": fields, "logical_request_key": request + ":" + name, "actor": actor}
+                record = self.graph.create(work_kind, project=owner_record, **kwargs)
+                local_refs[name] = record.ref
+                records.append(record)
+                receipts.append(self.store.get_receipt(request + ":" + name))
         return TemplateResult(owner_record, tuple(records), local_refs, tuple(receipts), rendered, False)
 
     def instantiate_task(self, template: Union[str, WorkTemplate], parameters: Optional[Mapping[str, Any]] = None, *, project: Any, logical_request_key: Optional[str] = None, actor: Any = None) -> TemplateResult:
