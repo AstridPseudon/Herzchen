@@ -1,0 +1,167 @@
+{
+  "handoff": "PKG-05",
+  "state": "worker-candidate",
+  "acceptance_claimed": false,
+  "gate_verdict_claimed": false,
+  "launch": {
+    "requested_route": "worker_normal / gpt-5.6-luna / high",
+    "observed_route": "worker_normal / gpt-5.6-luna / high",
+    "launcher": "/Users/hannahomalley/.local/bin/codex",
+    "launcher_version": "codex-cli 0.150.1",
+    "process_id": "shell-82590",
+    "session_id": "01a09d21-f42c-7a63-9b94-1ac1411e89c4",
+    "thread_id": "01a09d21-f42c-7a63-9b94-1ac1411e89c4",
+    "started_at_utc": "2026-09-13T23:49:34Z",
+    "jsonl_or_native_output_reference": "API worker tool receipts; no separate launcher JSONL path exposed",
+    "exit_status": 0,
+    "receipt_note": "The route and launcher identity were observed in this worker session; no model substitution or provider credential was used."
+  },
+  "workspace": {
+    "worker_root": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-pkg05-worker",
+    "branch": "pkg-05-worker",
+    "base_commit": "e9f91f196d5130965069c6110e3f2d60098c3952",
+    "base_tree": "a735253153056ae80b755005b64ee78d4322f275",
+    "base_rechecked_clean": true,
+    "source_manifest": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/source-set-int01-refresh-20260913.json",
+    "source_manifest_sha256": "742fed428923c7702001865407d3d8897ba9685b5fcfd473076fc7edb3ee563a",
+    "owned_paths": [
+      "src/herzchen/packs/authoring.py",
+      "handoffs/PKG.json",
+      "tests/packs/test_authoring.py",
+      "work/pkg-05-result.md"
+    ]
+  },
+  "dependencies": {
+    "pkg04_commit": "62503c6bf1e08e6399ed97bc4ee5aab7d3f3d96e",
+    "pkg04_tree": "e6dc75c4d2c0bf9a54dae1048224f69186604de3",
+    "fnd_typed_port_commit": "59043551e6fb4a19d7130d5aa47cf75a732e0a45",
+    "astrid_commit": "96e5664237eb35adeb4cad08bddd8cd6df0a2ae1",
+    "astrid_tree": "19f7539a266618a797559eedbda48e2752b30fa3",
+    "runtime_commit": "afccb430e2a983c968b6a8a96fd630ba3a6262fc",
+    "runtime_tree": "be89db2f02231aeef212bdb266d12c51778f32ae",
+    "poms_skills_commit": "d849898cd0c191cffc5ababbb5ea7d2c188e8ed0",
+    "poms_skills_tree": "9644eb21632a98a51af7051ceeb294f851a7c70f",
+    "extraction_row": "EX-PACKS",
+    "extraction_map": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/package/otto_herzchen_delivery_v11_2/plan/extraction-map.json"
+  },
+  "contracts": {
+    "fnd_contract_revision": "fnd-02.v1.1",
+    "fnd_contract_digest": "28ee051bef55163e79be8acf17513eccd258769f9cebcb5a2608bdb8bd300264",
+    "fnd_schema_revision": "fnd-03.v1",
+    "fnd_schema_fingerprint": "367b22e1a345e13539ce6cef0d302d507bebe36e73cda68010c4f037e8c1ca5c",
+    "fnd_writer": "herzchen.kernel.Store.mutate(envelope, transaction=Transaction)",
+    "loader_contract": {
+      "source_modules": [
+        "astrid.core.pack.discovery.discover_canonical_pack_metadata",
+        "astrid.core.pack.loader.load_pack_manifest"
+      ],
+      "canonical_manifest": "pack.yaml",
+      "schema_version": 2,
+      "managed_source_kind": "managed",
+      "authoring_schema_revision": "pkg-05.managed-pack.v1"
+    }
+  },
+  "managed_pack_mapping": {
+    "source_checkout": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-pkg04-worker",
+    "source_revision": "62503c6bf1e08e6399ed97bc4ee5aab7d3f3d96e",
+    "observed_source_tree_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "mapping_note": "The supported managed inventory carries explicit pack_subpath and manifest-ID bindings for the hyphenated worker directories. The source_setup tree digest observed for this subpath fixture is recorded verbatim; it is not treated as a standalone repository tree claim.",
+    "inventory_identity_in_fixture": "21f6272fb3b4303c51d386f0e726c7c605841549b8750367376a0d6088973cbf"
+  },
+  "packs": [
+    {
+      "pack_id": "megado",
+      "directory": "packs/megado",
+      "manifest_sha256": "8cfc9a0225c282714f1e0b8ceb71946b74326fca1884241d23aed032892e7861",
+      "resources": {
+        "protocols/manager-led-refinement.json": "6b10aa942567397184f6a15900b86d0181a8f7143c505cb5efa9a7a6a6afb68e",
+        "protocols/megado.json": "c14ef4b7c025d36bf4e2bbb99cb75a51d8bd787d9e102b91b869f3f73825cc30",
+        "schemas/task-extension.json": "3dcfbc46b063d8db5d38794e24b02ac7ddda4bf54e9bc71fef6f765f07865111",
+        "skill/SKILL.md": "fc3ff4fa32b52c85a8f1684e077deb6359efec4695c17e7ce4105a9cc5901a28",
+        "skill/references/improvement-loop.md": "dde7f6913a0775199c71174c8ee65c36e29720fa4f8895754cf7121c91523078",
+        "templates/delivery.json": "fcf99881754a155da027b2b1e775260a349376e6ccc9e5edc94ee1cecfa087f8",
+        "templates/reviewed-delivery.json": "0b0a2b7a4ee06c3c5c6af658031c14723a3a4592e29b5d7a9f4957d662e3cbbb",
+        "templates/task-batch.json": "76e9db9f69920738cd8e462bc1089472b6f4fd5f0a12148786140339491bd211"
+      }
+    },
+    {
+      "pack_id": "scene_production",
+      "directory": "packs/scene-production",
+      "manifest_sha256": "2ce6ac8d61491fc6167b71ef371837587b5ff49684d4d8398bc8900d8221e35d",
+      "resources": {
+        "protocols/scene.json": "5a7022520994ea7747b897cddc4008f10451e861a9d6955e868a1e5790794380",
+        "schemas/editorial.json": "24b59fd56b49d64d0059434e9a3c4bbc662ca82175b323ffd5afd053003fefb8",
+        "skill/SKILL.md": "dde02af20dc785028e11ab6403ecff5e7c8885742aa98d0242d12e11770b7d28",
+        "templates/scene.json": "456f88a6f698271fe02e0c33002b78f27a108f6cf0017a52ba6ab6e7c4043a5f"
+      }
+    },
+    {
+      "pack_id": "work_starters",
+      "directory": "packs/work-starters",
+      "manifest_sha256": "88f3ccf31a4d37d54142250f9dd967d7ffab5e73796dd586140a4347fc40c225",
+      "resources": {
+        "skill/SKILL.md": "0a54a4c126c81d3eb0b52395eaf55764e8e44b404e7da824c94b610ae6e321e0",
+        "templates/blank-project.json": "5675a02cc9a34bf90de0d5e91dc0617965fe15b133ab1b0cb4b0340bb19af31b"
+      }
+    }
+  ],
+  "compatibility": {
+    "current": "v2 canonical pack.yaml with explicit managed pack_id binding; resource-only content and separate execution pins",
+    "historical": [
+      "schema_version 1: rejected",
+      "pack.yml/pack.json/schema-pack.yaml: rejected",
+      "database declarations: rejected",
+      "unbound extra-root scan of hyphenated directories: does not discover scene_production/work_starters"
+    ],
+    "aliases_and_migrations": [
+      "scene-production -> manifest ID scene_production through managed inventory",
+      "work-starters -> manifest ID work_starters through managed inventory",
+      "legacy manifests must be migrated to pack.yaml/schema_version 2; they are not aliases",
+      "existing pinned references keep their revision; fresh reads adopt only an explicitly assigned revision"
+    ],
+    "execution_boundary": {
+      "normal_xhard": ["normal", "xhard"],
+      "compulsory_stage_count": 1,
+      "counter_reset": false,
+      "new_specialist_recipe": "LATER-01"
+    },
+    "lesson_transfer_fixture": {
+      "origin_evidence": "tests/packs/test_protocol_resources.py::test_active_megado_skill_matches_file_mode_export_and_provenance",
+      "adopted_resource": "megado/skill/SKILL.md@62503c6bf1e08e6399ed97bc4ee5aab7d3f3d96e",
+      "tool_identity": "herzchen-contracts/pkg-05-public-reader",
+      "retained_regression": "tests/packs/test_protocol_resources.py::test_shipped_skill_links_resolve_offline_inside_pack",
+      "scope": "transfer mechanics only; no universal benefit, cadence, or rights grant"
+    }
+  },
+  "skill_export": {
+    "native_root": "packs/megado/skill",
+    "file_mode_root": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/package/otto_herzchen_delivery_v11_2/skill-export/megado",
+    "tree_sha256": "ef3bd97aeb88e227c6d21e34248954d34ea531b603642c681f9e72bead821e40",
+    "improvement_loop_sha256": "dde7f6913a0775199c71174c8ee65c36e29720fa4f8895754cf7121c91523078",
+    "byte_identical": true,
+    "offline_relative_links_checked": 12,
+    "upstream_written": false
+  },
+  "proof": {
+    "focused_receipt": "candidate installed tests/packs/test_authoring.py: 13 passed",
+    "broad_receipt": "env -u PYTHONPATH /tmp/herzchen-pkg05-candidate.7zo9W7/bin/python -m pytest -q tests/packs/test_authoring.py tests/packs/test_protocol_resources.py tests/packs/test_task_templates.py tests/packs/test_composition.py tests/work/test_identity_graph.py tests/kernel/test_transactions.py tests/kernel/test_receipts_limits.py tests/content/test_documents.py tests/content/test_context_visibility.py tests/extensions/test_namespaces.py tests/contracts/test_contracts.py tests/authoring/test_exclusivity.py tests/conformance/test_fixtures.py tests/conformance/test_matrix.py tests/conformance/test_rehearsal.py -> 156 passed, 70 subtests passed, exit 0",
+    "installed_origins": {
+      "astrid": "/private/tmp/herzchen-pkg05-candidate.7zo9W7/lib/python3.11/site-packages/astrid/__init__.py",
+      "herzchen": "/private/tmp/herzchen-pkg05-candidate.7zo9W7/lib/python3.11/site-packages/herzchen/__init__.py",
+      "authoring": "/private/tmp/herzchen-pkg05-candidate.7zo9W7/lib/python3.11/site-packages/herzchen/packs/authoring.py",
+      "templates": "/private/tmp/herzchen-pkg05-candidate.7zo9W7/lib/python3.11/site-packages/herzchen/packs/templates.py",
+      "pack_roots": "checkout-only; not present in Herzchen site-packages"
+    },
+    "candidate_python": "3.11.16",
+    "candidate_pytest": "9.1.1",
+    "candidate_wheel": "/tmp/herzchen-pkg05-final-wheel.N2vUn3/herzchen_contracts-0.1.0-py3-none-any.whl",
+    "candidate_wheel_sha256": "27448373d6abe744edb7adcf9c34766a301e3a40ade0ebd805efa9377718e527",
+    "clean_state": "clean after named-path commit; generated build/egg-info/pycache outputs removed"
+  },
+  "unresolved": {
+    "publication": "No safe poms-skills/Astrid/Runtime fork target was bound; no remote or upstream write was attempted.",
+    "license": "No new license grant or publication authorization was inferred; source provenance is recorded only.",
+    "installed_product": "The candidate wheel proves Herzchen installed origins. The Astrid loader proof uses the pinned Astrid source installed as a local candidate; this is not proof of a production Otto/Astrid installation.",
+    "acceptance": "Root/manager must validate this worker handoff; this file does not claim PKG-05 acceptance, publication, INT-03 completion, or any gate verdict."
+  }
+}
