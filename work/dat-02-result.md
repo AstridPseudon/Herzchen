@@ -81,6 +81,7 @@ de81e6ce7ea4ffeb833fef8451a34bd116d38491c8218eabf8d1c5582047abd4  src/herzchen/c
 
 ## Commit
 
-- Commit: `d30c83c5ba08aee0f1baffdb754779bcc4d31ffd`
-- Tree: `6f6939eb7b7f0c05c47085dd49af1d5ac73fcdc4`
+- Implementation commit: `7d7a523ee7f39cdb37380001d3aa5199609f9879`
+- Implementation tree: `24f9dfbd5e225eb4fd4651593a06066f3c3b0ce7`
+- The final receipt text is a follow-up commit so this receipt does not contain a self-referential commit hash.
 - Receipt: `work/dat-02-result.md`
