@@ -87,4 +87,6 @@ Known bounded gaps: FND-03 still owns the SQLite one-writer/store implementation
 
 ## Commit/tree
 
-- Correction commit/tree: recorded after the bounded correction is committed.
+- Correction commit: `96d3ac9b6598ea2a22413ec9f8d677b414e51315`
+- Correction tree: `2fc0f2fee58fe48154c161751d223c76c590aba8`
+- This report metadata update is a follow-up commit on the same `fnd-02-worker` branch; the correction commit above is the bounded implementation result to consume.
