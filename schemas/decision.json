@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "herzchen://dat/decision-manifest.v1",
+  "title": "DAT decision manifest",
+  "description": "Typed immutable decision over an exact subject, candidate, criteria, and evidence basis.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["decision_id", "decision_revision", "subject", "author", "authority", "question", "candidate_refs", "criteria_refs", "evidence_refs", "disposition", "rationale", "return_condition"],
+  "properties": {
+    "decision_id": {"type": "string", "minLength": 1},
+    "decision_revision": {"type": "string", "minLength": 1},
+    "subject": {"$ref": "#/$defs/pinned_ref"},
+    "author": {"type": "object"},
+    "authority": {"$ref": "#/$defs/pinned_ref"},
+    "question": {"type": "string", "minLength": 1},
+    "candidate_refs": {"type": "array", "items": {"$ref": "#/$defs/pinned_ref"}},
+    "criteria_refs": {"type": "array", "items": {"$ref": "#/$defs/pinned_ref"}},
+    "evidence_refs": {"type": "array", "items": {"$ref": "#/$defs/pinned_ref"}},
+    "disposition": {"type": "string", "minLength": 1},
+    "rationale": {"type": "string", "minLength": 1},
+    "return_condition": {"type": "string", "minLength": 1},
+    "action_refs": {"type": "array", "items": {"$ref": "#/$defs/pinned_ref"}},
+    "reconsideration": {"type": "object"}
+  },
+  "$defs": {
+    "pinned_ref": {
+      "type": "object",
+      "required": ["authority", "kind", "id", "revision"],
+      "properties": {
+        "authority": {"type": "string", "minLength": 1},
+        "kind": {"type": "string", "minLength": 1},
+        "id": {"type": "string", "minLength": 1},
+        "revision": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": true
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "herzchen://dat/candidate-manifest.v1",
+  "title": "DAT candidate manifest",
+  "description": "Typed immutable candidate over exact existing input and output revisions.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["candidate_id", "manifest_revision", "owner", "author", "resource", "role", "output_refs", "source_refs", "input_refs", "criteria_refs", "provenance"],
+  "properties": {
+    "candidate_id": {"type": "string", "minLength": 1},
+    "manifest_revision": {"type": "string", "minLength": 1},
+    "owner": {"type": "string", "minLength": 1},
+    "author": {"type": "object"},
+    "resource": {"$ref": "#/$defs/pinned_ref"},
+    "role": {"type": "string", "const": "candidate"},
+    "output_refs": {"type": "array", "items": {"$ref": "#/$defs/pinned_ref"}},
+    "source_refs": {"type": "array", "items": {"$ref": "#/$defs/pinned_ref"}},
+    "input_refs": {"type": "array", "items": {"$ref": "#/$defs/pinned_ref"}},
+    "criteria_refs": {"type": "array", "items": {"$ref": "#/$defs/pinned_ref"}},
+    "provenance": {"type": "object"},
+    "selection": {"type": "object"},
+    "assessment_refs": {"type": "array", "items": {"$ref": "#/$defs/pinned_ref"}}
+  },
+  "$defs": {
+    "pinned_ref": {
+      "type": "object",
+      "required": ["authority", "kind", "id", "revision"],
+      "properties": {
+        "authority": {"type": "string", "minLength": 1},
+        "kind": {"type": "string", "minLength": 1},
+        "id": {"type": "string", "minLength": 1},
+        "revision": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": true
+    }
+  }
+}
