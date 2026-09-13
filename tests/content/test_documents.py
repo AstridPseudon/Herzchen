@@ -1,18 +1,8 @@
 from __future__ import annotations
 
 import unittest
-import os
 import tempfile
 from typing import Optional
-
-# In the isolated worker checkout FND-03 is a sibling worktree.  Extending the
-# package path lets this test use that supplied kernel without copying code or
-# introducing a local persistence implementation.  Integrated consumers need
-# no environment variable because both modules then share one package tree.
-_fnd03_src = os.environ.get("HERZCHEN_FND03_SRC")
-if _fnd03_src:
-    import herzchen as _herzchen
-    _herzchen.__path__.append(os.path.join(_fnd03_src, "herzchen"))
 
 from herzchen.content import (
     ContentCommandHandler,
@@ -181,7 +171,7 @@ except ImportError:  # FND-03 is an integration dependency, not a test fallback.
     StoreError = Exception  # type: ignore[assignment,misc]
 
 
-@unittest.skipUnless(Store is not None, "FND-03 kernel is not on PYTHONPATH")
+@unittest.skipUnless(Store is not None, "FND-03 kernel package is unavailable")
 class FND03ContentIntegrationTests(unittest.TestCase):
     """DAT proof against the actual FND-03 Store, never a private test store."""
 

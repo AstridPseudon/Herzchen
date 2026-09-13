@@ -249,7 +249,7 @@ class ReadinessAttentionHostTests(unittest.TestCase):
 class CompositionAndFixtureTests(unittest.TestCase):
     def test_contract_import_has_no_product_imports(self):
         code = "import herzchen.contracts, sys; assert not any(name.startswith(('otto', 'astrid', 'runtime_protocol')) for name in sys.modules)"
-        result = subprocess.run([sys.executable, "-c", code], env={"PYTHONPATH": str(ROOT / "src")}, capture_output=True, text=True)
+        result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_fixture_load_round_trip_and_digest(self):

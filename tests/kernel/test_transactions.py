@@ -293,9 +293,8 @@ class StoreTests(unittest.TestCase):
         reopened.close()
 
     def test_kernel_import_boundary_has_no_optional_domain_modules(self) -> None:
-        source_root = str(Path(__file__).resolve().parents[2] / "src")
         code = "import sys; import herzchen.kernel; assert not any(x.startswith(('otto', 'astrid', 'runtime_protocol')) for x in sys.modules); print('boundary-ok')"
-        result = subprocess.run([sys.executable, "-B", "-c", code], env={"PYTHONPATH": source_root}, capture_output=True, text=True, check=False)
+        result = subprocess.run([sys.executable, "-B", "-c", code], capture_output=True, text=True, check=False)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout.strip(), "boundary-ok")
 
