@@ -1,5 +1,5 @@
 {
-  "contract_revision": "fnd-02.v1",
+  "contract_revision": "fnd-02.v1.1",
   "type": "readiness_and_attention",
   "readiness": {"missing_obligation":"Await the exact source revision.","owner":"owner-1","awaited_ref":{"authority":"neutral-store","kind":"source","id":"source-1","revision":"rev-2"},"awaited_revision":"rev-2","revisit_signal":"source.updated","decision_ref":null,"causes":["source-not-yet-pinned"]},
   "attention": {"recipient":"owner-1","cause":"source-updated","subject":{"authority":"neutral-store","kind":"work","id":"work-1","revision":"rev-3"},"dedupe_id":"attention-work-1-source-1-rev-2","context_cursor":{"authority":"neutral-store","stream":"work:work-1","sequence":4,"event_id":"event-004","state":"normal"},"state":"open","disposition":null,"delivery_hint":"inspect-current-state"}

@@ -15,7 +15,7 @@ import re
 from typing import Any, ClassVar, Iterable, Mapping, Optional, Sequence, Tuple
 
 
-CONTRACT_REVISION = "fnd-02.v1"
+CONTRACT_REVISION = "fnd-02.v1.1"
 _HEX64 = re.compile(r"^[0-9a-fA-F]{64}$")
 _PATHISH = re.compile(r"(^/|^\\|^[A-Za-z]:[\\/]|[\\/]|^[A-Za-z][A-Za-z0-9+.-]*://)")
 _ID = re.compile(r"^[^\x00\s]+$")
@@ -668,12 +668,23 @@ class DomainRegistry:
     def register(self, contribution: DomainContribution) -> None:
         if contribution.domain_id in self._domains:
             raise ContractError(f"duplicate domain identity: {contribution.domain_id}")
-        identities = contribution.operation_types + contribution.namespace_types
-        for identity in identities:
-            if identity in self._identities:
-                raise ContractError(f"duplicate domain contribution identity: {identity}")
+        identity_groups = (
+            ("operation", contribution.operation_types),
+            ("namespace", contribution.namespace_types),
+            ("resource", contribution.resource_types),
+            ("document", contribution.document_types),
+            ("event", contribution.event_types),
+        )
+        identities: list[tuple[str, str]] = []
+        for category, values in identity_groups:
+            for identity in values:
+                if identity in self._identities:
+                    raise ContractError(f"duplicate {category} type identity: {identity}")
+                if any(existing == identity for _, existing in identities):
+                    raise ContractError(f"duplicate {category} type identity: {identity}")
+                identities.append((category, identity))
         self._domains[contribution.domain_id] = contribution
-        for identity in identities:
+        for category, identity in identities:
             self._identities[identity] = contribution.domain_id
 
 

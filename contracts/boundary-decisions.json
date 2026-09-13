@@ -1,5 +1,5 @@
 {
-  "contract_revision": "fnd-02.v1",
+  "contract_revision": "fnd-02.v1.1",
   "source_manifest": "742fed428923c7702001865407d3d8897ba9685b5fcfd473076fc7edb3ee563a",
   "decisions": [
     {"id":"B01","owner":"fnd","positive_assertion":"Herzchen owns neutral references, transactions, events, receipts, authoring mechanics and attention; domain modules are optional and supply business meaning.","negative_case":"The kernel has no mandatory work, assessment, shot, timeline, media, scheduler, model or role-specific import/FK.","source_refs":["work/package/otto_herzchen_delivery_v11_2/architecture/BOUNDARIES.md:B01","work/package/otto_herzchen_delivery_v11_2/architecture/SHARED-CONTRACTS.md:16-24"]},

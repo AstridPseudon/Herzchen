@@ -1,5 +1,5 @@
 {
-  "contract_revision": "fnd-02.v1",
+  "contract_revision": "fnd-02.v1.1",
   "type": "authoring_checkout",
   "value": {"target_scope":{"authority":"neutral-store","kind":"work-scope","id":"scope-1","revision":"rev-4"},"target_kind":"document","actor":{"authority":"neutral-auth","actor":"author-1","credential_ref":"credential-2","authenticated":true},"session_id":"session-1","token":"token-1","fence":"fence-1","base_revision":"rev-4","draft_snapshot_ref":{"authority":"neutral-store","kind":"snapshot","id":"draft-1","revision":"digest-d1"},"final_snapshot_ref":null,"allowed_fields":["title","body"],"state":"open","cleanup":"not_requested","finish_claim":null,"unmanaged_writers":false}
 }

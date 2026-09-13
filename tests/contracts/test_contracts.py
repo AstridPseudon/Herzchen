@@ -85,8 +85,8 @@ class ExtensionAndDomainTests(unittest.TestCase):
     def extension(self, namespace="example.ns", operation="example.update"):
         return ExtensionDescriptor(namespace, "v1", ("example.resource",), "Example extension", "example-owner", operation_bindings=(__import__("herzchen.contracts", fromlist=["OperationBinding"]).OperationBinding(operation, "v1"),))
 
-    def domain(self, domain_id="example.domain", operation="example.update", namespace="example.ns"):
-        return DomainContribution(domain_id, "1", "example-owner", ("example.resource",), (), (namespace,), (operation,), ("example.updated",), "v1")
+    def domain(self, domain_id="example.domain", operation="example.update", namespace="example.ns", resources=("example.resource",), documents=("example.document",), events=("example.updated",)):
+        return DomainContribution(domain_id, "1", "example-owner", resources, documents, (namespace,), (operation,), events, "v1")
 
     def test_duplicate_namespace_and_operation_reject(self):
         registry = ExtensionRegistry()
@@ -103,6 +103,18 @@ class ExtensionAndDomainTests(unittest.TestCase):
             registry.register(self.domain("other.domain", "example.update", "other.ns"))
         with self.assertRaises(ValueError):
             registry.register(self.domain("example.domain", "other.update", "other.ns"))
+
+    def test_duplicate_resource_document_and_event_types_reject(self):
+        cases = (
+            {"resources": ("example.resource",), "documents": (), "events": ("other.updated",)},
+            {"resources": ("other.resource",), "documents": ("example.document",), "events": ("other.updated",)},
+            {"resources": ("other.resource",), "documents": (), "events": ("example.updated",)},
+        )
+        for kwargs in cases:
+            registry = DomainRegistry()
+            registry.register(self.domain())
+            with self.assertRaisesRegex(ValueError, "duplicate (resource|document|event) type identity"):
+                registry.register(self.domain("other.domain", "other.update", "other.ns", **kwargs))
 
     def test_unknown_resource_kind_is_preserved(self):
         value = PackResourceDescriptor("resource-1", "future.unknown.kind", "v1", ref("source", "source-1", "rev-1"), annotations={"future": {"keep": True}})

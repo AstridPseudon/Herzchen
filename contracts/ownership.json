@@ -1,5 +1,5 @@
 {
-  "contract_revision": "fnd-02.v1",
+  "contract_revision": "fnd-02.v1.1",
   "accountability_rule": "Exactly one accountable owner writes each boundary. Consumers may adapt through a declared port; they do not become a second authority.",
   "boundaries": [
     {

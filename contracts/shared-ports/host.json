@@ -1,5 +1,5 @@
 {
-  "contract_revision": "fnd-02.v1",
+  "contract_revision": "fnd-02.v1.1",
   "type": "optional_host_port",
   "request": {"operation":"inspect","identity":{"logical_agent_id":"agent-1","physical_session_id":"session-1"},"target":{"authority":"neutral-store","kind":"attention","id":"attention-1","revision":"rev-1"},"requested_profile":"neutral-fixture","input_refs":[]},
   "unsupported": {"operation":"resume","outcome":"unsupported","identity":{"logical_agent_id":"agent-1","physical_session_id":null},"logical_request_key":"host-request-2","requested_profile":"neutral-fixture","observed_runner":null,"observed_profile":null,"process_id":null,"unsupported_reason":"adapter_has_no_resume","result_ref":null}

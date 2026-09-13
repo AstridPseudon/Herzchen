@@ -4,8 +4,8 @@ Status: complete worker handoff; neutral contract baseline only.
 
 ## Contract identity
 
-- Contract revision: `fnd-02.v1`
-- Deterministic contract/schema digest: `fd7c2f416ff0fcaeffe9e66b0913258cc9db3b7bc792ad6e57d1fe456267d269`
+- Contract revision: `fnd-02.v1.1`
+- Deterministic contract/schema digest: `28ee051bef55163e79be8acf17513eccd258769f9cebcb5a2608bdb8bd300264`
 - Source manifest: `.otto/portfolios/otto-herzchen-delivery/local/source-set-int01-refresh-20260913.json`
 - Source manifest SHA-256: `742fed428923c7702001865407d3d8897ba9685b5fcfd473076fc7edb3ee563a`
 
@@ -27,6 +27,17 @@ Status: complete worker handoff; neutral contract baseline only.
 
 The neutral kernel has no inward optional-domain imports or foreign keys. Runtime remains Astrid's current writer until G-OTTO and the later AST transfer/qualification. This worker does not claim installed product origin, INT-02 validation, or a live Astrid/Runtime journey.
 
+## Bounded correction
+
+The PKG consumer acknowledgment identified that `DomainRegistry.register` checked
+duplicate domain, operation, and namespace identities but omitted resource,
+document, and event identities. Revision `fnd-02.v1.1` adds deterministic
+collision rejection for all three omitted identity groups and adds one focused
+negative test for each. B01–B12 and the neutral host receipt scope are
+unchanged. PKG must still keep pack resources resource-only and must not add a
+second registry or pack-owned DDL; live OTT receipt qualification remains a
+downstream adapter condition.
+
 ## Verification evidence
 
 Runtime: Python `3.9.6` on macOS arm64 host.
@@ -34,19 +45,46 @@ Runtime: Python `3.9.6` on macOS arm64 host.
 Commands and results:
 
 ```text
-PYTHONPATH=src python3 -m py_compile src/herzchen/contracts/model.py
+PYTHONPATH=src python3 -B -m unittest discover -s tests/contracts -p 'test_*.py' -v
+exit 0; Ran 24 tests; OK
+
+python3 -B - <<'PY'
+import json
+from pathlib import Path
+paths = sorted(Path('contracts').rglob('*.json'))
+for path in paths:
+    json.loads(path.read_text())
+print(f'JSON_PARSE_FILES={len(paths)}')
+PY
+JSON_PARSE_FILES=12; exit 0
+
+PYTHONPATH=src python3 -B - <<'PY'
+import hashlib
+import herzchen.contracts as c
+assert c.CONTRACT_REVISION == 'fnd-02.v1.1'
+assert c.CONTRACT_DIGEST == hashlib.sha256(c.canonical_json(c.SCHEMA_DEFINITIONS).encode()).hexdigest()
+assert len(c.CONTRACT_DIGEST) == 64
+assert {'ResourceRef','DomainRegistry','CommandEnvelope','EventEnvelope','HostPort'} <= set(c.__all__)
+print('IMPORT_EXPORT_DIGEST=OK')
+print('REVISION=' + c.CONTRACT_REVISION)
+print('DIGEST=' + c.CONTRACT_DIGEST)
+PY
+IMPORT_EXPORT_DIGEST=OK
+REVISION=fnd-02.v1.1
+DIGEST=28ee051bef55163e79be8acf17513eccd258769f9cebcb5a2608bdb8bd300264
 exit 0
 
-PYTHONPATH=src python3 -m unittest discover -s tests/contracts -p 'test_*.py' -v
-exit 0; Ran 23 tests; OK
+if rg -n '(^|[[:space:]])(import|from) (otto|astrid|runtime_protocol)|otto\.|astrid\.|runtime_protocol\.' src/herzchen/contracts; then exit 1; else echo none; fi
+FORBIDDEN_IMPORTS: none; exit 0
+
+git diff --check
+DIFF_CHECK=0; exit 0
 ```
 
 The unittest suite includes the small subprocess import check and JSON fixture load/round-trip/digest check. No pytest dependency was required or installed.
 
-Known bounded gaps: FND-03 still owns the SQLite one-writer/store implementation; EDT/OTT/AST adapters and installed-origin/live-use proof remain later work; the optional host fixture reports unsupported operations but does not launch a process.
+Known bounded gaps: FND-03 still owns the SQLite one-writer/store implementation; EDT/OTT/AST adapters and installed-origin/live-use proof remain later work; the optional host fixture reports unsupported operations but does not launch a process. The PKG duplicate-identity condition is now satisfied by this candidate but still requires downstream consumer integration; no INT-02 or installed-product claim is made.
 
 ## Commit/tree
 
-- Implementation commit: `d00d579a7077326956df207d4cc8a2becacc5f1d`
-- Implementation tree: `cbcb7888c1b66ef4be38961d73698be8f15cafb0`
-- This handoff report is a follow-up metadata commit on the same `fnd-02-worker` branch; the implementation commit above is the coherent contract result to consume.
+- Correction commit/tree: recorded after the bounded correction is committed.

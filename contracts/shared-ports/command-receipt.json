@@ -1,5 +1,5 @@
 {
-  "contract_revision": "fnd-02.v1",
+  "contract_revision": "fnd-02.v1.1",
   "type": "command_and_receipt",
   "command": {
     "operation":"document.update",
@@ -7,7 +7,7 @@
     "target":{"authority":"neutral-store","kind":"document","id":"doc-001","revision":"rev-7"},
     "context":{"actor":{"authority":"neutral-auth","actor":"agent-1","credential_ref":"credential-1","authenticated":true},"logical_request_key":"request-001","request_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","expected_revision":"rev-7","expected_version":7,"edit_token":"edit-1","correlation_id":"corr-1","causation_id":null},
     "payload":{"title":"neutral example","annotations":{"unknown_sibling":{"kept":true}}},
-    "envelope_revision":"fnd-02.v1"
+    "envelope_revision":"fnd-02.v1.1"
   },
   "receipts": [
     {"logical_request_key":"request-001","request_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","operation":"document.update","target":{"authority":"neutral-store","kind":"document","id":"doc-001","revision":"rev-7"},"status":"committed","transaction_id":"tx-001","event_ids":["event-001"],"result_ref":{"authority":"neutral-store","kind":"document","id":"doc-001","revision":"rev-8"},"error_code":null,"replayed":false,"observed_revision":"rev-8","unknown_reason":null},
