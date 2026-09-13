@@ -4,6 +4,7 @@ from .schema import COMPOSITION, SCHEMA_FINGERPRINT, SCHEMA_REVISION
 from .store import (
     ClosedStoreError,
     CompositionMismatchError,
+    DescriptorDigestMismatchError,
     FND02_CONTRACT_DIGEST,
     FND02_CONTRACT_REVISION,
     IdentityRecord,
@@ -36,6 +37,7 @@ __all__ = [
     "CompositionMismatchError",
     "WriterBusyError",
     "ClosedStoreError",
+    "DescriptorDigestMismatchError",
     "TargetMismatchError",
     "VersionConflictError",
 ]

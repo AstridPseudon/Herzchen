@@ -6,18 +6,21 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import fcntl
+import hashlib
 import json
 import os
-from pathlib import Path
 import secrets
 import sqlite3
 import threading
-from typing import Any, Iterator, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Iterator, Mapping, Optional, Sequence, Tuple, Union
 
 from herzchen.contracts import (
     AuthenticatedActor,
     CommandEnvelope,
     CommandReceipt,
+    ContractError,
+    DomainContribution,
+    DomainRegistry,
     EventEnvelope,
     ReceiptStatus,
     ReplayConflictError,
@@ -70,6 +73,15 @@ class VersionConflictError(StoreError):
     """The expected revision or version does not match current state."""
 
 
+class DescriptorDigestMismatchError(StoreAdmissionError):
+    """Persisted optional-domain descriptors do not match their digest."""
+
+
+DOMAIN_KIND = "domain"
+DOMAIN_DESCRIPTOR_DIGEST_KEY = "domain_descriptor_digest"
+EMPTY_DOMAIN_DESCRIPTOR_DIGEST = hashlib.sha256(b"[]").hexdigest()
+
+
 @dataclass(frozen=True)
 class IdentityRecord:
     """A neutral durable identity and its current mutable state."""
@@ -100,6 +112,11 @@ def _ref_key(ref: ResourceRef) -> str:
     return ref.to_json()
 
 
+def _descriptor_digest(descriptors: Sequence[DomainContribution]) -> str:
+    ordered = sorted(descriptors, key=lambda descriptor: descriptor.domain_id)
+    return hashlib.sha256(canonical_json([descriptor.to_dict() for descriptor in ordered]).encode("utf-8")).hexdigest()
+
+
 def _ref_json(ref: Optional[ResourceRef]) -> Optional[str]:
     return None if ref is None else ref.to_json()
 
@@ -112,6 +129,8 @@ class Transaction:
         self.connection = store._connection
         self._active = False
         self._savepoint_number = 0
+        self._domain_working: Dict[str, DomainContribution] = {}
+        self._domain_digest = store._domain_descriptor_digest
 
     def _require_active(self) -> None:
         self.store._require_open()
@@ -127,11 +146,15 @@ class Transaction:
                 raise WriterBusyError("SQLite writer admission is busy") from exc
             raise
         self._active = True
+        self._domain_working = dict(self.store._domain_descriptors)
+        self._domain_digest = self.store._domain_descriptor_digest
 
     def _commit(self) -> None:
         self._require_active()
         try:
             self.connection.execute("COMMIT")
+            self.store._domain_descriptors = dict(self._domain_working)
+            self.store._domain_descriptor_digest = self._domain_digest
         finally:
             self._active = False
 
@@ -155,12 +178,16 @@ class Transaction:
         self._require_active()
         self._savepoint_number += 1
         name = "fnd_sp_{}".format(self._savepoint_number)
+        domain_snapshot = dict(self._domain_working)
+        digest_snapshot = self._domain_digest
         self.connection.execute("SAVEPOINT " + name)
         try:
             yield self
         except BaseException:
             self.connection.execute("ROLLBACK TO SAVEPOINT " + name)
             self.connection.execute("RELEASE SAVEPOINT " + name)
+            self._domain_working = domain_snapshot
+            self._domain_digest = digest_snapshot
             raise
         else:
             self.connection.execute("RELEASE SAVEPOINT " + name)
@@ -169,7 +196,7 @@ class Transaction:
 class Store:
     """An admitted FND-03 database and its one durable writer."""
 
-    def __init__(self, connection: sqlite3.Connection, lock_fd: Optional[int], path: str, authority: str) -> None:
+    def __init__(self, connection: sqlite3.Connection, lock_fd: Optional[int], path: str, authority: str, domain_descriptors: Optional[Mapping[str, DomainContribution]] = None) -> None:
         self._connection = connection
         self._connection.row_factory = sqlite3.Row
         self._lock_fd = lock_fd
@@ -178,6 +205,8 @@ class Store:
         self._closed = False
         self._transaction_lock = threading.RLock()
         self._local = threading.local()
+        self._domain_descriptors: Dict[str, DomainContribution] = dict(domain_descriptors or {})
+        self._domain_descriptor_digest = _descriptor_digest(self._domain_descriptors.values())
 
     @classmethod
     def create(cls, path: Union[os.PathLike, str], *, authority: str = "neutral-store") -> "Store":
@@ -199,10 +228,11 @@ class Store:
                 "store_authority": authority,
                 "fnd02_contract_revision": FND02_CONTRACT_REVISION,
                 "fnd02_contract_digest": FND02_CONTRACT_DIGEST,
+                DOMAIN_DESCRIPTOR_DIGEST_KEY: EMPTY_DOMAIN_DESCRIPTOR_DIGEST,
             }
             connection.executemany("INSERT INTO store_metadata(key, value) VALUES (?, ?)", metadata.items())
             connection.execute("COMMIT")
-            return cls(connection, lock_fd, path_text, authority)
+            return cls(connection, lock_fd, path_text, authority, {})
         except BaseException:
             if connection is not None:
                 try:
@@ -224,8 +254,8 @@ class Store:
         connection: Optional[sqlite3.Connection] = None
         try:
             connection = cls._connect(path_text)
-            cls._verify(connection, authority)
-            return cls(connection, lock_fd, path_text, authority)
+            domains = cls._verify(connection, authority)
+            return cls(connection, lock_fd, path_text, authority, domains)
         except BaseException:
             if connection is not None:
                 connection.close()
@@ -274,7 +304,7 @@ class Store:
         return tuple(row[0] for row in rows)
 
     @classmethod
-    def _verify(cls, connection: sqlite3.Connection, authority: str) -> None:
+    def _verify(cls, connection: sqlite3.Connection, authority: str) -> Dict[str, DomainContribution]:
         actual = cls._user_tables(connection)
         expected = tuple(sorted(COMPOSITION))
         if actual != expected:
@@ -288,6 +318,27 @@ class Store:
             raise SchemaMismatchError("store authority does not match admission")
         if rows.get("fnd02_contract_revision") != FND02_CONTRACT_REVISION or rows.get("fnd02_contract_digest") != FND02_CONTRACT_DIGEST:
             raise SchemaMismatchError("accepted FND-02 contract baseline is not present")
+        descriptors: Dict[str, DomainContribution] = {}
+        descriptor_rows = connection.execute(
+            "SELECT authority, kind, id, payload_json FROM identities WHERE kind = ? ORDER BY authority, id",
+            (DOMAIN_KIND,),
+        ).fetchall()
+        registry = DomainRegistry()
+        for descriptor_row in descriptor_rows:
+            if descriptor_row[0] != authority:
+                raise StoreAdmissionError("domain descriptor authority does not match store authority")
+            try:
+                descriptor = DomainContribution.from_dict(json.loads(descriptor_row[3]))
+                if descriptor.domain_id != descriptor_row[2]:
+                    raise ContractError("domain descriptor identity does not match its record id")
+                registry.register(descriptor)
+            except (TypeError, ValueError, json.JSONDecodeError) as exc:
+                raise StoreAdmissionError("stored domain descriptor is invalid") from exc
+            descriptors[descriptor.domain_id] = descriptor
+        expected_digest = _descriptor_digest(descriptors.values())
+        if rows.get(DOMAIN_DESCRIPTOR_DIGEST_KEY) != expected_digest:
+            raise DescriptorDigestMismatchError("stored domain descriptor set does not match metadata digest")
+        return descriptors
 
     def _require_open(self) -> None:
         if self._closed:
@@ -422,6 +473,80 @@ class Store:
 
     def get_record(self, ref: ResourceRef) -> Optional[IdentityRecord]:
         return self.get_identity(ref)
+
+    @property
+    def domain_descriptor_digest(self) -> str:
+        self._require_open()
+        return self._domain_descriptor_digest
+
+    def registered_domains(self) -> Tuple[DomainContribution, ...]:
+        """Return the admitted typed optional-domain descriptors in stable order."""
+        self._require_open()
+        return tuple(self._domain_descriptors[key] for key in sorted(self._domain_descriptors))
+
+    def register_domain(
+        self,
+        contribution: DomainContribution,
+        *,
+        transaction: Optional[Transaction] = None,
+    ) -> DomainContribution:
+        """Register one typed descriptor using the common writer transaction."""
+        if not isinstance(contribution, DomainContribution):
+            raise TypeError("contribution must be a DomainContribution")
+        tx, own = self._active_or_transaction(transaction)
+        if own:
+            # Serialize the read/preflight with transaction admission.  This
+            # keeps the candidate from going stale if two callers register
+            # different descriptors concurrently, while the digest work stays
+            # outside BEGIN IMMEDIATE.
+            with self._transaction_lock:
+                candidate, candidate_digest = self._validated_domain_candidate(contribution, self._domain_descriptors)
+                with self.transaction() as owned:
+                    return self._register_domain(owned, contribution, candidate, candidate_digest)
+        candidate, candidate_digest = self._validated_domain_candidate(contribution, tx._domain_working)
+        return self._register_domain(tx, contribution, candidate, candidate_digest)
+
+    def _validated_domain_candidate(
+        self,
+        contribution: DomainContribution,
+        existing: Mapping[str, DomainContribution],
+    ) -> Tuple[Dict[str, DomainContribution], str]:
+        registry = DomainRegistry()
+        for descriptor in existing.values():
+            registry.register(descriptor)
+        registry.register(contribution)
+        candidate = dict(existing)
+        candidate[contribution.domain_id] = contribution
+        return candidate, _descriptor_digest(candidate.values())
+
+    def _register_domain(
+        self,
+        tx: Transaction,
+        contribution: DomainContribution,
+        candidate: Mapping[str, DomainContribution],
+        candidate_digest: str,
+    ) -> DomainContribution:
+        with tx.savepoint():
+            ref = ResourceRef(self.authority, DOMAIN_KIND, contribution.domain_id, contribution.version)
+            existing = tx.execute(
+                "SELECT 1 FROM identities WHERE authority = ? AND kind = ? AND id = ?",
+                (ref.authority, ref.kind, ref.id),
+            ).fetchone()
+            if existing is not None:
+                raise ContractError("duplicate domain identity: {}".format(contribution.domain_id))
+            now = _now()
+            tx.execute(
+                "INSERT INTO identities(authority, kind, id, current_revision, version, edit_token, payload_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (ref.authority, ref.kind, ref.id, ref.revision, 1, None, _json(contribution.to_dict()), now, now),
+            )
+            self._store_reference(tx, ref)
+            tx.execute(
+                "UPDATE store_metadata SET value = ? WHERE key = ?",
+                (candidate_digest, DOMAIN_DESCRIPTOR_DIGEST_KEY),
+            )
+            tx._domain_working = candidate
+            tx._domain_digest = candidate_digest
+            return contribution
 
     def put_reference(self, ref: ResourceRef, *, transaction: Optional[Transaction] = None) -> ResourceRef:
         """Durably retain a validated reference to an admitted identity."""
@@ -715,5 +840,7 @@ __all__ = [
     "Store", "SQLiteStore", "RealmStore", "Transaction", "IdentityRecord",
     "StoreError", "StoreAdmissionError", "StoreExistsError", "SchemaMismatchError",
     "CompositionMismatchError", "WriterBusyError", "ClosedStoreError",
-    "TargetMismatchError", "VersionConflictError", "FND02_CONTRACT_REVISION", "FND02_CONTRACT_DIGEST",
+    "TargetMismatchError", "VersionConflictError", "DescriptorDigestMismatchError",
+    "FND02_CONTRACT_REVISION", "FND02_CONTRACT_DIGEST", "DOMAIN_KIND",
+    "DOMAIN_DESCRIPTOR_DIGEST_KEY", "EMPTY_DOMAIN_DESCRIPTOR_DIGEST",
 ]

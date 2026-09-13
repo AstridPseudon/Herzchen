@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
 import subprocess
@@ -13,6 +14,8 @@ from typing import Optional
 from herzchen.contracts import (
     AuthenticatedActor,
     CommandEnvelope,
+    ContractError,
+    DomainContribution,
     ResourceRef,
     TransactionContext,
     ReplayConflictError,
@@ -24,6 +27,7 @@ from herzchen.kernel import (
     SCHEMA_REVISION,
     ClosedStoreError,
     CompositionMismatchError,
+    DescriptorDigestMismatchError,
     SchemaMismatchError,
     Store,
     TargetMismatchError,
@@ -51,6 +55,19 @@ class StoreTests(unittest.TestCase):
         store = Store.create(self.db)
         store.put_identity(ResourceRef("neutral-store", "record", "record-1"), {"value": "initial"}, version=0, edit_token="edit-1")
         return store
+
+    def domain(self, domain_id: str = "example.domain", *, resource: str = "example.resource", document: str = "example.document", event: str = "example.updated") -> DomainContribution:
+        return DomainContribution(
+            domain_id,
+            "1",
+            "example-owner",
+            (resource,),
+            (document,),
+            ("example.namespace",),
+            ("example.update",),
+            (event,),
+            "example.v1",
+        )
 
     def test_create_open_fingerprint_composition_and_foreign_keys(self) -> None:
         store = Store.create(self.db)
@@ -176,6 +193,79 @@ class StoreTests(unittest.TestCase):
             store.foreign_keys_enabled()
         with self.assertRaises(ClosedStoreError):
             store.get_receipt("missing")
+
+    def test_empty_domain_descriptor_set_is_initialized_and_reopened(self) -> None:
+        store = Store.create(self.db)
+        self.assertEqual(store.registered_domains(), ())
+        self.assertEqual(store.domain_descriptor_digest, hashlib.sha256(b"[]").hexdigest())
+        store.close()
+        reopened = Store.open(self.db)
+        self.assertEqual(reopened.registered_domains(), ())
+        self.assertEqual(reopened.domain_descriptor_digest, hashlib.sha256(b"[]").hexdigest())
+        reopened.close()
+
+    def test_valid_domain_descriptor_is_typed_durable_json_across_reopen(self) -> None:
+        store = Store.create(self.db)
+        contribution = self.domain()
+        self.assertEqual(store.register_domain(contribution), contribution)
+        identity = store.get_identity(ResourceRef("neutral-store", "domain", contribution.domain_id, contribution.version))
+        self.assertIsNotNone(identity)
+        self.assertEqual(identity.payload, contribution.to_dict())
+        digest = store.domain_descriptor_digest
+        self.assertNotEqual(digest, hashlib.sha256(b"[]").hexdigest())
+        store.close()
+        reopened = Store.open(self.db)
+        self.assertEqual(reopened.registered_domains(), (contribution,))
+        self.assertEqual(reopened.domain_descriptor_digest, digest)
+        reopened.close()
+
+    def test_duplicate_domain_and_type_rejection_is_atomic(self) -> None:
+        store = Store.create(self.db)
+        first = self.domain()
+        store.register_domain(first)
+        original_digest = store.domain_descriptor_digest
+        duplicate_domain = self.domain()
+        with self.assertRaises(ContractError):
+            store.register_domain(duplicate_domain)
+        colliding_type = self.domain("other.domain", resource=first.resource_types[0])
+        with self.assertRaises(ContractError):
+            store.register_domain(colliding_type)
+        self.assertEqual(store.registered_domains(), (first,))
+        self.assertEqual(store.domain_descriptor_digest, original_digest)
+        self.assertEqual(store.connection.execute("SELECT COUNT(*) FROM identities WHERE kind = 'domain'").fetchone()[0], 1)
+        self.assertEqual(store.connection.execute("SELECT COUNT(*) FROM record_references WHERE kind = 'domain'").fetchone()[0], 1)
+        store.close()
+
+    def test_descriptor_digest_tamper_or_missing_descriptor_refuses_open(self) -> None:
+        store = Store.create(self.db)
+        store.register_domain(self.domain())
+        store.connection.execute("UPDATE store_metadata SET value = 'tampered' WHERE key = 'domain_descriptor_digest'")
+        store.close()
+        with self.assertRaises(DescriptorDigestMismatchError):
+            Store.open(self.db)
+
+        missing_db = Path(self.tempdir.name) / "missing-descriptor.sqlite3"
+        store = Store.create(missing_db)
+        store.register_domain(self.domain("missing.domain"))
+        store.close()
+        connection = sqlite3.connect(missing_db)
+        connection.execute("DELETE FROM record_references WHERE kind = 'domain'")
+        connection.execute("DELETE FROM identities WHERE kind = 'domain'")
+        connection.commit()
+        connection.close()
+        with self.assertRaises(DescriptorDigestMismatchError):
+            Store.open(missing_db)
+
+    def test_domain_registration_uses_supplied_transaction_and_commits_once(self) -> None:
+        store = Store.create(self.db)
+        contribution = self.domain("transaction.domain")
+        with store.transaction() as transaction:
+            store.register_domain(contribution, transaction=transaction)
+            self.assertEqual(store.registered_domains(), ())
+            self.assertEqual(transaction.execute("SELECT COUNT(*) FROM identities WHERE kind = 'domain'").fetchone()[0], 1)
+        self.assertEqual(store.registered_domains(), (contribution,))
+        self.assertEqual(store.connection.execute("SELECT COUNT(*) FROM identities WHERE kind = 'domain'").fetchone()[0], 1)
+        store.close()
 
     def test_kernel_import_boundary_has_no_optional_domain_modules(self) -> None:
         source_root = str(Path(__file__).resolve().parents[2] / "src")
