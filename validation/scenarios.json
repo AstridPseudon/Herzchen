@@ -1,0 +1,2189 @@
+{
+  "schema": "int-02-conformance-matrix/v1",
+  "matrix_version": "2026-09-13.1",
+  "status": "planned_not_executed",
+  "scope": "source-independent harness and fixture specification only",
+  "mutation_observation_contract": {
+    "before_read": "Read the current identified resource, revision, cursor and relevant unchanged fields through the owning consumer.",
+    "action": "Invoke the declared public command when available; until then execute only the explicit fixture-only binding.",
+    "fresh_after_read": "Reconnect or use a fresh reader and verify the observable result independently of cached input.",
+    "persisted_delta": "Compare the exact intended state delta with preserved unrelated state.",
+    "event_receipt": "Correlate the semantic event and receipt by stable request identity.",
+    "replay": "Exercise same-key replay and conflicting replay with explicit rejection/no-collateral-mutation outcomes.",
+    "restart_recovery": "Restart or reconnect where material and verify committed state, history, uncertainty and cursor recovery."
+  },
+  "proof_classes": {
+    "harness_fixture": "stdlib-only deterministic shape, filesystem, cursor, replay, and isolation checks",
+    "installed_product": "pending; must use a clean installed consumer and public command",
+    "fresh_agent": "pending; must use a supported fresh consumer/agent path",
+    "actual_media": "pending and applicable only to Astrid creative scenarios",
+    "schema_only": "not sufficient for product acceptance"
+  },
+  "lineage": {
+    "package_spec_evidence": [
+      "validation/area-contracts.json",
+      "validation/behavioral-proof.md",
+      "validation/test_control_trial.py",
+      "validation/test_execution_clarity.py",
+      "validation/test_execution_learning.py",
+      "validation/test_lineage.py",
+      "validation/test_v11_operating.py"
+    ],
+    "source_inputs": [
+      {
+        "id": "astrid",
+        "commit": "96e5664237eb35adeb4cad08bddd8cd6df0a2ae1",
+        "tree": "19f7539a266618a797559eedbda48e2752b30fa3",
+        "checkout": ".../local/sources/Astrid-96e5664237eb",
+        "disposition": "read_only_evidence"
+      },
+      {
+        "id": "runtime",
+        "commit": "afccb430e2a983c968b6a8a96fd630ba3a6262fc",
+        "tree": "be89db2f02231aeef212bdb266d12c51778f32ae",
+        "checkout": ".../local/sources/Runtime-afccb430e2",
+        "disposition": "read_only_evidence"
+      },
+      {
+        "id": "poms-skills",
+        "commit": "d849898cd0c191cffc5ababbb5ea7d2c188e8ed0",
+        "tree": "9644eb21632a98a51af7051ceeb294f851a7c70f",
+        "checkout": "exact handover checkout",
+        "disposition": "read_only_evidence"
+      }
+    ],
+    "retained_assertion_handling": "adapted as neutral harness contracts; no private SQL copied; no product result inferred"
+  },
+  "fixture_inventory": {
+    "operating_context": "tests/conformance/fixtures/operating_context.py",
+    "definition_catalog": "tests/conformance/fixtures/definition_catalog.py",
+    "manager_choice": "tests/conformance/fixtures/manager_choice.py",
+    "review_choice": "tests/conformance/fixtures/review_choice.py",
+    "candidate_decision": "tests/conformance/fixtures/candidate_decision.py",
+    "attention_wait_restart": "tests/conformance/fixtures/attention.py",
+    "disposable_portfolio": "tests/conformance/fixtures/portfolio.py"
+  },
+  "whole_catalog_representation": {
+    "scenario_id": "S-CATALOG-REPRESENTATION",
+    "binding": "fixture-only:build_definition_catalog",
+    "read_only": true,
+    "must_preserve": [
+      "unknown",
+      "conditional",
+      "pending"
+    ],
+    "owner_areas": [
+      "FND",
+      "DAT",
+      "PKG",
+      "WRK",
+      "EDT",
+      "OTT",
+      "AST",
+      "INT"
+    ],
+    "product_status": "pending; no product command is emulated"
+  },
+  "disposable_portfolio_rehearsal": {
+    "scenario_id": "S-PORTFOLIO-REHEARSAL",
+    "binding": "fixture-only:build_disposable_portfolio",
+    "projects": [
+      "rehearsal-alpha",
+      "rehearsal-beta"
+    ],
+    "required_behaviors": [
+      "bounded manager choice",
+      "shared handoff",
+      "failed result and correction",
+      "candidate decision",
+      "attention restart"
+    ],
+    "isolation": {
+      "temporary_directory": true,
+      "live_control_db": false,
+      "product_command": false,
+      "source_checkout": false
+    },
+    "product_status": "pending; fixture rehearsal cannot satisfy G-OTTO or installed-product proof"
+  },
+  "scenarios": [
+    {
+      "id": "S-CORE-01",
+      "name": "Kernel transaction and recovery",
+      "owner": "FND",
+      "produced_by": "INT-03",
+      "criteria": [
+        "C01",
+        "C02",
+        "C03"
+      ],
+      "consumer_contract": "one-owner atomic state/event/receipt and restart recovery",
+      "command_action_binding": "fixture-only:transaction-recovery",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "validation/test_control_trial.py"
+      ],
+      "positive_cases": [
+        "valid operation commits state, event and receipt together"
+      ],
+      "negative_cases": [
+        "malformed schema and conflicting replay reject without a partial delta"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "one committed identity with one linked receipt",
+      "fresh_read_expectation": "fresh reader sees the committed state and no uncommitted fields",
+      "persisted_expectations": {
+        "state_delta": "exactly one intended record delta",
+        "event_receipt": "one semantic event linked to one receipt",
+        "replay": "same request is idempotent; conflicting payload is rejected"
+      },
+      "restart_recovery_expectation": "reopen preserves committed identity and unresolved uncertainty",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-CORE-02",
+      "name": "Capacity and uncertain outcome",
+      "owner": "FND",
+      "produced_by": "INT-03",
+      "criteria": [
+        "C04"
+      ],
+      "consumer_contract": "atomic capacity admission with cumulative spend",
+      "command_action_binding": "fixture-only:capacity-race",
+      "required_input_source_refs": [
+        "validation/area-contracts.json"
+      ],
+      "positive_cases": [
+        "two contenders admit at most the final unit"
+      ],
+      "negative_cases": [
+        "lost acknowledgement remains held/charged and rename cannot reset usage"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "capacity is reusable while spend remains cumulative",
+      "fresh_read_expectation": "independent read shows one admitted unit and stable accounting",
+      "persisted_expectations": {
+        "state_delta": "one winner; loser has no duplicate admission",
+        "event_receipt": "admission and uncertainty receipts retain request identity",
+        "replay": "retry reconciles the original request"
+      },
+      "restart_recovery_expectation": "restart preserves held/unknown accounting and reusable capacity",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-DATA-01",
+      "name": "Namespaced metadata guards",
+      "owner": "DAT",
+      "produced_by": "INT-03",
+      "criteria": [
+        "C06"
+      ],
+      "consumer_contract": "definition-bound metadata with protected managed fields",
+      "command_action_binding": "fixture-only:metadata-update",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "validation/test_execution_clarity.py"
+      ],
+      "positive_cases": [
+        "declared namespace update preserves unrelated keys"
+      ],
+      "negative_cases": [
+        "typo and protected promotion attempt fail precisely"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "only the permitted namespace changes",
+      "fresh_read_expectation": "fresh read retains unknown annotations and protected values",
+      "persisted_expectations": {
+        "state_delta": "one namespaced value changes; unrelated values remain",
+        "event_receipt": "mutation receipt identifies definition revision",
+        "replay": "same request does not duplicate the semantic event"
+      },
+      "restart_recovery_expectation": "definition and preserved annotations survive reopen",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-DATA-02",
+      "name": "Generic document links and visibility",
+      "owner": "DAT",
+      "produced_by": "INT-03",
+      "criteria": [
+        "C05",
+        "C10"
+      ],
+      "consumer_contract": "versioned documents, links, pins and scope-filtered context",
+      "command_action_binding": "fixture-only:document-link",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "validation/test_lineage.py"
+      ],
+      "positive_cases": [
+        "one document links to two resources and a pinned revision is readable"
+      ],
+      "negative_cases": [
+        "private backlink and direct out-of-scope open are hidden/rejected"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "visible links reflect scope and exact revision identity",
+      "fresh_read_expectation": "fresh reader sees current and pinned revisions without hidden links",
+      "persisted_expectations": {
+        "state_delta": "link/pin changes only the owning document graph",
+        "event_receipt": "link receipt carries document and target identities",
+        "replay": "duplicate link request is harmless; conflicting pin is rejected"
+      },
+      "restart_recovery_expectation": "current/pinned identity and visibility survive reopen",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-PACK-01",
+      "name": "Trusted pack composition",
+      "owner": "PKG",
+      "produced_by": "INT-03",
+      "criteria": [
+        "C02",
+        "C11"
+      ],
+      "consumer_contract": "declared resources are readable without capability-driven DDL",
+      "command_action_binding": "fixture-only:pack-manifest-read",
+      "required_input_source_refs": [
+        "validation/area-contracts.json"
+      ],
+      "positive_cases": [
+        "manifest exposes declared resources and reduced composition"
+      ],
+      "negative_cases": [
+        "untrusted resource and DDL/reference request are refused"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "read-only pack description has no schema side effect",
+      "fresh_read_expectation": "fresh reader gets the same declared resource set",
+      "persisted_expectations": {
+        "state_delta": "no state delta for manifest read",
+        "event_receipt": "no mutation receipt is emitted",
+        "replay": "repeat read is stable"
+      },
+      "restart_recovery_expectation": "no capability is granted by restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-TEMPLATE-01",
+      "name": "Literal template instantiation",
+      "owner": "PKG",
+      "produced_by": "INT-03",
+      "criteria": [
+        "C12",
+        "C14"
+      ],
+      "consumer_contract": "typed template seeds with stable remapping and no auto-execution",
+      "command_action_binding": "fixture-only:template-instantiate",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "validation/test_execution_learning.py"
+      ],
+      "positive_cases": [
+        "typed literals instantiate work/docs once with stable local references"
+      ],
+      "negative_cases": [
+        "unknown template, malformed parameter and repeat conflicting key refuse"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "exact seed graph exists without acceptance or budget inheritance",
+      "fresh_read_expectation": "fresh read finds the same mapped identities",
+      "persisted_expectations": {
+        "state_delta": "one exact seed set",
+        "event_receipt": "instantiation receipt names template revision",
+        "replay": "same key returns original identity; conflicting input rejects"
+      },
+      "restart_recovery_expectation": "instantiated seed survives reopen without launch",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-WORK-01",
+      "name": "Work and assessment identity",
+      "owner": "WRK",
+      "produced_by": "INT-03",
+      "criteria": [
+        "C13",
+        "C14",
+        "C15"
+      ],
+      "consumer_contract": "stable task identity, dependencies, bounded assessment and distinct verdicts",
+      "command_action_binding": "fixture-only:work-assessment",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "validation/test_control_trial.py"
+      ],
+      "positive_cases": [
+        "task, job, dependency and PASS/REWORK/UNKNOWN remain distinct"
+      ],
+      "negative_cases": [
+        "invocation success cannot accept work; cycle and exhausted allowance reject"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "manager can see the exact obligation and verdict",
+      "fresh_read_expectation": "fresh read preserves task identity across correction",
+      "persisted_expectations": {
+        "state_delta": "attempt/result changes without replacing task",
+        "event_receipt": "assessment receipt binds candidate and criterion",
+        "replay": "duplicate result is rejected or reconciled by request identity"
+      },
+      "restart_recovery_expectation": "limits and obligations survive restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-EDIT-01",
+      "name": "Authoring batch and token fencing",
+      "owner": "EDT",
+      "produced_by": "INT-03",
+      "criteria": [
+        "C07",
+        "C08",
+        "C16"
+      ],
+      "consumer_contract": "exclusive scope, atomic sheet/doc batch and idle finish",
+      "command_action_binding": "fixture-only:authoring-batch",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "validation/test_execution_clarity.py"
+      ],
+      "positive_cases": [
+        "valid batch commits current sheet and linked document under one holder"
+      ],
+      "negative_cases": [
+        "stale token, invalid draft and late writer do not alter current revision"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "one coherent revision is visible to the next editor",
+      "fresh_read_expectation": "fresh editor sees current revision and preserved results",
+      "persisted_expectations": {
+        "state_delta": "batch changes all intended records atomically",
+        "event_receipt": "finish receipt links scope token and revision",
+        "replay": "same finish is repeat-safe; stale finish rejects"
+      },
+      "restart_recovery_expectation": "saved draft/checkout state follows declared recovery path",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-EDIT-02",
+      "name": "Authoring cleanup and crash boundaries",
+      "owner": "EDT",
+      "produced_by": "INT-03",
+      "criteria": [
+        "C08",
+        "C09",
+        "C17"
+      ],
+      "consumer_contract": "registered temporary-file cleanup preserves durable and running content",
+      "command_action_binding": "fixture-only:authoring-crash-cleanup",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "validation/test_execution_clarity.py"
+      ],
+      "positive_cases": [
+        "successful finish removes only registered temporary files"
+      ],
+      "negative_cases": [
+        "save error, symlink, crash and unregistered file preserve bytes or refuse cleanup"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "durable snapshot and pinned running copy remain available",
+      "fresh_read_expectation": "new process verifies filesystem contents independently",
+      "persisted_expectations": {
+        "state_delta": "durable content survives cleanup",
+        "event_receipt": "cleanup/finish receipt reports exact paths",
+        "replay": "late cleanup cannot remove a new holder's file"
+      },
+      "restart_recovery_expectation": "reopen recovers saved bytes and running execution copy",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-OTTO-01",
+      "name": "Installed Otto journey",
+      "owner": "OTT",
+      "produced_by": "INT-05",
+      "criteria": [
+        "C17",
+        "C18",
+        "C19"
+      ],
+      "consumer_contract": "fresh supported intake, continuation and visible history",
+      "command_action_binding": "fixture-only:otto-journey; product command pending",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "architecture/OTTO-VS-EXECUTION.md"
+      ],
+      "positive_cases": [
+        "fresh consumer can inspect a bounded brief and supported continuation"
+      ],
+      "negative_cases": [
+        "missing launcher or lost delivery remains unknown and does not duplicate owner"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "supported view exposes identity, history and uncertainty",
+      "fresh_read_expectation": "fresh consumer reads current records without cache assumptions",
+      "persisted_expectations": {
+        "state_delta": "harness only; no product state written",
+        "event_receipt": "fixture receipt is labelled non-product",
+        "replay": "duplicate continuation reconciles by stable identity"
+      },
+      "restart_recovery_expectation": "fixture cursor and session identity survive simulated restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-OTTO-02",
+      "name": "Manager hierarchy and attention",
+      "owner": "OTT",
+      "produced_by": "INT-05",
+      "criteria": [
+        "C20",
+        "C21"
+      ],
+      "consumer_contract": "parent/manager/executor bounds and one durable attention path",
+      "command_action_binding": "fixture-only:manager-attention; product command pending",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "architecture/AGENT-OPERATING-CONTRACT.md"
+      ],
+      "positive_cases": [
+        "one manager selects bounded work and attention remains readable"
+      ],
+      "negative_cases": [
+        "due signal does not auto-dispatch or create a new review stage"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "attention explains owner, missing obligation and revisit condition",
+      "fresh_read_expectation": "fresh read retains unhandled attention after reading",
+      "persisted_expectations": {
+        "state_delta": "manager choice is distinct from notification",
+        "event_receipt": "attention event and choice receipt remain linked",
+        "replay": "duplicate hint does not duplicate business action"
+      },
+      "restart_recovery_expectation": "anchor, counters and unresolved attention survive restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-ASTRID-01",
+      "name": "Astrid source custody",
+      "owner": "AST",
+      "produced_by": "INT-07",
+      "criteria": [
+        "C22",
+        "C25"
+      ],
+      "consumer_contract": "read-only source custody and preserved creative baseline",
+      "command_action_binding": "fixture-only:source-custody; product command pending",
+      "required_input_source_refs": [
+        "source-set-int01-refresh-20260913.json"
+      ],
+      "positive_cases": [
+        "exact commit/tree and clean disposition are recorded"
+      ],
+      "negative_cases": [
+        "dirty or guessed upstream identity blocks acceptance"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "source evidence is distinct from installed product evidence",
+      "fresh_read_expectation": "fresh manifest read matches exact pins",
+      "persisted_expectations": {
+        "state_delta": "no source checkout mutation",
+        "event_receipt": "custody record is evidence metadata only",
+        "replay": "re-reading manifest does not create acceptance"
+      },
+      "restart_recovery_expectation": "read-only custody facts remain unchanged",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-ASTRID-02",
+      "name": "Creative shared extensions",
+      "owner": "AST",
+      "produced_by": "INT-07",
+      "criteria": [
+        "C05",
+        "C06",
+        "C23",
+        "C24"
+      ],
+      "consumer_contract": "Runtime-owned creative metadata, docs, templates and media boundaries",
+      "command_action_binding": "fixture-only:astrid-adoption; product command pending",
+      "required_input_source_refs": [
+        "source-set-int01-refresh-20260913.json",
+        "validation/area-contracts.json"
+      ],
+      "positive_cases": [
+        "fixture preserves shot-like managed fields and pinned user content"
+      ],
+      "negative_cases": [
+        "generic annotation cannot forge primary promotion or acceptance"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "neutral fixture shows explicit product boundary",
+      "fresh_read_expectation": "fresh read sees preserved fixture baseline",
+      "persisted_expectations": {
+        "state_delta": "harness-only representation; no Astrid mutation",
+        "event_receipt": "fixture receipt cannot be a Runtime receipt",
+        "replay": "conflicting protected mutation rejects"
+      },
+      "restart_recovery_expectation": "pinned content remains after simulated cleanup",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "pending"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-JOINT-01",
+      "name": "Joint installed composition",
+      "owner": "INT",
+      "produced_by": "INT-07",
+      "criteria": [
+        "C17",
+        "C25",
+        "C26",
+        "C27"
+      ],
+      "consumer_contract": "candidate-bound composition and truthful connected evidence",
+      "command_action_binding": "fixture-only:composition-check; product command pending",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "validation/behavioral-proof.md"
+      ],
+      "positive_cases": [
+        "fixture records exact candidate and retained regression lineage"
+      ],
+      "negative_cases": [
+        "editable fallback, drift or missing evidence blocks product claim"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "composition metadata distinguishes package checks from product proof",
+      "fresh_read_expectation": "fresh reader sees unchanged candidate identity",
+      "persisted_expectations": {
+        "state_delta": "no live product state",
+        "event_receipt": "composition receipt is labelled harness evidence",
+        "replay": "same candidate identity is stable"
+      },
+      "restart_recovery_expectation": "fixture manifest remains reproducible",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "pending"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-RELEASE-01",
+      "name": "Promotion outcome honesty",
+      "owner": "INT",
+      "produced_by": "INT-08",
+      "criteria": [
+        "C28"
+      ],
+      "consumer_contract": "explicit target and partial/unknown promotion outcomes",
+      "command_action_binding": "fixture-only:promotion-outcome",
+      "required_input_source_refs": [
+        "validation/area-contracts.json"
+      ],
+      "positive_cases": [
+        "disposable target records verified complete outcome"
+      ],
+      "negative_cases": [
+        "partial or unknown result is not called complete"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "promotion status preserves uncertainty",
+      "fresh_read_expectation": "fresh target read is required before completion",
+      "persisted_expectations": {
+        "state_delta": "fixture target only",
+        "event_receipt": "outcome receipt names target and side effect",
+        "replay": "retry reconciles same target"
+      },
+      "restart_recovery_expectation": "partial outcome remains visible after restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-HANDOVER-01",
+      "name": "Final handover provenance",
+      "owner": "INT",
+      "produced_by": "INT-09",
+      "criteria": [
+        "C29"
+      ],
+      "consumer_contract": "reproducible supported install and recovery handover",
+      "command_action_binding": "fixture-only:handover-manifest",
+      "required_input_source_refs": [
+        "validation/area-contracts.json"
+      ],
+      "positive_cases": [
+        "manifest identifies target set, stewardship and recovery path"
+      ],
+      "negative_cases": [
+        "missing limitation or unsupported smoke remains undetermined"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "handover names what is and is not proven",
+      "fresh_read_expectation": "fresh reader can resolve exact fixture inputs",
+      "persisted_expectations": {
+        "state_delta": "manifest only",
+        "event_receipt": "handover receipt is not product acceptance",
+        "replay": "manifest regeneration is stable"
+      },
+      "restart_recovery_expectation": "recovery references remain readable",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "pending"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-MUTATION-01",
+      "name": "Public mutation probe plan",
+      "owner": "INT",
+      "produced_by": "INT-03",
+      "criteria": [
+        "C03",
+        "C33"
+      ],
+      "consumer_contract": "before/action/fresh-after and semantic receipt for each public mutator",
+      "command_action_binding": "fixture-only:mutation-contract",
+      "required_input_source_refs": [
+        "validation/behavioral-proof.md",
+        "validation/area-contracts.json"
+      ],
+      "positive_cases": [
+        "fixture expresses intended mutation and unchanged fields"
+      ],
+      "negative_cases": [
+        "no-op, invalid authority, stale input and conflicting replay are distinct"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "each mutation has a complete evidence checklist",
+      "fresh_read_expectation": "fresh independent reader is mandatory in product phase",
+      "persisted_expectations": {
+        "state_delta": "declared intended delta only",
+        "event_receipt": "event and receipt linkage is explicit",
+        "replay": "same-key and conflicting replay outcomes are specified"
+      },
+      "restart_recovery_expectation": "applicable mutators name recovery boundary",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-CANDIDATE-01",
+      "name": "Candidate-bound decision reuse",
+      "owner": "WRK",
+      "produced_by": "INT-03",
+      "criteria": [
+        "C13",
+        "C31"
+      ],
+      "consumer_contract": "immutable candidate inputs and typed decision evidence",
+      "command_action_binding": "fixture-only:build_candidate_decision_cases",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "validation/test_execution_learning.py"
+      ],
+      "positive_cases": [
+        "decision selects candidate A against exact pinned inputs"
+      ],
+      "negative_cases": [
+        "old A verdict cannot certify B; unrelated annotation does not invalidate all evidence"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "changed consumed input produces a clear applicability rejection",
+      "fresh_read_expectation": "fresh read returns candidate and decision identities separately",
+      "persisted_expectations": {
+        "state_delta": "decision is immutable and candidate-bound",
+        "event_receipt": "decision evidence names author, authority and rationale",
+        "replay": "same decision identity is preserved; conflicting candidate is rejected"
+      },
+      "restart_recovery_expectation": "candidate and historical decision remain readable",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-CURSOR-01",
+      "name": "Cursor recovery",
+      "owner": "FND",
+      "produced_by": "INT-03",
+      "criteria": [
+        "C03",
+        "C32",
+        "C33"
+      ],
+      "consumer_contract": "ordered accessible history with stable event identities",
+      "command_action_binding": "fixture-only:build_attention_recovery",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "validation/behavioral-proof.md"
+      ],
+      "positive_cases": [
+        "reconnect rereads missing ordered events"
+      ],
+      "negative_cases": [
+        "duplicate and out-of-order hints do not dispatch or invent a gap"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "unhandled events remain actionable and ordered",
+      "fresh_read_expectation": "cursor resumes from last confirmed position",
+      "persisted_expectations": {
+        "state_delta": "no duplicate business operation",
+        "event_receipt": "stable event IDs remain linked to original facts",
+        "replay": "duplicate hint is ignored/reconciled"
+      },
+      "restart_recovery_expectation": "cursor and unhandled status survive restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-BOUNDARY-01",
+      "name": "Module and authority boundary",
+      "owner": "FND",
+      "produced_by": "INT-03",
+      "criteria": [
+        "C02",
+        "C34"
+      ],
+      "consumer_contract": "optional domains compose without duplicate owners or private imports",
+      "command_action_binding": "fixture-only:boundary-inspection",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "architecture/EXTRACTION-FIRST.md"
+      ],
+      "positive_cases": [
+        "neutral fixture composes declared areas without product-private import"
+      ],
+      "negative_cases": [
+        "optional domain omission and duplicate writer are visible failures"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "ownership and omission are explicit",
+      "fresh_read_expectation": "fresh inspection sees same boundary map",
+      "persisted_expectations": {
+        "state_delta": "inspection has no state delta",
+        "event_receipt": "no product receipt is claimed",
+        "replay": "repeat inspection is stable"
+      },
+      "restart_recovery_expectation": "boundary declaration remains unchanged",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-VERTICAL-01",
+      "name": "Per-area vertical matrix",
+      "owner": "INT",
+      "produced_by": "INT-03",
+      "criteria": [
+        "C33",
+        "C35"
+      ],
+      "consumer_contract": "every area has positive, negative, persistence, receipt, replay and recovery axes",
+      "command_action_binding": "fixture-only:area-matrix",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "validation/behavioral-proof.md"
+      ],
+      "positive_cases": [
+        "all owner areas resolve to an executable fixture and pending product binding"
+      ],
+      "negative_cases": [
+        "empty proof axis or fake product pass fails validation"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "coverage gaps are named rather than greenwashed",
+      "fresh_read_expectation": "fresh matrix read returns every area and owner",
+      "persisted_expectations": {
+        "state_delta": "matrix metadata only",
+        "event_receipt": "fixture evidence has explicit class",
+        "replay": "matrix validation is repeatable"
+      },
+      "restart_recovery_expectation": "not applicable to read-only matrix; area-specific rows govern recovery",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "pending"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-WAIT-01",
+      "name": "Actionable waiting",
+      "owner": "WRK",
+      "produced_by": "INT-05",
+      "criteria": [
+        "C21",
+        "C32"
+      ],
+      "consumer_contract": "waiting explains owner, missing obligation, reference and revisit",
+      "command_action_binding": "fixture-only:attention_wait_restart",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "architecture/AGENT-OPERATING-CONTRACT.md"
+      ],
+      "positive_cases": [
+        "missing dependency creates owner-specific attention"
+      ],
+      "negative_cases": [
+        "duplicate/lost signal does not mark ready or dispatch"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "manager sees exact wait reason and revisit condition",
+      "fresh_read_expectation": "fresh read retains unhandled attention",
+      "persisted_expectations": {
+        "state_delta": "wait state changes only by explicit observation",
+        "event_receipt": "stable attention event is linked",
+        "replay": "duplicate signal is idempotent"
+      },
+      "restart_recovery_expectation": "cursor, anchor and wait reason survive restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-ASTRID-03",
+      "name": "Astrid protected mutation boundary",
+      "owner": "AST",
+      "produced_by": "INT-07",
+      "criteria": [
+        "C22",
+        "C23",
+        "C33",
+        "C34",
+        "C35"
+      ],
+      "consumer_contract": "real Runtime-owned mutation and protected promotion remain product obligations",
+      "command_action_binding": "fixture-only:astrid-protected-mutation; product command pending",
+      "required_input_source_refs": [
+        "source-set-int01-refresh-20260913.json",
+        "validation/area-contracts.json"
+      ],
+      "positive_cases": [
+        "neutral fixture distinguishes annotation from protected promotion"
+      ],
+      "negative_cases": [
+        "private copied writer or forged primary state fails boundary check"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "no fixture result is relabelled as Astrid proof",
+      "fresh_read_expectation": "fresh product read is explicitly pending",
+      "persisted_expectations": {
+        "state_delta": "no Astrid state delta",
+        "event_receipt": "fixture receipt cannot satisfy Runtime receipt",
+        "replay": "forged promotion remains rejected"
+      },
+      "restart_recovery_expectation": "fixture boundary survives restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "pending"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-REUSE-01",
+      "name": "Source and test lineage",
+      "owner": "INT",
+      "produced_by": "INT-03",
+      "criteria": [
+        "C01",
+        "C02",
+        "C17",
+        "C26",
+        "C34",
+        "C35"
+      ],
+      "consumer_contract": "exact source/test lineage and retained/adapted assertions",
+      "command_action_binding": "fixture-only:lineage-record",
+      "required_input_source_refs": [
+        "source-set-int01-refresh-20260913.json",
+        "validation/test_lineage.py"
+      ],
+      "positive_cases": [
+        "exact pins and retained assertion handling are present"
+      ],
+      "negative_cases": [
+        "unresolved source hint or wrong installed origin cannot pass"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "provenance is distinguishable from implementation",
+      "fresh_read_expectation": "fresh manifest reader gets exact identity",
+      "persisted_expectations": {
+        "state_delta": "lineage metadata only",
+        "event_receipt": "lineage receipt is not product behavior",
+        "replay": "same lineage record is stable"
+      },
+      "restart_recovery_expectation": "provenance remains readable",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-REUSE-02",
+      "name": "Post-gate consumer reuse",
+      "owner": "AST",
+      "produced_by": "INT-07",
+      "criteria": [
+        "C17",
+        "C22",
+        "C23",
+        "C24",
+        "C26",
+        "C34",
+        "C35"
+      ],
+      "consumer_contract": "post-gate shared artifact consumption and duplicate-path retirement",
+      "command_action_binding": "fixture-only:consumer-reuse; product command pending",
+      "required_input_source_refs": [
+        "source-set-int01-refresh-20260913.json",
+        "architecture/EXTRACTION-FIRST.md"
+      ],
+      "positive_cases": [
+        "fixture records intended shared origin and retained creative assertions"
+      ],
+      "negative_cases": [
+        "active private copied event/store implementation is a failure"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "consumer cutover remains pending and bounded",
+      "fresh_read_expectation": "fresh installed-origin read is required later",
+      "persisted_expectations": {
+        "state_delta": "no consumer mutation in this worker",
+        "event_receipt": "lineage metadata only",
+        "replay": "repeat inspection remains stable"
+      },
+      "restart_recovery_expectation": "not applicable to read-only worker fixture",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "pending"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-OTTO-PLAN-01",
+      "name": "Whole plan representation",
+      "owner": "OTT",
+      "produced_by": "OTT-06",
+      "criteria": [
+        "C12",
+        "C15",
+        "C18",
+        "C25",
+        "C35"
+      ],
+      "consumer_contract": "complete catalog represented with aliases, dependencies and provenance",
+      "command_action_binding": "fixture-only:build_definition_catalog; product command pending",
+      "required_input_source_refs": [
+        "architecture/OTTO-VS-EXECUTION.md",
+        "validation/area-contracts.json"
+      ],
+      "positive_cases": [
+        "all eight areas and planned nodes are represented read-only"
+      ],
+      "negative_cases": [
+        "unknown/conditional/pending nodes dropped or seed grants authority"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "catalog is complete without live activation",
+      "fresh_read_expectation": "fresh representation preserves all node classes",
+      "persisted_expectations": {
+        "state_delta": "read-only representation has no product delta",
+        "event_receipt": "no import receipt is claimed",
+        "replay": "same catalog digest is stable"
+      },
+      "restart_recovery_expectation": "catalog representation is reproducible",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-OTTO-PLAN-02",
+      "name": "Bounded portfolio rehearsal",
+      "owner": "OTT",
+      "produced_by": "OTT-06",
+      "criteria": [
+        "C04",
+        "C07",
+        "C08",
+        "C13",
+        "C18",
+        "C19",
+        "C20",
+        "C21",
+        "C25",
+        "C26",
+        "C27",
+        "C31",
+        "C32",
+        "C33",
+        "C35"
+      ],
+      "consumer_contract": "two disposable projects exercise bounded manager-led operations",
+      "command_action_binding": "fixture-only:build_disposable_portfolio; product command pending",
+      "required_input_source_refs": [
+        "architecture/OTTO-VS-EXECUTION.md",
+        "validation/behavioral-proof.md"
+      ],
+      "positive_cases": [
+        "isolated alpha/beta specs include handoff, failed result, correction and restart"
+      ],
+      "negative_cases": [
+        "live control target, automatic dispatch and cloned allowance are prohibited"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "rehearsal is disposable and visibly bounded",
+      "fresh_read_expectation": "fresh process can inspect files without live root",
+      "persisted_expectations": {
+        "state_delta": "temporary files only",
+        "event_receipt": "all receipts are harness-labelled",
+        "replay": "same fixture build is deterministic"
+      },
+      "restart_recovery_expectation": "rehearsal files and attention spec remain recoverable within temp root",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-AST-CONTROL-01",
+      "name": "Adopted fixture continuity",
+      "owner": "OTT",
+      "produced_by": "OTT-06",
+      "criteria": [
+        "C19",
+        "C25"
+      ],
+      "consumer_contract": "stable adopted aliases, prior decisions and external references",
+      "command_action_binding": "fixture-only:adopted-continuity; product command pending",
+      "required_input_source_refs": [
+        "validation/area-contracts.json"
+      ],
+      "positive_cases": [
+        "fixture retains stable aliases and previous result references"
+      ],
+      "negative_cases": [
+        "retry cannot create duplicate task, manager or allowance"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "adoption continuity is explicit but not live AST evidence",
+      "fresh_read_expectation": "fresh read matches adopted fixture snapshot",
+      "persisted_expectations": {
+        "state_delta": "no live adoption delta",
+        "event_receipt": "fixture receipt labelled non-product",
+        "replay": "ack retry preserves identity"
+      },
+      "restart_recovery_expectation": "snapshot/cursor survives restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-AST-CONTROL-02",
+      "name": "Qualified cutover boundary",
+      "owner": "AST",
+      "produced_by": "AST-02",
+      "criteria": [
+        "C22",
+        "C36"
+      ],
+      "consumer_contract": "post-gate controller cutover with frozen source baseline",
+      "command_action_binding": "fixture-only:cutover-boundary; product command pending",
+      "required_input_source_refs": [
+        "source-set-int01-refresh-20260913.json",
+        "validation/area-contracts.json"
+      ],
+      "positive_cases": [
+        "fixture records frozen baseline and separate controller identity"
+      ],
+      "negative_cases": [
+        "pre-gate dispatch and old local edit are refused"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "cutover readiness is separate from actual AST use",
+      "fresh_read_expectation": "fresh read compares baseline and controller refs",
+      "persisted_expectations": {
+        "state_delta": "no AST product state change",
+        "event_receipt": "fixture cutover record is not live handoff",
+        "replay": "repeat inspection is stable"
+      },
+      "restart_recovery_expectation": "frozen baseline remains readable",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "pending"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-AST-CONTROL-03",
+      "name": "Supported AST tools",
+      "owner": "AST",
+      "produced_by": "AST-06",
+      "criteria": [
+        "C19",
+        "C20",
+        "C36"
+      ],
+      "consumer_contract": "actual plan, assignment, result and handoff through shipped Otto tools",
+      "command_action_binding": "fixture-only:ast-tool-journey; product command pending",
+      "required_input_source_refs": [
+        "validation/area-contracts.json"
+      ],
+      "positive_cases": [
+        "fixture enumerates required public tool operations"
+      ],
+      "negative_cases": [
+        "manual backfill cannot be reported as tool use"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "unexercised product operations remain pending",
+      "fresh_read_expectation": "fresh consumer read is required later",
+      "persisted_expectations": {
+        "state_delta": "no AST product delta",
+        "event_receipt": "fixture operation list has no live receipts",
+        "replay": "operation specification is repeatable"
+      },
+      "restart_recovery_expectation": "fixture journey remains recoverable",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "pending"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-AST-CONTROL-04",
+      "name": "Controller isolation",
+      "owner": "INT",
+      "produced_by": "INT-05",
+      "criteria": [
+        "C17",
+        "C19",
+        "C25"
+      ],
+      "consumer_contract": "candidate/test installation cannot alter controller realm or imports",
+      "command_action_binding": "fixture-only:controller-isolation",
+      "required_input_source_refs": [
+        "source-set-int01-refresh-20260913.json",
+        "validation/area-contracts.json"
+      ],
+      "positive_cases": [
+        "fixture paths are distinct from controller and source checkouts"
+      ],
+      "negative_cases": [
+        "cleanup target resolving to live controller fails"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "candidate/controller separation is inspectable",
+      "fresh_read_expectation": "fresh path inspection sees separate roots",
+      "persisted_expectations": {
+        "state_delta": "no controller mutation",
+        "event_receipt": "isolation check is harness evidence",
+        "replay": "repeat check is stable"
+      },
+      "restart_recovery_expectation": "controller identity remains separate",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-AST-CONTROL-05",
+      "name": "Controller recovery",
+      "owner": "INT",
+      "produced_by": "INT-05",
+      "criteria": [
+        "C19",
+        "C25"
+      ],
+      "consumer_contract": "lost handoff and unavailable controller reconcile without free retry",
+      "command_action_binding": "fixture-only:controller-recovery",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "architecture/OTTO-VS-EXECUTION.md"
+      ],
+      "positive_cases": [
+        "fixture records export/restore and authority return"
+      ],
+      "negative_cases": [
+        "stale restore cannot duplicate post-snapshot action"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "unknown outcome remains visible until reconciled",
+      "fresh_read_expectation": "fresh reader compares snapshot and current state",
+      "persisted_expectations": {
+        "state_delta": "reconciliation does not erase prior uncertainty",
+        "event_receipt": "handoff and reconciliation remain linked",
+        "replay": "same request reconciles; conflicting retry rejects"
+      },
+      "restart_recovery_expectation": "old dispatcher is fenced and recovery reference survives restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-AST-CONTROL-06",
+      "name": "Controller versus deliverable",
+      "owner": "INT",
+      "produced_by": "INT-07",
+      "criteria": [
+        "C27",
+        "C35",
+        "C36"
+      ],
+      "consumer_contract": "final candidate and live controller identities are compared explicitly",
+      "command_action_binding": "fixture-only:controller-deliverable-comparison",
+      "required_input_source_refs": [
+        "validation/area-contracts.json"
+      ],
+      "positive_cases": [
+        "fixture names separate controller and deliverable versions"
+      ],
+      "negative_cases": [
+        "fallback or intervention cannot be erased by synthetic rerun"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "version mismatch is visible and unresolved",
+      "fresh_read_expectation": "fresh comparison reads both identities",
+      "persisted_expectations": {
+        "state_delta": "comparison metadata only",
+        "event_receipt": "comparison receipt cannot certify live use",
+        "replay": "same comparison is stable"
+      },
+      "restart_recovery_expectation": "version references survive restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-OPT-01",
+      "name": "Attention cadence mechanics",
+      "owner": "OTT",
+      "produced_by": "INT-05",
+      "criteria": [
+        "C19",
+        "C21",
+        "C25"
+      ],
+      "consumer_contract": "anchored due checks, coalescing and unknown invocation handling",
+      "command_action_binding": "fixture-only:attention-cadence",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "architecture/AGENT-OPERATING-CONTRACT.md"
+      ],
+      "positive_cases": [
+        "anchor is not due before interval and one reservation wins race"
+      ],
+      "negative_cases": [
+        "inflight/unknown state prevents duplicate launch"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "timer mechanics do not make business decisions",
+      "fresh_read_expectation": "fresh read reports anchor and reservation state",
+      "persisted_expectations": {
+        "state_delta": "anchor/call state changes are explicit",
+        "event_receipt": "reservation receipt retains profile and request",
+        "replay": "duplicate due check coalesces"
+      },
+      "restart_recovery_expectation": "anchor and unknown state survive restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-OPT-02",
+      "name": "Managed baseline readiness",
+      "owner": "AST",
+      "produced_by": "AST-02",
+      "criteria": [
+        "C36",
+        "C37"
+      ],
+      "consumer_contract": "qualified handoff exposes ideal, rubric, protocol and controller refs",
+      "command_action_binding": "fixture-only:optimization-readiness",
+      "required_input_source_refs": [
+        "validation/area-contracts.json"
+      ],
+      "positive_cases": [
+        "fixture identifies baseline and next manager action"
+      ],
+      "negative_cases": [
+        "report-only recommendation is not implementation"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "readiness is distinct from an elapsed live interval",
+      "fresh_read_expectation": "fresh manager view returns current refs",
+      "persisted_expectations": {
+        "state_delta": "fixture baseline only",
+        "event_receipt": "readiness receipt is not Astra review evidence",
+        "replay": "same readiness record is stable"
+      },
+      "restart_recovery_expectation": "baseline and controller refs survive restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-OPT-03",
+      "name": "Actual optimization follow-through",
+      "owner": "AST",
+      "produced_by": "AST-06",
+      "criteria": [
+        "C36",
+        "C37"
+      ],
+      "consumer_contract": "live due interval, parent accounting, action and observed effect",
+      "command_action_binding": "fixture-only:optimization-follow-through; product command pending",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "validation/test_execution_learning.py"
+      ],
+      "positive_cases": [
+        "fixture records baseline, chosen bounded change and uncertainty"
+      ],
+      "negative_cases": [
+        "short phase cannot invent a three-hour call; queued work is not implementation"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "fixture proves mechanics only, not causal benefit",
+      "fresh_read_expectation": "fresh view would need actual live receipts",
+      "persisted_expectations": {
+        "state_delta": "fixture action and effect fields are separate",
+        "event_receipt": "parent accounting and action receipt are linked",
+        "replay": "unknown/missed interval remains visible"
+      },
+      "restart_recovery_expectation": "clock anchor and interval status survive restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-OPT-04",
+      "name": "Reusable improvement boundary",
+      "owner": "INT",
+      "produced_by": "INT-07",
+      "criteria": [
+        "C27",
+        "C35",
+        "C37"
+      ],
+      "consumer_contract": "evidence-backed improvement reaches existing destination without auto-adoption",
+      "command_action_binding": "fixture-only:improvement-boundary",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "validation/test_execution_learning.py"
+      ],
+      "positive_cases": [
+        "fixture names destination, revision and smallest regression"
+      ],
+      "negative_cases": [
+        "local success, report-only work or automatic protocol upgrade is rejected"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "implemented, beneficial, unknown and deferred remain distinct",
+      "fresh_read_expectation": "fresh later assignment is required for applicability",
+      "persisted_expectations": {
+        "state_delta": "fixture lesson metadata only",
+        "event_receipt": "decision and implementation receipts remain separate",
+        "replay": "older pinned assignment remains unchanged"
+      },
+      "restart_recovery_expectation": "adoption choice and uncertainty survive restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-PENDING-01",
+      "name": "Pending project capture",
+      "owner": "WRK",
+      "produced_by": "INT-05",
+      "criteria": [
+        "C18",
+        "C38"
+      ],
+      "consumer_contract": "saved pending work creates attention, not activation",
+      "command_action_binding": "fixture-only:pending-project",
+      "required_input_source_refs": [
+        "validation/area-contracts.json"
+      ],
+      "positive_cases": [
+        "rough pending project retains reason, curator and revisit"
+      ],
+      "negative_cases": [
+        "due revisit or dependency completion does not dispatch"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "pending status remains durable and non-executable",
+      "fresh_read_expectation": "fresh reader sees pending identity and unknown fields",
+      "persisted_expectations": {
+        "state_delta": "pending metadata only",
+        "event_receipt": "capture receipt names no allowance",
+        "replay": "same-key import is idempotent"
+      },
+      "restart_recovery_expectation": "pending project remains after restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-LOOP-01",
+      "name": "Manager loop choices",
+      "owner": "WRK",
+      "produced_by": "INT-05",
+      "criteria": [
+        "C13",
+        "C31",
+        "C39"
+      ],
+      "consumer_contract": "manager chooses implementation/check/assessment/correction against stable task",
+      "command_action_binding": "fixture-only:manager-loop",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "architecture/AGENT-OPERATING-CONTRACT.md"
+      ],
+      "positive_cases": [
+        "explicit manager choice records rationale and exact candidate"
+      ],
+      "negative_cases": [
+        "automatic next-step inference and invocation-success acceptance fail"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "choice remains with manager",
+      "fresh_read_expectation": "fresh read sees prior choices and limits",
+      "persisted_expectations": {
+        "state_delta": "choice appends history without changing task identity",
+        "event_receipt": "choice receipt links candidate and owner",
+        "replay": "same choice identity is repeat-safe"
+      },
+      "restart_recovery_expectation": "loop history and allowance survive restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-LOOP-02",
+      "name": "Pending loop admission",
+      "owner": "WRK",
+      "produced_by": "INT-07",
+      "criteria": [
+        "C14",
+        "C38",
+        "C39"
+      ],
+      "consumer_contract": "explicit admission resolves scope/resources after pending capture",
+      "command_action_binding": "fixture-only:pending-admission",
+      "required_input_source_refs": [
+        "validation/area-contracts.json"
+      ],
+      "positive_cases": [
+        "manager explicitly admits a bounded pending item"
+      ],
+      "negative_cases": [
+        "revisit alone cannot create tasklist, manager or grant"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "admission is a separate manager decision",
+      "fresh_read_expectation": "fresh read distinguishes pending from admitted",
+      "persisted_expectations": {
+        "state_delta": "admission appends explicit decision",
+        "event_receipt": "admission receipt identifies authority",
+        "replay": "same-key admission is idempotent"
+      },
+      "restart_recovery_expectation": "pending/admitted state remains distinct after restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-PENDING-LOOP-CORE",
+      "name": "Pending core semantics",
+      "owner": "WRK",
+      "produced_by": "INT-03",
+      "criteria": [
+        "C38",
+        "C39"
+      ],
+      "consumer_contract": "sparse pending identity with no dummy task or implicit protocol",
+      "command_action_binding": "fixture-only:pending-core",
+      "required_input_source_refs": [
+        "validation/area-contracts.json"
+      ],
+      "positive_cases": [
+        "empty pending project has durable identity and zero tasks"
+      ],
+      "negative_cases": [
+        "client draft flag cannot bypass admission requirements"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "pending shape is valid but not executable",
+      "fresh_read_expectation": "fresh read observes zero tasks and preserved rationale",
+      "persisted_expectations": {
+        "state_delta": "identity and initial content only",
+        "event_receipt": "creation receipt has no acceptance",
+        "replay": "same-key create preserves identity"
+      },
+      "restart_recovery_expectation": "pending identity survives restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-NEW-01",
+      "name": "Blank project shape",
+      "owner": "PKG",
+      "produced_by": "INT-03",
+      "criteria": [
+        "C03",
+        "C08",
+        "C12",
+        "C38"
+      ],
+      "consumer_contract": "blank starter is immediately durable, zero-task and pending",
+      "command_action_binding": "fixture-only:blank-project",
+      "required_input_source_refs": [
+        "validation/area-contracts.json"
+      ],
+      "positive_cases": [
+        "blank starter round-trips without fabricated task or outcome"
+      ],
+      "negative_cases": [
+        "unknown template and malformed starter do not create partial state"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "blank shape is valid but does not admit work",
+      "fresh_read_expectation": "fresh read finds same pending identity and zero tasks",
+      "persisted_expectations": {
+        "state_delta": "one pending identity",
+        "event_receipt": "creation receipt is non-acceptance",
+        "replay": "same key returns original identity"
+      },
+      "restart_recovery_expectation": "blank project remains durable after restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-NEW-02",
+      "name": "Blank project authoring",
+      "owner": "EDT",
+      "produced_by": "INT-05",
+      "criteria": [
+        "C08",
+        "C09",
+        "C12",
+        "C16",
+        "C18",
+        "C38"
+      ],
+      "consumer_contract": "normal authoring/idle finish for a new pending project",
+      "command_action_binding": "fixture-only:blank-authoring",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "validation/test_execution_clarity.py"
+      ],
+      "positive_cases": [
+        "registered edit finishes and removes only temporary files"
+      ],
+      "negative_cases": [
+        "duplicate/manual-idle race and failed save preserve content"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "same project identity reopens with saved content",
+      "fresh_read_expectation": "fresh editor sees saved revision after finish",
+      "persisted_expectations": {
+        "state_delta": "coherent authoring revision",
+        "event_receipt": "finish/cleanup receipt names exact temp paths",
+        "replay": "same-key create does not duplicate"
+      },
+      "restart_recovery_expectation": "saved draft and cleanup result survive restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-NEW-03",
+      "name": "Blank project failure recovery",
+      "owner": "EDT",
+      "produced_by": "INT-05",
+      "criteria": [
+        "C03",
+        "C07",
+        "C08",
+        "C09",
+        "C18",
+        "C38"
+      ],
+      "consumer_contract": "materialize/save/DB/validation failures preserve durable pending work",
+      "command_action_binding": "fixture-only:blank-failure-recovery",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "validation/behavioral-proof.md"
+      ],
+      "positive_cases": [
+        "successful retry uses existing identity"
+      ],
+      "negative_cases": [
+        "partial file-open, late writer and validation failure never erase saved bytes"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "failure reports saved or rejected state precisely",
+      "fresh_read_expectation": "fresh process verifies bytes and ownership",
+      "persisted_expectations": {
+        "state_delta": "no collateral mutation on failure",
+        "event_receipt": "failure receipt carries retry/recovery reason",
+        "replay": "same-key retry is repeat-safe"
+      },
+      "restart_recovery_expectation": "reopen preserves pending project and saved draft",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-NEW-04",
+      "name": "Blank and selected templates",
+      "owner": "AST",
+      "produced_by": "INT-07",
+      "criteria": [
+        "C08",
+        "C12",
+        "C18",
+        "C22",
+        "C23",
+        "C24",
+        "C34",
+        "C38"
+      ],
+      "consumer_contract": "blank and selected templates share ordinary implementation across consumers",
+      "command_action_binding": "fixture-only:template-cross-consumer; product command pending",
+      "required_input_source_refs": [
+        "source-set-int01-refresh-20260913.json",
+        "validation/area-contracts.json"
+      ],
+      "positive_cases": [
+        "fixture distinguishes blank and valid selected template"
+      ],
+      "negative_cases": [
+        "missing parameter and unknown template fail before creation"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "no duplicate creative project authority is inferred",
+      "fresh_read_expectation": "fresh product reads remain pending",
+      "persisted_expectations": {
+        "state_delta": "harness representation only",
+        "event_receipt": "fixture receipt cannot be product acceptance",
+        "replay": "same-key selected template remains stable"
+      },
+      "restart_recovery_expectation": "pinned fixture content remains after cleanup",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "pending"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-ELEGANCE-CONTEXT",
+      "name": "Resolved brief and meaningful continuity",
+      "owner": "OTT",
+      "produced_by": "INT-05",
+      "criteria": [
+        "C10",
+        "C19",
+        "C21",
+        "C35"
+      ],
+      "consumer_contract": "fresh bounded context has provenance, relevant links, deltas and recoverable attention",
+      "command_action_binding": "fixture-only:build_operating_context_cases",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "architecture/AGENT-OPERATING-CONTRACT.md",
+        "validation/test_execution_clarity.py"
+      ],
+      "positive_cases": [
+        "complete mandate/owner/profile/current inputs enable one bounded selected action",
+        "same-scope amendment is visible to next read while prior packet remains pinned"
+      ],
+      "negative_cases": [
+        "stale cursor or missing mandate is rejected with omissions",
+        "lost/duplicate/out-of-order notification cannot dispatch or erase attention"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "positive and negative contexts differ by observable provenance, cursor and authorization",
+      "fresh_read_expectation": "fresh reader sees current amendment and unresolved prior attention without hidden context",
+      "persisted_expectations": {
+        "state_delta": "choice/amendment is separate from prior assignment and result",
+        "event_receipt": "decision, attention and delivery receipts remain linked by stable IDs",
+        "replay": "stale queued dispatch rejects or is held for rebrief; duplicate hint is idempotent"
+      },
+      "restart_recovery_expectation": "cursor, pinned packet, unresolved attention and allowance history survive restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-ELEGANCE-DEFINITION",
+      "name": "Shared declaration and operation",
+      "owner": "DAT",
+      "produced_by": "INT-03",
+      "criteria": [
+        "C06",
+        "C14",
+        "C16",
+        "C35"
+      ],
+      "consumer_contract": "one pinned definition feeds describe/help/editable shape/validation/query and mutation paths",
+      "command_action_binding": "fixture-only:build_definition_catalog",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "architecture/AGENT-OPERATING-CONTRACT.md",
+        "validation/test_execution_clarity.py"
+      ],
+      "positive_cases": [
+        "same definition accepts valid update on direct and sheet-shaped fixture paths",
+        "read-only catalog preserves unknown, conditional and pending nodes"
+      ],
+      "negative_cases": [
+        "malformed/protected/conflicting update is rejected and differs observably from valid update",
+        "presentation hint cannot grant authority or create a second schema"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "definition identity and read-only catalog are explicit",
+      "fresh_read_expectation": "fresh read returns current definition revision and unchanged unrelated fields",
+      "persisted_expectations": {
+        "state_delta": "valid update changes permitted namespace only",
+        "event_receipt": "receipt names definition revision and operation identity",
+        "replay": "same update is repeat-safe; stale/conflicting update rejects"
+      },
+      "restart_recovery_expectation": "definition/catalog digest and preserved nodes survive restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-MANAGER-CHOICE",
+      "name": "Programmatically defined records; manager-determined next work",
+      "owner": "OTT",
+      "produced_by": "INT-05",
+      "criteria": [
+        "C14",
+        "C21",
+        "C35",
+        "C39"
+      ],
+      "consumer_contract": "records expose options; accountable manager chooses next work",
+      "command_action_binding": "fixture-only:build_manager_choice_cases",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "architecture/AGENT-OPERATING-CONTRACT.md",
+        "validation/test_execution_learning.py"
+      ],
+      "positive_cases": [
+        "manager selects a justified bounded action from explicit alternatives",
+        "same task records support advisor refinement without changing parent identity"
+      ],
+      "negative_cases": [
+        "prerequisite pass, due timer, checked-in template or custom field only create attention and are rejected as dispatch",
+        "automatic advice cannot rewrite plan or accept result"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "selected action and attention-only state have different observable fields",
+      "fresh_read_expectation": "fresh read preserves available alternatives, rationale, limits and sparse pending work",
+      "persisted_expectations": {
+        "state_delta": "explicit choice appends a decision; readiness alone has no business delta",
+        "event_receipt": "choice receipt names manager and source event",
+        "replay": "same choice is repeat-safe; automatic duplicate action is rejected"
+      },
+      "restart_recovery_expectation": "manager decision, task history and limits survive restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "pending",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    },
+    {
+      "id": "S-REVIEW-CHOICE",
+      "name": "Normal versus XHARD review without stacked panels",
+      "owner": "OTT",
+      "produced_by": "INT-05",
+      "criteria": [
+        "C13",
+        "C14",
+        "C35"
+      ],
+      "consumer_contract": "selected review alternative binds exact profile and shared accounting",
+      "command_action_binding": "fixture-only:build_review_choice_cases",
+      "required_input_source_refs": [
+        "validation/area-contracts.json",
+        "architecture/AGENT-OPERATING-CONTRACT.md",
+        "validation/test_v11_operating.py"
+      ],
+      "positive_cases": [
+        "reviewer_normal binds gpt-5.6-luna/xhigh and reviewer_xhard binds gpt-5.6-sol/high",
+        "manager inspection and tests-only template create no independent-review claim"
+      ],
+      "negative_cases": [
+        "normal+xhard stacked sequence is rejected",
+        "switching role cannot reset prior calls, evidence or blockers"
+      ],
+      "proof_class": "harness_fixture",
+      "expected_observable_effect": "alternative profile and invalid stacked pipeline differ in role, sequence and rejection reason",
+      "fresh_read_expectation": "fresh reviewer context is pinned to selected profile and existing allowance",
+      "persisted_expectations": {
+        "state_delta": "choice changes routing only; prior calls remain",
+        "event_receipt": "reservation retains requested profile and request identity",
+        "replay": "same reservation reconciles; conflicting profile rejects"
+      },
+      "restart_recovery_expectation": "profile binding and consumed accounting survive restart",
+      "fixture_vs_product_status": {
+        "fixture": "planned",
+        "installed_product": "pending",
+        "fresh_agent": "not_applicable",
+        "actual_media": "not_applicable"
+      },
+      "before_read": "Read the current fixture resource before acting.",
+      "action": "Exercise the declared command/action binding.",
+      "fresh_after_read": "Fresh-read the resource independently after acting."
+    }
+  ],
+  "coverage": {
+    "retained_existing_scenario_ids": [
+      "S-CORE-01",
+      "S-CORE-02",
+      "S-DATA-01",
+      "S-DATA-02",
+      "S-PACK-01",
+      "S-TEMPLATE-01",
+      "S-WORK-01",
+      "S-EDIT-01",
+      "S-EDIT-02",
+      "S-OTTO-01",
+      "S-OTTO-02",
+      "S-ASTRID-01",
+      "S-ASTRID-02",
+      "S-JOINT-01",
+      "S-RELEASE-01",
+      "S-HANDOVER-01",
+      "S-MUTATION-01",
+      "S-CANDIDATE-01",
+      "S-CURSOR-01",
+      "S-BOUNDARY-01",
+      "S-VERTICAL-01",
+      "S-WAIT-01",
+      "S-ASTRID-03",
+      "S-REUSE-01",
+      "S-REUSE-02",
+      "S-OTTO-PLAN-01",
+      "S-OTTO-PLAN-02",
+      "S-AST-CONTROL-01",
+      "S-AST-CONTROL-02",
+      "S-AST-CONTROL-03",
+      "S-AST-CONTROL-04",
+      "S-AST-CONTROL-05",
+      "S-AST-CONTROL-06",
+      "S-OPT-01",
+      "S-OPT-02",
+      "S-OPT-03",
+      "S-OPT-04",
+      "S-PENDING-01",
+      "S-LOOP-01",
+      "S-LOOP-02",
+      "S-PENDING-LOOP-CORE",
+      "S-NEW-01",
+      "S-NEW-02",
+      "S-NEW-03",
+      "S-NEW-04",
+      "S-ELEGANCE-CONTEXT",
+      "S-ELEGANCE-DEFINITION",
+      "S-MANAGER-CHOICE",
+      "S-REVIEW-CHOICE"
+    ],
+    "unexecuted_product_scenarios": "All scenarios in this file; harness checks never upgrade this field.",
+    "area_contract_source_of_truth": "validation/area-contracts.json"
+  }
+}
