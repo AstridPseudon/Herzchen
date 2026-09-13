@@ -109,7 +109,7 @@
   "scenarios": [
     {
       "id": "S-CORE-01",
-      "name": "Kernel transaction and recovery",
+      "name": "Minimum and composed SQLite owner",
       "owner": "FND",
       "produced_by": "INT-03",
       "criteria": [
@@ -146,11 +146,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Create/open/refuse malformed schema; same state/event/receipt transaction; duplicate/conflicting operation identity; restart and restore.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-CORE-02",
-      "name": "Capacity and uncertain outcome",
+      "name": "Shared allowance and uncertainty",
       "owner": "FND",
       "produced_by": "INT-03",
       "criteria": [
@@ -184,11 +186,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Two real processes request last call; lost acknowledgement remains charged/held; capacity recycles while spend remains consumed; no reset by rename.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-DATA-01",
-      "name": "Namespaced metadata guards",
+      "name": "Metadata descriptions and protected fields",
       "owner": "DAT",
       "produced_by": "INT-03",
       "criteria": [
@@ -223,11 +227,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Task/shot-shaped resources accept schema-bound custom fields; typo fails precisely; unknown annotations preserved; protected state cannot be forged.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-DATA-02",
-      "name": "Generic document links and visibility",
+      "name": "Generic docs and context",
       "owner": "DAT",
       "produced_by": "INT-03",
       "criteria": [
@@ -263,11 +269,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "One doc linked to multiple resources; private visibility and backlinks filtered; current versus pinned identity; direct doc open honors owning scope.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-PACK-01",
-      "name": "Trusted pack composition",
+      "name": "Pack and composition boundaries",
       "owner": "PKG",
       "produced_by": "INT-03",
       "criteria": [
@@ -302,11 +310,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Minimum/core works without work domain; declared module conflicts refuse; ordinary capability/protocol resource cannot execute DDL.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-TEMPLATE-01",
-      "name": "Literal template instantiation",
+      "name": "Reusable task-structure templates",
       "owner": "PKG",
       "produced_by": "INT-03",
       "criteria": [
@@ -342,11 +352,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Typed literal parameters; stable local-reference remapping; atomic work/doc/assessment seeds; idempotent instantiate; no inherited acceptance/budget or launch.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-WORK-01",
-      "name": "Work and assessment identity",
+      "name": "Work, responsibilities and assessment history",
       "owner": "WRK",
       "produced_by": "INT-03",
       "criteria": [
@@ -383,11 +395,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Tasks versus jobs, real dependencies, same obligation across correction; PASS/REWORK/UNKNOWN distinct from invocation success; global shared review caps.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-EDIT-01",
-      "name": "Authoring batch and token fencing",
+      "name": "Actual exclusive edit and idle finish",
       "owner": "EDT",
       "produced_by": "INT-03",
       "criteria": [
@@ -424,11 +438,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Whole sheet, metadata and linked doc batch; one scope/actor; valid/nochange/invalid idle paths; late-token rejection; next editor gets current revision.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-EDIT-02",
-      "name": "Authoring cleanup and crash boundaries",
+      "name": "Filesystem and execution isolation",
       "owner": "EDT",
       "produced_by": "INT-03",
       "criteria": [
@@ -465,11 +481,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Crash before/after commit and deletion; save error; symlink/unregistered file refusal; actual helper/writer coordination; pinned running pack survives cleanup.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-OTTO-01",
-      "name": "Installed Otto journey",
+      "name": "Installed Otto project journey",
       "owner": "OTT",
       "produced_by": "INT-05",
       "criteria": [
@@ -506,11 +524,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Fresh build install, rough intake, dependencies, actual available launcher, continuation/handoff, whole-sheet docs/metadata, actual result and history.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-OTTO-02",
-      "name": "Manager hierarchy and attention",
+      "name": "Bounded management, shared attention and restart",
       "owner": "OTT",
       "produced_by": "INT-05",
       "criteria": [
@@ -546,11 +566,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "One parent, accountable manager and bounded executors; explicit handoff; one shared timed-attention path using 3h and another interval; no automatic business dispatch; clock and accounting survive restart. Full Demi-god UX deferred.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-ASTRID-01",
-      "name": "Astrid source custody",
+      "name": "Current baseline and sole-owner adoption",
       "owner": "AST",
       "produced_by": "INT-07",
       "criteria": [
@@ -585,11 +607,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "After G-OTTO only: current source custody, original SDK/CLI baseline, exact Runtime identity, no duplicate local database/project authority.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-ASTRID-02",
-      "name": "Creative shared extensions",
+      "name": "Real shared shot/docs/work and packs",
       "owner": "AST",
       "produced_by": "INT-07",
       "criteria": [
@@ -627,11 +651,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Shot metadata/primary rules, shared doc links, creative work template, event correlation, pinned user-owned pack after idle cleanup, local media result.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-JOINT-01",
-      "name": "Joint installed composition",
+      "name": "Both installed consumers, repeatable recovery",
       "owner": "INT",
       "produced_by": "INT-07",
       "criteria": [
@@ -669,11 +695,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Build once, clean install both, generated-client parity, preserved regressions, real conformance, safe restore and final candidate/evidence completeness.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-RELEASE-01",
-      "name": "Promotion outcome honesty",
+      "name": "Multi-repo source promotion",
       "owner": "INT",
       "produced_by": "INT-08",
       "criteria": [
@@ -707,11 +735,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "After G-FINAL: explicit destinations and sideeffects checked; each remote outcome verified; partial/unknown outcome never called complete.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-HANDOVER-01",
-      "name": "Final handover provenance",
+      "name": "Post-promotion finish",
       "owner": "INT",
       "produced_by": "INT-09",
       "criteria": [
@@ -745,11 +775,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Actual target-set identity and small supported-entry smoke; stewardship, recovery, limitations and final provenance handoff.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-MUTATION-01",
-      "name": "Public mutation probe plan",
+      "name": "Public mutation and event coverage",
       "owner": "INT",
       "produced_by": "INT-03",
       "criteria": [
@@ -785,11 +817,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Execute each registered shared/work mutator through actual public SDK/CLI; capture before and independent after reads, unchanged fields, persisted effects, linked semantic events/receipt, no-op, rejection and conflicting/same-key replay. No test-only SQL mutations.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-CANDIDATE-01",
-      "name": "Candidate-bound decision reuse",
+      "name": "Exact candidate and decision basis",
       "owner": "WRK",
       "produced_by": "INT-03",
       "criteria": [
@@ -825,11 +859,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Build candidates A and B with distinct consumed input revisions; select/assess/decide against exact criteria. Old A verdict cannot certify B. An unrelated annotation does not automatically invalidate all evidence. Reuse same question decision identity and preserve outcomes.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-CURSOR-01",
-      "name": "Cursor recovery",
+      "name": "Durable cursor and notification recovery",
       "owner": "FND",
       "produced_by": "INT-03",
       "criteria": [
@@ -866,11 +902,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Disconnect a consumer, mutate through public tools, restart, then deliver missing/duplicate/out-of-order hints. Re-read ordered accessible history by cursor; no lost committed result, false gap inference, synthetic progress or duplicate business operation.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-BOUNDARY-01",
-      "name": "Module and authority boundary",
+      "name": "Explicit ownership and reduced composition",
       "owner": "FND",
       "produced_by": "INT-03",
       "criteria": [
@@ -906,11 +944,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Inspect installed package origins, registered owner/type/handler paths and actual SQLite composition. Core+documents works without work/assessment or products; core does not import or foreign-key optional tables. Shared owner supplies each domain transaction.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-VERTICAL-01",
-      "name": "Per-area vertical matrix",
+      "name": "Foundation area tool-to-data proof",
       "owner": "INT",
       "produced_by": "INT-03",
       "criteria": [
@@ -946,11 +986,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "For each foundation area in area-contracts.json, execute actual positive, negative, persisted-state, event/receipt, replay and applicable recovery probes. No empty proof axes or fake product passes from package lint.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-WAIT-01",
-      "name": "Actionable waiting",
+      "name": "Useful waiting without a workflow engine",
       "owner": "WRK",
       "produced_by": "INT-05",
       "criteria": [
@@ -986,11 +1028,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Create missing dependency and explicit responsible owner/revisit signal; inspect readiness through ordinary Otto tools, restart host, deliver duplicate signal, then let agent select next action. No implicit dispatch, priority change or extra review.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-ASTRID-03",
-      "name": "Astrid protected mutation boundary",
+      "name": "Common conformance through actual creative facade",
       "owner": "AST",
       "produced_by": "INT-07",
       "criteria": [
@@ -1029,11 +1073,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Use real adopted Astrid/Runtime tools for shot annotation/doc changes and primary-candidate promotion. Independent fresh reads verify actual managed data, events and existing behavior; generic metadata cannot impersonate promotion. Record preserved baseline and shared module origins.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-REUSE-01",
-      "name": "Source and test lineage",
+      "name": "Extraction lineage and retained assertions",
       "owner": "INT",
       "produced_by": "INT-03",
       "criteria": [
@@ -1073,11 +1119,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Trace resolved reuse entries from exact current source symbols/tests to installed Herzchen. Run retained/adapted behaviour assertions plus changed-requirement tests; deliberate lost assertion or wrong installed origin fails qualification. Reasons distinguish historical/proposed source from implemented code. No Astrid consumer changes are required or permitted yet.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-REUSE-02",
-      "name": "Post-gate consumer reuse",
+      "name": "Real consumer switch and duplicate retirement",
       "owner": "AST",
       "produced_by": "INT-07",
       "criteria": [
@@ -1118,11 +1166,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "After G-OTTO, prove Astrid and its Runtime call the same validated shared components; retained creative baseline assertions and affected Otto and retained small neutral-fixture tests pass; independent Fieldnote qualification remains pending. Enumerate removed/no-longer-active duplicate paths, or justified thin facades with callers and owner. Negative control detects an active private copied event/store implementation; preserve still-needed code and historical evidence.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-OTTO-PLAN-01",
-      "name": "Whole plan representation",
+      "name": "Represent the construction plan through public work tools",
       "owner": "OTT",
       "produced_by": "OTT-06",
       "criteria": [
@@ -1161,11 +1211,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Use supported work/template/import commands to represent the complete catalog in an isolated realm, preserving all scoped aliases/dependency/gate/criterion meanings and explicit source provenance. Independent fresh reads compare the full mapping. Renamed project/stage IDs still work. Importing a seed creates neither completion claims, active managers nor live grants. No private bootstrap SQL/product import and no mutation to the live construction control root.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-OTTO-PLAN-02",
-      "name": "Bounded portfolio rehearsal",
+      "name": "Operate a small portfolio through installed Otto",
       "owner": "OTT",
       "produced_by": "OTT-06",
       "criteria": [
@@ -1214,11 +1266,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Two bounded projects and disposable repos: real bounded agent decision through verified tools, task/doc/metadata batch and idle finish, one shared handoff, failed result/correction, unchanged dependent held while disjoint work continues, worker continuity, budget retained after interruption, explicit candidate/review fixture and local promotion/partial outcome. New intake does not silently expand release. Prove before/after persisted state/events and unchanged live build ledger. Fake reviews are accounting fixtures, not independent certification or fresh live budget.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-AST-CONTROL-01",
-      "name": "Adopted fixture continuity",
+      "name": "Isolated handoff before live use",
       "owner": "OTT",
       "produced_by": "OTT-06",
       "criteria": [
@@ -1253,11 +1307,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Adopt a fixture with stable aliases, previous decisions/results, a real supported existing session and external accounting references. Independent reads match. Import/ack retries create no duplicated tasks or manager. Record snapshot/cursor and no new allowance; this is not C36 live evidence.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-AST-CONTROL-02",
-      "name": "Qualified cutover boundary",
+      "name": "Actual scoped AST cutover",
       "owner": "AST",
       "produced_by": "AST-02",
       "criteria": [
@@ -1293,11 +1349,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Qualified controller artifact is installed separately; bootstrap AST is frozen, exact state imported and compared, cutover recorded, and only then Otto dispatch enabled. Old local edits fail. Parent budget/gates/source promotion stay outside; preserve actual AST-01 work and session identity.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-AST-CONTROL-03",
-      "name": "Supported AST tools",
+      "name": "Real Astrid delivery through Otto",
       "owner": "AST",
       "produced_by": "AST-06",
       "criteria": [
@@ -1333,11 +1391,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Actual plan/task/doc changes, assignments, supported continuation, results, decisions and handoffs are performed through shipped Otto tools. Logs cite real operations; no manual work later backfilled as use. Report all workarounds and observed versus unexercised features separately.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-AST-CONTROL-04",
-      "name": "Controller isolation",
+      "name": "Pinned controller isolated from development",
       "owner": "INT",
       "produced_by": "INT-05",
       "criteria": [
@@ -1374,11 +1434,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Record actual installed module paths and artifacts; edits/installations in candidate source do not alter controller imports, realm, credentials or schema. Test cleanup is unable to target its live paths. Recheck affected delivered-version behavior after common fixes.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-AST-CONTROL-05",
-      "name": "Controller recovery",
+      "name": "Controller recovery without duplicate work",
       "owner": "INT",
       "produced_by": "INT-05",
       "criteria": [
@@ -1414,11 +1476,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "On a disposable copy rehearse lost handoff acknowledgement, unavailable controller, export/restore and explicit authority return. Fence old dispatcher; reconcile post-snapshot completed/unknown actions and shared usage before resuming. Never make a stale restore a free retry. No deliberate live controller crash required.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-AST-CONTROL-06",
-      "name": "Controller versus deliverable",
+      "name": "Separate migration and controller verdicts",
       "owner": "INT",
       "produced_by": "INT-07",
       "criteria": [
@@ -1454,11 +1518,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Compare live-use controller build(s) with final deliverable; correlate external scope reports and actual receipts; evaluate Astrid compatibility and Otto usability independently. Retest affected final-version cases. Fallback or private intervention stays visible and cannot be erased by a synthetic rerun.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-OPT-01",
-      "name": "Attention cadence mechanics",
+      "name": "Three-hour scheduling and accounting in isolated fixtures",
       "owner": "OTT",
       "produced_by": "INT-05",
       "criteria": [
@@ -1495,11 +1561,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Persist an anchor; not due before +3h; due at +3h; one reservation under process race; late windows coalesce; restarts/upgrades/fallback preserve anchor; inflight/unknown prevents duplicate launch; not-invoked proof and late result handling; phase stop rejects new calls. A short actual timer smoke plus controlled-clock fixtures are labelled, not counted as real Astra reviews.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-OPT-02",
-      "name": "Managed baseline readiness",
+      "name": "Real safe-start and ideal communication",
       "owner": "AST",
       "produced_by": "AST-02",
       "criteria": [
@@ -1534,11 +1602,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "After actual qualified cutover, verify shipped read/edit/assignment tools and capture truthful baseline and exact ideal/rubric/protocol/controller refs. Manager read-back understands responsibilities and next action; no duplicate owner or delayed start awaiting a reviewer.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-OPT-03",
-      "name": "Actual optimization follow-through",
+      "name": "Actual-versus-ideal comparison closes the loop",
       "owner": "AST",
       "produced_by": "AST-06",
       "criteria": [
@@ -1574,11 +1644,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "For each actually due/coalesced 3h interval record the parent reservation and verified Astra-high call, evidence-backed rubric comparison, prior-action outcomes and chosen minimal fixes. Preserve unknown/missed observations, healthy waiting and zero-change conclusions. A phase shorter than 3h has baseline/closure evidence and no invented call. Trace supported changes from originating 3h or 12h findings to the orchestrator decision, actual plan/brief revision or delegated assignment, implementation receipts and observed effect. Report-only or merely queued work cannot count as implementation. Show concrete explanations/revisit for blocked actions; no changes solely to fill an interval. Name the destination of each implemented change in its existing decision context and retain baseline/expected signal, exact changed revision, observed effect and uncertainty. Local success is not automatically a reusable default; unchanged work or confounders limit causal claims. Record unimplemented, unobserved, ineffective or harmful outcomes honestly and the accountable next action.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-OPT-04",
-      "name": "Reusable improvement boundary",
+      "name": "Optimisation cannot replace product proof",
       "owner": "INT",
       "produced_by": "INT-07",
       "criteria": [
@@ -1615,11 +1687,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Changed ideal cannot erase old obligations; ad-hoc/12h/3h/gate accounting remains distinct; reports do not issue acceptance. Actual approved fixes name existing owner, preserved candidate/controller inputs, isolated tests and upgrade receipts. Compare final versions; mandatory unresolved controller defects do not disappear because Astrid passes. Demonstrate that an ordinary useful in-mandate correction is acted on without another approval ceremony, but genuine new authority and live-controller upgrade boundaries remain. The next check distinguishes non-execution from ineffective implementation; no extra model review is required for objective verification. For a supported reusable improvement, identify the maintained tool/skill/domain revision, applicable scope and smallest relevant regression/example. In existing fixture or fresh-session proof, a later applicable assignment can discover/use the adopted change while an older pinned assignment and a local-only exception remain unchanged. Do not require a new live agent turn, third app, paid review or positive improvement claim when evidence is absent; fixtures prove mechanics only.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-PENDING-01",
-      "name": "Pending project capture",
+      "name": "Pending projects without manufactured execution",
       "owner": "WRK",
       "produced_by": "INT-05",
       "criteria": [
@@ -1654,11 +1728,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Use public tools to create, query and batch-edit a rough pending project with docs/reason/curator; restart and read independently. A due revisit and completed upstream dependency do not activate or dispatch. Manager explicitly chooses the next step. No default manager, budget or full tasklist. Import stable pending IDs idempotently.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-LOOP-01",
-      "name": "Manager loop choices",
+      "name": "Advisor-led refinement on one stable obligation",
       "owner": "WRK",
       "produced_by": "INT-05",
       "criteria": [
@@ -1695,11 +1771,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Through the supported task tools, a manager chooses implementation/check/assessment/correction steps; the parent task keeps identity. Preserve each candidate and actual invocation. REWORK then correction then approval; approval for A cannot close B, unknown/missing approval cannot complete, limits remain consumed. No machine-evaluated condition or recursive workflow needed. Use a real bounded worker decision; mocked advisor outputs only prove mechanics and do not certify the actual product.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-LOOP-02",
-      "name": "Pending loop admission",
+      "name": "Different approaches and non-executable custom guidance",
       "owner": "WRK",
       "produced_by": "INT-07",
       "criteria": [
@@ -1735,11 +1813,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Represent sequential, parallel, human-approval and conditional-fallback approaches in the same work schema using ordinary relationships/instructions/namespaced data. Preserve unknown annotations, validate declared choices, prevent managed-state spoofing. Readiness and revisit events do not select a branch or launch. Repeat affected current scenarios after Astrid shared-code changes.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-PENDING-LOOP-CORE",
-      "name": "Pending core semantics",
+      "name": "Work-domain pending and required-decision mechanics",
       "owner": "WRK",
       "produced_by": "INT-03",
       "criteria": [
@@ -1774,11 +1854,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Real domain command fixtures before product handoff: sparse pending item, identity/restart/query, no template dispatch or allowance. Existing task/assessment/candidate records support required-decision scope and retain correction history. Guards reject wrong role, stale candidate and missing evidence under the supported registered operation. These fixtures do not prove managerial judgment or certify future live work. Actual manager-loop behavior follows in INT-05/07.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-NEW-01",
-      "name": "Blank project shape",
+      "name": "Saved zero-task project and normal blank close",
       "owner": "PKG",
       "produced_by": "INT-03",
       "criteria": [
@@ -1815,11 +1897,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Create through the real owning work/domain API with the built-in template; fresh-read the committed pending ID, template revision and initial empty spec before editing. Render through the existing handler; untouched finish retains the same project and emits no fabricated task/new content revision. No manager, gate, budget, DDL or dispatch. Same request replay returns the same ID, changed arguments reject, admission still requires its actual scope/authority.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-NEW-02",
-      "name": "Blank project authoring",
+      "name": "New project autosave, idle finish and reopen",
       "owner": "EDT",
       "produced_by": "INT-05",
       "criteria": [
@@ -1859,11 +1943,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Use installed Otto through public help/tools to create-and-open, observe immediate pending durability, add multiple real tasks/docs/custom fields and save on disk. Use controlled-clock plus short real timer tests. Observe actual changed state, events, receipt, closed token, another allowed editor claim and absence of registered temp files after idle. Reopen the same project with stable IDs/content and a fresh token. Repeat with a wholly untouched blank starter. No auto-admission or project deletion.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-NEW-03",
-      "name": "Blank project failure recovery",
+      "name": "New-project partial failure, concurrent retries and safe retention",
       "owner": "EDT",
       "produced_by": "INT-05",
       "criteria": [
@@ -1903,11 +1989,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Exercise actual creation concurrency and manual/idle finish races, occupied actor before create, commit-before-response, materialisation failure after saved identity, malformed on-disk draft, failed DB/capture, late old token and cleanup failure. Prove one project/reservation/result per logical request; saved-but-not-opened partial result retains recoverable project. Rejected raw bytes persist before safe release; failed preservation or unknown writers prevent file deletion. No automatic project/archive cleanup. Original invocation pools and existing controller state untouched.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-NEW-04",
-      "name": "Blank and selected templates",
+      "name": "Blank and selected templates across Otto and Astrid",
       "owner": "AST",
       "produced_by": "INT-07",
       "criteria": [
@@ -1949,11 +2037,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Invoke blank/default and a valid selected protocol/creative template through current installed consumer entrypoints using the same work/resource/authoring implementation. Test unknown template and missing selected parameters fail before creation. Existing Astrid project gains work view on its true ID without duplicate authority; a genuinely new project uses Runtime creation. Prove persisted docs/metadata/tasks and exact event/receipt/cleanup, with ongoing pinned execution copy retained. Rerun affected earlier S-NEW cases for changed shared code; do not claim package schema success as adapter proof.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-ELEGANCE-CONTEXT",
-      "name": "Resolved brief and meaningful continuity",
+      "name": "Resolved brief and meaningful continuity through installed tools",
       "owner": "OTT",
       "produced_by": "INT-05",
       "criteria": [
@@ -1978,9 +2068,21 @@
         "lost/duplicate/out-of-order notification cannot dispatch or erase attention"
       ],
       "discriminating_dimensions": [
-        {"dimension":"mandate_provenance","positive_observation":"current bounded mandate is present","negative_observation":"mandate is missing"},
-        {"dimension":"context_revision","positive_observation":"current context revision ctx-001","negative_observation":"stale context revision ctx-000-stale"},
-        {"dimension":"attention_cursor","positive_observation":"cursor 11 is current","negative_observation":"cursor 9 requires reread"}
+        {
+          "dimension": "mandate_provenance",
+          "positive_observation": "current bounded mandate is present",
+          "negative_observation": "mandate is missing"
+        },
+        {
+          "dimension": "context_revision",
+          "positive_observation": "current context revision ctx-001",
+          "negative_observation": "stale context revision ctx-000-stale"
+        },
+        {
+          "dimension": "attention_cursor",
+          "positive_observation": "cursor 11 is current",
+          "negative_observation": "cursor 9 requires reread"
+        }
       ],
       "proof_class": "harness_fixture",
       "expected_observable_effect": "positive and negative contexts differ by observable provenance, cursor and authorization",
@@ -1999,11 +2101,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Fresh manager reads one bounded relevant responsibility view and scoped links, with mandate/profile provenance and deltas. Relevant hidden/conflicting/stale context is excluded or reported; cutoff/omissions are explicit. A real bounded turn selects an action through the supported interface without manual packet/session duplication. Duplicate/lost notification, restart and partial delivery preserve unresolved attention and reconcile actual receipts. No trace dump, hidden SQL or product-private helper. Extend the existing rehearsal with a same-scope task/dependency/brief amendment linked to its decision while a prior assignment remains pinned and a result arrives. Fresh reads/next dispatch see the adopted current instructions; old packets, results and allowance history survive. Recover interrupted attention; reject stale queued dispatch or explicitly hold/rebrief it. A cross-scope interruption exposes partial progress through linked receipts rather than claiming a global transaction.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-ELEGANCE-DEFINITION",
-      "name": "Shared declaration and operation",
+      "name": "Shared declaration and operation across data surfaces",
       "owner": "DAT",
       "produced_by": "INT-03",
       "criteria": [
@@ -2028,9 +2132,21 @@
         "presentation hint cannot grant authority or create a second schema"
       ],
       "discriminating_dimensions": [
-        {"dimension":"mutation_shape","positive_observation":"valid update matches the pinned definition","negative_observation":"malformed or protected update violates the definition"},
-        {"dimension":"catalog_preservation","positive_observation":"unknown, conditional and pending nodes remain represented","negative_observation":"a presentation hint cannot create authority or a second schema"},
-        {"dimension":"revision_binding","positive_observation":"receipt names the active definition revision","negative_observation":"stale/conflicting revision has no permitted delta"}
+        {
+          "dimension": "mutation_shape",
+          "positive_observation": "valid update matches the pinned definition",
+          "negative_observation": "malformed or protected update violates the definition"
+        },
+        {
+          "dimension": "catalog_preservation",
+          "positive_observation": "unknown, conditional and pending nodes remain represented",
+          "negative_observation": "a presentation hint cannot create authority or a second schema"
+        },
+        {
+          "dimension": "revision_binding",
+          "positive_observation": "receipt names the active definition revision",
+          "negative_observation": "stale/conflicting revision has no permitted delta"
+        }
       ],
       "proof_class": "harness_fixture",
       "expected_observable_effect": "definition identity and read-only catalog are explicit",
@@ -2049,11 +2165,13 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "One pinned test definition supplies describe/help, rendered editable shape, validation and supported query. A valid update and the same malformed/protected/conflicting update exercise direct commands and the relevant sheet path through one domain implementation. Unrelated fields/results survive; snapshots/events/receipts and replay agree. Verify installed consumer bindings later under the same affected conformance, not only a JSON fixture.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-MANAGER-CHOICE",
-      "name": "Programmatically defined records; manager-determined next work",
+      "name": "Programmatically defined records; agent-determined next work",
       "owner": "OTT",
       "produced_by": "INT-05",
       "criteria": [
@@ -2078,9 +2196,21 @@
         "automatic advice cannot rewrite plan or accept result"
       ],
       "discriminating_dimensions": [
-        {"dimension":"selected_action","positive_observation":"manager selects implement-rehearsal-change","negative_observation":"attention-only input has no selected action"},
-        {"dimension":"decision_authority","positive_observation":"choice has manager rationale","negative_observation":"readiness event has no business decision"},
-        {"dimension":"dispatch_effect","positive_observation":"one explicit bounded action is available","negative_observation":"automatic dispatch remains false"}
+        {
+          "dimension": "selected_action",
+          "positive_observation": "manager selects implement-rehearsal-change",
+          "negative_observation": "attention-only input has no selected action"
+        },
+        {
+          "dimension": "decision_authority",
+          "positive_observation": "choice has manager rationale",
+          "negative_observation": "readiness event has no business decision"
+        },
+        {
+          "dimension": "dispatch_effect",
+          "positive_observation": "one explicit bounded action is available",
+          "negative_observation": "automatic dispatch remains false"
+        }
       ],
       "proof_class": "harness_fixture",
       "expected_observable_effect": "selected action and attention-only state have different observable fields",
@@ -2099,7 +2229,9 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Exercise a simple tests-only task and an advisor refinement using the same work records. The actual bounded manager chooses a justified next step or alternative; a prerequisite passing, schedule becoming due, template being checked in or custom field changing does not choose business work or accept the result. A preauthorised timed check may run, but its advice cannot rewrite the plan. Preserve histories/limits and sparse pending work. Use the existing live-agent allowance, not an extra agent trial.",
+      "state": "UNDETERMINED"
     },
     {
       "id": "S-REVIEW-CHOICE",
@@ -2127,9 +2259,21 @@
         "switching role cannot reset prior calls, evidence or blockers"
       ],
       "discriminating_dimensions": [
-        {"dimension":"profile_binding","positive_observation":"one selected role binds its exact model/reasoning profile","negative_observation":"a stacked alternative sequence has no valid single binding"},
-        {"dimension":"review_sequence","positive_observation":"selected leaf has one review role","negative_observation":"normal and xhard are incorrectly combined"},
-        {"dimension":"accounting_continuity","positive_observation":"prior calls and evidence remain attached","negative_observation":"role switching cannot reset consumed accounting or blockers"}
+        {
+          "dimension": "profile_binding",
+          "positive_observation": "one selected role binds its exact model/reasoning profile",
+          "negative_observation": "a stacked alternative sequence has no valid single binding"
+        },
+        {
+          "dimension": "review_sequence",
+          "positive_observation": "selected leaf has one review role",
+          "negative_observation": "normal and xhard are incorrectly combined"
+        },
+        {
+          "dimension": "accounting_continuity",
+          "positive_observation": "prior calls and evidence remain attached",
+          "negative_observation": "role switching cannot reset consumed accounting or blockers"
+        }
       ],
       "proof_class": "harness_fixture",
       "expected_observable_effect": "alternative profile and invalid stacked pipeline differ in role, sequence and rejection reason",
@@ -2148,7 +2292,9 @@
       },
       "before_read": "Read the current fixture resource before acting.",
       "action": "Exercise the declared command/action binding.",
-      "fresh_after_read": "Fresh-read the resource independently after acting."
+      "fresh_after_read": "Fresh-read the resource independently after acting.",
+      "required_proof": "Resolve reviewer_normal to Luna xhigh and reviewer_xhard to Sol high from the adopted generic pack configuration; independently demonstrate route/profile binding, fresh reviewer context and shared stage accounting with labelled fixtures. Switching profile keeps prior calls, the evidence basis and required blockers. Manager inspection creates no independent-review claim; tests-only template creates none. Programme foundation/conditional Otto remain explicitly Sol and final Astra. No extra product certification invoked merely to demonstrate routing.",
+      "state": "UNDETERMINED"
     }
   ],
   "coverage": {
