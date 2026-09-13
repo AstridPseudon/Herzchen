@@ -1,0 +1,162 @@
+from __future__ import annotations
+
+from pathlib import Path
+import tempfile
+import threading
+import unittest
+
+from herzchen.authoring.finish import SemanticFinishAdapter, ValidationResult
+from herzchen.authoring.sessions import AuthoringSessionService
+from herzchen.authoring.snapshots import DurableSnapshotAdapter
+from herzchen.contracts import AuthenticatedActor, ResourceRef
+from herzchen.kernel import Store
+
+
+class Handler:
+    def __init__(self, valid: bool = True, fail_apply: bool = False) -> None:
+        self.valid = valid
+        self.fail_apply = fail_apply
+        self.validated = 0
+        self.applied = 0
+
+    def validate(self, snapshot, checkout, checkout_root):
+        self.validated += 1
+        return ValidationResult(self.valid, {"error": "invalid draft"} if not self.valid else None)
+
+    def apply(self, snapshot, checkout, tx, writer):
+        self.applied += 1
+        if self.fail_apply:
+            raise RuntimeError("domain delta failed")
+        return {"tree_digest": snapshot.tree_digest, "revision_ref": checkout.target_scope}
+
+
+class FinishTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.root = Path(self.tempdir.name) / "checkout"
+        self.root.mkdir()
+        (self.root / "project.json").write_bytes(b"{\"title\":\"draft\"}")
+        self.db = Path(self.tempdir.name) / "store.sqlite3"
+        self.store = Store.create(self.db)
+        self.service = AuthoringSessionService(self.store)
+        self.scope = ResourceRef("neutral-store", "project", "finish-project", "base-1")
+        self.actor = AuthenticatedActor("auth", "finish-actor", "credential")
+
+    def tearDown(self) -> None:
+        self.store.close()
+        self.tempdir.cleanup()
+
+    def test_valid_handler_applies_once_and_manual_idle_share_finish_boundary(self) -> None:
+        opened = self.service.open(self.scope, self.actor, request_id="open", target_kind="project", base_revision="base-1", initial_content=b"initial")
+        handler = Handler()
+        adapter = SemanticFinishAdapter(self.service)
+        finished = adapter.finish(
+            opened.handle,
+            request_id="finish-manual",
+            mode="manual",
+            checkout_root=self.root,
+            registered_files=["project.json"],
+            handler=handler,
+        )
+        self.assertEqual(finished.status, "finished")
+        self.assertEqual(handler.applied, 1)
+        idle_loser = adapter.finish(
+            opened.handle,
+            request_id="finish-idle",
+            mode="idle",
+            checkout_root=self.root,
+            registered_files=["project.json"],
+            handler=Handler(),
+        )
+        self.assertEqual(idle_loser.status, "already_finished")
+        replay = adapter.finish(
+            opened.handle,
+            request_id="finish-manual",
+            mode="manual",
+            checkout_root=self.root,
+            registered_files=["project.json"],
+            handler=handler,
+        )
+        self.assertEqual(replay.status, "replayed")
+        self.assertEqual(handler.applied, 1)
+        self.assertIsNotNone(finished.finish.receipt)
+
+    def test_concurrent_manual_idle_race_has_one_application(self) -> None:
+        opened = self.service.open(self.scope, self.actor, request_id="open", target_kind="project", base_revision="base-1", initial_content=b"initial")
+        adapter = SemanticFinishAdapter(self.service)
+        handler = Handler()
+        barrier = threading.Barrier(2)
+        results = []
+
+        def contender(mode: str) -> None:
+            barrier.wait()
+            results.append(adapter.finish(
+                opened.handle,
+                request_id="race-" + mode,
+                mode=mode,
+                checkout_root=self.root,
+                registered_files=["project.json"],
+                handler=handler,
+            ))
+
+        first = threading.Thread(target=contender, args=("manual",))
+        second = threading.Thread(target=contender, args=("idle",))
+        first.start()
+        second.start()
+        first.join(2)
+        second.join(2)
+        self.assertFalse(first.is_alive())
+        self.assertFalse(second.is_alive())
+        self.assertEqual(sorted(result.status for result in results), ["already_finished", "finished"])
+        self.assertEqual(handler.applied, 1)
+
+    def test_validation_failure_preserves_rejected_bytes_and_diagnostics(self) -> None:
+        opened = self.service.open(self.scope, self.actor, request_id="open", target_kind="project", base_revision="base-1", initial_content=b"initial")
+        handler = Handler(valid=False)
+        result = SemanticFinishAdapter(self.service).finish(
+            opened.handle,
+            request_id="reject",
+            mode="manual",
+            checkout_root=self.root,
+            registered_files=["project.json"],
+            handler=handler,
+        )
+        self.assertEqual(result.status, "rejected")
+        self.assertEqual(handler.applied, 0)
+        self.assertIn("invalid draft", result.error)
+        self.assertEqual(self.service.read(self.scope).status, "available")
+        self.assertEqual(DurableSnapshotAdapter(self.service).read(result.finish.final_snapshot.ref).file_bytes("project.json"), b"{\"title\":\"draft\"}")
+
+    def test_application_failure_is_recovery_pending_without_success_receipt(self) -> None:
+        opened = self.service.open(self.scope, self.actor, request_id="open", target_kind="project", base_revision="base-1", initial_content=b"initial")
+        result = SemanticFinishAdapter(self.service).finish(
+            opened.handle,
+            request_id="apply-fails",
+            mode="manual",
+            checkout_root=self.root,
+            registered_files=["project.json"],
+            handler=Handler(fail_apply=True),
+        )
+        self.assertEqual(result.status, "recovery_pending")
+        self.assertTrue(result.recovery_pending)
+        self.assertIsNone(self.store.get_receipt("apply-fails"))
+        self.assertEqual(DurableSnapshotAdapter(self.service).read(result.finish.final_snapshot.ref).file_bytes("project.json"), b"{\"title\":\"draft\"}")
+
+    def test_capture_failure_does_not_write_a_false_success(self) -> None:
+        opened = self.service.open(self.scope, self.actor, request_id="open", target_kind="project", base_revision="base-1", initial_content=b"initial")
+        result = SemanticFinishAdapter(self.service).finish(
+            opened.handle,
+            request_id="capture-fails",
+            mode="manual",
+            checkout_root=self.root,
+            registered_files=["missing.json"],
+            handler=Handler(),
+        )
+        self.assertEqual(result.status, "failed")
+        self.assertTrue(result.recovery_pending)
+        self.assertIsNone(self.store.get_receipt("capture-fails"))
+        self.assertEqual(self.service.read(self.scope).status, "occupied")
+
+
+if __name__ == "__main__":
+    unittest.main()
