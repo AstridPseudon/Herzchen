@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from herzchen.contracts import AuthenticatedActor, CommandEnvelope, ResourceRef, TransactionContext
 from herzchen.kernel import (
@@ -18,6 +19,7 @@ from herzchen.kernel import (
     EventFilter,
     IntervalController,
     RecoveryManager,
+    SnapshotError,
     SnapshotValidationError,
     StaleTokenError,
     Store,
@@ -134,6 +136,104 @@ class RecoveryTests(unittest.TestCase):
                 self.root / "snapshot", self.root / "wrong-digest",
                 **dict(self.snapshot_kwargs(), expected_composition_digest="0" * 64),
             )
+
+    def test_snapshot_restores_fresh_public_reads_for_wal_mutation(self) -> None:
+        self.assertEqual(str(self.store.connection.execute("PRAGMA journal_mode=WAL").fetchone()[0]).lower(), "wal")
+        self.append(11)
+        target = ResourceRef("neutral-store", "item", "item-11")
+        source_identity = self.store.get_identity(target)
+        source_receipt = self.store.get_receipt("request-11")
+        source_events = self.store.list_events(stream="items")
+        self.assertIsNotNone(source_identity)
+        self.assertIsNotNone(source_receipt)
+        self.assertEqual(len(source_events), 1)
+        refs = {target.to_json(): target}
+        for event in source_events:
+            for ref in event.before_refs + event.after_refs:
+                refs[ref.to_json()] = ref
+        for ref in refs.values():
+            self.assertIsNotNone(self.store.get_reference(ref))
+        create_snapshot(self.store, self.root / "snapshot", source_identity=self.source, realm_identity=self.realm)
+        candidate = verify_restore_candidate(self.root / "snapshot", self.root / "candidate", **self.snapshot_kwargs())
+        restored = Store.open(candidate.database_path, authority="neutral-store", expected_domains=self.store.registered_domains())
+        try:
+            self.assertEqual(restored.get_identity(target), source_identity)
+            self.assertEqual(restored.get_receipt("request-11"), source_receipt)
+            self.assertEqual(restored.list_events(stream="items"), source_events)
+            for ref in refs.values():
+                self.assertEqual(restored.get_reference(ref), self.store.get_reference(ref))
+        finally:
+            restored.close()
+
+    def test_snapshot_rejects_source_or_external_file_change_and_preserves_partial_evidence(self) -> None:
+        external = self.root / "external.bin"
+        external.write_bytes(b"before")
+        original_copy = __import__("herzchen.kernel.recovery", fromlist=["_copy_exact"])._copy_exact
+
+        def replace_source_after_copy(source, target, *args):
+            result = original_copy(source, target, *args)
+            if source == self.db:
+                replacement = self.root / "replacement.sqlite3"
+                replacement.write_bytes(b"replaced")
+                replacement.replace(self.db)
+            return result
+
+        with patch("herzchen.kernel.recovery._copy_exact", side_effect=replace_source_after_copy):
+            with self.assertRaises(SnapshotError):
+                create_snapshot(self.store, self.root / "source-replaced", source_identity=self.source, realm_identity=self.realm)
+        self.assertTrue((self.root / "source-replaced" / "database.sqlite3").exists())
+
+        def change_external_after_copy(source, target, *args):
+            result = original_copy(source, target, *args)
+            if source == external:
+                external.write_bytes(b"after")
+            return result
+
+        with patch("herzchen.kernel.recovery._copy_exact", side_effect=change_external_after_copy):
+            with self.assertRaises(SnapshotError):
+                create_snapshot(self.store, self.root / "external-changed", source_identity=self.source, realm_identity=self.realm, object_files={"external": external})
+        self.assertTrue((self.root / "external-changed" / "database.sqlite3").exists())
+
+        sidecar = Path(str(self.db) + "-wal")
+
+        def create_raw_sidecar_after_copy(source, target, *args):
+            result = original_copy(source, target, *args)
+            if source == self.db:
+                sidecar.write_bytes(b"raw writer evidence")
+            return result
+
+        with patch("herzchen.kernel.recovery._copy_exact", side_effect=create_raw_sidecar_after_copy):
+            with self.assertRaises(SnapshotError):
+                create_snapshot(self.store, self.root / "raw-sidecar", source_identity=self.source, realm_identity=self.realm)
+        self.assertTrue((self.root / "raw-sidecar" / "database.sqlite3").exists())
+
+    def test_restore_rejects_dangling_symlink_non_directory_and_symlink_parent_roots(self) -> None:
+        create_snapshot(self.store, self.root / "snapshot", source_identity=self.source, realm_identity=self.realm)
+        dangling = self.root / "dangling-candidate"
+        dangling.symlink_to(self.root / "missing")
+        with self.assertRaises(RestoreActivationError):
+            verify_restore_candidate(self.root / "snapshot", dangling, **self.snapshot_kwargs())
+        non_directory = self.root / "file-candidate"
+        non_directory.write_bytes(b"occupied")
+        with self.assertRaises(RestoreActivationError):
+            verify_restore_candidate(self.root / "snapshot", non_directory, **self.snapshot_kwargs())
+        symlink_parent = self.root / "symlink-parent"
+        real_parent = self.root / "real-parent"
+        real_parent.mkdir()
+        symlink_parent.symlink_to(real_parent, target_is_directory=True)
+        with self.assertRaises(RestoreActivationError):
+            verify_restore_candidate(self.root / "snapshot", symlink_parent / "candidate", **self.snapshot_kwargs())
+        target = self.root / "dangling-target"
+        target.symlink_to(self.root / "missing-target")
+        with self.assertRaises(RestoreActivationError):
+            restore_snapshot(self.root / "snapshot", target, candidate_root=self.root / "preserved-candidate", **self.snapshot_kwargs())
+        self.assertTrue((self.root / "preserved-candidate" / "database.sqlite3").exists())
+        occupied_target = self.root / "occupied-target"
+        occupied_target.write_bytes(b"preserve")
+        with self.assertRaises(RestoreActivationError):
+            restore_snapshot(self.root / "snapshot", occupied_target, candidate_root=self.root / "preserved-file-target-candidate", **self.snapshot_kwargs())
+        self.assertEqual(occupied_target.read_bytes(), b"preserve")
+        self.assertTrue((self.root / "preserved-file-target-candidate" / "database.sqlite3").exists())
 
     def test_corrupt_snapshot_database_is_rejected_without_repair(self) -> None:
         create_snapshot(self.store, self.root / "snapshot", source_identity=self.source, realm_identity=self.realm)
