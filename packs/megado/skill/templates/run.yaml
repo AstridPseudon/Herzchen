@@ -1,0 +1,44 @@
+{
+  "mode": "planning_only",
+  "roles": {
+    "coordinator": {
+      "model": "gpt-5.6-luna",
+      "reasoning": "medium"
+    },
+    "worker_normal": {
+      "model": "gpt-5.6-luna",
+      "reasoning": "high"
+    },
+    "worker_xhard": {
+      "model": "gpt-5.6-sol",
+      "reasoning": "high"
+    },
+    "reviewer_normal": {
+      "model": "gpt-5.6-luna",
+      "reasoning": "xhigh"
+    },
+    "reviewer_xhard": {
+      "model": "gpt-5.6-sol",
+      "reasoning": "high"
+    },
+    "oracle": {
+      "model": "gpt-6-astra",
+      "reasoning": "high"
+    },
+    "final_reviewer": {
+      "model": "gpt-6-astra",
+      "reasoning": "high"
+    }
+  },
+  "oracle": {
+    "max_calls": 3
+  },
+  "review_stages": [],
+  "assurance_selection": "Record downside, reversibility, observed proof and residual risk before admitting work; no implicit final stage.",
+  "scheduled_checks": [],
+  "publication": {
+    "target": null,
+    "allowed_refs": [],
+    "source_upstream_write": false
+  }
+}

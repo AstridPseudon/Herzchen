@@ -1,0 +1,13 @@
+# Role, assurance and accounting configuration
+
+Preserve the seven Megado slots: coordinator, worker_normal, worker_xhard, reviewer_normal, reviewer_xhard, oracle, final_reviewer. They are replaceable responsibility bindings, not kernel enums. This edition routes normal implementation to Luna High, normal independent review to Luna Extra High, XHARD implementation/review to Sol High, and selected holistic/oracle judgment to Astra High. A portfolio may bind its coordinator to Astra Low and project coordinators to Luna Extra High. These instance choices do not change responsibilities.
+
+`run.yaml` is the adopted model/stage/budget declaration in file mode. In native mode it is a versioned configuration record rendered by the shared work tools. Do not maintain two editable authorities. Select modes, models and review policy before applicable dispatch; no field hot-swaps running agents.
+
+A stage identifies its actual trigger, task/criterion scope, criteria source/revision, lens, reviewer role and maximum real invocations. An acceptance boundary may explicitly be tests-and-owner-judgment with a conditional model-review allowance; no model PASS is fabricated for that path. Existing required stages remain required. No automatic final stage. Use pragmatic-review.md to select zero/one/two distinct intermediate risks, not time/file-count formulas. Requested limits resolve to authorised scopes/pools; a template supplies no grant.
+
+The oracle default is at most three responses per coherent effort unless explicitly changed. Resumption and follow-up responses count; memory does not replace current evidence. Manager runs can reference a parent's shared pool instead of allocating private ones. Tests, repeated assessments, scheduled process checks and oracle calls are not interchangeable; declare their purpose and actual charging. Periodic checks are absent by default and enabled only by an adopted instance instruction. The 3h/12h schedules of one delivery are not mandatory Megado behavior.
+
+Uncertain invocation outcomes remain held/charged. Request keys and frozen input references prevent accidental duplicate calls; changed arguments under an old key are conflicts. A proved pre-dispatch failure may release an unused reservation. Policy amendments retain actual use and exact previous decisions; new stage names cannot replenish an equivalent scope.
+
+The manager decides what to do. Tools may refuse an expired authoring token, wrong authority, unmet required decision, missing input or exhausted limit. They need not judge intellectual difficulty, invent dependencies or execute a template as a program.

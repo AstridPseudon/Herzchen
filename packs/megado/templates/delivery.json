@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "id": "megado.delivery_seed",
+  "version": "1.1.0",
+  "protocol": "megado.delivery",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string",
+        "minLength": 1
+      },
+      "outcome": {
+        "type": "string",
+        "minLength": 1
+      },
+      "proof": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "title",
+      "outcome",
+      "proof"
+    ],
+    "additionalProperties": false
+  },
+  "seed": {
+    "work": [
+      {
+        "local_id": "effort",
+        "kind": "effort",
+        "title": {
+          "$param": "title"
+        },
+        "outcome": {
+          "$param": "outcome"
+        }
+      },
+      {
+        "local_id": "implement",
+        "kind": "task",
+        "parent": {
+          "$local": "effort"
+        },
+        "title": "Deliver the specified outcome",
+        "outcome": {
+          "$param": "outcome"
+        },
+        "custom": {
+          "megado": {
+            "execution_class": "normal"
+          }
+        }
+      },
+      {
+        "local_id": "verify",
+        "kind": "task",
+        "parent": {
+          "$local": "effort"
+        },
+        "title": "Demonstrate the outcome",
+        "outcome": {
+          "$param": "proof"
+        },
+        "custom": {
+          "megado": {
+            "execution_class": "normal"
+          }
+        }
+      },
+      {
+        "local_id": "criterion",
+        "kind": "criterion",
+        "parent": {
+          "$local": "effort"
+        },
+        "title": "Required observable behavior",
+        "outcome": {
+          "$param": "proof"
+        }
+      }
+    ],
+    "links": [
+      {
+        "from": {
+          "$local": "verify"
+        },
+        "to": {
+          "$local": "implement"
+        },
+        "relation": "requires"
+      },
+      {
+        "from": {
+          "$local": "implement"
+        },
+        "to": {
+          "$local": "criterion"
+        },
+        "relation": "covers"
+      }
+    ],
+    "documents": [
+      {
+        "local_id": "goal",
+        "title": "Bounded goal",
+        "content": {
+          "$param": "outcome"
+        }
+      }
+    ],
+    "document_links": [
+      {
+        "subject": {
+          "$local": "effort"
+        },
+        "document": {
+          "$local": "goal"
+        },
+        "namespace": "megado",
+        "key": "goal",
+        "binding": "current"
+      }
+    ],
+    "assessments": [],
+    "status": "planning_only"
+  },
+  "notes": "A planning seed with real work and proof, not automatic certification. Manager selects a proportionate assurance approach under the skill. Required existing mandates remain binding. No automatic final review or new budget."
+}

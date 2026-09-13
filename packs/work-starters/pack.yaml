@@ -1,0 +1,17 @@
+{
+  "schema_version": 2,
+  "id": "work_starters",
+  "name": "Shared work starters",
+  "version": "1.0.0",
+  "description": "Reference resource envelope for the built-in starter shipped with the Herzchen work module; not a new product or DDL plugin.",
+  "documentation": {
+    "kind": "skill",
+    "path": "skill/SKILL.md"
+  },
+  "resources": [
+    {
+      "path": "templates/blank-project.json",
+      "kind": "work_template"
+    }
+  ]
+}

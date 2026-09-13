@@ -1,0 +1,25 @@
+{
+  "schema_version": 2,
+  "id": "scene_production",
+  "name": "Scene production work protocol",
+  "version": "1.0.0",
+  "description": "Resource-only reference pack for the proposed shared work adapter.",
+  "documentation": {
+    "kind": "skill",
+    "path": "skill/SKILL.md"
+  },
+  "resources": [
+    {
+      "path": "protocols/scene.json",
+      "kind": "work_protocol"
+    },
+    {
+      "path": "templates/scene.json",
+      "kind": "work_template"
+    },
+    {
+      "path": "schemas/editorial.json",
+      "kind": "extension_schema"
+    }
+  ]
+}

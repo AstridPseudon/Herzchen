@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "id": "scene.production",
+  "requires": [
+    "work.v1"
+  ],
+  "skills": [
+    "skill/SKILL.md"
+  ],
+  "extension_definitions": [
+    {
+      "namespace": "editorial",
+      "applies_to": [
+        "work.task",
+        "creative.shot"
+      ],
+      "schema": "schemas/editorial.json",
+      "document_roles": {
+        "dialogue": "Authored dialogue",
+        "references": "Creative references",
+        "notes": "Director notes"
+      },
+      "write_class": "protocol_annotation"
+    }
+  ],
+  "role_slots": [
+    "creator",
+    "editor",
+    "critic"
+  ],
+  "routes": {},
+  "activation": "explicit_instance_adoption; no required Otto hierarchy"
+}

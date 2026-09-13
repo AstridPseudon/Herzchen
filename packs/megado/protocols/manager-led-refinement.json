@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "megado.manager_led_refinement",
+  "interpretation": "manager_guidance_not_workflow_code",
+  "required_domains": [
+    "work",
+    "assessments"
+  ],
+  "instructions": "Implement or improve the current candidate, run affected checks, and request an assessment when it is ready and an allowance is available. For changes requested, create only the needed correction assignments and try again. For a tool/environment problem, diagnose it rather than repeatedly changing product code. If waiting for an external decision, preserve state and work on independent tasks. After repeated non-progress, seek the specified root-cause decision. The manager decides each step; these instructions are not executable conditions.",
+  "completion": "A required advisor decision binds actual candidate and criterion revision, with other mandatory checks satisfied. Role binding and budget authority come from the adopted instance.",
+  "no_automatic_dispatch": true,
+  "no_budget_reset": true,
+  "failure_return": "The selected Megado skill supplies correction/decision loop guidance. No universal max-iteration constant is added to Herzchen."
+}

@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "id": "megado.delivery",
+  "requires": [
+    "work.v1",
+    "assessment.v1"
+  ],
+  "skills": [
+    "skill/SKILL.md"
+  ],
+  "extension_definitions": [
+    {
+      "namespace": "megado",
+      "applies_to": [
+        "work.task",
+        "work.assignment"
+      ],
+      "schema": "schemas/task-extension.json",
+      "document_roles": {
+        "investigation": "Supporting factual investigation",
+        "decision": "Relevant ruling; association is not authority"
+      },
+      "write_class": "protocol_annotation"
+    }
+  ],
+  "role_slots": [
+    "coordinator",
+    "worker_normal",
+    "worker_xhard",
+    "reviewer_normal",
+    "reviewer_xhard",
+    "oracle",
+    "final_reviewer"
+  ],
+  "routes": {
+    "execute": {
+      "normal": "worker_normal",
+      "xhard": "worker_xhard"
+    },
+    "assess": {
+      "normal": "reviewer_normal",
+      "xhard": "reviewer_xhard"
+    }
+  },
+  "default_limits": {
+    "oracle_calls": 3,
+    "ordinary_review_rounds": 1,
+    "elevated_review_ceiling": 2,
+    "whole_system_review_ceiling": 2,
+    "whole_plan_simplicity_rounds": 1
+  },
+  "loop_guidance": {
+    "failed_correction_cycles_before_diagnosis": 2,
+    "same_decision_unchanged_returns_before_repair": 2,
+    "consecutive_no_progress_checks_alarm": 10
+  },
+  "activation": "explicit_instance_adoption; no authority or budget from installation",
+  "assurance": {
+    "policy": "skill/references/pragmatic-review.md",
+    "no_implicit_final": true,
+    "tests_only_permitted": true,
+    "selection": "manager records downside, reversibility, observability and residual question",
+    "automatic_dispatch": false,
+    "periodic_reviews_default": [],
+    "normal_review": "Luna xhigh only when an independent local judgment adds value; manager inspection and tests remain the default",
+    "xhard_review": "Sol high for a specifically justified nonlocal reasoning question; not an automatic second reviewer"
+  },
+  "default_role_bindings": {
+    "coordinator": {
+      "model": "gpt-5.6-luna",
+      "reasoning": "medium"
+    },
+    "worker_normal": {
+      "model": "gpt-5.6-luna",
+      "reasoning": "high"
+    },
+    "worker_xhard": {
+      "model": "gpt-5.6-sol",
+      "reasoning": "high"
+    },
+    "reviewer_normal": {
+      "model": "gpt-5.6-luna",
+      "reasoning": "xhigh"
+    },
+    "reviewer_xhard": {
+      "model": "gpt-5.6-sol",
+      "reasoning": "high"
+    },
+    "oracle": {
+      "model": "gpt-6-astra",
+      "reasoning": "high"
+    },
+    "final_reviewer": {
+      "model": "gpt-6-astra",
+      "reasoning": "high"
+    }
+  },
+  "version": "1.2.0"
+}

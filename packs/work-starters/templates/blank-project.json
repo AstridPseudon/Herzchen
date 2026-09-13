@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "id": "work.blank_project",
+  "version": "1.0.0",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": ".*\\S.*",
+        "default": "Untitled project"
+      }
+    },
+    "additionalProperties": false
+  },
+  "seed": {
+    "work": [
+      {
+        "local_id": "project",
+        "kind": "project",
+        "title": {
+          "$param": "title"
+        },
+        "outcome": "",
+        "instructions": "",
+        "requires": [],
+        "acceptance": {},
+        "custom": {}
+      }
+    ],
+    "links": [],
+    "documents": [],
+    "document_links": [],
+    "assessments": [],
+    "status": "planning_only"
+  },
+  "notes": "One project, zero tasks. No protocol or authority binding. The owner creates it pending; the shared literal-default normaliser supplies the optional title before substitution. Empty pending authoring is not execution-ready."
+}

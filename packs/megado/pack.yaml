@@ -1,0 +1,73 @@
+{
+  "schema_version": 2,
+  "id": "megado",
+  "name": "Megado work protocol",
+  "version": "1.2.0",
+  "description": "Resource-only reference pack for the proposed shared work adapter.",
+  "documentation": {
+    "kind": "skill",
+    "path": "skill/SKILL.md"
+  },
+  "resources": [
+    {
+      "path": "protocols/megado.json",
+      "kind": "work_protocol"
+    },
+    {
+      "path": "templates/delivery.json",
+      "kind": "work_template"
+    },
+    {
+      "path": "templates/task-batch.json",
+      "kind": "work_template"
+    },
+    {
+      "path": "schemas/task-extension.json",
+      "kind": "extension_schema"
+    },
+    {
+      "path": "protocols/manager-led-refinement.json",
+      "kind": "work_protocol"
+    },
+    {
+      "path": "templates/reviewed-delivery.json",
+      "kind": "work_template"
+    },
+    {
+      "path": "skill/references/agentbox.md",
+      "kind": "protocol_reference"
+    },
+    {
+      "path": "skill/references/execution.md",
+      "kind": "protocol_reference"
+    },
+    {
+      "path": "skill/references/native-work.md",
+      "kind": "protocol_reference"
+    },
+    {
+      "path": "skill/references/pragmatic-review.md",
+      "kind": "protocol_reference"
+    },
+    {
+      "path": "skill/references/review-packets.md",
+      "kind": "protocol_reference"
+    },
+    {
+      "path": "skill/references/run-config.md",
+      "kind": "protocol_reference"
+    },
+    {
+      "path": "skill/templates/review-packet.md",
+      "kind": "protocol_reference"
+    },
+    {
+      "path": "skill/templates/run.yaml",
+      "kind": "protocol_reference"
+    },
+    {
+      "path": "skill/references/improvement-loop.md",
+      "kind": "protocol_guidance"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "execution_class": {
+      "type": "string",
+      "enum": [
+        "normal",
+        "xhard"
+      ],
+      "description": "Execution assignment classification; not priority, authority or reviewer difficulty."
+    },
+    "classification_reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "execution_class"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "execution_class": {
+            "const": "xhard"
+          }
+        },
+        "required": [
+          "execution_class"
+        ]
+      },
+      "then": {
+        "required": [
+          "classification_reason"
+        ],
+        "properties": {
+          "classification_reason": {
+            "minLength": 12
+          }
+        }
+      }
+    }
+  ]
+}

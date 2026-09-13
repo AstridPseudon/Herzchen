@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "id": "megado.reviewed_delivery_seed",
+  "version": "1.2.0",
+  "protocol": "megado.delivery",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string",
+        "minLength": 1
+      },
+      "outcome": {
+        "type": "string",
+        "minLength": 1
+      },
+      "proof": {
+        "type": "string",
+        "minLength": 1
+      },
+      "residual_risk": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "title",
+      "outcome",
+      "proof",
+      "residual_risk"
+    ],
+    "additionalProperties": false
+  },
+  "seed": {
+    "work": [
+      {
+        "local_id": "effort",
+        "kind": "effort",
+        "title": {
+          "$param": "title"
+        },
+        "outcome": {
+          "$param": "outcome"
+        }
+      },
+      {
+        "local_id": "implement",
+        "kind": "task",
+        "parent": {
+          "$local": "effort"
+        },
+        "title": "Deliver the specified outcome",
+        "outcome": {
+          "$param": "outcome"
+        },
+        "custom": {
+          "megado": {
+            "execution_class": "normal"
+          }
+        }
+      },
+      {
+        "local_id": "verify",
+        "kind": "task",
+        "parent": {
+          "$local": "effort"
+        },
+        "title": "Demonstrate the outcome",
+        "outcome": {
+          "$param": "proof"
+        },
+        "custom": {
+          "megado": {
+            "execution_class": "normal"
+          }
+        }
+      },
+      {
+        "local_id": "criterion",
+        "kind": "criterion",
+        "parent": {
+          "$local": "effort"
+        },
+        "title": "Required observable behavior",
+        "outcome": {
+          "$param": "proof"
+        }
+      },
+      {
+        "local_id": "review",
+        "kind": "gate",
+        "parent": {
+          "$local": "effort"
+        },
+        "title": "Chosen technical assessment",
+        "outcome": {
+          "$param": "residual_risk"
+        }
+      }
+    ],
+    "links": [
+      {
+        "from": {
+          "$local": "verify"
+        },
+        "to": {
+          "$local": "implement"
+        },
+        "relation": "requires"
+      },
+      {
+        "from": {
+          "$local": "implement"
+        },
+        "to": {
+          "$local": "criterion"
+        },
+        "relation": "covers"
+      },
+      {
+        "from": {
+          "$local": "review"
+        },
+        "to": {
+          "$local": "verify"
+        },
+        "relation": "requires"
+      }
+    ],
+    "documents": [
+      {
+        "local_id": "goal",
+        "title": "Bounded goal",
+        "content": {
+          "$param": "outcome"
+        }
+      }
+    ],
+    "document_links": [
+      {
+        "subject": {
+          "$local": "effort"
+        },
+        "document": {
+          "$local": "goal"
+        },
+        "namespace": "megado",
+        "key": "goal",
+        "binding": "current"
+      }
+    ],
+    "assessments": [
+      {
+        "gate": {
+          "$local": "review"
+        },
+        "lens": "completion",
+        "role_slot": "reviewer_normal",
+        "scope": [
+          {
+            "$local": "implement"
+          },
+          {
+            "$local": "verify"
+          }
+        ],
+        "criteria": [
+          {
+            "$local": "criterion"
+          }
+        ],
+        "requested_max_rounds": 1
+      }
+    ],
+    "status": "planning_only"
+  },
+  "notes": "Explicitly chosen one-round normal independent review of a bounded local judgment. reviewer_normal resolves to Luna Extra High in this edition. For a justified XHARD question explicitly select reviewer_xhard in the adopted assessment configuration, using the same scope/pool, not an extra stage. No authority or allowance is created."
+}

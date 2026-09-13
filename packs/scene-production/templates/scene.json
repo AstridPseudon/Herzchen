@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "id": "scene.production_seed",
+  "version": "1.0.0",
+  "protocol": "scene.production",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string",
+        "minLength": 1
+      },
+      "brief": {
+        "type": "string",
+        "minLength": 1
+      },
+      "dialogue": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "title",
+      "brief",
+      "dialogue"
+    ],
+    "additionalProperties": false
+  },
+  "seed": {
+    "work": [
+      {
+        "local_id": "scene",
+        "kind": "effort",
+        "title": {
+          "$param": "title"
+        },
+        "outcome": {
+          "$param": "brief"
+        }
+      },
+      {
+        "local_id": "timing",
+        "kind": "task",
+        "parent": {
+          "$local": "scene"
+        },
+        "title": "Establish dialogue timing",
+        "outcome": "Prepare an agreed readable timing reference."
+      },
+      {
+        "local_id": "visual",
+        "kind": "task",
+        "parent": {
+          "$local": "scene"
+        },
+        "title": "Create the visual edit",
+        "outcome": {
+          "$param": "brief"
+        },
+        "custom": {
+          "editorial": {
+            "mood": "uneasy",
+            "preferred_take_count": 2
+          }
+        }
+      },
+      {
+        "local_id": "critique",
+        "kind": "task",
+        "parent": {
+          "$local": "scene"
+        },
+        "title": "Assess the identified creative result",
+        "outcome": "Record whether the exact edit meets the brief; a successful render alone is insufficient."
+      }
+    ],
+    "links": [
+      {
+        "from": {
+          "$local": "visual"
+        },
+        "to": {
+          "$local": "timing"
+        },
+        "relation": "requires"
+      },
+      {
+        "from": {
+          "$local": "critique"
+        },
+        "to": {
+          "$local": "visual"
+        },
+        "relation": "requires"
+      }
+    ],
+    "documents": [
+      {
+        "local_id": "dialogue",
+        "title": "Dialogue",
+        "content": {
+          "$param": "dialogue"
+        }
+      }
+    ],
+    "document_links": [
+      {
+        "subject": {
+          "$local": "timing"
+        },
+        "document": {
+          "$local": "dialogue"
+        },
+        "namespace": "editorial",
+        "key": "dialogue",
+        "binding": "current"
+      }
+    ],
+    "assessments": [],
+    "status": "planning_only"
+  },
+  "notes": "No model-review round is silently imposed. The selected project may add a human or agent assessment under its own authorised limits."
+}

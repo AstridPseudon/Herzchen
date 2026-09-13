@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "id": "megado.task_batch",
+  "version": "1.0.0",
+  "protocol": "megado.delivery",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string",
+        "minLength": 1
+      },
+      "outcome": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "title",
+      "outcome"
+    ],
+    "additionalProperties": false
+  },
+  "seed": {
+    "work": [
+      {
+        "local_id": "task",
+        "kind": "task",
+        "title": {
+          "$param": "title"
+        },
+        "outcome": {
+          "$param": "outcome"
+        },
+        "custom": {
+          "megado": {
+            "execution_class": "normal"
+          }
+        }
+      }
+    ],
+    "links": [],
+    "documents": [],
+    "document_links": [],
+    "assessments": [],
+    "status": "planning_only"
+  },
+  "notes": "Instantiate into an explicitly selected existing effort. It inherits no new allowance and launches nothing."
+}
