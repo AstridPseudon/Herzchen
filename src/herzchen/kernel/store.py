@@ -9,6 +9,7 @@ import fcntl
 import hashlib
 import json
 import os
+import re
 import secrets
 import sqlite3
 import threading
@@ -142,6 +143,9 @@ def _descriptor_expectation(
 
 def _ref_json(ref: Optional[ResourceRef]) -> Optional[str]:
     return None if ref is None else ref.to_json()
+
+
+_NUMERIC_REVISION = re.compile(r"^rev-([0-9]+)$")
 
 
 class Transaction:
@@ -513,6 +517,126 @@ class Store:
 
     def get_record(self, ref: ResourceRef) -> Optional[IdentityRecord]:
         return self.get_identity(ref)
+
+    def revise_identity(
+        self,
+        ref: ResourceRef,
+        payload: Mapping[str, Any],
+        *,
+        revision: str,
+        expected_revision: Optional[str],
+        expected_version: int,
+        expected_edit_token: Optional[str] = None,
+        transaction: Optional[Transaction] = None,
+    ) -> IdentityRecord:
+        """CAS-revise one admitted identity through the common writer.
+
+        ``ref`` must be the current reference, and ``expected_revision`` must
+        repeat its pin (or both must be ``None`` for an unpinned identity).
+        Numeric ``rev-N`` revisions advance exactly by one.  A legacy opaque
+        current revision is accepted only for one bounded transition to
+        ``rev-(expected_version + 1)``; subsequent revisions are numeric.
+        The method emits no receipt or event and uses a caller transaction when
+        supplied, so a parent operation can own the single logical boundary.
+        """
+        if not isinstance(ref, ResourceRef):
+            raise TypeError("ref must be a ResourceRef")
+        if ref.authority != self.authority:
+            raise TargetMismatchError("identity authority does not belong to this store")
+        if ref.revision != expected_revision:
+            raise TargetMismatchError("expected_revision must match the supplied current reference")
+        if not isinstance(expected_version, int) or isinstance(expected_version, bool) or expected_version < 0:
+            raise ValueError("expected_version must be a non-negative integer")
+        if not isinstance(payload, Mapping):
+            raise TypeError("payload must be a mapping")
+        payload_json = _json(dict(payload))
+        # ResourceRef performs the contract's revision validation.  Revisions
+        # are required for a revision operation even though identity creation
+        # permits an unpinned ref.
+        if revision is None:
+            raise ValueError("revision must be pinned for an identity revision")
+        new_ref = ResourceRef(self.authority, ref.kind, ref.id, revision)
+        if expected_edit_token is not None and (
+            not isinstance(expected_edit_token, str) or not expected_edit_token
+        ):
+            raise ValueError("expected_edit_token must be a non-blank string when supplied")
+
+        tx, own = self._active_or_transaction(transaction)
+        if own:
+            with self.transaction() as owned:
+                return self._revise_identity(owned, ref, new_ref, payload_json, expected_revision, expected_version, expected_edit_token)
+        return self._revise_identity(tx, ref, new_ref, payload_json, expected_revision, expected_version, expected_edit_token)
+
+    def _revise_identity(
+        self,
+        tx: Transaction,
+        ref: ResourceRef,
+        new_ref: ResourceRef,
+        payload_json: str,
+        expected_revision: Optional[str],
+        expected_version: int,
+        expected_edit_token: Optional[str],
+    ) -> IdentityRecord:
+        with tx.savepoint():
+            row = tx.execute(
+                "SELECT * FROM identities WHERE authority = ? AND kind = ? AND id = ?",
+                (ref.authority, ref.kind, ref.id),
+            ).fetchone()
+            if row is None:
+                raise TargetMismatchError("identity does not exist")
+            current = self._identity_from_row(row)
+            if current.ref.revision != ref.revision or current.ref.revision != expected_revision:
+                raise TargetMismatchError("supplied reference is not the current identity reference")
+            if current.version != expected_version:
+                raise VersionConflictError("expected version does not match current version")
+            if expected_edit_token is not None and current.edit_token != expected_edit_token:
+                raise VersionConflictError("expected edit token does not match")
+
+            current_numeric = None if current.revision is None else _NUMERIC_REVISION.fullmatch(current.revision)
+            if current_numeric is not None:
+                expected_new_revision = "rev-{}".format(int(current_numeric.group(1)) + 1)
+            else:
+                expected_new_revision = "rev-{}".format(expected_version + 1)
+            if new_ref.revision != expected_new_revision:
+                raise VersionConflictError(
+                    "revision must advance exactly to {}".format(expected_new_revision)
+                )
+
+            now = _now()
+            where = (
+                "WHERE authority = ? AND kind = ? AND id = ? "
+                "AND (current_revision = ? OR (current_revision IS NULL AND ? IS NULL)) "
+                "AND version = ?"
+            )
+            parameters = [
+                new_ref.revision,
+                expected_version + 1,
+                payload_json,
+                now,
+                ref.authority,
+                ref.kind,
+                ref.id,
+                expected_revision,
+                expected_revision,
+                expected_version,
+            ]
+            if expected_edit_token is not None:
+                where += " AND edit_token = ?"
+                parameters.append(expected_edit_token)
+            updated = tx.execute(
+                "UPDATE identities SET current_revision = ?, version = ?, payload_json = ?, updated_at = ? " + where,
+                parameters,
+            )
+            if updated.rowcount != 1:
+                raise StoreError("identity revision affected {} rows, expected exactly one".format(updated.rowcount))
+            self.put_reference(new_ref, transaction=tx)
+            revised = tx.execute(
+                "SELECT * FROM identities WHERE authority = ? AND kind = ? AND id = ?",
+                (ref.authority, ref.kind, ref.id),
+            ).fetchone()
+            if revised is None:
+                raise StoreError("revised identity disappeared before readback")
+            return self._identity_from_row(revised)
 
     @property
     def domain_descriptor_digest(self) -> str:
