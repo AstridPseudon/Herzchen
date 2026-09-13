@@ -1,0 +1,4564 @@
+{
+  "backlinks_and_scope": {
+    "outsider_with_scope": [
+      {
+        "association": {
+          "authority": "dat-store",
+          "id": "link-864f2393cbd6bcc9d7bb13d5b2de1bc8",
+          "kind": "document-association",
+          "revision": null
+        },
+        "document": {
+          "authority": "dat-store",
+          "id": "dat06-shared-doc",
+          "kind": "dat.content.document",
+          "revision": "rev-1"
+        },
+        "key": "historical-brief",
+        "namespace": "work.documents",
+        "subject": {
+          "authority": "dat-store",
+          "id": "shot-dat06",
+          "kind": "shot.fixture",
+          "revision": null
+        }
+      },
+      {
+        "association": {
+          "authority": "dat-store",
+          "id": "link-896b07e1413431cd6573010aa1835a33",
+          "kind": "document-association",
+          "revision": null
+        },
+        "document": {
+          "authority": "dat-store",
+          "id": "dat06-shared-doc",
+          "kind": "dat.content.document",
+          "revision": null
+        },
+        "key": "brief",
+        "namespace": "work.documents",
+        "subject": {
+          "authority": "dat-store",
+          "id": "assignment-dat06",
+          "kind": "work.assignment",
+          "revision": null
+        }
+      }
+    ],
+    "outsider_without_scope": [],
+    "owner": [
+      {
+        "association": {
+          "authority": "dat-store",
+          "id": "link-864f2393cbd6bcc9d7bb13d5b2de1bc8",
+          "kind": "document-association",
+          "revision": null
+        },
+        "document": {
+          "authority": "dat-store",
+          "id": "dat06-shared-doc",
+          "kind": "dat.content.document",
+          "revision": "rev-1"
+        },
+        "key": "historical-brief",
+        "namespace": "work.documents",
+        "subject": {
+          "authority": "dat-store",
+          "id": "shot-dat06",
+          "kind": "shot.fixture",
+          "revision": null
+        }
+      },
+      {
+        "association": {
+          "authority": "dat-store",
+          "id": "link-896b07e1413431cd6573010aa1835a33",
+          "kind": "document-association",
+          "revision": null
+        },
+        "document": {
+          "authority": "dat-store",
+          "id": "dat06-shared-doc",
+          "kind": "dat.content.document",
+          "revision": null
+        },
+        "key": "brief",
+        "namespace": "work.documents",
+        "subject": {
+          "authority": "dat-store",
+          "id": "assignment-dat06",
+          "kind": "work.assignment",
+          "revision": null
+        }
+      }
+    ]
+  },
+  "boundaries": {
+    "assignment_status": "neutral work.assignment identity through public FND store; no WorkGraph assignment kind exists",
+    "astrid_integration_proven": false,
+    "astrid_status": "deferred behind G-OTTO; shot fixture is synthetic contract proof only",
+    "copied_content_or_private_writer": false,
+    "ddl_or_event_engine_added": false,
+    "domain_specific_document_tables": false,
+    "third_specialist_status": "deferred"
+  },
+  "definitions": {
+    "all": {
+      "definitions": [
+        {
+          "classification": "open_annotation",
+          "definition_id": "dat.extensions.annotation.open.v1",
+          "description": "Harmless user annotations; unknown JSON fields are retained and never grant authority.",
+          "metadata": {
+            "doc_role": "annotation",
+            "unknown_values": "retained"
+          },
+          "namespace": "annotation.open",
+          "owner": "dat",
+          "query_fields": [
+            "*"
+          ],
+          "resource_kinds": [
+            "*"
+          ],
+          "schema": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "dat.extensions.annotation.open.v1",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1",
+          "writable": true
+        },
+        {
+          "classification": "managed",
+          "definition_id": "dat.extensions.managed.state.v1",
+          "description": "FND-owned identity, ownership, version, archive, promotion, provenance, acceptance, receipt, event, and head state.",
+          "metadata": {
+            "protected": true,
+            "writable": false
+          },
+          "namespace": "managed.state",
+          "owner": "fnd",
+          "query_fields": [],
+          "resource_kinds": [
+            "*"
+          ],
+          "schema": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "dat.extensions.managed.state.v1",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1",
+          "writable": false
+        },
+        {
+          "classification": "protocol",
+          "definition_id": "dat.extensions.protocol.choice.v1",
+          "description": "An owner-declared protocol choice; values are schema-validated and do not become authority by annotation.",
+          "metadata": {
+            "doc_role": "protocol-choice",
+            "owner_required": true
+          },
+          "namespace": "protocol.choice",
+          "owner": "dat.protocol-owner",
+          "query_fields": [
+            "choice",
+            "reason",
+            "profile"
+          ],
+          "resource_kinds": [
+            "work.task",
+            "work.project",
+            "dat.content.document"
+          ],
+          "schema": {
+            "additionalProperties": false,
+            "properties": {
+              "choice": {
+                "enum": [
+                  "accept",
+                  "reject",
+                  "hold"
+                ],
+                "type": "string"
+              },
+              "profile": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "reason": {
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "choice"
+            ],
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "dat.extensions.protocol.choice.v1",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1",
+          "writable": true
+        }
+      ],
+      "document_roles": [
+        {
+          "description": "Immutable candidate inputs, outputs, criteria, and provenance for a proposed deliverable.",
+          "document_kind": "dat.content.document",
+          "metadata": {
+            "doc_role": "candidate"
+          },
+          "role_id": "candidate-manifest",
+          "schema": {
+            "additionalProperties": true,
+            "properties": {
+              "candidate_id": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "criteria_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "input_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "manifest_revision": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "output_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "provenance": {
+                "type": "object"
+              },
+              "resource": {
+                "additionalProperties": true,
+                "required": [
+                  "authority",
+                  "kind",
+                  "id"
+                ],
+                "type": "object"
+              },
+              "source_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "candidate_id",
+              "manifest_revision",
+              "resource",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "candidate-manifest",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1"
+        },
+        {
+          "description": "Decision subject, authority, criteria, evidence, disposition, rationale, and reconsideration condition.",
+          "document_kind": "dat.content.document",
+          "metadata": {
+            "doc_role": "decision"
+          },
+          "role_id": "decision-manifest",
+          "schema": {
+            "additionalProperties": true,
+            "properties": {
+              "candidate_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "criteria_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "decision_id": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "disposition": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "evidence_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "question": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "rationale": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "subject": {
+                "additionalProperties": true,
+                "required": [
+                  "authority",
+                  "kind",
+                  "id"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "decision_id",
+              "subject",
+              "question",
+              "disposition",
+              "rationale"
+            ],
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "decision-manifest",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1"
+        }
+      ],
+      "schema_revision": "dat.extensions.v1"
+    },
+    "assignment": {
+      "definitions": [
+        {
+          "classification": "open_annotation",
+          "definition_id": "dat.extensions.annotation.open.v1",
+          "description": "Harmless user annotations; unknown JSON fields are retained and never grant authority.",
+          "metadata": {
+            "doc_role": "annotation",
+            "unknown_values": "retained"
+          },
+          "namespace": "annotation.open",
+          "owner": "dat",
+          "query_fields": [
+            "*"
+          ],
+          "resource_kinds": [
+            "*"
+          ],
+          "schema": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "dat.extensions.annotation.open.v1",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1",
+          "writable": true
+        },
+        {
+          "classification": "managed",
+          "definition_id": "dat.extensions.managed.state.v1",
+          "description": "FND-owned identity, ownership, version, archive, promotion, provenance, acceptance, receipt, event, and head state.",
+          "metadata": {
+            "protected": true,
+            "writable": false
+          },
+          "namespace": "managed.state",
+          "owner": "fnd",
+          "query_fields": [],
+          "resource_kinds": [
+            "*"
+          ],
+          "schema": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "dat.extensions.managed.state.v1",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1",
+          "writable": false
+        }
+      ],
+      "document_roles": [
+        {
+          "description": "Immutable candidate inputs, outputs, criteria, and provenance for a proposed deliverable.",
+          "document_kind": "dat.content.document",
+          "metadata": {
+            "doc_role": "candidate"
+          },
+          "role_id": "candidate-manifest",
+          "schema": {
+            "additionalProperties": true,
+            "properties": {
+              "candidate_id": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "criteria_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "input_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "manifest_revision": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "output_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "provenance": {
+                "type": "object"
+              },
+              "resource": {
+                "additionalProperties": true,
+                "required": [
+                  "authority",
+                  "kind",
+                  "id"
+                ],
+                "type": "object"
+              },
+              "source_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "candidate_id",
+              "manifest_revision",
+              "resource",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "candidate-manifest",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1"
+        },
+        {
+          "description": "Decision subject, authority, criteria, evidence, disposition, rationale, and reconsideration condition.",
+          "document_kind": "dat.content.document",
+          "metadata": {
+            "doc_role": "decision"
+          },
+          "role_id": "decision-manifest",
+          "schema": {
+            "additionalProperties": true,
+            "properties": {
+              "candidate_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "criteria_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "decision_id": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "disposition": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "evidence_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "question": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "rationale": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "subject": {
+                "additionalProperties": true,
+                "required": [
+                  "authority",
+                  "kind",
+                  "id"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "decision_id",
+              "subject",
+              "question",
+              "disposition",
+              "rationale"
+            ],
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "decision-manifest",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1"
+        }
+      ],
+      "schema_revision": "dat.extensions.v1"
+    },
+    "candidate_role": {
+      "description": "Immutable candidate inputs, outputs, criteria, and provenance for a proposed deliverable.",
+      "document_kind": "dat.content.document",
+      "metadata": {
+        "doc_role": "candidate"
+      },
+      "role_id": "candidate-manifest",
+      "schema": {
+        "additionalProperties": true,
+        "properties": {
+          "candidate_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "criteria_refs": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "input_refs": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "manifest_revision": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "output_refs": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "provenance": {
+            "type": "object"
+          },
+          "resource": {
+            "additionalProperties": true,
+            "required": [
+              "authority",
+              "kind",
+              "id"
+            ],
+            "type": "object"
+          },
+          "source_refs": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "manifest_revision",
+          "resource",
+          "provenance"
+        ],
+        "type": "object"
+      },
+      "schema_ref": {
+        "authority": "herzchen",
+        "id": "candidate-manifest",
+        "kind": "dat.extensions.schema",
+        "revision": "1"
+      },
+      "version": "1"
+    },
+    "decision_role": {
+      "description": "Decision subject, authority, criteria, evidence, disposition, rationale, and reconsideration condition.",
+      "document_kind": "dat.content.document",
+      "metadata": {
+        "doc_role": "decision"
+      },
+      "role_id": "decision-manifest",
+      "schema": {
+        "additionalProperties": true,
+        "properties": {
+          "candidate_refs": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "criteria_refs": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "decision_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "disposition": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "question": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "rationale": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "subject": {
+            "additionalProperties": true,
+            "required": [
+              "authority",
+              "kind",
+              "id"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "decision_id",
+          "subject",
+          "question",
+          "disposition",
+          "rationale"
+        ],
+        "type": "object"
+      },
+      "schema_ref": {
+        "authority": "herzchen",
+        "id": "decision-manifest",
+        "kind": "dat.extensions.schema",
+        "revision": "1"
+      },
+      "version": "1"
+    },
+    "shot": {
+      "definitions": [
+        {
+          "classification": "open_annotation",
+          "definition_id": "dat.extensions.annotation.open.v1",
+          "description": "Harmless user annotations; unknown JSON fields are retained and never grant authority.",
+          "metadata": {
+            "doc_role": "annotation",
+            "unknown_values": "retained"
+          },
+          "namespace": "annotation.open",
+          "owner": "dat",
+          "query_fields": [
+            "*"
+          ],
+          "resource_kinds": [
+            "*"
+          ],
+          "schema": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "dat.extensions.annotation.open.v1",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1",
+          "writable": true
+        },
+        {
+          "classification": "managed",
+          "definition_id": "dat.extensions.managed.state.v1",
+          "description": "FND-owned identity, ownership, version, archive, promotion, provenance, acceptance, receipt, event, and head state.",
+          "metadata": {
+            "protected": true,
+            "writable": false
+          },
+          "namespace": "managed.state",
+          "owner": "fnd",
+          "query_fields": [],
+          "resource_kinds": [
+            "*"
+          ],
+          "schema": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "dat.extensions.managed.state.v1",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1",
+          "writable": false
+        }
+      ],
+      "document_roles": [
+        {
+          "description": "Immutable candidate inputs, outputs, criteria, and provenance for a proposed deliverable.",
+          "document_kind": "dat.content.document",
+          "metadata": {
+            "doc_role": "candidate"
+          },
+          "role_id": "candidate-manifest",
+          "schema": {
+            "additionalProperties": true,
+            "properties": {
+              "candidate_id": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "criteria_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "input_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "manifest_revision": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "output_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "provenance": {
+                "type": "object"
+              },
+              "resource": {
+                "additionalProperties": true,
+                "required": [
+                  "authority",
+                  "kind",
+                  "id"
+                ],
+                "type": "object"
+              },
+              "source_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "candidate_id",
+              "manifest_revision",
+              "resource",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "candidate-manifest",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1"
+        },
+        {
+          "description": "Decision subject, authority, criteria, evidence, disposition, rationale, and reconsideration condition.",
+          "document_kind": "dat.content.document",
+          "metadata": {
+            "doc_role": "decision"
+          },
+          "role_id": "decision-manifest",
+          "schema": {
+            "additionalProperties": true,
+            "properties": {
+              "candidate_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "criteria_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "decision_id": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "disposition": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "evidence_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "question": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "rationale": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "subject": {
+                "additionalProperties": true,
+                "required": [
+                  "authority",
+                  "kind",
+                  "id"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "decision_id",
+              "subject",
+              "question",
+              "disposition",
+              "rationale"
+            ],
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "decision-manifest",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1"
+        }
+      ],
+      "schema_revision": "dat.extensions.v1"
+    },
+    "task": {
+      "definitions": [
+        {
+          "classification": "open_annotation",
+          "definition_id": "dat.extensions.annotation.open.v1",
+          "description": "Harmless user annotations; unknown JSON fields are retained and never grant authority.",
+          "metadata": {
+            "doc_role": "annotation",
+            "unknown_values": "retained"
+          },
+          "namespace": "annotation.open",
+          "owner": "dat",
+          "query_fields": [
+            "*"
+          ],
+          "resource_kinds": [
+            "*"
+          ],
+          "schema": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "dat.extensions.annotation.open.v1",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1",
+          "writable": true
+        },
+        {
+          "classification": "managed",
+          "definition_id": "dat.extensions.managed.state.v1",
+          "description": "FND-owned identity, ownership, version, archive, promotion, provenance, acceptance, receipt, event, and head state.",
+          "metadata": {
+            "protected": true,
+            "writable": false
+          },
+          "namespace": "managed.state",
+          "owner": "fnd",
+          "query_fields": [],
+          "resource_kinds": [
+            "*"
+          ],
+          "schema": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "dat.extensions.managed.state.v1",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1",
+          "writable": false
+        },
+        {
+          "classification": "protocol",
+          "definition_id": "dat.extensions.protocol.choice.v1",
+          "description": "An owner-declared protocol choice; values are schema-validated and do not become authority by annotation.",
+          "metadata": {
+            "doc_role": "protocol-choice",
+            "owner_required": true
+          },
+          "namespace": "protocol.choice",
+          "owner": "dat.protocol-owner",
+          "query_fields": [
+            "choice",
+            "reason",
+            "profile"
+          ],
+          "resource_kinds": [
+            "work.task",
+            "work.project",
+            "dat.content.document"
+          ],
+          "schema": {
+            "additionalProperties": false,
+            "properties": {
+              "choice": {
+                "enum": [
+                  "accept",
+                  "reject",
+                  "hold"
+                ],
+                "type": "string"
+              },
+              "profile": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "reason": {
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "choice"
+            ],
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "dat.extensions.protocol.choice.v1",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1",
+          "writable": true
+        }
+      ],
+      "document_roles": [
+        {
+          "description": "Immutable candidate inputs, outputs, criteria, and provenance for a proposed deliverable.",
+          "document_kind": "dat.content.document",
+          "metadata": {
+            "doc_role": "candidate"
+          },
+          "role_id": "candidate-manifest",
+          "schema": {
+            "additionalProperties": true,
+            "properties": {
+              "candidate_id": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "criteria_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "input_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "manifest_revision": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "output_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "provenance": {
+                "type": "object"
+              },
+              "resource": {
+                "additionalProperties": true,
+                "required": [
+                  "authority",
+                  "kind",
+                  "id"
+                ],
+                "type": "object"
+              },
+              "source_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "candidate_id",
+              "manifest_revision",
+              "resource",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "candidate-manifest",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1"
+        },
+        {
+          "description": "Decision subject, authority, criteria, evidence, disposition, rationale, and reconsideration condition.",
+          "document_kind": "dat.content.document",
+          "metadata": {
+            "doc_role": "decision"
+          },
+          "role_id": "decision-manifest",
+          "schema": {
+            "additionalProperties": true,
+            "properties": {
+              "candidate_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "criteria_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "decision_id": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "disposition": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "evidence_refs": {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "question": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "rationale": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "subject": {
+                "additionalProperties": true,
+                "required": [
+                  "authority",
+                  "kind",
+                  "id"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "decision_id",
+              "subject",
+              "question",
+              "disposition",
+              "rationale"
+            ],
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "decision-manifest",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1"
+        }
+      ],
+      "schema_revision": "dat.extensions.v1"
+    }
+  },
+  "elegance_inputs_executed": {
+    "actual_context_surface": "ContextPacketService",
+    "actual_definition_surface": "ExtensionCommandService",
+    "context_fixture": {
+      "negative": {
+        "fixture_id": "operating-context-negative",
+        "fixture_kind": "operating_context",
+        "fixture_schema": "int-02-fixture/v1",
+        "harness": {
+          "evidence_scope": "harness_input",
+          "installed_product_proof": false,
+          "live_control_target": false,
+          "product_state": false
+        },
+        "payload": {
+          "attention": {
+            "cursor": 9,
+            "event_id": "evt-attention-001",
+            "unhandled": true
+          },
+          "context_revision": "ctx-000-stale",
+          "current_inputs": [
+            "task-rehearsal-01"
+          ],
+          "mandate": null,
+          "omissions": [
+            "missing mandate",
+            "stale cursor requires reread"
+          ],
+          "profile": {
+            "id": "manager-normal",
+            "model": "gpt-5.6-luna",
+            "reasoning": "high"
+          },
+          "rejection_reason": "stale or incomplete context cannot authorize a bounded action",
+          "responsibility": {
+            "id": "resp-rehearsal-manager",
+            "owner": "OTT"
+          }
+        }
+      },
+      "positive": {
+        "fixture_id": "operating-context-positive",
+        "fixture_kind": "operating_context",
+        "fixture_schema": "int-02-fixture/v1",
+        "harness": {
+          "evidence_scope": "harness_input",
+          "installed_product_proof": false,
+          "live_control_target": false,
+          "product_state": false
+        },
+        "payload": {
+          "attention": {
+            "cursor": 11,
+            "event_id": "evt-attention-001",
+            "unhandled": true
+          },
+          "context_revision": "ctx-001",
+          "current_inputs": [
+            "task-rehearsal-01",
+            "definition-v1"
+          ],
+          "mandate": {
+            "id": "mandate-bounded-rehearsal",
+            "scope": "disposable-portfolio"
+          },
+          "omissions": [],
+          "profile": {
+            "id": "manager-normal",
+            "model": "gpt-5.6-luna",
+            "reasoning": "high"
+          },
+          "responsibility": {
+            "id": "resp-rehearsal-manager",
+            "owner": "OTT"
+          }
+        }
+      }
+    },
+    "definition_fixture": {
+      "fixture_id": "definition-catalog-v1",
+      "fixture_kind": "definition_and_catalog",
+      "fixture_schema": "int-02-fixture/v1",
+      "harness": {
+        "evidence_scope": "harness_input",
+        "installed_product_proof": false,
+        "live_control_target": false,
+        "product_state": false
+      },
+      "payload": {
+        "catalog": {
+          "catalog_id": "int-02-whole-catalog",
+          "catalog_revision": "catalog-v1",
+          "owner_areas": [
+            {
+              "area": "FND",
+              "conditional_nodes": [
+                "none"
+              ],
+              "owner": "FND",
+              "pending_nodes": [
+                "none"
+              ],
+              "status": "planned",
+              "tasks": [
+                "FND-03",
+                "FND-04",
+                "FND-05",
+                "FND-06"
+              ],
+              "unknown_fields": {
+                "future_ref": "preserve-me"
+              }
+            },
+            {
+              "area": "DAT",
+              "conditional_nodes": [
+                "none"
+              ],
+              "owner": "DAT",
+              "pending_nodes": [
+                "none"
+              ],
+              "status": "planned",
+              "tasks": [
+                "DAT-02",
+                "DAT-03",
+                "DAT-04",
+                "DAT-05",
+                "DAT-06"
+              ],
+              "unknown_fields": {
+                "future_ref": "preserve-me"
+              }
+            },
+            {
+              "area": "PKG",
+              "conditional_nodes": [
+                "third-specialist"
+              ],
+              "owner": "PKG",
+              "pending_nodes": [
+                "none"
+              ],
+              "status": "planned",
+              "tasks": [
+                "PKG-02",
+                "PKG-03",
+                "PKG-04",
+                "PKG-05"
+              ],
+              "unknown_fields": {
+                "future_ref": "preserve-me"
+              }
+            },
+            {
+              "area": "WRK",
+              "conditional_nodes": [
+                "none"
+              ],
+              "owner": "WRK",
+              "pending_nodes": [
+                "none"
+              ],
+              "status": "planned",
+              "tasks": [
+                "WRK-02",
+                "WRK-03",
+                "WRK-04",
+                "WRK-05",
+                "WRK-06",
+                "WRK-07"
+              ],
+              "unknown_fields": {
+                "future_ref": "preserve-me"
+              }
+            },
+            {
+              "area": "EDT",
+              "conditional_nodes": [
+                "none"
+              ],
+              "owner": "EDT",
+              "pending_nodes": [
+                "none"
+              ],
+              "status": "planned",
+              "tasks": [
+                "EDT-02",
+                "EDT-03",
+                "EDT-04",
+                "EDT-05",
+                "EDT-06"
+              ],
+              "unknown_fields": {
+                "future_ref": "preserve-me"
+              }
+            },
+            {
+              "area": "OTT",
+              "conditional_nodes": [
+                "none"
+              ],
+              "owner": "OTT",
+              "pending_nodes": [
+                "none"
+              ],
+              "status": "planned",
+              "tasks": [
+                "OTT-01",
+                "OTT-02",
+                "OTT-03",
+                "OTT-04",
+                "OTT-05",
+                "OTT-06"
+              ],
+              "unknown_fields": {
+                "future_ref": "preserve-me"
+              }
+            },
+            {
+              "area": "AST",
+              "conditional_nodes": [
+                "none"
+              ],
+              "owner": "AST",
+              "pending_nodes": [
+                "AST-after-G-OTTO"
+              ],
+              "status": "planned",
+              "tasks": [
+                "AST-01",
+                "AST-02",
+                "AST-03",
+                "AST-04",
+                "AST-05",
+                "AST-06"
+              ],
+              "unknown_fields": {
+                "future_ref": "preserve-me"
+              }
+            },
+            {
+              "area": "INT",
+              "conditional_nodes": [
+                "none"
+              ],
+              "owner": "INT",
+              "pending_nodes": [
+                "none"
+              ],
+              "status": "planned",
+              "tasks": [
+                "INT-02",
+                "INT-03",
+                "INT-04",
+                "INT-05",
+                "INT-06",
+                "INT-07",
+                "INT-08",
+                "INT-09"
+              ],
+              "unknown_fields": {
+                "future_ref": "preserve-me"
+              }
+            }
+          ],
+          "preserve_unknown_conditional_pending": true,
+          "read_only": true,
+          "source_kind": "package-plan-representation"
+        },
+        "catalog_digest": "21f176b488f429657156e799b834f5cf2e2084000ba92715bc4e29f1aeb638b0",
+        "definition": {
+          "definition_id": "int-02-operating-definition",
+          "extension_namespace": "fixture.int02",
+          "managed_fields": [
+            "owner",
+            "state",
+            "acceptance"
+          ],
+          "read_only": true,
+          "revision": "definition-v1",
+          "surfaces": [
+            "describe",
+            "help",
+            "editable_shape",
+            "validation",
+            "query"
+          ]
+        }
+      }
+    }
+  },
+  "final_snapshots": {
+    "assignment": {
+      "created_at": "2026-09-13T23:53:10.664324Z",
+      "edit_token": null,
+      "payload": {
+        "fixture_shape": "assignment",
+        "managed_payload": {
+          "acceptance": {
+            "status": "pending"
+          },
+          "owner": "fnd",
+          "primary_state": "fnd-owned",
+          "provenance": {
+            "source": "neutral-fixture"
+          }
+        },
+        "metadata": {
+          "annotation.open": {
+            "assignment_note": "neutral fixture",
+            "owner_hint": "worker_normal"
+          },
+          "annotation.sibling": {
+            "keep": "seed"
+          },
+          "managed.state": {
+            "acceptance": "fnd-owned",
+            "identity": "fnd-owned",
+            "primary": "fnd-owned",
+            "provenance": "fnd-owned"
+          }
+        },
+        "record_type": "neutral-fixture",
+        "task": {
+          "authority": "dat-store",
+          "id": "task-1bc764bbbb37505abd4fbc09484d",
+          "kind": "work.task",
+          "revision": "rev-2"
+        }
+      },
+      "ref": {
+        "authority": "dat-store",
+        "id": "assignment-dat06",
+        "kind": "work.assignment",
+        "revision": "rev-2"
+      },
+      "updated_at": "2026-09-13T23:53:10.669774Z",
+      "version": 2
+    },
+    "document": {
+      "current_revision": {
+        "authority": "dat-store",
+        "id": "dat06-shared-doc",
+        "kind": "dat.content.document",
+        "revision": "rev-3"
+      },
+      "document": {
+        "access_mode": "append",
+        "authoring_scope": {
+          "authority": "dat-store",
+          "id": "dat06-scope",
+          "kind": "work.project",
+          "revision": null
+        },
+        "import_mode": "owned",
+        "maintainer": "dat-worker",
+        "ref": {
+          "authority": "dat-store",
+          "id": "dat06-shared-doc",
+          "kind": "dat.content.document",
+          "revision": null
+        },
+        "role": "dat06-brief",
+        "source_ref": null,
+        "visibility": "shared",
+        "writable": true
+      },
+      "identity": {
+        "authority": "dat-store",
+        "id": "dat06-shared-doc",
+        "kind": "dat.content.document",
+        "revision": null
+      },
+      "payload": {
+        "current_revision": {
+          "authority": "dat-store",
+          "id": "dat06-shared-doc",
+          "kind": "dat.content.document",
+          "revision": "rev-3"
+        },
+        "document": {
+          "access_mode": "append",
+          "authoring_scope": {
+            "authority": "dat-store",
+            "id": "dat06-scope",
+            "kind": "work.project",
+            "revision": null
+          },
+          "import_mode": "owned",
+          "maintainer": "dat-worker",
+          "ref": {
+            "authority": "dat-store",
+            "id": "dat06-shared-doc",
+            "kind": "dat.content.document",
+            "revision": null
+          },
+          "role": "dat06-brief",
+          "source_ref": null,
+          "visibility": "shared",
+          "writable": true
+        },
+        "record_type": "dat.content.document"
+      },
+      "revision": {
+        "author": {
+          "actor": "dat-worker",
+          "authenticated": true,
+          "authority": "dat-auth",
+          "credential_ref": "dat-credential"
+        },
+        "content": {
+          "title": "after-again",
+          "unknown": {
+            "keep": true
+          }
+        },
+        "content_digest": "02e0180b711078cc14985b9e2cd74ce01b2bc7fb4e1aacffccd6d25eef2c0315",
+        "document": {
+          "authority": "dat-store",
+          "id": "dat06-shared-doc",
+          "kind": "dat.content.document",
+          "revision": null
+        },
+        "initial": false,
+        "parent_revision": "rev-2",
+        "record_type": "dat.content.revision",
+        "revision": "rev-3"
+      },
+      "storage_identity": {
+        "authority": "dat-store",
+        "id": "dat06-shared-doc",
+        "kind": "dat.content.document",
+        "revision": "rev-3"
+      },
+      "version": 3
+    },
+    "document_historical_initial": {
+      "content": {
+        "title": "before",
+        "unknown": {
+          "keep": true
+        }
+      },
+      "document": {
+        "authority": "dat-store",
+        "id": "dat06-shared-doc",
+        "kind": "dat.content.document",
+        "revision": null
+      },
+      "identity": {
+        "authority": "dat-store",
+        "id": "dat06-shared-doc",
+        "kind": "dat.content.document",
+        "revision": "rev-1"
+      },
+      "revision": "rev-1",
+      "storage_identity": {
+        "authority": "dat-store",
+        "id": "revision-ee4ceffb9878b54ab79f8b704d359742",
+        "kind": "dat.content.revision",
+        "revision": "rev-1"
+      },
+      "version": 0
+    },
+    "document_historical_revision_2": {
+      "content": {
+        "title": "after",
+        "unknown": {
+          "keep": true
+        }
+      },
+      "document": {
+        "authority": "dat-store",
+        "id": "dat06-shared-doc",
+        "kind": "dat.content.document",
+        "revision": null
+      },
+      "identity": {
+        "authority": "dat-store",
+        "id": "dat06-shared-doc",
+        "kind": "dat.content.document",
+        "revision": "rev-2"
+      },
+      "revision": "rev-2",
+      "storage_identity": {
+        "authority": "dat-store",
+        "id": "revision-30f50a7be5328cc6ef1572f9dbdfdb91",
+        "kind": "dat.content.revision",
+        "revision": "rev-2"
+      },
+      "version": 0
+    },
+    "shot": {
+      "created_at": "2026-09-13T23:53:10.664056Z",
+      "edit_token": null,
+      "payload": {
+        "fixture_shape": "shot",
+        "managed_payload": {
+          "acceptance": {
+            "status": "pending"
+          },
+          "owner": "fnd",
+          "primary_state": "fnd-owned",
+          "provenance": {
+            "source": "neutral-fixture"
+          }
+        },
+        "metadata": {
+          "annotation.open": {
+            "color": "blue",
+            "future_annotation": {
+              "retain": [
+                1,
+                true
+              ]
+            }
+          },
+          "annotation.sibling": {
+            "keep": "seed"
+          },
+          "managed.state": {
+            "acceptance": "fnd-owned",
+            "identity": "fnd-owned",
+            "primary": "fnd-owned",
+            "provenance": "fnd-owned"
+          }
+        },
+        "record_type": "neutral-fixture"
+      },
+      "ref": {
+        "authority": "dat-store",
+        "id": "shot-dat06",
+        "kind": "shot.fixture",
+        "revision": "rev-2"
+      },
+      "updated_at": "2026-09-13T23:53:10.667697Z",
+      "version": 2
+    },
+    "shot_pinned_link": {
+      "identity": {
+        "authority": "dat-store",
+        "id": "link-864f2393cbd6bcc9d7bb13d5b2de1bc8",
+        "kind": "document-association",
+        "revision": null
+      },
+      "payload": {
+        "active": true,
+        "association": {
+          "access_mode": "read",
+          "document": {
+            "mode": "pinned",
+            "ref": {
+              "authority": "dat-store",
+              "id": "dat06-shared-doc",
+              "kind": "dat.content.document",
+              "revision": "rev-1"
+            }
+          },
+          "key": "historical-brief",
+          "namespace": "work.documents",
+          "subject": {
+            "authority": "dat-store",
+            "id": "shot-dat06",
+            "kind": "shot.fixture",
+            "revision": null
+          }
+        },
+        "record_type": "dat.content.association"
+      },
+      "storage_identity": {
+        "authority": "dat-store",
+        "id": "link-864f2393cbd6bcc9d7bb13d5b2de1bc8",
+        "kind": "document-association",
+        "revision": "rev-1"
+      },
+      "version": 1
+    },
+    "task": {
+      "created_at": "2026-09-13T23:53:10.662947Z",
+      "edit_token": null,
+      "payload": {
+        "alias": "task-4fbc09484d",
+        "aliases": [
+          "task-4fbc09484d"
+        ],
+        "dependencies": [],
+        "fields": {
+          "assignment": "assignment-dat06",
+          "changed_by": "public-work-graph",
+          "unrelated": {
+            "keep": true
+          }
+        },
+        "id": "task-1bc764bbbb37505abd4fbc09484d",
+        "kind": "task",
+        "lifecycle": "pending",
+        "metadata": {
+          "annotation.open": {
+            "note": "task annotation",
+            "unknown": {
+              "survives": true
+            }
+          },
+          "protocol.choice": {
+            "choice": "hold",
+            "profile": "worker_normal",
+            "reason": "fixture proof"
+          }
+        },
+        "name": "DAT-06 task-shaped fixture",
+        "parent": {
+          "authority": "dat-store",
+          "id": "project-6a015ec83fb4ae091060bcdfd2c5",
+          "kind": "work.project"
+        },
+        "project_ref": {
+          "authority": "dat-store",
+          "id": "project-6a015ec83fb4ae091060bcdfd2c5",
+          "kind": "work.project"
+        },
+        "readiness": {
+          "dispatch": false,
+          "ready": false,
+          "status": "not-evaluated"
+        },
+        "schema_revision": "work.v1",
+        "title": "DAT-06 task-shaped fixture"
+      },
+      "ref": {
+        "authority": "dat-store",
+        "id": "task-1bc764bbbb37505abd4fbc09484d",
+        "kind": "work.task",
+        "revision": "rev-4"
+      },
+      "updated_at": "2026-09-13T23:53:10.669103Z",
+      "version": 4
+    },
+    "task_link": {
+      "identity": {
+        "authority": "dat-store",
+        "id": "link-eb0adb7a97150b58dab2e2c776696c0c",
+        "kind": "document-association",
+        "revision": null
+      },
+      "payload": {
+        "active": false,
+        "association": {
+          "access_mode": "read",
+          "document": {
+            "mode": "current",
+            "ref": {
+              "authority": "dat-store",
+              "id": "dat06-shared-doc",
+              "kind": "dat.content.document",
+              "revision": null
+            }
+          },
+          "key": "brief",
+          "namespace": "work.documents",
+          "subject": {
+            "authority": "dat-store",
+            "id": "task-1bc764bbbb37505abd4fbc09484d",
+            "kind": "work.task",
+            "revision": null
+          }
+        },
+        "record_type": "dat.content.association"
+      },
+      "storage_identity": {
+        "authority": "dat-store",
+        "id": "link-eb0adb7a97150b58dab2e2c776696c0c",
+        "kind": "document-association",
+        "revision": "rev-2"
+      },
+      "version": 2
+    }
+  },
+  "handoff_schema": "dat-06-handoff/v1",
+  "migration": {
+    "aliases": [],
+    "instructions": "Use ResourceRef authority/kind/id as the neutral identity boundary; keep shot.fixture and work.assignment synthetic until an approved Astrid adapter exists."
+  },
+  "pins": {
+    "content_schema_revision": "dat-content.v1",
+    "extension_definition_refs": [
+      {
+        "authority": "herzchen",
+        "id": "dat.extensions.annotation.open.v1",
+        "kind": "dat.extensions.schema",
+        "revision": "1"
+      },
+      {
+        "authority": "herzchen",
+        "id": "dat.extensions.managed.state.v1",
+        "kind": "dat.extensions.schema",
+        "revision": "1"
+      }
+    ],
+    "extension_schema_revision": "dat.extensions.v1",
+    "fnd_schema_fingerprint": "367b22e1a345e13539ce6cef0d302d507bebe36e73cda68010c4f037e8c1ca5c",
+    "fnd_schema_revision": "fnd-03.v1",
+    "work_schema_revision": "work.v1"
+  },
+  "receipts_and_events": {
+    "by_operation": {
+      "assignment_metadata": {
+        "events": [
+          {
+            "actor": {
+              "actor": "dat-worker",
+              "authenticated": true,
+              "authority": "dat-auth",
+              "credential_ref": "dat-credential"
+            },
+            "after_refs": [
+              {
+                "authority": "dat-store",
+                "id": "assignment-dat06",
+                "kind": "work.assignment",
+                "revision": "rev-2"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "dat-store",
+                "id": "assignment-dat06",
+                "kind": "work.assignment",
+                "revision": "seed-1"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "definition": "dat.extensions.annotation.open.v1",
+              "namespace": "annotation.open",
+              "removed": false
+            },
+            "event_id": "event-3b8988e3f24c1b42b4e638f9ce0876f9",
+            "event_type": "dat.extensions.metadata.changed",
+            "occurred_at": null,
+            "operation": "dat.extensions.metadata.set",
+            "recorded_at": "2026-09-13T23:53:10.669900Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "dat-store",
+            "stream": "work.assignment:assignment-dat06",
+            "subject": {
+              "authority": "dat-store",
+              "id": "assignment-dat06",
+              "kind": "work.assignment",
+              "revision": "rev-2"
+            }
+          }
+        ],
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-3b8988e3f24c1b42b4e638f9ce0876f9"
+          ],
+          "logical_request_key": "dat06-assignment-metadata",
+          "observed_revision": "rev-2",
+          "operation": "dat.extensions.metadata.set",
+          "replayed": false,
+          "request_digest": "cd47d6e218cf674c03aada4a7d7bdf7abe3b740e5549e4a9baf69d6cca5ee607",
+          "result_ref": {
+            "authority": "dat-store",
+            "id": "assignment-dat06",
+            "kind": "work.assignment",
+            "revision": "rev-2"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "dat-store",
+            "id": "assignment-dat06",
+            "kind": "work.assignment",
+            "revision": null
+          },
+          "transaction_id": "e410f009c6263ecc764add32de200441",
+          "unknown_reason": null
+        }
+      },
+      "document_append_2": {
+        "events": [
+          {
+            "actor": {
+              "actor": "dat-worker",
+              "authenticated": true,
+              "authority": "dat-auth",
+              "credential_ref": "dat-credential"
+            },
+            "after_refs": [
+              {
+                "authority": "dat-store",
+                "id": "dat06-shared-doc",
+                "kind": "dat.content.document",
+                "revision": "rev-2"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "dat-store",
+                "id": "dat06-shared-doc",
+                "kind": "dat.content.document",
+                "revision": "rev-1"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "content_revision": {
+                "authority": "dat-store",
+                "id": "dat06-shared-doc",
+                "kind": "dat.content.document",
+                "revision": "rev-2"
+              }
+            },
+            "event_id": "event-ae95015682881ca9e35e6c11656e70d6",
+            "event_type": "dat.content.revision.appended",
+            "occurred_at": null,
+            "operation": "dat.content.revision.append",
+            "recorded_at": "2026-09-13T23:53:10.673388Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 2,
+            "store_authority": "dat-store",
+            "stream": "dat.content.document:dat06-shared-doc",
+            "subject": {
+              "authority": "dat-store",
+              "id": "dat06-shared-doc",
+              "kind": "dat.content.document",
+              "revision": "rev-2"
+            }
+          }
+        ],
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-ae95015682881ca9e35e6c11656e70d6"
+          ],
+          "logical_request_key": "dat06-document-append-2",
+          "observed_revision": "rev-2",
+          "operation": "dat.content.revision.append",
+          "replayed": false,
+          "request_digest": "bdcafd7f03dc215dcf107932a6db294b12b285f2835b7156f036e1ef21c91345",
+          "result_ref": {
+            "authority": "dat-store",
+            "id": "dat06-shared-doc",
+            "kind": "dat.content.document",
+            "revision": "rev-2"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "dat-store",
+            "id": "dat06-shared-doc",
+            "kind": "dat.content.document",
+            "revision": null
+          },
+          "transaction_id": "29edf61a56ee583a1e702e876c9d5b02",
+          "unknown_reason": null
+        }
+      },
+      "document_append_3": {
+        "events": [
+          {
+            "actor": {
+              "actor": "dat-worker",
+              "authenticated": true,
+              "authority": "dat-auth",
+              "credential_ref": "dat-credential"
+            },
+            "after_refs": [
+              {
+                "authority": "dat-store",
+                "id": "dat06-shared-doc",
+                "kind": "dat.content.document",
+                "revision": "rev-3"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "dat-store",
+                "id": "dat06-shared-doc",
+                "kind": "dat.content.document",
+                "revision": "rev-2"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "content_revision": {
+                "authority": "dat-store",
+                "id": "dat06-shared-doc",
+                "kind": "dat.content.document",
+                "revision": "rev-3"
+              }
+            },
+            "event_id": "event-8fbbf83689b0b4020945d82d376c9781",
+            "event_type": "dat.content.revision.appended",
+            "occurred_at": null,
+            "operation": "dat.content.revision.append",
+            "recorded_at": "2026-09-13T23:53:10.675834Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 3,
+            "store_authority": "dat-store",
+            "stream": "dat.content.document:dat06-shared-doc",
+            "subject": {
+              "authority": "dat-store",
+              "id": "dat06-shared-doc",
+              "kind": "dat.content.document",
+              "revision": "rev-3"
+            }
+          }
+        ],
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-8fbbf83689b0b4020945d82d376c9781"
+          ],
+          "logical_request_key": "dat06-document-append-3",
+          "observed_revision": "rev-3",
+          "operation": "dat.content.revision.append",
+          "replayed": false,
+          "request_digest": "02e0180b711078cc14985b9e2cd74ce01b2bc7fb4e1aacffccd6d25eef2c0315",
+          "result_ref": {
+            "authority": "dat-store",
+            "id": "dat06-shared-doc",
+            "kind": "dat.content.document",
+            "revision": "rev-3"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "dat-store",
+            "id": "dat06-shared-doc",
+            "kind": "dat.content.document",
+            "revision": null
+          },
+          "transaction_id": "b0a1048f350001c25698e7aef914a65f",
+          "unknown_reason": null
+        }
+      },
+      "document_create": {
+        "events": [
+          {
+            "actor": {
+              "actor": "dat-worker",
+              "authenticated": true,
+              "authority": "dat-auth",
+              "credential_ref": "dat-credential"
+            },
+            "after_refs": [
+              {
+                "authority": "dat-store",
+                "id": "dat06-shared-doc",
+                "kind": "dat.content.document",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "content_revision": {
+                "authority": "dat-store",
+                "id": "dat06-shared-doc",
+                "kind": "dat.content.document",
+                "revision": "rev-1"
+              }
+            },
+            "event_id": "event-3385e5f6b3b5b1f20efd8c91a1aad04c",
+            "event_type": "dat.content.document.created",
+            "occurred_at": null,
+            "operation": "dat.content.document.create",
+            "recorded_at": "2026-09-13T23:53:10.671833Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "dat-store",
+            "stream": "dat.content.document:dat06-shared-doc",
+            "subject": {
+              "authority": "dat-store",
+              "id": "dat06-shared-doc",
+              "kind": "dat.content.document",
+              "revision": "rev-1"
+            }
+          }
+        ],
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-3385e5f6b3b5b1f20efd8c91a1aad04c"
+          ],
+          "logical_request_key": "dat06-document-create",
+          "observed_revision": "rev-1",
+          "operation": "dat.content.document.create",
+          "replayed": false,
+          "request_digest": "7b34ea84aa191cccf7ee9895ac8e5da6299dccdd42856ddc8d487f8b90315995",
+          "result_ref": {
+            "authority": "dat-store",
+            "id": "dat06-shared-doc",
+            "kind": "dat.content.document",
+            "revision": "rev-1"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "dat-store",
+            "id": "dat06-shared-doc",
+            "kind": "dat.content.document",
+            "revision": null
+          },
+          "transaction_id": "c80df12742d00d3b58f8b21ac46301e8",
+          "unknown_reason": null
+        }
+      },
+      "link_assignment": {
+        "events": [
+          {
+            "actor": {
+              "actor": "dat-worker",
+              "authenticated": true,
+              "authority": "dat-auth",
+              "credential_ref": "dat-credential"
+            },
+            "after_refs": [
+              {
+                "authority": "dat-store",
+                "id": "link-896b07e1413431cd6573010aa1835a33",
+                "kind": "document-association",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "active": true,
+              "association": "link-896b07e1413431cd6573010aa1835a33"
+            },
+            "event_id": "event-d7891c8ea3bef779db4faa98cf810bd6",
+            "event_type": "dat.content.linked",
+            "occurred_at": null,
+            "operation": "dat.content.link",
+            "recorded_at": "2026-09-13T23:53:10.672877Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "dat-store",
+            "stream": "document-association:link-896b07e1413431cd6573010aa1835a33",
+            "subject": {
+              "authority": "dat-store",
+              "id": "link-896b07e1413431cd6573010aa1835a33",
+              "kind": "document-association",
+              "revision": "rev-1"
+            }
+          }
+        ],
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-d7891c8ea3bef779db4faa98cf810bd6"
+          ],
+          "logical_request_key": "dat06-link-assignment",
+          "observed_revision": "rev-1",
+          "operation": "dat.content.link",
+          "replayed": false,
+          "request_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "result_ref": {
+            "authority": "dat-store",
+            "id": "link-896b07e1413431cd6573010aa1835a33",
+            "kind": "document-association",
+            "revision": "rev-1"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "dat-store",
+            "id": "link-896b07e1413431cd6573010aa1835a33",
+            "kind": "document-association",
+            "revision": null
+          },
+          "transaction_id": "5b559bdc385916a7f0c591520ce5be4c",
+          "unknown_reason": null
+        }
+      },
+      "link_shot_pinned": {
+        "events": [
+          {
+            "actor": {
+              "actor": "dat-worker",
+              "authenticated": true,
+              "authority": "dat-auth",
+              "credential_ref": "dat-credential"
+            },
+            "after_refs": [
+              {
+                "authority": "dat-store",
+                "id": "link-864f2393cbd6bcc9d7bb13d5b2de1bc8",
+                "kind": "document-association",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "active": true,
+              "association": "link-864f2393cbd6bcc9d7bb13d5b2de1bc8"
+            },
+            "event_id": "event-3e0c53c2c1134630a35b6ee02b82d3fc",
+            "event_type": "dat.content.linked",
+            "occurred_at": null,
+            "operation": "dat.content.link",
+            "recorded_at": "2026-09-13T23:53:10.673984Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "dat-store",
+            "stream": "document-association:link-864f2393cbd6bcc9d7bb13d5b2de1bc8",
+            "subject": {
+              "authority": "dat-store",
+              "id": "link-864f2393cbd6bcc9d7bb13d5b2de1bc8",
+              "kind": "document-association",
+              "revision": "rev-1"
+            }
+          }
+        ],
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-3e0c53c2c1134630a35b6ee02b82d3fc"
+          ],
+          "logical_request_key": "dat06-link-shot-pinned",
+          "observed_revision": "rev-1",
+          "operation": "dat.content.link",
+          "replayed": false,
+          "request_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "result_ref": {
+            "authority": "dat-store",
+            "id": "link-864f2393cbd6bcc9d7bb13d5b2de1bc8",
+            "kind": "document-association",
+            "revision": "rev-1"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "dat-store",
+            "id": "link-864f2393cbd6bcc9d7bb13d5b2de1bc8",
+            "kind": "document-association",
+            "revision": null
+          },
+          "transaction_id": "e46e1c5c5b75768f37d43628ff813020",
+          "unknown_reason": null
+        }
+      },
+      "link_task": {
+        "events": [
+          {
+            "actor": {
+              "actor": "dat-worker",
+              "authenticated": true,
+              "authority": "dat-auth",
+              "credential_ref": "dat-credential"
+            },
+            "after_refs": [
+              {
+                "authority": "dat-store",
+                "id": "link-eb0adb7a97150b58dab2e2c776696c0c",
+                "kind": "document-association",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "active": true,
+              "association": "link-eb0adb7a97150b58dab2e2c776696c0c"
+            },
+            "event_id": "event-fdc58b900f228c0cdf0ba948112674a6",
+            "event_type": "dat.content.linked",
+            "occurred_at": null,
+            "operation": "dat.content.link",
+            "recorded_at": "2026-09-13T23:53:10.672417Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "dat-store",
+            "stream": "document-association:link-eb0adb7a97150b58dab2e2c776696c0c",
+            "subject": {
+              "authority": "dat-store",
+              "id": "link-eb0adb7a97150b58dab2e2c776696c0c",
+              "kind": "document-association",
+              "revision": "rev-1"
+            }
+          }
+        ],
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-fdc58b900f228c0cdf0ba948112674a6"
+          ],
+          "logical_request_key": "dat06-link-task",
+          "observed_revision": "rev-1",
+          "operation": "dat.content.link",
+          "replayed": false,
+          "request_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "result_ref": {
+            "authority": "dat-store",
+            "id": "link-eb0adb7a97150b58dab2e2c776696c0c",
+            "kind": "document-association",
+            "revision": "rev-1"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "dat-store",
+            "id": "link-eb0adb7a97150b58dab2e2c776696c0c",
+            "kind": "document-association",
+            "revision": null
+          },
+          "transaction_id": "8e8484c6b2083736b2479fd2098e4d6e",
+          "unknown_reason": null
+        }
+      },
+      "packet_create": {
+        "events": [
+          {
+            "actor": {
+              "actor": "dat-worker",
+              "authenticated": true,
+              "authority": "dat-auth",
+              "credential_ref": "dat-credential"
+            },
+            "after_refs": [
+              {
+                "authority": "dat-store",
+                "id": "packet:dat06-assignment-packet",
+                "kind": "dat.context.packet",
+                "revision": "packet-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "content_revision": {
+                "authority": "dat-store",
+                "id": "packet:dat06-assignment-packet",
+                "kind": "dat.context.packet",
+                "revision": "packet-1"
+              }
+            },
+            "event_id": "event-4fcdb148eea03142df25b08c77e393e4",
+            "event_type": "dat.content.document.created",
+            "occurred_at": null,
+            "operation": "dat.content.document.create",
+            "recorded_at": "2026-09-13T23:53:10.674697Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "dat-store",
+            "stream": "dat.context.packet:packet:dat06-assignment-packet",
+            "subject": {
+              "authority": "dat-store",
+              "id": "packet:dat06-assignment-packet",
+              "kind": "dat.context.packet",
+              "revision": "packet-1"
+            }
+          }
+        ],
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-4fcdb148eea03142df25b08c77e393e4"
+          ],
+          "logical_request_key": "dat06-packet-create",
+          "observed_revision": "packet-1",
+          "operation": "dat.content.document.create",
+          "replayed": false,
+          "request_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "result_ref": {
+            "authority": "dat-store",
+            "id": "packet:dat06-assignment-packet",
+            "kind": "dat.context.packet",
+            "revision": "packet-1"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "dat-store",
+            "id": "packet:dat06-assignment-packet",
+            "kind": "dat.context.packet",
+            "revision": null
+          },
+          "transaction_id": "fcc3eabe59504617c521b4f5c44c4114",
+          "unknown_reason": null
+        }
+      },
+      "project_create": {
+        "events": [
+          {
+            "actor": {
+              "actor": "dat-worker",
+              "authenticated": true,
+              "authority": "dat-auth",
+              "credential_ref": "dat-credential"
+            },
+            "after_refs": [
+              {
+                "authority": "dat-store",
+                "id": "project-6a015ec83fb4ae091060bcdfd2c5",
+                "kind": "work.project",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "id": "project-6a015ec83fb4ae091060bcdfd2c5",
+              "kind": "project"
+            },
+            "event_id": "event-fb18019d0580254cc5b08265359281d7",
+            "event_type": "work.created",
+            "occurred_at": null,
+            "operation": "work.create",
+            "recorded_at": "2026-09-13T23:53:10.662399Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "dat-store",
+            "stream": "work:project-6a015ec83fb4ae091060bcdfd2c5",
+            "subject": {
+              "authority": "dat-store",
+              "id": "project-6a015ec83fb4ae091060bcdfd2c5",
+              "kind": "work.project",
+              "revision": "rev-1"
+            }
+          }
+        ],
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-fb18019d0580254cc5b08265359281d7"
+          ],
+          "logical_request_key": "dat06-project-create",
+          "observed_revision": "rev-1",
+          "operation": "work.create",
+          "replayed": false,
+          "request_digest": "a632efa7546ead0174a403f7b2d01b27e917d479f611c695518f10fd6df4b746",
+          "result_ref": {
+            "authority": "dat-store",
+            "id": "project-6a015ec83fb4ae091060bcdfd2c5",
+            "kind": "work.project",
+            "revision": "rev-1"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "dat-store",
+            "id": "project-6a015ec83fb4ae091060bcdfd2c5",
+            "kind": "work.project",
+            "revision": null
+          },
+          "transaction_id": "f6218fbff08bbecd334df67eb2a06450",
+          "unknown_reason": null
+        }
+      },
+      "shot_metadata": {
+        "events": [
+          {
+            "actor": {
+              "actor": "dat-worker",
+              "authenticated": true,
+              "authority": "dat-auth",
+              "credential_ref": "dat-credential"
+            },
+            "after_refs": [
+              {
+                "authority": "dat-store",
+                "id": "shot-dat06",
+                "kind": "shot.fixture",
+                "revision": "rev-2"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "dat-store",
+                "id": "shot-dat06",
+                "kind": "shot.fixture",
+                "revision": "seed-1"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "definition": "dat.extensions.annotation.open.v1",
+              "namespace": "annotation.open",
+              "removed": false
+            },
+            "event_id": "event-c36de4ed7faa5dfe7df1710549639f9e",
+            "event_type": "dat.extensions.metadata.changed",
+            "occurred_at": null,
+            "operation": "dat.extensions.metadata.set",
+            "recorded_at": "2026-09-13T23:53:10.667828Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "dat-store",
+            "stream": "shot.fixture:shot-dat06",
+            "subject": {
+              "authority": "dat-store",
+              "id": "shot-dat06",
+              "kind": "shot.fixture",
+              "revision": "rev-2"
+            }
+          }
+        ],
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-c36de4ed7faa5dfe7df1710549639f9e"
+          ],
+          "logical_request_key": "dat06-shot-metadata",
+          "observed_revision": "rev-2",
+          "operation": "dat.extensions.metadata.set",
+          "replayed": false,
+          "request_digest": "a587a2db134009a437cda877e74c9db5b193707a7bd6c71a4c2d72ba3f6ce3ac",
+          "result_ref": {
+            "authority": "dat-store",
+            "id": "shot-dat06",
+            "kind": "shot.fixture",
+            "revision": "rev-2"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "dat-store",
+            "id": "shot-dat06",
+            "kind": "shot.fixture",
+            "revision": null
+          },
+          "transaction_id": "e993bd17af0ea242b180fdf3092c60af",
+          "unknown_reason": null
+        }
+      },
+      "task_create": {
+        "events": [
+          {
+            "actor": {
+              "actor": "dat-worker",
+              "authenticated": true,
+              "authority": "dat-auth",
+              "credential_ref": "dat-credential"
+            },
+            "after_refs": [
+              {
+                "authority": "dat-store",
+                "id": "task-1bc764bbbb37505abd4fbc09484d",
+                "kind": "work.task",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "id": "task-1bc764bbbb37505abd4fbc09484d",
+              "kind": "task"
+            },
+            "event_id": "event-ccfd917295e9d691eb98cc6805bc5230",
+            "event_type": "work.created",
+            "occurred_at": null,
+            "operation": "work.create",
+            "recorded_at": "2026-09-13T23:53:10.663084Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "dat-store",
+            "stream": "work:task-1bc764bbbb37505abd4fbc09484d",
+            "subject": {
+              "authority": "dat-store",
+              "id": "task-1bc764bbbb37505abd4fbc09484d",
+              "kind": "work.task",
+              "revision": "rev-1"
+            }
+          }
+        ],
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-ccfd917295e9d691eb98cc6805bc5230"
+          ],
+          "logical_request_key": "dat06-task-create",
+          "observed_revision": "rev-1",
+          "operation": "work.create",
+          "replayed": false,
+          "request_digest": "90e79c99f8b8491cfb2da4fd63243721bb3bceef25f4b96fd29b637fc1e3c54d",
+          "result_ref": {
+            "authority": "dat-store",
+            "id": "task-1bc764bbbb37505abd4fbc09484d",
+            "kind": "work.task",
+            "revision": "rev-1"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "dat-store",
+            "id": "task-1bc764bbbb37505abd4fbc09484d",
+            "kind": "work.task",
+            "revision": null
+          },
+          "transaction_id": "e0703aacaf34529be7353be484387788",
+          "unknown_reason": null
+        }
+      },
+      "task_metadata": {
+        "events": [
+          {
+            "actor": {
+              "actor": "dat-worker",
+              "authenticated": true,
+              "authority": "dat-auth",
+              "credential_ref": "dat-credential"
+            },
+            "after_refs": [
+              {
+                "authority": "dat-store",
+                "id": "task-1bc764bbbb37505abd4fbc09484d",
+                "kind": "work.task",
+                "revision": "rev-3"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "dat-store",
+                "id": "task-1bc764bbbb37505abd4fbc09484d",
+                "kind": "work.task",
+                "revision": "rev-2"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "definition": "dat.extensions.annotation.open.v1",
+              "namespace": "annotation.open",
+              "removed": false
+            },
+            "event_id": "event-faea97c97daa8922aa9f5f47307ee2ec",
+            "event_type": "dat.extensions.metadata.changed",
+            "occurred_at": null,
+            "operation": "dat.extensions.metadata.set",
+            "recorded_at": "2026-09-13T23:53:10.668605Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "dat-store",
+            "stream": "work.task:task-1bc764bbbb37505abd4fbc09484d",
+            "subject": {
+              "authority": "dat-store",
+              "id": "task-1bc764bbbb37505abd4fbc09484d",
+              "kind": "work.task",
+              "revision": "rev-3"
+            }
+          }
+        ],
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-faea97c97daa8922aa9f5f47307ee2ec"
+          ],
+          "logical_request_key": "dat06-task-metadata",
+          "observed_revision": "rev-3",
+          "operation": "dat.extensions.metadata.set",
+          "replayed": false,
+          "request_digest": "ceba06bfda80fe632b96100ae939aa2f9121240c0ded2cd9a6ac98973b502b80",
+          "result_ref": {
+            "authority": "dat-store",
+            "id": "task-1bc764bbbb37505abd4fbc09484d",
+            "kind": "work.task",
+            "revision": "rev-3"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "dat-store",
+            "id": "task-1bc764bbbb37505abd4fbc09484d",
+            "kind": "work.task",
+            "revision": null
+          },
+          "transaction_id": "0678fd1589136fc32db5a26b795864c1",
+          "unknown_reason": null
+        }
+      },
+      "task_protocol": {
+        "events": [
+          {
+            "actor": {
+              "actor": "dat-worker",
+              "authenticated": true,
+              "authority": "dat-auth",
+              "credential_ref": "dat-credential"
+            },
+            "after_refs": [
+              {
+                "authority": "dat-store",
+                "id": "task-1bc764bbbb37505abd4fbc09484d",
+                "kind": "work.task",
+                "revision": "rev-4"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "dat-store",
+                "id": "task-1bc764bbbb37505abd4fbc09484d",
+                "kind": "work.task",
+                "revision": "rev-3"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "definition": "dat.extensions.protocol.choice.v1",
+              "namespace": "protocol.choice",
+              "removed": false
+            },
+            "event_id": "event-44c342c1e723b9ecbb0d6c970842dc68",
+            "event_type": "dat.extensions.metadata.changed",
+            "occurred_at": null,
+            "operation": "dat.extensions.metadata.set",
+            "recorded_at": "2026-09-13T23:53:10.669224Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 2,
+            "store_authority": "dat-store",
+            "stream": "work.task:task-1bc764bbbb37505abd4fbc09484d",
+            "subject": {
+              "authority": "dat-store",
+              "id": "task-1bc764bbbb37505abd4fbc09484d",
+              "kind": "work.task",
+              "revision": "rev-4"
+            }
+          }
+        ],
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-44c342c1e723b9ecbb0d6c970842dc68"
+          ],
+          "logical_request_key": "dat06-task-protocol",
+          "observed_revision": "rev-4",
+          "operation": "dat.extensions.metadata.set",
+          "replayed": false,
+          "request_digest": "91ad786e94495d588ec4979a2853736833636695fd96786c2923503b6edfafdb",
+          "result_ref": {
+            "authority": "dat-store",
+            "id": "task-1bc764bbbb37505abd4fbc09484d",
+            "kind": "work.task",
+            "revision": "rev-4"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "dat-store",
+            "id": "task-1bc764bbbb37505abd4fbc09484d",
+            "kind": "work.task",
+            "revision": null
+          },
+          "transaction_id": "91a10bc3d748c3bc6242cfdc6eeb353e",
+          "unknown_reason": null
+        }
+      },
+      "task_revise": {
+        "events": [
+          {
+            "actor": {
+              "actor": "dat-worker",
+              "authenticated": true,
+              "authority": "dat-auth",
+              "credential_ref": "dat-credential"
+            },
+            "after_refs": [
+              {
+                "authority": "dat-store",
+                "id": "task-1bc764bbbb37505abd4fbc09484d",
+                "kind": "work.task",
+                "revision": "rev-2"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "dat-store",
+                "id": "task-1bc764bbbb37505abd4fbc09484d",
+                "kind": "work.task",
+                "revision": "rev-1"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "id": "task-1bc764bbbb37505abd4fbc09484d",
+              "kind": "task"
+            },
+            "event_id": "event-9068ab9afc8eae4e445ddccc3866108a",
+            "event_type": "work.revised",
+            "occurred_at": null,
+            "operation": "work.revise",
+            "recorded_at": "2026-09-13T23:53:10.663706Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 2,
+            "store_authority": "dat-store",
+            "stream": "work:task-1bc764bbbb37505abd4fbc09484d",
+            "subject": {
+              "authority": "dat-store",
+              "id": "task-1bc764bbbb37505abd4fbc09484d",
+              "kind": "work.task",
+              "revision": "rev-2"
+            }
+          }
+        ],
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-9068ab9afc8eae4e445ddccc3866108a"
+          ],
+          "logical_request_key": "dat06-task-revise",
+          "observed_revision": "rev-2",
+          "operation": "work.revise",
+          "replayed": false,
+          "request_digest": "9c8f08b476891212dca91676ff81410b64b7492a4ddbc25464becba147023d2d",
+          "result_ref": {
+            "authority": "dat-store",
+            "id": "task-1bc764bbbb37505abd4fbc09484d",
+            "kind": "work.task",
+            "revision": "rev-2"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "dat-store",
+            "id": "task-1bc764bbbb37505abd4fbc09484d",
+            "kind": "work.task",
+            "revision": "rev-1"
+          },
+          "transaction_id": "36940a3de6cde9b9591668f6ee8fd165",
+          "unknown_reason": null
+        }
+      },
+      "unlink_task": {
+        "events": [
+          {
+            "actor": {
+              "actor": "dat-worker",
+              "authenticated": true,
+              "authority": "dat-auth",
+              "credential_ref": "dat-credential"
+            },
+            "after_refs": [
+              {
+                "authority": "dat-store",
+                "id": "link-eb0adb7a97150b58dab2e2c776696c0c",
+                "kind": "document-association",
+                "revision": "rev-2"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "dat-store",
+                "id": "link-eb0adb7a97150b58dab2e2c776696c0c",
+                "kind": "document-association",
+                "revision": "rev-1"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "active": false,
+              "association": "link-eb0adb7a97150b58dab2e2c776696c0c",
+              "preserved": [
+                "document",
+                "revisions",
+                "other_links"
+              ]
+            },
+            "event_id": "event-18615feb7a52530cf286743fd256ee43",
+            "event_type": "dat.content.unlinked",
+            "occurred_at": null,
+            "operation": "dat.content.unlink",
+            "recorded_at": "2026-09-13T23:53:10.676514Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 2,
+            "store_authority": "dat-store",
+            "stream": "document-association:link-eb0adb7a97150b58dab2e2c776696c0c",
+            "subject": {
+              "authority": "dat-store",
+              "id": "link-eb0adb7a97150b58dab2e2c776696c0c",
+              "kind": "document-association",
+              "revision": "rev-2"
+            }
+          }
+        ],
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-18615feb7a52530cf286743fd256ee43"
+          ],
+          "logical_request_key": "dat06-unlink-task",
+          "observed_revision": "rev-2",
+          "operation": "dat.content.unlink",
+          "replayed": false,
+          "request_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "result_ref": {
+            "authority": "dat-store",
+            "id": "link-eb0adb7a97150b58dab2e2c776696c0c",
+            "kind": "document-association",
+            "revision": "rev-2"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "dat-store",
+            "id": "link-eb0adb7a97150b58dab2e2c776696c0c",
+            "kind": "document-association",
+            "revision": null
+          },
+          "transaction_id": "e22d2ac3250edf156e9b982882834093",
+          "unknown_reason": null
+        }
+      }
+    },
+    "event_count": 15
+  },
+  "rejections": {
+    "after_state": {
+      "created_at": "2026-09-13T23:53:10.664056Z",
+      "edit_token": null,
+      "payload": {
+        "fixture_shape": "shot",
+        "managed_payload": {
+          "acceptance": {
+            "status": "pending"
+          },
+          "owner": "fnd",
+          "primary_state": "fnd-owned",
+          "provenance": {
+            "source": "neutral-fixture"
+          }
+        },
+        "metadata": {
+          "annotation.open": {
+            "color": "blue",
+            "future_annotation": {
+              "retain": [
+                1,
+                true
+              ]
+            }
+          },
+          "annotation.sibling": {
+            "keep": "seed"
+          },
+          "managed.state": {
+            "acceptance": "fnd-owned",
+            "identity": "fnd-owned",
+            "primary": "fnd-owned",
+            "provenance": "fnd-owned"
+          }
+        },
+        "record_type": "neutral-fixture"
+      },
+      "ref": {
+        "authority": "dat-store",
+        "id": "shot-dat06",
+        "kind": "shot.fixture",
+        "revision": "rev-2"
+      },
+      "updated_at": "2026-09-13T23:53:10.667697Z",
+      "version": 2
+    },
+    "before_state": {
+      "created_at": "2026-09-13T23:53:10.664056Z",
+      "edit_token": null,
+      "payload": {
+        "fixture_shape": "shot",
+        "managed_payload": {
+          "acceptance": {
+            "status": "pending"
+          },
+          "owner": "fnd",
+          "primary_state": "fnd-owned",
+          "provenance": {
+            "source": "neutral-fixture"
+          }
+        },
+        "metadata": {
+          "annotation.sibling": {
+            "keep": "seed"
+          },
+          "managed.state": {
+            "acceptance": "fnd-owned",
+            "identity": "fnd-owned",
+            "primary": "fnd-owned",
+            "provenance": "fnd-owned"
+          }
+        },
+        "record_type": "neutral-fixture"
+      },
+      "ref": {
+        "authority": "dat-store",
+        "id": "shot-dat06",
+        "kind": "shot.fixture",
+        "revision": "seed-1"
+      },
+      "updated_at": "2026-09-13T23:53:10.664056Z",
+      "version": 1
+    },
+    "cases": {
+      "managed_namespace": {
+        "error": "ManagedFieldError",
+        "message": "managed namespace is not writable: managed.state"
+      },
+      "protected_acceptance": {
+        "error": "ManagedFieldError",
+        "message": "managed fields cannot be written as annotations: acceptance"
+      },
+      "protected_primary": {
+        "error": "ManagedFieldError",
+        "message": "managed fields cannot be written as annotations: primary"
+      },
+      "protected_provenance": {
+        "error": "ManagedFieldError",
+        "message": "managed fields cannot be written as annotations: provenance"
+      },
+      "schema_typo": {
+        "error": "SchemaValidationError",
+        "message": "protocol.choice.choice is required"
+      },
+      "wrong_owner": {
+        "error": "OwnerRequiredError",
+        "message": "protocol namespace requires owner 'dat.protocol-owner'"
+      }
+    },
+    "event_count_before": 3
+  },
+  "replay_and_restart": {
+    "changed_input_replay": "rejected: ReplayConflictError",
+    "persisted_receipt": {
+      "error_code": null,
+      "event_ids": [
+        "event-3b8988e3f24c1b42b4e638f9ce0876f9"
+      ],
+      "logical_request_key": "dat06-assignment-metadata",
+      "observed_revision": "rev-2",
+      "operation": "dat.extensions.metadata.set",
+      "replayed": false,
+      "request_digest": "cd47d6e218cf674c03aada4a7d7bdf7abe3b740e5549e4a9baf69d6cca5ee607",
+      "result_ref": {
+        "authority": "dat-store",
+        "id": "assignment-dat06",
+        "kind": "work.assignment",
+        "revision": "rev-2"
+      },
+      "status": "committed",
+      "target": {
+        "authority": "dat-store",
+        "id": "assignment-dat06",
+        "kind": "work.assignment",
+        "revision": null
+      },
+      "transaction_id": "e410f009c6263ecc764add32de200441",
+      "unknown_reason": null
+    },
+    "restart_fresh_read": true,
+    "restart_replay_equal": true,
+    "same_key_original_receipt": {
+      "error_code": null,
+      "event_ids": [
+        "event-3b8988e3f24c1b42b4e638f9ce0876f9"
+      ],
+      "logical_request_key": "dat06-assignment-metadata",
+      "observed_revision": "rev-2",
+      "operation": "dat.extensions.metadata.set",
+      "replayed": false,
+      "request_digest": "cd47d6e218cf674c03aada4a7d7bdf7abe3b740e5549e4a9baf69d6cca5ee607",
+      "result_ref": {
+        "authority": "dat-store",
+        "id": "assignment-dat06",
+        "kind": "work.assignment",
+        "revision": "rev-2"
+      },
+      "status": "committed",
+      "target": {
+        "authority": "dat-store",
+        "id": "assignment-dat06",
+        "kind": "work.assignment",
+        "revision": null
+      },
+      "transaction_id": "e410f009c6263ecc764add32de200441",
+      "unknown_reason": null
+    },
+    "same_key_replay_equal": true,
+    "stale_write": "rejected: VersionConflictError"
+  },
+  "resources": {
+    "assignment_fixture": {
+      "after": {
+        "definition": {
+          "classification": "open_annotation",
+          "definition_id": "dat.extensions.annotation.open.v1",
+          "description": "Harmless user annotations; unknown JSON fields are retained and never grant authority.",
+          "metadata": {
+            "doc_role": "annotation",
+            "unknown_values": "retained"
+          },
+          "namespace": "annotation.open",
+          "owner": "dat",
+          "query_fields": [
+            "*"
+          ],
+          "resource_kinds": [
+            "*"
+          ],
+          "schema": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "dat.extensions.annotation.open.v1",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1",
+          "writable": true
+        },
+        "metadata": {
+          "annotation.open": {
+            "assignment_note": "neutral fixture",
+            "owner_hint": "worker_normal"
+          },
+          "annotation.sibling": {
+            "keep": "seed"
+          },
+          "managed.state": {
+            "acceptance": "fnd-owned",
+            "identity": "fnd-owned",
+            "primary": "fnd-owned",
+            "provenance": "fnd-owned"
+          }
+        },
+        "payload": {
+          "fixture_shape": "assignment",
+          "managed_payload": {
+            "acceptance": {
+              "status": "pending"
+            },
+            "owner": "fnd",
+            "primary_state": "fnd-owned",
+            "provenance": {
+              "source": "neutral-fixture"
+            }
+          },
+          "metadata": {
+            "annotation.open": {
+              "assignment_note": "neutral fixture",
+              "owner_hint": "worker_normal"
+            },
+            "annotation.sibling": {
+              "keep": "seed"
+            },
+            "managed.state": {
+              "acceptance": "fnd-owned",
+              "identity": "fnd-owned",
+              "primary": "fnd-owned",
+              "provenance": "fnd-owned"
+            }
+          },
+          "record_type": "neutral-fixture",
+          "task": {
+            "authority": "dat-store",
+            "id": "task-1bc764bbbb37505abd4fbc09484d",
+            "kind": "work.task",
+            "revision": "rev-2"
+          }
+        },
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-3b8988e3f24c1b42b4e638f9ce0876f9"
+          ],
+          "logical_request_key": "dat06-assignment-metadata",
+          "observed_revision": "rev-2",
+          "operation": "dat.extensions.metadata.set",
+          "replayed": false,
+          "request_digest": "cd47d6e218cf674c03aada4a7d7bdf7abe3b740e5549e4a9baf69d6cca5ee607",
+          "result_ref": {
+            "authority": "dat-store",
+            "id": "assignment-dat06",
+            "kind": "work.assignment",
+            "revision": "rev-2"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "dat-store",
+            "id": "assignment-dat06",
+            "kind": "work.assignment",
+            "revision": null
+          },
+          "transaction_id": "e410f009c6263ecc764add32de200441",
+          "unknown_reason": null
+        },
+        "revision": "rev-2",
+        "schema_ref": {
+          "authority": "herzchen",
+          "id": "dat.extensions.annotation.open.v1",
+          "kind": "dat.extensions.schema",
+          "revision": "1"
+        },
+        "subject": {
+          "authority": "dat-store",
+          "id": "assignment-dat06",
+          "kind": "work.assignment",
+          "revision": "rev-2"
+        },
+        "value": {
+          "assignment_note": "neutral fixture",
+          "owner_hint": "worker_normal"
+        },
+        "version": 2
+      },
+      "before": {
+        "created_at": "2026-09-13T23:53:10.664324Z",
+        "edit_token": null,
+        "payload": {
+          "fixture_shape": "assignment",
+          "managed_payload": {
+            "acceptance": {
+              "status": "pending"
+            },
+            "owner": "fnd",
+            "primary_state": "fnd-owned",
+            "provenance": {
+              "source": "neutral-fixture"
+            }
+          },
+          "metadata": {
+            "annotation.sibling": {
+              "keep": "seed"
+            },
+            "managed.state": {
+              "acceptance": "fnd-owned",
+              "identity": "fnd-owned",
+              "primary": "fnd-owned",
+              "provenance": "fnd-owned"
+            }
+          },
+          "record_type": "neutral-fixture",
+          "task": {
+            "authority": "dat-store",
+            "id": "task-1bc764bbbb37505abd4fbc09484d",
+            "kind": "work.task",
+            "revision": "rev-2"
+          }
+        },
+        "ref": {
+          "authority": "dat-store",
+          "id": "assignment-dat06",
+          "kind": "work.assignment",
+          "revision": "seed-1"
+        },
+        "updated_at": "2026-09-13T23:53:10.664324Z",
+        "version": 1
+      },
+      "fresh_after": {
+        "created_at": "2026-09-13T23:53:10.664324Z",
+        "edit_token": null,
+        "payload": {
+          "fixture_shape": "assignment",
+          "managed_payload": {
+            "acceptance": {
+              "status": "pending"
+            },
+            "owner": "fnd",
+            "primary_state": "fnd-owned",
+            "provenance": {
+              "source": "neutral-fixture"
+            }
+          },
+          "metadata": {
+            "annotation.open": {
+              "assignment_note": "neutral fixture",
+              "owner_hint": "worker_normal"
+            },
+            "annotation.sibling": {
+              "keep": "seed"
+            },
+            "managed.state": {
+              "acceptance": "fnd-owned",
+              "identity": "fnd-owned",
+              "primary": "fnd-owned",
+              "provenance": "fnd-owned"
+            }
+          },
+          "record_type": "neutral-fixture",
+          "task": {
+            "authority": "dat-store",
+            "id": "task-1bc764bbbb37505abd4fbc09484d",
+            "kind": "work.task",
+            "revision": "rev-2"
+          }
+        },
+        "ref": {
+          "authority": "dat-store",
+          "id": "assignment-dat06",
+          "kind": "work.assignment",
+          "revision": "rev-2"
+        },
+        "updated_at": "2026-09-13T23:53:10.669774Z",
+        "version": 2
+      },
+      "identity": {
+        "authority": "dat-store",
+        "id": "assignment-dat06",
+        "kind": "work.assignment",
+        "revision": "seed-1"
+      }
+    },
+    "assignment_packet": {
+      "after": {
+        "content": {
+          "actor": {
+            "actor": "dat-worker",
+            "authenticated": true,
+            "authority": "dat-auth",
+            "credential_ref": "dat-credential"
+          },
+          "inputs": [
+            {
+              "consumed": true,
+              "name": "shared_document",
+              "purpose": "assignment-input",
+              "requested_ref": {
+                "authority": "dat-store",
+                "id": "dat06-shared-doc",
+                "kind": "dat.content.document",
+                "revision": null
+              },
+              "resolved_ref": {
+                "authority": "dat-store",
+                "id": "dat06-shared-doc",
+                "kind": "dat.content.document",
+                "revision": "rev-2"
+              },
+              "source_digest": null
+            }
+          ],
+          "packet_id": "dat06-assignment-packet",
+          "protocol_ref": null,
+          "provenance": {
+            "assignment": "assignment-dat06",
+            "source": "DAT-06"
+          },
+          "record_type": "dat.context.packet",
+          "responsibility": {
+            "adopted_protocol": "dat.extensions.protocol.choice.v1",
+            "adopted_task": "task-1bc764bbbb37505abd4fbc09484d",
+            "criteria_refs": [
+              "C05",
+              "C06",
+              "C33",
+              "C35"
+            ],
+            "mandate": "inspect shared data extension",
+            "omissions": [
+              "Astrid binding",
+              "third specialist"
+            ],
+            "outcome": "report conformance",
+            "profile": "worker_normal",
+            "scope_coverage": [
+              {
+                "authority": "dat-store",
+                "id": "dat06-scope",
+                "kind": "work.project",
+                "revision": null
+              }
+            ],
+            "supported_operations": [
+              "read",
+              "modify",
+              "fresh-read"
+            ]
+          },
+          "schema_adoptions": [],
+          "schema_ref": null
+        },
+        "packet_ref": {
+          "authority": "dat-store",
+          "id": "packet:dat06-assignment-packet",
+          "kind": "dat.context.packet",
+          "revision": "packet-1"
+        },
+        "provenance": {
+          "assignment": "assignment-dat06",
+          "source": "DAT-06"
+        }
+      },
+      "before": {
+        "content": {
+          "actor": {
+            "actor": "dat-worker",
+            "authenticated": true,
+            "authority": "dat-auth",
+            "credential_ref": "dat-credential"
+          },
+          "inputs": [
+            {
+              "consumed": true,
+              "name": "shared_document",
+              "purpose": "assignment-input",
+              "requested_ref": {
+                "authority": "dat-store",
+                "id": "dat06-shared-doc",
+                "kind": "dat.content.document",
+                "revision": null
+              },
+              "resolved_ref": {
+                "authority": "dat-store",
+                "id": "dat06-shared-doc",
+                "kind": "dat.content.document",
+                "revision": "rev-2"
+              },
+              "source_digest": null
+            }
+          ],
+          "packet_id": "dat06-assignment-packet",
+          "protocol_ref": null,
+          "provenance": {
+            "assignment": "assignment-dat06",
+            "source": "DAT-06"
+          },
+          "record_type": "dat.context.packet",
+          "responsibility": {
+            "adopted_protocol": "dat.extensions.protocol.choice.v1",
+            "adopted_task": "task-1bc764bbbb37505abd4fbc09484d",
+            "criteria_refs": [
+              "C05",
+              "C06",
+              "C33",
+              "C35"
+            ],
+            "mandate": "inspect shared data extension",
+            "omissions": [
+              "Astrid binding",
+              "third specialist"
+            ],
+            "outcome": "report conformance",
+            "profile": "worker_normal",
+            "scope_coverage": [
+              {
+                "authority": "dat-store",
+                "id": "dat06-scope",
+                "kind": "work.project",
+                "revision": null
+              }
+            ],
+            "supported_operations": [
+              "read",
+              "modify",
+              "fresh-read"
+            ]
+          },
+          "schema_adoptions": [],
+          "schema_ref": null
+        },
+        "packet_ref": {
+          "authority": "dat-store",
+          "id": "packet:dat06-assignment-packet",
+          "kind": "dat.context.packet",
+          "revision": "packet-1"
+        },
+        "provenance": {
+          "assignment": "assignment-dat06",
+          "source": "DAT-06"
+        }
+      },
+      "identity": {
+        "authority": "dat-store",
+        "id": "packet:dat06-assignment-packet",
+        "kind": "dat.context.packet",
+        "revision": "packet-1"
+      },
+      "responsibility_view": {
+        "adopted": {},
+        "adopted_protocol": "dat.extensions.protocol.choice.v1",
+        "adopted_task": "task-1bc764bbbb37505abd4fbc09484d",
+        "criteria_refs": [
+          "C05",
+          "C06",
+          "C33",
+          "C35"
+        ],
+        "cursor_delta": [],
+        "evidence_links": [],
+        "inputs": [
+          {
+            "authority": "dat-store",
+            "id": "dat06-shared-doc",
+            "kind": "dat.content.document",
+            "revision": "rev-2"
+          }
+        ],
+        "mandate": "inspect shared data extension",
+        "missing_prerequisites": [],
+        "omissions": [
+          "Astrid binding",
+          "third specialist"
+        ],
+        "open_decisions": [],
+        "outcome": "report conformance",
+        "profile": "worker_normal",
+        "provenance": {
+          "assignment": "assignment-dat06",
+          "source": "DAT-06"
+        },
+        "scope_coverage": [
+          {
+            "authority": "dat-store",
+            "id": "dat06-scope",
+            "kind": "work.project",
+            "revision": null
+          }
+        ],
+        "supported_operations": [
+          "read",
+          "modify",
+          "fresh-read"
+        ]
+      }
+    },
+    "document": {
+      "current": {
+        "current_revision": {
+          "authority": "dat-store",
+          "id": "dat06-shared-doc",
+          "kind": "dat.content.document",
+          "revision": "rev-3"
+        },
+        "document": {
+          "access_mode": "append",
+          "authoring_scope": {
+            "authority": "dat-store",
+            "id": "dat06-scope",
+            "kind": "work.project",
+            "revision": null
+          },
+          "import_mode": "owned",
+          "maintainer": "dat-worker",
+          "ref": {
+            "authority": "dat-store",
+            "id": "dat06-shared-doc",
+            "kind": "dat.content.document",
+            "revision": null
+          },
+          "role": "dat06-brief",
+          "source_ref": null,
+          "visibility": "shared",
+          "writable": true
+        },
+        "identity": {
+          "authority": "dat-store",
+          "id": "dat06-shared-doc",
+          "kind": "dat.content.document",
+          "revision": null
+        },
+        "payload": {
+          "current_revision": {
+            "authority": "dat-store",
+            "id": "dat06-shared-doc",
+            "kind": "dat.content.document",
+            "revision": "rev-3"
+          },
+          "document": {
+            "access_mode": "append",
+            "authoring_scope": {
+              "authority": "dat-store",
+              "id": "dat06-scope",
+              "kind": "work.project",
+              "revision": null
+            },
+            "import_mode": "owned",
+            "maintainer": "dat-worker",
+            "ref": {
+              "authority": "dat-store",
+              "id": "dat06-shared-doc",
+              "kind": "dat.content.document",
+              "revision": null
+            },
+            "role": "dat06-brief",
+            "source_ref": null,
+            "visibility": "shared",
+            "writable": true
+          },
+          "record_type": "dat.content.document"
+        },
+        "revision": {
+          "author": {
+            "actor": "dat-worker",
+            "authenticated": true,
+            "authority": "dat-auth",
+            "credential_ref": "dat-credential"
+          },
+          "content": {
+            "title": "after-again",
+            "unknown": {
+              "keep": true
+            }
+          },
+          "content_digest": "02e0180b711078cc14985b9e2cd74ce01b2bc7fb4e1aacffccd6d25eef2c0315",
+          "document": {
+            "authority": "dat-store",
+            "id": "dat06-shared-doc",
+            "kind": "dat.content.document",
+            "revision": null
+          },
+          "initial": false,
+          "parent_revision": "rev-2",
+          "record_type": "dat.content.revision",
+          "revision": "rev-3"
+        },
+        "storage_identity": {
+          "authority": "dat-store",
+          "id": "dat06-shared-doc",
+          "kind": "dat.content.document",
+          "revision": "rev-3"
+        },
+        "version": 3
+      },
+      "historical_initial": {
+        "content": {
+          "title": "before",
+          "unknown": {
+            "keep": true
+          }
+        },
+        "document": {
+          "authority": "dat-store",
+          "id": "dat06-shared-doc",
+          "kind": "dat.content.document",
+          "revision": null
+        },
+        "identity": {
+          "authority": "dat-store",
+          "id": "dat06-shared-doc",
+          "kind": "dat.content.document",
+          "revision": "rev-1"
+        },
+        "revision": "rev-1",
+        "storage_identity": {
+          "authority": "dat-store",
+          "id": "revision-ee4ceffb9878b54ab79f8b704d359742",
+          "kind": "dat.content.revision",
+          "revision": "rev-1"
+        },
+        "version": 0
+      },
+      "historical_revision_2": {
+        "content": {
+          "title": "after",
+          "unknown": {
+            "keep": true
+          }
+        },
+        "document": {
+          "authority": "dat-store",
+          "id": "dat06-shared-doc",
+          "kind": "dat.content.document",
+          "revision": null
+        },
+        "identity": {
+          "authority": "dat-store",
+          "id": "dat06-shared-doc",
+          "kind": "dat.content.document",
+          "revision": "rev-2"
+        },
+        "revision": "rev-2",
+        "storage_identity": {
+          "authority": "dat-store",
+          "id": "revision-30f50a7be5328cc6ef1572f9dbdfdb91",
+          "kind": "dat.content.revision",
+          "revision": "rev-2"
+        },
+        "version": 0
+      },
+      "identity": {
+        "authority": "dat-store",
+        "id": "dat06-shared-doc",
+        "kind": "dat.content.document",
+        "revision": null
+      },
+      "initial_revision": {
+        "authority": "dat-store",
+        "id": "dat06-shared-doc",
+        "kind": "dat.content.document",
+        "revision": "rev-1"
+      },
+      "revision_2": {
+        "authority": "dat-store",
+        "id": "dat06-shared-doc",
+        "kind": "dat.content.document",
+        "revision": "rev-2"
+      },
+      "revision_3": {
+        "authority": "dat-store",
+        "id": "dat06-shared-doc",
+        "kind": "dat.content.document",
+        "revision": "rev-3"
+      }
+    },
+    "project": {
+      "authority": "dat-store",
+      "id": "project-6a015ec83fb4ae091060bcdfd2c5",
+      "kind": "work.project",
+      "revision": "rev-1"
+    },
+    "relationships": {
+      "assignment_current_link": {
+        "access_mode": "read",
+        "document": {
+          "mode": "current",
+          "ref": {
+            "authority": "dat-store",
+            "id": "dat06-shared-doc",
+            "kind": "dat.content.document",
+            "revision": null
+          }
+        },
+        "key": "brief",
+        "namespace": "work.documents",
+        "subject": {
+          "authority": "dat-store",
+          "id": "assignment-dat06",
+          "kind": "work.assignment",
+          "revision": null
+        }
+      },
+      "shot_pinned_after": {
+        "identity": {
+          "authority": "dat-store",
+          "id": "link-864f2393cbd6bcc9d7bb13d5b2de1bc8",
+          "kind": "document-association",
+          "revision": null
+        },
+        "payload": {
+          "active": true,
+          "association": {
+            "access_mode": "read",
+            "document": {
+              "mode": "pinned",
+              "ref": {
+                "authority": "dat-store",
+                "id": "dat06-shared-doc",
+                "kind": "dat.content.document",
+                "revision": "rev-1"
+              }
+            },
+            "key": "historical-brief",
+            "namespace": "work.documents",
+            "subject": {
+              "authority": "dat-store",
+              "id": "shot-dat06",
+              "kind": "shot.fixture",
+              "revision": null
+            }
+          },
+          "record_type": "dat.content.association"
+        },
+        "storage_identity": {
+          "authority": "dat-store",
+          "id": "link-864f2393cbd6bcc9d7bb13d5b2de1bc8",
+          "kind": "document-association",
+          "revision": "rev-1"
+        },
+        "version": 1
+      },
+      "shot_pinned_link": {
+        "access_mode": "read",
+        "document": {
+          "mode": "pinned",
+          "ref": {
+            "authority": "dat-store",
+            "id": "dat06-shared-doc",
+            "kind": "dat.content.document",
+            "revision": "rev-1"
+          }
+        },
+        "key": "historical-brief",
+        "namespace": "work.documents",
+        "subject": {
+          "authority": "dat-store",
+          "id": "shot-dat06",
+          "kind": "shot.fixture",
+          "revision": null
+        }
+      },
+      "task_current_link": {
+        "access_mode": "read",
+        "document": {
+          "mode": "current",
+          "ref": {
+            "authority": "dat-store",
+            "id": "dat06-shared-doc",
+            "kind": "dat.content.document",
+            "revision": null
+          }
+        },
+        "key": "brief",
+        "namespace": "work.documents",
+        "subject": {
+          "authority": "dat-store",
+          "id": "task-1bc764bbbb37505abd4fbc09484d",
+          "kind": "work.task",
+          "revision": null
+        }
+      },
+      "task_detached": {
+        "identity": {
+          "authority": "dat-store",
+          "id": "link-eb0adb7a97150b58dab2e2c776696c0c",
+          "kind": "document-association",
+          "revision": null
+        },
+        "payload": {
+          "active": false,
+          "association": {
+            "access_mode": "read",
+            "document": {
+              "mode": "current",
+              "ref": {
+                "authority": "dat-store",
+                "id": "dat06-shared-doc",
+                "kind": "dat.content.document",
+                "revision": null
+              }
+            },
+            "key": "brief",
+            "namespace": "work.documents",
+            "subject": {
+              "authority": "dat-store",
+              "id": "task-1bc764bbbb37505abd4fbc09484d",
+              "kind": "work.task",
+              "revision": null
+            }
+          },
+          "record_type": "dat.content.association"
+        },
+        "storage_identity": {
+          "authority": "dat-store",
+          "id": "link-eb0adb7a97150b58dab2e2c776696c0c",
+          "kind": "document-association",
+          "revision": "rev-2"
+        },
+        "version": 2
+      }
+    },
+    "shot_fixture": {
+      "after": {
+        "definition": {
+          "classification": "open_annotation",
+          "definition_id": "dat.extensions.annotation.open.v1",
+          "description": "Harmless user annotations; unknown JSON fields are retained and never grant authority.",
+          "metadata": {
+            "doc_role": "annotation",
+            "unknown_values": "retained"
+          },
+          "namespace": "annotation.open",
+          "owner": "dat",
+          "query_fields": [
+            "*"
+          ],
+          "resource_kinds": [
+            "*"
+          ],
+          "schema": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "dat.extensions.annotation.open.v1",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1",
+          "writable": true
+        },
+        "metadata": {
+          "annotation.open": {
+            "color": "blue",
+            "future_annotation": {
+              "retain": [
+                1,
+                true
+              ]
+            }
+          },
+          "annotation.sibling": {
+            "keep": "seed"
+          },
+          "managed.state": {
+            "acceptance": "fnd-owned",
+            "identity": "fnd-owned",
+            "primary": "fnd-owned",
+            "provenance": "fnd-owned"
+          }
+        },
+        "payload": {
+          "fixture_shape": "shot",
+          "managed_payload": {
+            "acceptance": {
+              "status": "pending"
+            },
+            "owner": "fnd",
+            "primary_state": "fnd-owned",
+            "provenance": {
+              "source": "neutral-fixture"
+            }
+          },
+          "metadata": {
+            "annotation.open": {
+              "color": "blue",
+              "future_annotation": {
+                "retain": [
+                  1,
+                  true
+                ]
+              }
+            },
+            "annotation.sibling": {
+              "keep": "seed"
+            },
+            "managed.state": {
+              "acceptance": "fnd-owned",
+              "identity": "fnd-owned",
+              "primary": "fnd-owned",
+              "provenance": "fnd-owned"
+            }
+          },
+          "record_type": "neutral-fixture"
+        },
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-c36de4ed7faa5dfe7df1710549639f9e"
+          ],
+          "logical_request_key": "dat06-shot-metadata",
+          "observed_revision": "rev-2",
+          "operation": "dat.extensions.metadata.set",
+          "replayed": false,
+          "request_digest": "a587a2db134009a437cda877e74c9db5b193707a7bd6c71a4c2d72ba3f6ce3ac",
+          "result_ref": {
+            "authority": "dat-store",
+            "id": "shot-dat06",
+            "kind": "shot.fixture",
+            "revision": "rev-2"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "dat-store",
+            "id": "shot-dat06",
+            "kind": "shot.fixture",
+            "revision": null
+          },
+          "transaction_id": "e993bd17af0ea242b180fdf3092c60af",
+          "unknown_reason": null
+        },
+        "revision": "rev-2",
+        "schema_ref": {
+          "authority": "herzchen",
+          "id": "dat.extensions.annotation.open.v1",
+          "kind": "dat.extensions.schema",
+          "revision": "1"
+        },
+        "subject": {
+          "authority": "dat-store",
+          "id": "shot-dat06",
+          "kind": "shot.fixture",
+          "revision": "rev-2"
+        },
+        "value": {
+          "color": "blue",
+          "future_annotation": {
+            "retain": [
+              1,
+              true
+            ]
+          }
+        },
+        "version": 2
+      },
+      "before": {
+        "created_at": "2026-09-13T23:53:10.664056Z",
+        "edit_token": null,
+        "payload": {
+          "fixture_shape": "shot",
+          "managed_payload": {
+            "acceptance": {
+              "status": "pending"
+            },
+            "owner": "fnd",
+            "primary_state": "fnd-owned",
+            "provenance": {
+              "source": "neutral-fixture"
+            }
+          },
+          "metadata": {
+            "annotation.sibling": {
+              "keep": "seed"
+            },
+            "managed.state": {
+              "acceptance": "fnd-owned",
+              "identity": "fnd-owned",
+              "primary": "fnd-owned",
+              "provenance": "fnd-owned"
+            }
+          },
+          "record_type": "neutral-fixture"
+        },
+        "ref": {
+          "authority": "dat-store",
+          "id": "shot-dat06",
+          "kind": "shot.fixture",
+          "revision": "seed-1"
+        },
+        "updated_at": "2026-09-13T23:53:10.664056Z",
+        "version": 1
+      },
+      "fresh_after": {
+        "definition": {
+          "classification": "open_annotation",
+          "definition_id": "dat.extensions.annotation.open.v1",
+          "description": "Harmless user annotations; unknown JSON fields are retained and never grant authority.",
+          "metadata": {
+            "doc_role": "annotation",
+            "unknown_values": "retained"
+          },
+          "namespace": "annotation.open",
+          "owner": "dat",
+          "query_fields": [
+            "*"
+          ],
+          "resource_kinds": [
+            "*"
+          ],
+          "schema": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "dat.extensions.annotation.open.v1",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1",
+          "writable": true
+        },
+        "metadata": {
+          "annotation.open": {
+            "color": "blue",
+            "future_annotation": {
+              "retain": [
+                1,
+                true
+              ]
+            }
+          },
+          "annotation.sibling": {
+            "keep": "seed"
+          },
+          "managed.state": {
+            "acceptance": "fnd-owned",
+            "identity": "fnd-owned",
+            "primary": "fnd-owned",
+            "provenance": "fnd-owned"
+          }
+        },
+        "payload": {
+          "fixture_shape": "shot",
+          "managed_payload": {
+            "acceptance": {
+              "status": "pending"
+            },
+            "owner": "fnd",
+            "primary_state": "fnd-owned",
+            "provenance": {
+              "source": "neutral-fixture"
+            }
+          },
+          "metadata": {
+            "annotation.open": {
+              "color": "blue",
+              "future_annotation": {
+                "retain": [
+                  1,
+                  true
+                ]
+              }
+            },
+            "annotation.sibling": {
+              "keep": "seed"
+            },
+            "managed.state": {
+              "acceptance": "fnd-owned",
+              "identity": "fnd-owned",
+              "primary": "fnd-owned",
+              "provenance": "fnd-owned"
+            }
+          },
+          "record_type": "neutral-fixture"
+        },
+        "receipt": null,
+        "revision": "rev-2",
+        "schema_ref": {
+          "authority": "herzchen",
+          "id": "dat.extensions.annotation.open.v1",
+          "kind": "dat.extensions.schema",
+          "revision": "1"
+        },
+        "subject": {
+          "authority": "dat-store",
+          "id": "shot-dat06",
+          "kind": "shot.fixture",
+          "revision": "rev-2"
+        },
+        "value": {
+          "color": "blue",
+          "future_annotation": {
+            "retain": [
+              1,
+              true
+            ]
+          }
+        },
+        "version": 2
+      },
+      "identity": {
+        "authority": "dat-store",
+        "id": "shot-dat06",
+        "kind": "shot.fixture",
+        "revision": "seed-1"
+      },
+      "query": {
+        "definition": {
+          "classification": "open_annotation",
+          "definition_id": "dat.extensions.annotation.open.v1",
+          "description": "Harmless user annotations; unknown JSON fields are retained and never grant authority.",
+          "metadata": {
+            "doc_role": "annotation",
+            "unknown_values": "retained"
+          },
+          "namespace": "annotation.open",
+          "owner": "dat",
+          "query_fields": [
+            "*"
+          ],
+          "resource_kinds": [
+            "*"
+          ],
+          "schema": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "schema_ref": {
+            "authority": "herzchen",
+            "id": "dat.extensions.annotation.open.v1",
+            "kind": "dat.extensions.schema",
+            "revision": "1"
+          },
+          "version": "1",
+          "writable": true
+        },
+        "matches": [
+          {
+            "field": "color",
+            "namespace": "annotation.open",
+            "value": "blue"
+          }
+        ],
+        "metadata": {
+          "annotation.open": {
+            "color": "blue",
+            "future_annotation": {
+              "retain": [
+                1,
+                true
+              ]
+            }
+          },
+          "annotation.sibling": {
+            "keep": "seed"
+          },
+          "managed.state": {
+            "acceptance": "fnd-owned",
+            "identity": "fnd-owned",
+            "primary": "fnd-owned",
+            "provenance": "fnd-owned"
+          }
+        },
+        "payload": {
+          "fixture_shape": "shot",
+          "managed_payload": {
+            "acceptance": {
+              "status": "pending"
+            },
+            "owner": "fnd",
+            "primary_state": "fnd-owned",
+            "provenance": {
+              "source": "neutral-fixture"
+            }
+          },
+          "metadata": {
+            "annotation.open": {
+              "color": "blue",
+              "future_annotation": {
+                "retain": [
+                  1,
+                  true
+                ]
+              }
+            },
+            "annotation.sibling": {
+              "keep": "seed"
+            },
+            "managed.state": {
+              "acceptance": "fnd-owned",
+              "identity": "fnd-owned",
+              "primary": "fnd-owned",
+              "provenance": "fnd-owned"
+            }
+          },
+          "record_type": "neutral-fixture"
+        },
+        "receipt": null,
+        "revision": "rev-2",
+        "schema_ref": {
+          "authority": "herzchen",
+          "id": "dat.extensions.annotation.open.v1",
+          "kind": "dat.extensions.schema",
+          "revision": "1"
+        },
+        "subject": {
+          "authority": "dat-store",
+          "id": "shot-dat06",
+          "kind": "shot.fixture",
+          "revision": "rev-2"
+        },
+        "version": 2
+      }
+    },
+    "task": {
+      "after": {
+        "aliases": [
+          "task-4fbc09484d"
+        ],
+        "dependencies": [],
+        "kind": "task",
+        "lifecycle": "pending",
+        "name": "DAT-06 task-shaped fixture",
+        "parent": {
+          "authority": "dat-store",
+          "id": "project-6a015ec83fb4ae091060bcdfd2c5",
+          "kind": "work.project",
+          "revision": null
+        },
+        "payload": {
+          "alias": "task-4fbc09484d",
+          "aliases": [
+            "task-4fbc09484d"
+          ],
+          "dependencies": [],
+          "fields": {
+            "assignment": "assignment-dat06",
+            "changed_by": "public-work-graph",
+            "unrelated": {
+              "keep": true
+            }
+          },
+          "id": "task-1bc764bbbb37505abd4fbc09484d",
+          "kind": "task",
+          "lifecycle": "pending",
+          "name": "DAT-06 task-shaped fixture",
+          "parent": {
+            "authority": "dat-store",
+            "id": "project-6a015ec83fb4ae091060bcdfd2c5",
+            "kind": "work.project"
+          },
+          "project_ref": {
+            "authority": "dat-store",
+            "id": "project-6a015ec83fb4ae091060bcdfd2c5",
+            "kind": "work.project"
+          },
+          "readiness": {
+            "dispatch": false,
+            "ready": false,
+            "status": "not-evaluated"
+          },
+          "schema_revision": "work.v1",
+          "title": "DAT-06 task-shaped fixture"
+        },
+        "project_ref": {
+          "authority": "dat-store",
+          "id": "project-6a015ec83fb4ae091060bcdfd2c5",
+          "kind": "work.project",
+          "revision": null
+        },
+        "readiness": {
+          "dispatch": false,
+          "ready": false,
+          "status": "not-evaluated"
+        },
+        "ref": {
+          "authority": "dat-store",
+          "id": "task-1bc764bbbb37505abd4fbc09484d",
+          "kind": "work.task",
+          "revision": "rev-2"
+        },
+        "title": "DAT-06 task-shaped fixture",
+        "version": 2
+      },
+      "before": {
+        "aliases": [
+          "task-4fbc09484d"
+        ],
+        "dependencies": [],
+        "kind": "task",
+        "lifecycle": "pending",
+        "name": "DAT-06 task-shaped fixture",
+        "parent": {
+          "authority": "dat-store",
+          "id": "project-6a015ec83fb4ae091060bcdfd2c5",
+          "kind": "work.project",
+          "revision": null
+        },
+        "payload": {
+          "alias": "task-4fbc09484d",
+          "aliases": [
+            "task-4fbc09484d"
+          ],
+          "dependencies": [],
+          "fields": {
+            "assignment": "assignment-dat06",
+            "unrelated": {
+              "keep": true
+            }
+          },
+          "id": "task-1bc764bbbb37505abd4fbc09484d",
+          "kind": "task",
+          "lifecycle": "pending",
+          "name": "DAT-06 task-shaped fixture",
+          "parent": {
+            "authority": "dat-store",
+            "id": "project-6a015ec83fb4ae091060bcdfd2c5",
+            "kind": "work.project"
+          },
+          "project_ref": {
+            "authority": "dat-store",
+            "id": "project-6a015ec83fb4ae091060bcdfd2c5",
+            "kind": "work.project"
+          },
+          "readiness": {
+            "dispatch": false,
+            "ready": false,
+            "status": "not-evaluated"
+          },
+          "schema_revision": "work.v1",
+          "title": "DAT-06 task-shaped fixture"
+        },
+        "project_ref": {
+          "authority": "dat-store",
+          "id": "project-6a015ec83fb4ae091060bcdfd2c5",
+          "kind": "work.project",
+          "revision": null
+        },
+        "readiness": {
+          "dispatch": false,
+          "ready": false,
+          "status": "not-evaluated"
+        },
+        "ref": {
+          "authority": "dat-store",
+          "id": "task-1bc764bbbb37505abd4fbc09484d",
+          "kind": "work.task",
+          "revision": "rev-1"
+        },
+        "title": "DAT-06 task-shaped fixture",
+        "version": 1
+      },
+      "fresh_after": {
+        "aliases": [
+          "task-4fbc09484d"
+        ],
+        "dependencies": [],
+        "kind": "task",
+        "lifecycle": "pending",
+        "name": "DAT-06 task-shaped fixture",
+        "parent": {
+          "authority": "dat-store",
+          "id": "project-6a015ec83fb4ae091060bcdfd2c5",
+          "kind": "work.project",
+          "revision": null
+        },
+        "payload": {
+          "alias": "task-4fbc09484d",
+          "aliases": [
+            "task-4fbc09484d"
+          ],
+          "dependencies": [],
+          "fields": {
+            "assignment": "assignment-dat06",
+            "changed_by": "public-work-graph",
+            "unrelated": {
+              "keep": true
+            }
+          },
+          "id": "task-1bc764bbbb37505abd4fbc09484d",
+          "kind": "task",
+          "lifecycle": "pending",
+          "name": "DAT-06 task-shaped fixture",
+          "parent": {
+            "authority": "dat-store",
+            "id": "project-6a015ec83fb4ae091060bcdfd2c5",
+            "kind": "work.project"
+          },
+          "project_ref": {
+            "authority": "dat-store",
+            "id": "project-6a015ec83fb4ae091060bcdfd2c5",
+            "kind": "work.project"
+          },
+          "readiness": {
+            "dispatch": false,
+            "ready": false,
+            "status": "not-evaluated"
+          },
+          "schema_revision": "work.v1",
+          "title": "DAT-06 task-shaped fixture"
+        },
+        "project_ref": {
+          "authority": "dat-store",
+          "id": "project-6a015ec83fb4ae091060bcdfd2c5",
+          "kind": "work.project",
+          "revision": null
+        },
+        "readiness": {
+          "dispatch": false,
+          "ready": false,
+          "status": "not-evaluated"
+        },
+        "ref": {
+          "authority": "dat-store",
+          "id": "task-1bc764bbbb37505abd4fbc09484d",
+          "kind": "work.task",
+          "revision": "rev-2"
+        },
+        "title": "DAT-06 task-shaped fixture",
+        "version": 2
+      },
+      "identity": {
+        "authority": "dat-store",
+        "id": "task-1bc764bbbb37505abd4fbc09484d",
+        "kind": "work.task",
+        "revision": "rev-2"
+      }
+    }
+  },
+  "source_pins": {
+    "accepted_base_commit": "e9f91f196d5130965069c6110e3f2d60098c3952",
+    "accepted_base_tree": "a735253153056ae80b755005b64ee78d4322f275",
+    "dat05_source_commit": "3597187aaaebb627ed818f5dd3ab1f165eb15097",
+    "dat05_source_tree": "b405bdd3c229ee5d8fed04b8be5c45a86b71a64d",
+    "fnd_typed_identity_source_commit": "59043551e6fb4a19d7130d5aa47cf75a732e0a45",
+    "fnd_typed_identity_source_tree": "39bb3ac322855f3e6552813b3ce87c6834d40917",
+    "installed_origin": "not represented by this source-generated handoff; see worker result",
+    "refreshed_source_manifest_sha256": "742fed428923c7702001865407d3d8897ba9685b5fcfd473076fc7edb3ee563a",
+    "source_origin": "worker checkout via PYTHONPATH=src"
+  },
+  "task": {
+    "criteria": [
+      "C05",
+      "C06",
+      "C33",
+      "C35"
+    ],
+    "id": "DAT-06",
+    "source_reuse_entries": [
+      "EX-CONTENT",
+      "EX-METADATA"
+    ],
+    "status": "worker_evidence_only",
+    "title": "Hand off data-extension conformance"
+  },
+  "unresolved": {
+    "astrid": "actual Astrid binding deferred behind G-OTTO",
+    "installed": "candidate-wheel import proof only; pytest unavailable in disposable installed environment",
+    "license": "not evaluated by this worker",
+    "publication": "not performed by this worker"
+  }
+}
