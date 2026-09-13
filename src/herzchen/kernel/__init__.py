@@ -1,6 +1,29 @@
 """Neutral FND-03 SQLite kernel."""
 
 from .schema import COMPOSITION, SCHEMA_FINGERPRINT, SCHEMA_REVISION
+from .limits import (
+    AllowanceExhaustedError,
+    CapacityExhaustedError,
+    LimitError,
+    LimitPool,
+    LimitService,
+    Limits,
+    ReservationLedger,
+    ReservationRecord,
+    ReservationStateError,
+    ReservationStatus,
+)
+from .operations import (
+    OperationAdapter,
+    OperationContext,
+    OperationError,
+    OperationManager,
+    OperationRecord,
+    OperationRequest,
+    OperationState,
+    UnknownOutcomeError,
+    request_digest,
+)
 from .store import (
     ClosedStoreError,
     CompositionMismatchError,
@@ -42,4 +65,23 @@ __all__ = [
     "DescriptorExpectationMismatchError",
     "TargetMismatchError",
     "VersionConflictError",
+    "AllowanceExhaustedError",
+    "CapacityExhaustedError",
+    "LimitError",
+    "LimitPool",
+    "LimitService",
+    "Limits",
+    "ReservationLedger",
+    "ReservationRecord",
+    "ReservationStateError",
+    "ReservationStatus",
+    "OperationAdapter",
+    "OperationContext",
+    "OperationError",
+    "OperationManager",
+    "OperationRecord",
+    "OperationRequest",
+    "OperationState",
+    "UnknownOutcomeError",
+    "request_digest",
 ]
