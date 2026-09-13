@@ -47,4 +47,6 @@ Known bounded gaps: FND-03 still owns the SQLite one-writer/store implementation
 
 ## Commit/tree
 
-The final commit and tree are recorded here after the coherent result is committed.
+- Implementation commit: `d00d579a7077326956df207d4cc8a2becacc5f1d`
+- Implementation tree: `cbcb7888c1b66ef4be38961d73698be8f15cafb0`
+- This handoff report is a follow-up metadata commit on the same `fnd-02-worker` branch; the implementation commit above is the coherent contract result to consume.
