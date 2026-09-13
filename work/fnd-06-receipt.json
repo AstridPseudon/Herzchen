@@ -1,0 +1,33 @@
+{
+  "receipt": "FND-06",
+  "receipt_revision": "fnd-06.receipt.v1",
+  "status": "candidate-ready",
+  "route": {"mode": "normal", "model": "gpt-5.6-luna", "reasoning": "high", "xhardsol": false},
+  "worker": {
+    "worktree": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-fnd06-worker",
+    "branch": "fnd-06-worker",
+    "candidate_commit": "9e15ad908c4a9773ce27e7ff8e03e3dfca274c9b",
+    "candidate_tree": "db08184a5bf81a74c1970db7ac741f97cc192cda",
+    "clean_at_source_handoff": true
+  },
+  "artifacts": {
+    "handoff_path": "handoffs/FND.json",
+    "handoff_sha256": "d4b5b6994e97454d3a9bf886ee69dba48069535b95529de3fb3885d02de8006e",
+    "result_path": "work/fnd-06-result.md",
+    "result_sha256": "a8d340f98ee99036a82240d1c3e89d6eb3a5a45df9e2043ed828516549ce2d10",
+    "receipt_path": "work/fnd-06-receipt.json",
+    "wheel_sha256": "4ac45490195be909ada4e9f1bdce87b9e098dd2b9526b70c622302495651dbc3",
+    "source_manifest_sha256": "742fed428923c7702001865407d3d8897ba9685b5fcfd473076fc7edb3ee563a"
+  },
+  "acceptance": {
+    "installed_pythonpath_unset": true,
+    "focused_installed_kernel_recovery": "47 passed, 10 subtests, exit 0",
+    "installed_kernel_documents": "31 passed, exit 0",
+    "installed_kernel_work": "6 passed, exit 0",
+    "installed_common_conformance": "17 passed, 70 subtests, exit 0",
+    "installed_import_boundary": "kernel+adapters fresh import loaded zero optional modules",
+    "installed_schema_history_receipt_event_coherence": true,
+    "product_or_live_controller_verdict": false
+  },
+  "handoff_note": "Manager may route this bounded candidate to root for ledger acceptance. No gate or review pool was called. Corrected FND-05 evidence remains separate and is cited by the handoff."
+}

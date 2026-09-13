@@ -1,0 +1,132 @@
+{
+  "handoff": "FND-06",
+  "status": "candidate-ready",
+  "scope": "Packaged neutral kernel and reduced-composition proof only; no product or live-controller verdict.",
+  "custody": {
+    "invoking_root": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20",
+    "control_root": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery",
+    "worker_worktree": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-fnd06-worker",
+    "branch": "fnd-06-worker",
+    "base_commit": "e9f91f196d5130965069c6110e3f2d60098c3952",
+    "base_tree": "a735253153056ae80b755005b64ee78d4322f275",
+    "preflight_commit": "211571555e2ab798faad0f3c5644ea477d1dd5f2",
+    "preflight_tree": "d7c3821c68ebc1a73ab358b8366ff22f71aecc3f",
+    "candidate_commit": "9e15ad908c4a9773ce27e7ff8e03e3dfca274c9b",
+    "candidate_tree": "db08184a5bf81a74c1970db7ac741f97cc192cda",
+    "worktree_clean_at_source_handoff": true,
+    "source_ownership": "Only FND-06 packaging/import-proof paths were added after the supplied baseline. FND-05 recovery remains the accepted cherry-picked correction; the typed revision baseline was not rewritten. No merge, push, ledger, seed, extraction-map, Runtime/Astrid checkout, or other owner worktree was changed."
+  },
+  "source_manifest": {
+    "path": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/source-set-int01-refresh-20260913.json",
+    "sha256": "742fed428923c7702001865407d3d8897ba9685b5fcfd473076fc7edb3ee563a"
+  },
+  "lineage": {
+    "typed_revision_baseline": {
+      "accepted_source_commit": "59043551e6fb4a19d7130d5aa47cf75a732e0a45",
+      "accepted_source_tree": "39bb3ac322855f3e6552813b3ce87c6834d40917",
+      "current_store_blob": "0c133689d8f20fc24005b1ee5fa531a57f0e7eca",
+      "current_identity_revision_test_blob": "be3627efacb723a8bcb14c009ef6b633ecee719a",
+      "current_store_path": "src/herzchen/kernel/store.py",
+      "current_identity_revision_test_path": "tests/kernel/test_identity_revisions.py"
+    },
+    "recovery": {
+      "original_source_commit": "13f23ec6b00bfd7ecb2b6534ded49029b1c94a23",
+      "corrected_source_commit": "8258aafc8fa95e23ce7ff50303c01583c9f8e605",
+      "corrected_source_tree": "273695de8c2091e268d85eaa77cfd85a66cf0db4",
+      "current_cherry_pick_commit": "211571555e2ab798faad0f3c5644ea477d1dd5f2",
+      "current_recovery_blob": "97830dfcb02b324677df53dc54c4b0cba1769e86d814678ce583ba067e20e205",
+      "current_recovery_test_blob": "c4fb78414e75443d0fee7bcd08dedc8342c52a80ea60ba837599748f15e80172",
+      "preserved_correction_result": {
+        "path": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-fnd05-correction-worker/work/fnd-05-correction-result.md",
+        "sha256": "2c3e5b143965f259b36a22b38b60e974105824c12b64b4f790d37bc13818b47b"
+      },
+      "installed_correction_supplement_status": "Preserved separately as source evidence; its original installed supplement does not claim installed proof for corrected commit 8258aaf. This FND-06 wheel is the installed proof for the final candidate."
+    },
+    "source_checkout_lineage_only": {
+      "runtime": {"commit": "afccb430e2a983c968b6a8a96fd630ba3a6262fc", "tree": "be89db2f02231aeef212bdb266d12c51778f32ae", "installed_origin_claimed": false},
+      "astrid": {"commit": "96e5664237eb35adeb4cad08bddd8cd6df0a2ae1", "tree": "19f7539a266618a797559eedbda48e2752b30fa3", "installed_origin_claimed": false}
+    },
+    "extraction_lineage": {
+      "map_path": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/plan/extraction-map.json",
+      "map_sha256": "3ec83c6ff9b6e5ab415827b3bb38412a80349745ace2b442c0f7379c74fb59a3",
+      "entries": {
+        "EX-STORE": {"decision": "extract_generalise", "target": "Herzchen kernel owner/recovery", "implementation_tasks": ["FND-03", "FND-05", "FND-06"], "source_test_lineage": "Runtime store/backup and writer/recovery tests; source checkout only"},
+        "EX-OPS": {"decision": "extract_generalise", "target": "Herzchen operations and accounting", "implementation_tasks": ["FND-04", "FND-06"], "source_test_lineage": "Runtime replay/reservation/settlement tests; source checkout only"},
+        "EX-EVENTS": {"decision": "extract_generalise", "target": "Herzchen event/receipt implementation", "implementation_tasks": ["FND-05", "FND-06"], "source_test_lineage": "Runtime event/receipt/cursor/reboot tests and Astrid read-adapter source; source checkout only"}
+      },
+      "map_status": "proposed discovery map; no consumer cutover or installed Runtime/Astrid origin inferred"
+    }
+  },
+  "candidate_package": {
+    "distribution": "herzchen-contracts",
+    "version": "0.1.0",
+    "requires": [],
+    "interpreter": "/private/tmp/herzchen-fnd06-candidate-final2.JMsgxP/venv311/bin/python",
+    "python_version": "3.11.16",
+    "build_source": "/tmp/herzchen-fnd06-candidate-final2.JMsgxP/source",
+    "wheel": "/private/tmp/herzchen-fnd06-candidate-final2.JMsgxP/wheels/herzchen_contracts-0.1.0-py3-none-any.whl",
+    "wheel_sha256": "4ac45490195be909ada4e9f1bdce87b9e098dd2b9526b70c622302495651dbc3",
+    "venv": "/private/tmp/herzchen-fnd06-candidate-final2.JMsgxP/venv311",
+    "build_copy_exclusions": ["/.git", "/work", "/tests", "/handoffs", "*.pyc"],
+    "installed_proof": {"pythonpath": "unset", "installed_file_count_in_wheel": 34, "root_work_or_assessment_files": [], "optional_work_domain_packaged": true}
+  },
+  "schema_and_coherence": {
+    "schema_revision": "fnd-03.v1",
+    "schema_fingerprint": "367b22e1a345e13539ce6cef0d302d507bebe36e73cda68010c4f037e8c1ca5c",
+    "composition": ["store_metadata", "identities", "record_references", "event_sequences", "command_receipts", "events"],
+    "composition_digest": "bff6fc666dc6bdf41973b68606b13765c5581a04e8cfa7f20785fb3bb07f1713",
+    "contract_revision": "fnd-02.v1.1",
+    "contract_digest": "28ee051bef55163e79be8acf17513eccd258769f9cebcb5a2608bdb8bd300264",
+    "installed_metadata": {"table_names": ["command_receipts", "event_sequences", "events", "identities", "record_references", "store_metadata"], "domain_descriptor_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"},
+    "installed_round_trip": {"identity_revision": "rev-1", "identity_version": 1, "receipt_status": "committed", "event_count": 1, "event_transaction_match": true, "history_receipt_event_coherence": true, "fresh_and_reopened_reads_equal": true}
+  },
+  "installed_origins_and_dependencies": {
+    "observed_origins": {
+      "herzchen": "/private/tmp/herzchen-fnd06-candidate-final2.JMsgxP/venv311/lib/python3.11/site-packages/herzchen/__init__.py",
+      "herzchen.contracts": "/private/tmp/herzchen-fnd06-candidate-final2.JMsgxP/venv311/lib/python3.11/site-packages/herzchen/contracts/__init__.py",
+      "herzchen.kernel": "/private/tmp/herzchen-fnd06-candidate-final2.JMsgxP/venv311/lib/python3.11/site-packages/herzchen/kernel/__init__.py",
+      "herzchen.kernel.schema": "/private/tmp/herzchen-fnd06-candidate-final2.JMsgxP/venv311/lib/python3.11/site-packages/herzchen/kernel/schema.py",
+      "herzchen.kernel.store": "/private/tmp/herzchen-fnd06-candidate-final2.JMsgxP/venv311/lib/python3.11/site-packages/herzchen/kernel/store.py",
+      "herzchen.kernel.operations": "/private/tmp/herzchen-fnd06-candidate-final2.JMsgxP/venv311/lib/python3.11/site-packages/herzchen/kernel/operations.py",
+      "herzchen.kernel.limits": "/private/tmp/herzchen-fnd06-candidate-final2.JMsgxP/venv311/lib/python3.11/site-packages/herzchen/kernel/limits.py",
+      "herzchen.kernel.recovery": "/private/tmp/herzchen-fnd06-candidate-final2.JMsgxP/venv311/lib/python3.11/site-packages/herzchen/kernel/recovery.py",
+      "herzchen.adapters": "/private/tmp/herzchen-fnd06-candidate-final2.JMsgxP/venv311/lib/python3.11/site-packages/herzchen/adapters/__init__.py",
+      "herzchen.adapters.host": "/private/tmp/herzchen-fnd06-candidate-final2.JMsgxP/venv311/lib/python3.11/site-packages/herzchen/adapters/host.py",
+      "herzchen.adapters.receipt": "/private/tmp/herzchen-fnd06-candidate-final2.JMsgxP/venv311/lib/python3.11/site-packages/herzchen/adapters/receipt.py",
+      "herzchen.domains.work": "/private/tmp/herzchen-fnd06-candidate-final2.JMsgxP/venv311/lib/python3.11/site-packages/herzchen/domains/work/__init__.py"
+    },
+    "package_metadata_requires": [],
+    "fresh_import_observation": {"imported": ["herzchen.kernel", "herzchen.adapters"], "loaded_optional_modules": [], "optional_specs_not_imported": ["herzchen.domains.work", "herzchen.domains.megado", "herzchen.domains.god", "herzchen.domains.shot", "herzchen.runtime", "herzchen.astrid", "herzchen.otto"], "kernel_and_adapters_neutral_modules_observed": ["herzchen.contracts", "herzchen.kernel", "herzchen.kernel.schema", "herzchen.kernel.store", "herzchen.kernel.operations", "herzchen.kernel.limits", "herzchen.kernel.recovery", "herzchen.adapters", "herzchen.adapters.host", "herzchen.adapters.receipt"], "method": "fresh subprocess import plus importlib.util.find_spec and sys.modules observation; not source-string search"}
+  },
+  "verification": {
+    "commands": [
+      {"label": "build", "command": "/opt/homebrew/bin/python3.11 -m pip wheel --no-deps --no-build-isolation /tmp/herzchen-fnd06-candidate-final2.JMsgxP/source --wheel-dir /tmp/herzchen-fnd06-candidate-final2.JMsgxP/wheels", "started": "2026-09-14T01:49:07+02:00", "ended": "2026-09-14T01:49:10+02:00", "exit": 0, "result": "herzchen_contracts-0.1.0-py3-none-any.whl"},
+      {"label": "focused-installed-kernel-recovery", "command": "env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-fnd06-candidate-final2.JMsgxP/venv311/bin/python -B -m pytest -q /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-fnd06-worker/tests/kernel/test_identity_revisions.py /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-fnd06-worker/tests/kernel/test_transactions.py /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-fnd06-worker/tests/kernel/test_receipts_limits.py /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-fnd06-worker/tests/kernel/test_recovery.py /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-fnd06-worker/tests/kernel/test_reduced_composition.py", "started": "2026-09-14T01:49:45+02:00", "ended": "2026-09-14T01:49:46+02:00", "exit": 0, "result": "47 passed, 10 subtests"},
+      {"label": "installed-kernel-documents", "composition": "kernel+documents", "command": "env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-fnd06-candidate-final2.JMsgxP/venv311/bin/python -B -m pytest -q /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-fnd06-worker/tests/content/test_documents.py /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-fnd06-worker/tests/content/test_document_authoring_contract.py /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-fnd06-worker/tests/content/test_context_visibility.py", "started": "2026-09-14T01:49:45+02:00", "ended": "2026-09-14T01:49:46+02:00", "exit": 0, "result": "31 passed"},
+      {"label": "installed-kernel-work", "composition": "kernel+work", "command": "env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-fnd06-candidate-final2.JMsgxP/venv311/bin/python -B -m pytest -q /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-fnd06-worker/tests/work/test_identity_graph.py", "started": "2026-09-14T01:49:45+02:00", "ended": "2026-09-14T01:49:46+02:00", "exit": 0, "result": "6 passed"},
+      {"label": "installed-common-conformance", "composition": "common conformance harness", "command": "env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-fnd06-candidate-final2.JMsgxP/venv311/bin/python -B -m pytest -q /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-fnd06-worker/tests/conformance/test_fixtures.py /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-fnd06-worker/tests/conformance/test_matrix.py /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-fnd06-worker/tests/conformance/test_rehearsal.py", "started": "2026-09-14T01:49:45+02:00", "ended": "2026-09-14T01:49:46+02:00", "exit": 0, "result": "17 passed, 70 subtests"},
+      {"label": "installed-schema-history-proof", "command": "env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-fnd06-candidate-final2.JMsgxP/venv311/bin/python -B -c '<inline installed Store create/mutate/fresh-read/close/reopen coherence proof>'", "exit": 0, "result": "schema metadata and composition match; identity rev-1/version 1; committed receipt and one event share transaction; references, receipt/event IDs and reopened history agree"},
+      {"label": "source-diff-check", "command": "git diff --check", "exit": 0, "result": "clean"},
+      {"label": "source-reduced-test", "command": "PYTHONPATH=src /opt/homebrew/bin/python3.11 -B -m pytest -q tests/kernel/test_reduced_composition.py", "exit": 0, "result": "1 passed"}
+    ],
+    "environment_failures": [
+      {"command": "python3 -m pip wheel --no-deps --no-build-isolation /tmp/herzchen-fnd06-candidate.TJ6OPY/source --wheel-dir /tmp/herzchen-fnd06-candidate.TJ6OPY/wheels", "interpreter": "Python 3.9.6", "tooling": "setuptools 58.0.4", "exit": 0, "result": "superseded UNKNOWN-0.0.0 wheel; not candidate evidence"},
+      {"command": "/tmp/herzchen-fnd06-candidate.TJ6OPY/venv/bin/python -m pytest --version", "exit": 1, "result": "No module named pytest; superseded environment"}
+    ]
+  },
+  "changed_path_hashes": {
+    "src/herzchen/domains/__init__.py": "a6d310139109be639186fde21a94d4f84ac8d1af538b7301ba4f1c504da2efeb",
+    "tests/kernel/test_reduced_composition.py": "5f11a45e807e542a9bfb4d9dd4b9c65860a135fab0805d12c8489793dad38a20",
+    "src/herzchen/kernel/recovery.py": "97830dfcb02b324677df53dc54c4b0cba1769e86d814678ce583ba067e20e205",
+    "tests/kernel/test_recovery.py": "c4fb78414e75443d0fee7bcd08dedc8342c52a80ea60ba837599748f15e80172",
+    "src/herzchen/kernel/__init__.py": "fca8316b02d65239755729a528951c92fa59c5711b55dbea66d47a53f1b0b080"
+  },
+  "known_limits": [
+    "Unmanaged host writers remain outside the one-writer contract; final file checks detect observed changes but cannot provide an external exactly-once boundary against a race after the final check.",
+    "External exactly-once execution and live invocation settlement are not claimed.",
+    "Optional-domain adapter ownership remains explicit and downstream; importing the packaged work domain is not a kernel import and no Megado/God-role/shot-specific adapter is included.",
+    "Common conformance tests are installed and executed, but the matrix itself labels fixture/product status; no live product state is inferred.",
+    "Runtime and Astrid paths are source-checkout lineage only; no installed Runtime/Astrid origin, live Astrid/AST execution, scheduler, migration, or product verdict is claimed.",
+    "The small reduced-composition test can also run from source with PYTHONPATH=src; the acceptance import proof and all composition counts above are from the installed wheel with PYTHONPATH unset."
+  ]
+}
