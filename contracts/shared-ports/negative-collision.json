@@ -1,0 +1,8 @@
+{
+  "contract_revision": "fnd-02.v1.1",
+  "type": "negative_examples",
+  "duplicate_namespace": {"namespace":"example.annotations","schema_revision":"v1","resource_kinds":["example.resource"],"description":"duplicate","owner":"owner-2","profile_bindings":[],"operation_bindings":[{"operation":"example.other","schema_revision":"v1"}],"annotations":{},"managed":false},
+  "duplicate_operation": {"namespace":"other.annotations","schema_revision":"v1","resource_kinds":["other.resource"],"description":"duplicate operation","owner":"owner-2","profile_bindings":[],"operation_bindings":[{"operation":"example.update","schema_revision":"v1"}],"annotations":{},"managed":false},
+  "path_ref": {"authority":"neutral-store","kind":"document","id":"/tmp/not-an-id","revision":null},
+  "unknown_reserved_envelope": {"operation":"example.update","schema_revision":"v1","target":{"authority":"neutral-store","kind":"document","id":"doc-1","revision":null},"context":{},"payload":{},"envelope_revision":"fnd-02.v1.1","reserved_future_field":true}
+}
