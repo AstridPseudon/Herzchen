@@ -7,8 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from herzchen.contracts import AuthenticatedActor, ReplayConflictError
+from herzchen.content import ContentCommandHandler
+from herzchen.contracts import AuthenticatedActor, ReferenceBinding, ReplayConflictError, ResourceRef
 from herzchen.domains.work import WorkGraph, WorkKind
+from herzchen.domains.work.module import contribution as work_contribution
 from herzchen.kernel import Store
 from herzchen.packs.templates import (
     CRITERION_NAMESPACE,
@@ -92,14 +94,40 @@ def test_shipped_delivery_seed_work_is_expanded_from_real_resource(harness):
     assert by_id["implement"].parent.id == by_id["effort"].id
     assert by_id["verify"].parent.id == by_id["effort"].id
     assert by_id["criterion"].parent.id == by_id["effort"].id
-    assert by_id["implement"].dependencies[0].id == by_id["criterion"].id
-    assert by_id["verify"].dependencies[0].id == by_id["implement"].id
+    assert tuple(dependency.id for dependency in by_id["verify"].dependencies) == (by_id["implement"].id,)
+    assert by_id["implement"].dependencies == ()
     assert result.rendered.seed["work"][0]["title"] == "Ship"
     assert result.rendered.seed["work"][0]["outcome"] == "Build"
     assert result.rendered.seed["documents"][0]["content"] == "Build"
-    assert len(result.receipts) == 4
+    assert result.document_refs["goal"].kind == "dat.content.document"
+    assert result.document_refs["goal"].revision is None
+    assert result.association_refs["effort:megado:goal"].kind == "document-association"
+    assert len(result.dat_receipts) == 2
+    assert {receipt.operation for receipt in result.dat_receipts} == {"dat.content.document.create", "dat.content.link"}
+    document_read = ContentCommandHandler(store).read(result.document_refs["goal"])
+    assert document_read["document"]["role"] == "template-document"
+    assert document_read["document"]["visibility"] == "private"
+    assert document_read["document"]["authoring_scope"] == project.ref.to_dict()
+    assert document_read["revision"]["content"] == "Build"
+    association_read = ContentCommandHandler(store).read(result.association_refs["effort:megado:goal"])
+    assert association_read["payload"]["association"]["document"]["ref"] == result.document_refs["goal"].to_dict()
+    assert association_read["payload"]["association"]["document"]["mode"] == "current"
+    assert association_read["payload"]["active"] is True
+    assert len(result.receipts) == 6
     assert all(receipt.status.value == "committed" and receipt.event_ids for receipt in result.receipts)
-    assert len(store.list_events()) == 5
+    assert len(store.list_events()) == 7
+    document_receipt, link_receipt = result.dat_receipts
+    assert document_receipt.result_ref.revision == document_read["current_revision"]["revision"]
+    assert link_receipt.target == result.association_refs["effort:megado:goal"]
+
+    store.close()
+    reopened = Store.open(store.path, authority=store.authority, expected_domains=(work_contribution(),))
+    try:
+        reopened_content = ContentCommandHandler(reopened)
+        assert reopened_content.read(result.document_refs["goal"])["revision"]["content"] == "Build"
+        assert reopened_content.read(result.association_refs["effort:megado:goal"])["payload"]["active"] is True
+    finally:
+        reopened.close()
 
 
 def test_shipped_delivery_is_idempotent_and_conflicts_on_changed_parameters(harness):
@@ -108,12 +136,17 @@ def test_shipped_delivery_is_idempotent_and_conflicts_on_changed_parameters(harn
     template = _shipped_delivery()
     first = engine.instantiate(template, {"title": "Ship", "outcome": "Build", "proof": "Check"}, project=project, logical_request_key="delivery")
     before_replay = _durable_counts(store)
+    events_before_replay = store.list_events()
     replay = engine.instantiate(template, {"title": "Ship", "outcome": "Build", "proof": "Check"}, project=project, logical_request_key="delivery")
     assert replay.project.ref == first.project.ref
     assert [x.ref for x in replay.records] == [x.ref for x in first.records]
     assert replay.local_refs == first.local_refs
+    assert replay.document_refs == first.document_refs
+    assert replay.association_refs == first.association_refs
+    assert replay.receipts == first.receipts
     assert tuple(receipt.logical_request_key for receipt in replay.receipts) == tuple(receipt.logical_request_key for receipt in first.receipts)
     assert _durable_counts(store) == before_replay
+    assert store.list_events() == events_before_replay
     before_conflict = (graph.list(), store.list_events(), _durable_counts(store))
     with pytest.raises(ReplayConflictError):
         engine.instantiate(template, {"title": "Changed", "outcome": "Build", "proof": "Check"}, project=project, logical_request_key="delivery")
@@ -128,6 +161,9 @@ def test_shipped_delivery_is_idempotent_and_conflicts_on_changed_parameters(harn
     (lambda data: data["seed"]["links"][0].update(relation="blocks"), TemplateValidationError),
     (lambda data: data["seed"]["document_links"][0].update(document={"$local": "missing"}), TemplateReferenceError),
     (lambda data: data["seed"]["document_links"][0].update(binding="pinned"), TemplateValidationError),
+    (lambda data: data["seed"]["documents"][0].update(visibility="not-a-visibility"), TemplateValidationError),
+    (lambda data: data["seed"]["documents"][0].update(role={"not": "text"}), TemplateValidationError),
+    (lambda data: data["seed"]["document_links"][0].update(document={"authority": "pkg03-test", "kind": "dat.content.document", "id": "missing"}), TemplateReferenceError),
 ])
 def test_invalid_shipped_shape_writes_nothing(harness, mutation, error):
     store, graph, engine, _ = harness
@@ -139,6 +175,52 @@ def test_invalid_shipped_shape_writes_nothing(harness, mutation, error):
     with pytest.raises(error):
         engine.instantiate(bad, {"title": "Ship", "outcome": "Build", "proof": "Check"}, project=project, logical_request_key="bad")
     assert (graph.list(), store.list_events(), _durable_counts(store)) == before
+
+
+def test_document_association_failure_rolls_back_work_and_dat_savepoints(harness, monkeypatch):
+    store, graph, engine, _ = harness
+    project = graph.create_project(title="Owner", outcome="Import", logical_request_key="owner")
+    template = _shipped_delivery()
+    before = (graph.list(), store.list_events(), _durable_counts(store))
+    original_execute = ContentCommandHandler.execute
+
+    def fail_link(handler, envelope):
+        if envelope.operation == "dat.content.link":
+            raise RuntimeError("injected DAT association failure")
+        return original_execute(handler, envelope)
+
+    monkeypatch.setattr(ContentCommandHandler, "execute", fail_link)
+    with pytest.raises(RuntimeError, match="injected DAT association failure"):
+        engine.instantiate(template, {"title": "Ship", "outcome": "Build", "proof": "Check"}, project=project, logical_request_key="association-failure")
+    assert (graph.list(), store.list_events(), _durable_counts(store)) == before
+    assert store.connection.execute("SELECT COUNT(*) FROM identities WHERE kind LIKE 'dat.content.%'").fetchone()[0] == 0
+
+
+def test_typed_external_document_is_validated_and_linked_without_local_materialization(harness):
+    store, graph, engine, actor = harness
+    project = graph.create_project(title="Owner", outcome="Import", logical_request_key="owner")
+    content = ContentCommandHandler(store)
+    external = ResourceRef(store.authority, "dat.content.document", "existing-document")
+    from herzchen.content import ContentDocument, ContentRevision
+    from herzchen.contracts import TransactionContext
+
+    document = ContentDocument(external, "source", "shared", "append", actor.actor, project.ref)
+    revision = ContentRevision(external, "source-rev", {"body": "existing"}, actor, initial=True)
+    content.execute(content.build_create_document(TransactionContext(actor, "external-create", "1" * 64, expected_version=0), document, revision))
+    template = work_template(
+        "external-document",
+        seed={
+            "tasks": [{"local_id": "task", "title": "Task"}],
+            "documents": [{"ref": external.to_dict()}],
+            "document_links": [{"subject": {"$local": "task"}, "document": external.to_dict(), "namespace": "megado", "key": "source", "binding": "current"}],
+        },
+    )
+    result = engine.instantiate(template, project=project, logical_request_key="external-document")
+    assert result.document_refs == {}
+    assert len(result.dat_receipts) == 1
+    assert store.get_identity(external) is not None
+    association = next(iter(result.association_refs.values()))
+    assert content.read(association)["payload"]["association"]["document"]["ref"] == external.to_dict()
 
 
 def test_existing_plural_seed_shape_remains_compatible(harness):

@@ -104,3 +104,125 @@ No broad/full-suite run was used for acceptance.
 - No catalog hardcoding; no private writer; no SQL write path; no upstream write; no FND/DAT/WRK/EDT/OTT/control/seed/manifest/contract/shared-map owner-file change.
 - Generated wheel, build metadata, venv, caches, and bytecode are outside the worker checkout and were not left as tracked or working-tree artifacts.
 - Final source/test/report commit and tree are recorded after the allowed-path commit; the checkout is clean at handoff.
+
+## Follow-up correction: DAT document identities and typed link semantics
+
+This addendum supersedes the earlier limitation above that local planning
+documents remained only in WRK fields. The accepted prior commit is preserved:
+
+- source base: `78278f0c7683edd81415c0d67fdd6795cb2cec8f`
+- source base tree: `847456d4d8b9040ce51cf4ce8a56dbec9c2fcaea`
+- correction scope: `src/herzchen/packs/templates.py`,
+  `tests/packs/test_task_templates.py`, and this report only
+- no DAT/FND/WRK/EDT/OTT/control/seed/manifest/contracts/shared-map file was changed
+
+### Exact public APIs and PKG functions
+
+The consumer composition uses the existing public DAT/FND contracts without
+private SQL or a second writer:
+
+- `herzchen.content.ContentCommandHandler(store)`
+- `ContentDocument`, `ContentRevision`, `DocumentAssociation`
+- `ReferenceBinding`, `TransactionContext`, `canonical_json`
+- `ContentCommandHandler.build_create_document()` followed by `.execute()`
+- `ContentCommandHandler.build_link()` followed by `.execute()`
+- `ContentCommandHandler.read()` for fresh document/revision and association readback
+
+The correction functions are `TemplateEngine.instantiate`,
+`_node_list`, `_document_seed_values`, `_resolve_document_external`,
+`_content_actor`, `_content_context`, `_document_identity`,
+`_document_revision`, `_content_document`, and `_document_binding`. `TemplateResult`
+now exposes `document_refs`, `association_refs`, and `dat_receipts`, while the
+actual DAT receipts remain in the ordinary `receipts` tuple.
+
+Every local document is converted into one deterministic
+`dat.content.document` identity and one initial revision. The identity and
+revision hash the logical request, rendered resource, rendered seed, and full
+rendered document object. Document creation and each association use stable
+request keys derived from the template request. The outer `TemplateEngine`
+`Store.transaction()` is the durable boundary; DAT's internal transaction is a
+nested FND savepoint. The association-failure test proves that a later DAT
+failure removes prior work, document, revision, references, receipts, events,
+and event-sequence changes.
+
+The complete rendered document object remains in the subject work record's
+public `fields.documents` mapping. DAT metadata is derived from supplied
+`role`, `visibility`, `access_mode`/`access`, `maintainer`, `scope` or
+`authoring_scope`, and `writable`; the shipped shape uses explicit safe
+defaults: role `template-document`, visibility `private`, access `append`,
+the authenticated actor as maintainer, the owner project as authoring scope,
+owned import mode, and writable `True`.
+
+Typed external document refs are read through DAT and linked through
+`DocumentAssociation`/`ReferenceBinding`; no local DAT document is invented.
+
+### `requires` versus `covers`
+
+`seed.links` accepts only `requires` and `covers`, and rejects malformed or
+unknown local endpoints before the first mutation. Both relations are retained
+as the complete typed `{from,to,relation}` object in the source work record's
+public `fields.links`. Only `requires` is added to the WRK dependency list.
+Therefore the shipped result has `verify.dependencies` containing `implement`,
+`implement.dependencies == ()`, and no criterion dependency on `implement`,
+while both `covers` and `requires` remain inspectable in their respective
+`links` payloads.
+
+### Focused proof
+
+The corrected focused suite is `23 passed`. It loads the real
+`packs/megado/templates/delivery.json` bytes and proves:
+
+- DAT public `read()` returns the document metadata, current revision, and
+  exact rendered content;
+- the actual association identity, `ReferenceBinding`, receipt, event, and
+  active association read back through DAT;
+- a fresh `Store.open(..., expected_domains=(work_contribution(),))` sees the
+  same document and association;
+- same-key replay returns identical work/DAT refs and receipts with unchanged
+  identities, references, receipts, events, and event-sequence counts;
+- malformed document metadata, invalid external document refs, missing local
+  document endpoints, unknown work endpoints/relations, pinned-link omissions,
+  and injected association failure leave durable state unchanged;
+- an existing typed external document is linked without a local document row.
+
+### Installed-wheel proof
+
+Wheel rebuilt after this correction:
+
+```text
+wheel: /private/tmp/pkg-delivery-dat-relation-correction-final.KlPFjK/wheel/herzchen_contracts-0.1.0-py3-none-any.whl
+sha256: 9b30a88a9d38803a88d2bdb3ef44bda6503fd3e27b9c54a54053abc7317fa64f
+```
+
+The installed commands used `env -u PYTHONPATH -u PYTHONHOME` and ran
+`pytest -q tests/packs/test_task_templates.py tests/work tests/content tests/contracts tests/kernel`.
+Both disposable environments passed `159 passed, 10 subtests passed`:
+
+- Python 3.11.16: `/private/tmp/pkg-delivery-dat-relation-correction-final.KlPFjK/venv311/bin/python`
+  - `herzchen`: `/private/tmp/pkg-delivery-dat-relation-correction-final.KlPFjK/venv311/lib/python3.11/site-packages/herzchen/__init__.py`
+  - `herzchen.packs.templates`: `/private/tmp/pkg-delivery-dat-relation-correction-final.KlPFjK/venv311/lib/python3.11/site-packages/herzchen/packs/templates.py`
+- Python 3.12.14: `/private/tmp/pkg-delivery-dat-relation-correction-final.KlPFjK/venv312/bin/python`
+  - `herzchen`: `/private/tmp/pkg-delivery-dat-relation-correction-final.KlPFjK/venv312/lib/python3.12/site-packages/herzchen/__init__.py`
+  - `herzchen.packs.templates`: `/private/tmp/pkg-delivery-dat-relation-correction-final.KlPFjK/venv312/lib/python3.12/site-packages/herzchen/packs/templates.py`
+
+The affected source-checkout regression suite was `186 passed, 11 skipped,
+10 subtests passed` with `PYTHONPATH=src` and `PYTHONHOME` unset. `git diff
+--check` passed. Build output, egg-info, bytecode, and caches were removed from
+the worker checkout.
+
+### Route and receipt
+
+Requested route context: normal, `gpt-5.6-luna`, reasoning high, direct
+implementation worker, with no recursive delegation or model substitution.
+Correction session/thread: `01a09d95-b2b3-7900-bd84-53a71612467a`.
+The correction was executed in this direct Codex session rather than through a
+separate child `codex exec` process, so there is no standalone correction JSONL
+file or PTY command receipt. The retained prior-candidate JSONL lineage is
+`/private/tmp/pkg-delivery-shape-correction.jsonl` (44 lines; prior thread
+`01a09d88-a3ea-7700-b5c1-5b558d60878d`). The exact build and test commands are
+the commands printed in this addendum; their installed origins and wheel hash
+are recorded above.
+
+Final correction commit: `97bbf82cf7035e80ae098daca3435d948df0eebb`;
+final correction tree: `eb81d3a301ee3fa605bb6c2d99861ae4cd2871e0`.
+This report does not call INT-03 complete and does not claim any gate complete.

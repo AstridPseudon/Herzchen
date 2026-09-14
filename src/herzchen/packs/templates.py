@@ -16,13 +16,14 @@ shell fragment, import, or network lookup is evaluated.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from copy import deepcopy
 import hashlib
 import uuid
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
 
-from herzchen.contracts import ResourceRef, canonical_json
+from herzchen.content import ContentCommandHandler, ContentDocument, ContentRevision, DocumentAssociation
+from herzchen.contracts import AuthenticatedActor, ReferenceBinding, ResourceRef, TransactionContext, canonical_json
 from herzchen.domains.work import Lifecycle, WorkKind, WorkRecord, WorkValidationError
 
 
@@ -450,6 +451,8 @@ class TemplateResult:
     receipts: Tuple[Any, ...]
     rendered: RenderedTemplate
     protocol_adopted: bool = False
+    document_refs: Mapping[str, ResourceRef] = field(default_factory=dict)
+    association_refs: Mapping[str, ResourceRef] = field(default_factory=dict)
 
     @property
     def record(self) -> WorkRecord:
@@ -462,6 +465,11 @@ class TemplateResult:
     @property
     def mapping(self) -> Mapping[str, ResourceRef]:
         return self.local_refs
+
+    @property
+    def dat_receipts(self) -> Tuple[Any, ...]:
+        """The DAT receipts included in the one result receipt envelope."""
+        return tuple(receipt for receipt in self.receipts if getattr(receipt, "operation", "").startswith("dat.content."))
 
 
 def _node_list(seed: Mapping[str, Any]) -> list[dict[str, Any]]:
@@ -508,7 +516,8 @@ def _node_list(seed: Mapping[str, Any]) -> list[dict[str, Any]]:
                 raise TemplateReferenceError("work link references an unknown local identity")
             source_node = all_work[source]
             if source not in project_names:
-                source_node.setdefault("dependencies", []).append({"$local": target})
+                if relation == "requires":
+                    source_node.setdefault("dependencies", []).append({"$local": target})
                 source_node.setdefault(_WORK_LINKS_KEY, []).append(
                     {"from": {"$local": source}, "to": {"$local": target}, "relation": relation}
                 )
@@ -731,10 +740,10 @@ class TemplateEngine:
             owner_record = None
         if resource.id == BLANK_TEMPLATE_ID and nodes:
             raise TemplateValidationError("blank project must contain zero work nodes")
+        request = _request_key(logical_request_key, resource, rendered)
         self._validate_seed_references(seed, nodes, owner_record, name_set)
         document_values, document_link_values = self._document_seed_values(seed, name_set)
         ordered = self._ordered_nodes(nodes, edges)
-        request = _request_key(logical_request_key, resource, rendered)
 
         # All checks above are intentionally before the first public WRK
         # command.  The public commands then provide the real FND receipts and
@@ -795,7 +804,72 @@ class TemplateEngine:
                 local_refs[name] = record.ref
                 records.append(record)
                 receipts.append(self.store.get_receipt(request + ":" + name))
-        return TemplateResult(owner_record, tuple(records), local_refs, tuple(receipts), rendered, False)
+
+            # DAT's command handler uses nested FND savepoints here.  The
+            # outer TemplateEngine transaction remains the single durable
+            # boundary for work, document, and association mutations.
+            content = ContentCommandHandler(self.store)
+            content_actor = self._content_actor(actor)
+            document_refs: dict[str, ResourceRef] = {}
+            association_refs: dict[str, ResourceRef] = {}
+            for document in seed.get("documents", []):
+                if "local_id" not in document:
+                    continue
+                local_id = document["local_id"]
+                document_ref = ResourceRef(
+                    self.store.authority,
+                    "dat.content.document",
+                    self._document_identity(request, resource, rendered, document),
+                )
+                document_value = self._content_document(document, document_ref, owner_record, content_actor)
+                revision = ContentRevision(
+                    document_value.ref,
+                    self._document_revision(request, resource, rendered, document),
+                    document["content"],
+                    content_actor,
+                    initial=True,
+                )
+                document_receipt = content.execute(
+                    content.build_create_document(
+                        self._content_context(
+                            content_actor,
+                            request + ":document:" + local_id,
+                            {"document": document_value, "revision": revision},
+                        ),
+                        document_value,
+                        revision,
+                    )
+                )
+                document_refs[local_id] = document_value.ref
+                receipts.append(document_receipt)
+
+            for index, link in enumerate(seed.get("document_links", [])):
+                subject_name = _marker_name(link["subject"])
+                if subject_name is None:
+                    raise TemplateReferenceError(f"document link[{index}] subject must use a local reference")
+                subject = local_refs.get(subject_name)
+                if subject is None:
+                    raise TemplateReferenceError(f"document link[{index}] subject was not instantiated: {subject_name}")
+                binding = self._document_binding(link, document_refs)
+                association = DocumentAssociation(
+                    subject,
+                    link["namespace"],
+                    link["key"],
+                    binding,
+                    link.get("access_mode", "read"),
+                )
+                link_key = request + ":link:" + subject_name + ":" + link["namespace"] + ":" + link["key"]
+                link_receipt = content.execute(
+                    content.build_link(
+                        self._content_context(content_actor, link_key, {"association": association}),
+                        association,
+                    )
+                )
+                association_refs["{}:{}:{}".format(subject_name, link["namespace"], link["key"])] = ResourceRef(
+                    subject.authority, "document-association", association.identity,
+                )
+                receipts.append(link_receipt)
+        return TemplateResult(owner_record, tuple(records), local_refs, tuple(receipts), rendered, False, document_refs, association_refs)
 
     def instantiate_task(self, template: Union[str, WorkTemplate], parameters: Optional[Mapping[str, Any]] = None, *, project: Any, logical_request_key: Optional[str] = None, actor: Any = None) -> TemplateResult:
         return self.instantiate(template, parameters, project=project, logical_request_key=logical_request_key, actor=actor)
@@ -909,9 +983,30 @@ class TemplateEngine:
                 local_id = _text(document["local_id"], f"document[{index}] local_id")
                 if local_id in by_local:
                     raise TemplateValidationError(f"duplicate document local_id: {local_id}")
+                if "title" not in document or "content" not in document:
+                    raise TemplateValidationError(f"document[{index}] requires title and content")
+                _text(document["title"], f"document[{index}] title")
+                _json(document["content"])
+                for field in ("role", "maintainer"):
+                    if field in document:
+                        _text(document[field], f"document[{index}] {field}")
+                if document.get("visibility", "private") not in {"private", "shared", "public"}:
+                    raise TemplateValidationError(f"document[{index}] visibility is invalid")
+                if document.get("access_mode", document.get("access", "append")) not in {"read", "write", "append"}:
+                    raise TemplateValidationError(f"document[{index}] access_mode is invalid")
+                if "authoring_scope" in document and "scope" in document:
+                    raise TemplateValidationError(f"document[{index}] supplied scope twice")
+                if "authoring_scope" in document:
+                    _ref(document["authoring_scope"], f"document[{index}] authoring_scope")
+                if "scope" in document:
+                    _ref(document["scope"], f"document[{index}] scope")
+                if document.get("import_mode", "owned") != "owned":
+                    raise TemplateValidationError(f"document[{index}] local import_mode must be owned")
+                if "source_ref" in document:
+                    raise TemplateValidationError(f"document[{index}] local documents cannot carry source_ref")
                 by_local[local_id] = dict(document)
             elif "ref" in document:
-                self._resolve_external(_ref(document["ref"], f"document[{index}] ref"), f"document[{index}] ref")
+                self._resolve_document_external(_ref(document["ref"], f"document[{index}] ref"), f"document[{index}] ref")
             else:
                 raise TemplateValidationError(f"document[{index}] requires local_id or typed ref")
 
@@ -931,17 +1026,24 @@ class TemplateEngine:
                 raise TemplateReferenceError(f"document link[{index}] references unknown subject: {subject}")
             document = link.get("document")
             document_local = _marker_name(document)
+            external_document = None
             if document_local is not None:
                 _text(document_local, f"document link[{index}] document")
                 if document_local not in by_local:
                     raise TemplateReferenceError(f"document link[{index}] references unknown document: {document_local}")
             else:
-                self._resolve_external(_ref(document, f"document link[{index}] document"), f"document link[{index}] document")
+                external_document = _ref(document, f"document link[{index}] document")
+                self._resolve_document_external(external_document, f"document link[{index}] document")
             namespace = _text(link.get("namespace", "work"), f"document link[{index}] namespace")
             key = _text(link.get("key", "document"), f"document link[{index}] key")
             binding = link.get("binding", "current")
             if binding not in {"current", "pinned"}:
                 raise TemplateValidationError(f"document link[{index}] binding must be current or pinned")
+            if binding == "current" and external_document is not None and external_document.revision is not None:
+                raise TemplateValidationError(f"document link[{index}] current binding cannot carry a revision")
+            access_mode = link.get("access_mode", "read")
+            if access_mode not in {"read", "append"}:
+                raise TemplateValidationError(f"document link[{index}] access_mode must be read or append")
             if binding == "pinned":
                 revision = link.get("revision_ref", link.get("revision"))
                 if revision is None:
@@ -954,9 +1056,84 @@ class TemplateEngine:
             value["namespace"] = namespace
             value["key"] = key
             value["binding"] = binding
+            if "access_mode" in link:
+                value["access_mode"] = access_mode
             by_subject.setdefault(subject, []).append(value)
 
         return ({subject: [deepcopy(by_local[_marker_name(link["document"])]) for link in subject_links if _marker_name(link.get("document")) is not None] for subject, subject_links in by_subject.items()}, by_subject)
+
+    def _content_actor(self, actor: Any) -> AuthenticatedActor:
+        selected = actor or self.actor or getattr(self.graph, "default_actor", None)
+        if selected is None:
+            return AuthenticatedActor(self.store.authority, "pkg-template-engine", "pkg-template-engine")
+        if not isinstance(selected, AuthenticatedActor):
+            raise TemplateValidationError("template DAT writes require an authenticated actor")
+        return selected
+
+    @staticmethod
+    def _content_context(actor: AuthenticatedActor, key: str, payload: Mapping[str, Any]) -> TransactionContext:
+        digest = hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest()
+        return TransactionContext(actor, key, digest, expected_version=0)
+
+    @staticmethod
+    def _document_identity(request: str, resource: WorkTemplate, rendered: RenderedTemplate, document: Mapping[str, Any]) -> str:
+        material = {"request": request, "resource": resource.ref, "rendered": rendered.seed, "document": document}
+        return "template-" + hashlib.sha256(canonical_json(material).encode("utf-8")).hexdigest()[:32]
+
+    @staticmethod
+    def _document_revision(request: str, resource: WorkTemplate, rendered: RenderedTemplate, document: Mapping[str, Any]) -> str:
+        material = {"request": request, "resource": resource.ref, "rendered": rendered.seed, "document": document, "purpose": "initial"}
+        return "rev-" + hashlib.sha256(canonical_json(material).encode("utf-8")).hexdigest()[:32]
+
+    @staticmethod
+    def _content_document(document: Mapping[str, Any], reference: ResourceRef, owner: Optional[WorkRecord], actor: AuthenticatedActor) -> ContentDocument:
+        scope_value = document.get("authoring_scope", document.get("scope", owner.ref if owner is not None else None))
+        scope = None if scope_value is None else _ref(scope_value, "document authoring_scope")
+        import_mode = document.get("import_mode", "owned")
+        if import_mode != "owned":
+            raise TemplateValidationError("local template documents must use owned import_mode")
+        if "source_ref" in document:
+            raise TemplateValidationError("local template documents cannot carry source_ref")
+        writable = document.get("writable", True)
+        if not isinstance(writable, bool):
+            raise TemplateValidationError("document writable must be a boolean")
+        try:
+            return ContentDocument(
+                reference,
+                document.get("role", "template-document"),
+                document.get("visibility", "private"),
+                document.get("access_mode", document.get("access", "append")),
+                document.get("maintainer", actor.actor),
+                scope,
+                import_mode=import_mode,
+                writable=writable,
+            )
+        except ValueError as exc:
+            raise TemplateValidationError("local document metadata violates the DAT contract") from exc
+
+    @staticmethod
+    def _document_binding(link: Mapping[str, Any], document_refs: Mapping[str, ResourceRef]) -> ReferenceBinding:
+        local = _marker_name(link.get("document"))
+        if local is not None:
+            try:
+                document = document_refs[local]
+            except KeyError as exc:
+                raise TemplateReferenceError(f"document link references an unmaterialized document: {local}") from exc
+        else:
+            document = _ref(link["document"], "document link document")
+        binding = link["binding"]
+        if binding == "current":
+            document = ResourceRef(document.authority, document.kind, document.id)
+        else:
+            revision = link.get("revision_ref", link.get("revision"))
+            if revision is None:
+                if document.revision is None:
+                    raise TemplateValidationError("pinned document binding requires a revision")
+            elif isinstance(revision, Mapping):
+                document = _ref(revision, "document link revision")
+            else:
+                document = ResourceRef(document.authority, document.kind, document.id, revision)
+        return ReferenceBinding(document, binding)
 
     def _validate_ref_value(self, value: Any, names: set[str], owner: Optional[WorkRecord], field: str) -> None:
         if value is None:
@@ -981,6 +1158,12 @@ class TemplateEngine:
             raise TemplateReferenceError(f"{field} crosses store authority")
         if self.store.get_identity(reference) is None:
             raise TemplateReferenceError(f"missing {field}: {reference.to_json()}")
+        return reference
+
+    def _resolve_document_external(self, reference: ResourceRef, field: str) -> ResourceRef:
+        self._resolve_external(reference, field)
+        if not ContentCommandHandler(self.store).read(reference):
+            raise TemplateReferenceError(f"missing DAT document: {reference.to_json()}")
         return reference
 
     def _resolve_seed_ref(self, value: Any, local_refs: Mapping[str, ResourceRef], owner: WorkRecord, *, required: bool = False) -> Optional[WorkRecord]:
