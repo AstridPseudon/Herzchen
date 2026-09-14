@@ -30,6 +30,7 @@ from herzchen.content.packets import (
     ContextPacketService,
     PacketInput,
     VisibilityContext,
+    domain_contribution as packet_contribution,
 )
 from herzchen.contracts import (
     AuthenticatedActor,
@@ -56,7 +57,7 @@ from herzchen.kernel import (
     VersionConflictError,
 )
 from herzchen.content import domain_contribution as content_contribution
-from herzchen.domains.work import contribution as work_contribution
+from herzchen.domains.work import register_work
 
 try:  # The package harness exposes these as the planned elegance inputs.
     from fixtures.definition_catalog import build_definition_catalog
@@ -116,10 +117,10 @@ def _event_evidence(store: Store, receipts: Mapping[str, Any]) -> dict[str, Any]
 def _register_domains(store: Store) -> tuple[Any, ...]:
     # Registration is performed through the common FND domain registry.  The
     # sorted order is also the order required by Store.open admission.
-    contributions = tuple(sorted((content_contribution(), extension_contribution(), work_contribution()), key=lambda item: item.domain_id))
-    for descriptor in contributions:
+    register_work(store)
+    for descriptor in (content_contribution(), packet_contribution(), extension_contribution()):
         store.register_domain(descriptor)
-    return contributions
+    return store.registered_domains()
 
 
 def _run_probe(db_path: Path) -> dict[str, Any]:
@@ -164,10 +165,10 @@ def _run_probe(db_path: Path) -> dict[str, Any]:
         # These are neutral contract identities, not product adapters.  The
         # assignment shape is admitted by the public FND identity surface;
         # WorkGraph intentionally exposes no WorkKind.ASSIGNMENT.
-        shot = ResourceRef(AUTHORITY, "shot.fixture", "shot-dat06", "seed-1")
-        assignment = ResourceRef(AUTHORITY, "work.assignment", "assignment-dat06", "seed-1")
+        shot = ResourceRef(AUTHORITY, "work.task", "shot-dat06", "seed-1")
+        assignment = ResourceRef(AUTHORITY, "wrk.assignment", "assignment-dat06", "seed-1")
         seed_payload = {
-            "record_type": "neutral-fixture",
+            "record_type": "work.task",
             "managed_payload": {
                 "owner": "fnd",
                 "primary_state": "fnd-owned",
@@ -382,8 +383,8 @@ def _run_probe(db_path: Path) -> dict[str, Any]:
         )
         receipts["document_create"] = content.execute(create_doc)
         task_subject = ResourceRef(AUTHORITY, "work.task", task.id)
-        shot_subject = ResourceRef(AUTHORITY, "shot.fixture", shot.id)
-        assignment_subject = ResourceRef(AUTHORITY, "work.assignment", assignment.id)
+        shot_subject = ResourceRef(AUTHORITY, "work.task", shot.id)
+        assignment_subject = ResourceRef(AUTHORITY, "wrk.assignment", assignment.id)
         task_link = DocumentAssociation(task_subject, "work.documents", "brief", ReferenceBinding(shared_ref))
         assignment_link = DocumentAssociation(assignment_subject, "work.documents", "brief", ReferenceBinding(shared_ref))
         receipts["link_task"] = content.execute(content.build_link(_context("dat06-link-task", {}, version=0, revision=None), task_link))
@@ -577,7 +578,7 @@ def _run_probe(db_path: Path) -> dict[str, Any]:
             },
             "migration": {
                 "aliases": [],
-                "instructions": "Use ResourceRef authority/kind/id as the neutral identity boundary; keep shot.fixture and work.assignment synthetic until an approved Astrid adapter exists.",
+                "instructions": "Use ResourceRef authority/kind/id as the neutral identity boundary; keep the declared work.task fixture synthetic until an approved Astrid adapter exists.",
             },
             "unresolved": {
                 "astrid": "actual Astrid binding deferred behind G-OTTO",
@@ -588,7 +589,7 @@ def _run_probe(db_path: Path) -> dict[str, Any]:
             "boundaries": {
                 "astrid_integration_proven": False,
                 "astrid_status": "deferred behind G-OTTO; shot fixture is synthetic contract proof only",
-                "assignment_status": "neutral work.assignment identity through public FND store; no WorkGraph assignment kind exists",
+                "assignment_status": "declared wrk.assignment identity through the public FND store",
                 "third_specialist_status": "deferred",
                 "domain_specific_document_tables": False,
                 "copied_content_or_private_writer": False,

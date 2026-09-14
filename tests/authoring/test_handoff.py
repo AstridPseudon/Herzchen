@@ -16,7 +16,7 @@ import pytest
 
 from herzchen.authoring import AuthoringLifecycle, CallableSemanticHandler
 from herzchen.authoring.cleanup import CleanupPathError, CleanupStatus, RegisteredFile, cleanup_registered_files
-from herzchen.authoring.sessions import AuthoringSessionService
+from herzchen.authoring.sessions import AuthoringSessionService, domain_contribution, register_authoring
 from herzchen.authoring.snapshots import DurableSnapshotAdapter
 from herzchen.contracts import AuthenticatedActor, AuthoringState, ResourceRef
 from herzchen.kernel import Store
@@ -45,6 +45,7 @@ def _target(authority: str, ident: str) -> ResourceRef:
 def test_deterministic_idle_clock_and_actual_timer_fixture(tmp_path: Path) -> None:
     db = tmp_path / "timer.sqlite"
     store = Store.create(db, authority="edt06-timer")
+    register_authoring(store)
     lifecycle = AuthoringLifecycle(AuthoringSessionService(store))
     actor = _actor("timer")
     target = _target(store.authority, "timer-target")
@@ -102,6 +103,7 @@ def test_deterministic_idle_clock_and_actual_timer_fixture(tmp_path: Path) -> No
 def test_failed_cleanup_is_durable_and_retry_removes_only_registered_files(tmp_path: Path) -> None:
     db = tmp_path / "recovery.sqlite"
     store = Store.create(db, authority="edt06-recovery")
+    register_authoring(store)
     service = AuthoringSessionService(store)
     lifecycle = AuthoringLifecycle(service)
     actor = _actor("recovery")
@@ -159,7 +161,7 @@ def test_failed_cleanup_is_durable_and_retry_removes_only_registered_files(tmp_p
         assert after.payload["checkout"]["cleanup"] == CleanupStatus.COMPLETE.value
         final_ref = finished.finish.finish.final_snapshot.ref
         store.close()
-        restarted = Store.open(db, authority="edt06-recovery")
+        restarted = Store.open(db, authority="edt06-recovery", expected_domains=(domain_contribution(),))
         restarted_service = AuthoringSessionService(restarted)
         assert restarted_service.read(target).status == "available"
         restarted_record = restarted.get_identity(opened.handle.scope)
@@ -177,7 +179,7 @@ def test_failed_cleanup_is_durable_and_retry_removes_only_registered_files(tmp_p
             initial_content=b"opening bytes",
         )
         restarted.close()
-        reopened_unsaved = Store.open(db, authority="edt06-recovery")
+        reopened_unsaved = Store.open(db, authority="edt06-recovery", expected_domains=(domain_contribution(),))
         unsaved_service = AuthoringSessionService(reopened_unsaved)
         unsaved_record = reopened_unsaved.get_identity(unsaved.handle.scope)
         assert unsaved_service.read(unsaved_target).status == "occupied"
@@ -210,7 +212,7 @@ def test_fresh_consumer_process_and_restart_read_exact_durable_links(tmp_path: P
         import json, sys
         from pathlib import Path
         from herzchen.authoring import AuthoringLifecycle
-        from herzchen.authoring.sessions import AuthoringSessionService
+        from herzchen.authoring.sessions import AuthoringSessionService, register_authoring
         from herzchen.contracts import AuthenticatedActor, ResourceRef
         from herzchen.kernel import Store
 
@@ -222,6 +224,7 @@ def test_fresh_consumer_process_and_restart_read_exact_durable_links(tmp_path: P
 
         db, root = map(Path, sys.argv[1:])
         store = Store.create(db, authority="edt06-process")
+        register_authoring(store)
         service = AuthoringSessionService(store)
         lifecycle = AuthoringLifecycle(service)
         actor = AuthenticatedActor("edt06-auth", "process-writer", "credential-process-writer")
@@ -272,14 +275,14 @@ def test_fresh_consumer_process_and_restart_read_exact_durable_links(tmp_path: P
         import json, sys
         from pathlib import Path
         from herzchen.authoring.snapshots import DurableSnapshotAdapter
-        from herzchen.authoring.sessions import AuthoringSessionService
+        from herzchen.authoring.sessions import AuthoringSessionService, domain_contribution
         from herzchen.contracts import ResourceRef
         from herzchen.kernel import Store
 
         db = Path(sys.argv[1])
         snapshot_ref = ResourceRef.from_dict(json.loads(sys.argv[2]))
         scope = ResourceRef("edt06-process", "handoff-target", "process-target", "base-1")
-        store = Store.open(db, authority="edt06-process")
+        store = Store.open(db, authority="edt06-process", expected_domains=(domain_contribution(),))
         service = AuthoringSessionService(store)
         read = service.read(scope)
         record = store.get_identity(ResourceRef("edt06-process", "authoring-scope", scope.id))

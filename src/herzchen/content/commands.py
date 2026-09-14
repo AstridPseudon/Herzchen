@@ -12,6 +12,7 @@ from .model import (
     ContentRevision,
     DocumentAssociation,
     PersistenceUnavailableError,
+    domain_contribution,
     revision_identity,
     validate_document_binding,
     validate_revision_owner,
@@ -45,6 +46,11 @@ class ContentCommandHandler:
     """Validate DAT payloads and delegate persistence to a supplied FND writer."""
 
     def __init__(self, writer: Optional[FNDContentWriter] = None) -> None:
+        if writer is not None and hasattr(writer, "domain_handler"):
+            try:
+                writer = writer.domain_handler((domain_contribution(),))
+            except Exception:
+                pass
         self._writer = writer
 
     @staticmethod
@@ -182,12 +188,13 @@ class ContentCommandHandler:
             # Mutate the document head first so replay/conflict is decided by
             # FND before the auxiliary immutable revision row is considered.
             receipt = self._writer.mutate(
-                CommandEnvelope(envelope.operation, envelope.schema_revision, envelope.target, envelope.context, payload),
+                envelope,
                 event_type=event_type,
                 result_ref=revision.ref,
                 after_refs=(revision.ref,),
                 effects={"content_revision": revision.ref},
                 transaction=transaction,
+                identity_payload=payload,
             )
             self._writer.put_identity(
                 revision_identity(revision.document, revision.revision),

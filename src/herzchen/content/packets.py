@@ -21,6 +21,7 @@ from typing import Any, Iterable, Mapping, Optional, Protocol, Sequence, Tuple, 
 from herzchen.contracts import (
     AuthenticatedActor,
     CommandEnvelope,
+    DomainContribution,
     EventCursor,
     ResourceRef,
     TransactionContext,
@@ -33,6 +34,7 @@ from .model import (
     ContentDocument,
     ContentError,
     ContentRevision,
+    domain_contribution as content_domain_contribution,
     revision_identity,
 )
 
@@ -41,6 +43,21 @@ PACKET_SCHEMA_REVISION = "dat.context.packet.v1"
 PACKET_KIND = "dat.context.packet"
 ATTENTION_KIND = "dat.context.attention"
 MANIFEST_KIND = "dat.content.document"
+
+
+def domain_contribution() -> DomainContribution:
+    return DomainContribution(
+        "herzchen.content.packets", "1", "dat", (ATTENTION_KIND,), (),
+        ("dat.context.notifications",), ("dat.context.attention.create",),
+        ("dat.context.attention.created",), PACKET_SCHEMA_REVISION,
+        (
+            "fnd-03.identities", "fnd-03.record_references", "fnd-03.transaction",
+            "handler-required",
+            "mutation-port:{}|dat.context.attention.create|{}|dat.context.attention.created".format(
+                PACKET_SCHEMA_REVISION, ATTENTION_KIND
+            ),
+        ),
+    )
 
 
 class PacketError(ContentError):
@@ -251,6 +268,8 @@ class ContextPacketService:
     """Fresh, permission-filtered reads and FND-backed packet mutations."""
 
     def __init__(self, writer: Optional[FNDPacketWriter]) -> None:
+        if writer is not None and hasattr(writer, "domain_handler"):
+            writer = writer.domain_handler((content_domain_contribution(), domain_contribution()))
         self._writer = writer
         self._content = ContentCommandHandler(writer)
 
@@ -638,7 +657,7 @@ ContextPackets = ContextPacketService
 __all__ = [
     "AccessContext", "AccessDeniedError", "ATTENTION_KIND", "ConflictingAuthorityError",
     "ContextInput", "ContextPacket", "ContextPacketService", "ContextPackets", "FNDPacketWriter",
-    "ImmutableManifestError", "PACKET_KIND", "PACKET_SCHEMA_REVISION", "PacketActor",
+    "ImmutableManifestError", "PACKET_KIND", "PACKET_SCHEMA_REVISION", "PacketActor", "domain_contribution",
     "PacketError", "PacketInput", "PacketService", "SchemaAdoption",
     "SchemaAdoptionRequiredError", "UnresolvedReferenceError", "VisibilityContext",
 ]

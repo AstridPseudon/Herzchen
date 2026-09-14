@@ -14,6 +14,7 @@ from herzchen.domains.work import (  # noqa: E402
     WorkGraph,
     WorkKind,
     contribution,
+    contributions,
 )
 
 
@@ -91,7 +92,7 @@ def test_pending_project_is_durable_sparse_and_replay_safe(work_store, tmp_path)
     assert graph.get(project.ref).ref == project.ref
 
     work_store.close()
-    reopened = Store.open(tmp_path / "work.sqlite", authority="test-work", expected_domains=(contribution(),))
+    reopened = Store.open(tmp_path / "work.sqlite", authority="test-work", expected_domains=tuple(sorted(contributions(), key=lambda item: item.domain_id)))
     try:
         reopened_graph = WorkGraph(reopened, actor=actor())
         fresh = reopened_graph.get(project.ref)
@@ -103,6 +104,7 @@ def test_pending_project_is_durable_sparse_and_replay_safe(work_store, tmp_path)
 
 def test_aliases_and_revisions_preserve_identity_and_omission_does_not_delete(work_store):
     graph = WorkGraph(work_store, actor=actor())
+    graph.register()
     project = graph.create_project(title="Project", alias="p-local", logical_request_key="p")
     task = graph.create_task(
         project,
@@ -125,6 +127,7 @@ def test_aliases_and_revisions_preserve_identity_and_omission_does_not_delete(wo
 
 def test_parent_and_dependency_cycles_reject_atomically(work_store):
     graph = WorkGraph(work_store, actor=actor())
+    graph.register()
     project = graph.create_project(logical_request_key="p")
     effort = graph.create_effort(project, logical_request_key="e")
     task = graph.create_task(project, parent=effort, logical_request_key="t")
@@ -145,6 +148,7 @@ def test_parent_and_dependency_cycles_reject_atomically(work_store):
 
 def test_valid_single_record_links_state_and_lifecycle_keep_boundaries(work_store):
     graph = WorkGraph(work_store, actor=actor())
+    graph.register()
     project = graph.create_project(title="Structural", logical_request_key="p")
     effort = graph.create_effort(project, title="Bounded effort", logical_request_key="e")
     task = graph.create_task(project, title="Do the work", logical_request_key="t")

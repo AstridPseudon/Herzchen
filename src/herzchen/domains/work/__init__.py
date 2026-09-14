@@ -22,6 +22,9 @@ from .module import (
     WorkModule,
     WorkStore,
     contribution,
+    contributions,
+    register_work,
+    work_handler,
 )
 
 __all__ = [
@@ -44,4 +47,7 @@ __all__ = [
     "WorkStore",
     "WorkValidationError",
     "contribution",
+    "contributions",
+    "register_work",
+    "work_handler",
 ]

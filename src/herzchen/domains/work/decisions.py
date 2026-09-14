@@ -310,6 +310,13 @@ def _ref(value: Any, field: str) -> ResourceRef:
 
 
 def contribution() -> DomainContribution:
+    ports = (
+        ("work.candidate.create", CANDIDATE_KIND, "work.candidate.created"),
+        ("work.candidate.annotate", CANDIDATE_ANNOTATION_KIND, "work.candidate.annotated"),
+        ("work.decision.record", DECISION_KIND, "work.decision.recorded"),
+        ("work.wait.record", WAIT_KIND, "work.wait.recorded"),
+        ("work.manager-choice.record", MANAGER_CHOICE_KIND, "work.manager-choice.recorded"),
+    )
     return DomainContribution(
         domain_id=DOMAIN_ID,
         version=DOMAIN_VERSION,
@@ -329,7 +336,8 @@ def contribution() -> DomainContribution:
         composition_bindings=(
             "fnd-03.identities", "fnd-03.record_references", "fnd-03.transaction",
             "fnd-05.cursors", "fnd-05.intervals", "wrk-03.assignments", "wrk-04.assessment", "dat-04.documents",
-        ),
+            "handler-required",
+        ) + tuple("mutation-port:{}|{}|{}|{}".format(SCHEMA_REVISION, *port) for port in ports),
     )
 
 
@@ -337,14 +345,17 @@ class DecisionsModule:
     """Typed candidate/decision/waiting operations over one FND Store."""
 
     def __init__(self, store: Store, *, assessment: Any = None, actor: Optional[AuthenticatedActor] = None) -> None:
-        if not isinstance(store, Store):
-            raise TypeError("store must be the supplied FND Store")
-        self.store = store
+        if not hasattr(store, "transaction") or not hasattr(store, "mutate"):
+            raise TypeError("store must be the supplied FND writer")
+        from .module import work_handler
+        self.store = work_handler(store)
+        self._kernel_store = getattr(self.store, "_owner", store)
         self.assessment = assessment
         self.default_actor = actor
 
     def register(self) -> DomainContribution:
-        return self.store.register_domain(contribution())
+        from .module import contribution as structural_contribution
+        return structural_contribution()
 
     # ---- candidates -----------------------------------------------------------
 
@@ -679,7 +690,7 @@ class DecisionsModule:
     def reconcile_notifications(
         self, stream: str, *, cursor: Optional[str] = None, event_filter: Optional[EventFilter] = None, limit: int = 100,
     ) -> AttentionReconciliation:
-        page = EventCursorReader(self.store).catch_up(stream, cursor=cursor, event_filter=event_filter, limit=limit)
+        page = EventCursorReader(self._kernel_store).catch_up(stream, cursor=cursor, event_filter=event_filter, limit=limit)
         return AttentionReconciliation(page, page.cursor, False, False, page.status == "gap")
 
     reconcile_attention = reconcile_notifications
@@ -697,7 +708,7 @@ class DecisionsModule:
         ref = _ref(interval, "interval")
         if ref.authority != self.store.authority or ref.kind != INTERVAL_KIND or ref.revision is not None:
             raise WaitingError("interval must be an unpinned attention-interval identity in this Store")
-        controller = IntervalController(self.store, ref, interval_seconds, actor=actor or self.default_actor)
+        controller = IntervalController(self._kernel_store, ref, interval_seconds, actor=actor or self.default_actor)
         return controller.poll(now=now)
 
     # ---- explicit manager action ---------------------------------------------

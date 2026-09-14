@@ -13,6 +13,7 @@ from herzchen.authoring.sessions import (
     CleanupStatus,
     InvalidSessionError,
     Snapshot,
+    register_authoring,
 )
 from herzchen.contracts import AuthenticatedActor, ResourceRef
 from herzchen.kernel import Store
@@ -22,6 +23,7 @@ class ExclusivityTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tempdir = tempfile.TemporaryDirectory()
         self.store = Store.create(Path(self.tempdir.name) / "neutral.sqlite3")
+        register_authoring(self.store)
         self.service = AuthoringSessionService(self.store)
         self.scope = ResourceRef("neutral-store", "project", "project-1", "base-1")
         self.other_scope = ResourceRef("neutral-store", "project", "project-2", "base-1")

@@ -323,6 +323,7 @@ class SemanticFinishAdapter:
                 digest = self.service._request_digest(
                     "finish", request_id,
                     {"session": handle.session_id, "mode": mode, "expected_base_revision": expected_base_revision, "pending": pending},
+                    target=handle.scope, actor=handle.actor,
                 )
                 rejected = self.service._reject_finish(
                     handle, request_id, digest, checkout, session_snapshot, _diagnostic_text(validation.diagnostics), ValueError

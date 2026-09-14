@@ -15,12 +15,13 @@ import json
 import uuid
 from typing import Any, Mapping, Optional, Sequence, Tuple
 
-from herzchen.contracts import AuthenticatedActor, CommandEnvelope, ResourceRef, TransactionContext, canonical_json
+from herzchen.contracts import AuthenticatedActor, CommandEnvelope, DomainContribution, ResourceRef, TransactionContext, canonical_json
 
 from .model import Lifecycle, WorkNotFoundError, WorkValidationError
 
 
 ASSIGNMENT_SCHEMA_REVISION = "work.assignment.v1"
+DOMAIN_ID = "herzchen.work.assignments"
 # Keep auxiliary identities outside WorkGraph's ``work.*`` structural scan;
 # they are shared work-domain records but are not WorkKind graph vertices.
 RESPONSIBILITY_KIND = "wrk.responsibility"
@@ -28,6 +29,24 @@ ASSIGNMENT_KIND = "wrk.assignment"
 RESULT_KIND = "wrk.result"
 REPORT_KIND = "wrk.report"
 DISPATCH_KIND = "wrk.dispatch"
+
+
+def contribution() -> DomainContribution:
+    ports = (
+        ("work.assignment.create", ASSIGNMENT_KIND, "work.assignment.created"),
+        ("work.assignment.reassign", ASSIGNMENT_KIND, "work.assignment.reassigned"),
+        ("work.assignment.dispatch", DISPATCH_KIND, "work.assignment.dispatched"),
+        ("work.result.append", RESULT_KIND, "work.result.appended"),
+        ("work.report.append", REPORT_KIND, "work.report.appended"),
+    )
+    return DomainContribution(
+        DOMAIN_ID, "1.0", "wrk",
+        (RESPONSIBILITY_KIND, ASSIGNMENT_KIND, RESULT_KIND, REPORT_KIND, DISPATCH_KIND),
+        (), ("work.assignments",), tuple(port[0] for port in ports),
+        tuple(port[2] for port in ports), ASSIGNMENT_SCHEMA_REVISION,
+        ("fnd-03.identities", "fnd-03.record_references", "fnd-03.transaction", "handler-required")
+        + tuple("mutation-port:{}|{}|{}|{}".format(ASSIGNMENT_SCHEMA_REVISION, *port) for port in ports),
+    )
 
 
 class AssignmentStatus(str, Enum):
@@ -122,7 +141,8 @@ class ResponsibilityAssignments:
     def __init__(self, store: Any, *, actor: Optional[AuthenticatedActor] = None) -> None:
         if not hasattr(store, "transaction") or not hasattr(store, "mutate"):
             raise TypeError("store must be the supplied FND writer")
-        self.store = store
+        from .module import work_handler
+        self.store = work_handler(store)
         self.default_actor = actor
 
     def assign(

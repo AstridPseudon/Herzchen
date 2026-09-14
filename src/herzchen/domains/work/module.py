@@ -95,8 +95,48 @@ def contribution() -> Any:
             "work.state-changed",
         ),
         schema_revision=SCHEMA_REVISION,
-        composition_bindings=("fnd-03.identities", "fnd-03.record_references", "fnd-03.transaction"),
+        composition_bindings=(
+            "fnd-03.identities", "fnd-03.record_references", "fnd-03.transaction",
+            "handler-required",
+        ) + tuple(
+            "mutation-port:{}|{}|{}|{}".format(SCHEMA_REVISION, operation, kind, event)
+            for kind in KIND_PREFIX.values()
+            for operation, event in (
+                ("work.create", "work.created"),
+                ("work.revise", "work.revised"),
+                ("work.revise", "work.parent-linked"),
+                ("work.revise", "work.dependency-linked"),
+                ("work.revise", "work.state-changed"),
+            )
+        ),
     )
+
+
+def contributions() -> Tuple[Any, ...]:
+    """Return every exact descriptor admitted by the WRK handler."""
+    from .assignments import contribution as assignments_contribution
+    from .batches import contribution as batches_contribution
+    from .decisions import contribution as decisions_contribution
+    from .sheet import contribution as sheet_contribution
+
+    return (
+        contribution(), assignments_contribution(), batches_contribution(),
+        sheet_contribution(), decisions_contribution(),
+    )
+
+
+def register_work(store: Any) -> Any:
+    """Register the complete WRK definition and return its sealed handler."""
+    return store.register_domain_handler(contributions())
+
+
+def work_handler(store: Any) -> Any:
+    """Acquire the WRK handler only after the exact definition is registered."""
+    if hasattr(store, "domain_ids"):
+        required = {item.domain_id for item in contributions()}
+        if required.issubset(set(store.domain_ids)):
+            return store
+    return store.domain_handler(contributions())
 
 
 class WorkGraph:
@@ -105,13 +145,17 @@ class WorkGraph:
     def __init__(self, store: Any, *, actor: Any = None) -> None:
         if not hasattr(store, "transaction") or not hasattr(store, "mutate"):
             raise TypeError("store must be the supplied FND writer")
-        self.store = store
+        try:
+            self.store = work_handler(store)
+        except Exception:
+            self.store = store
         self.default_actor = actor
 
     def register(self) -> Any:
         """Register this domain through FND's existing registry port."""
 
-        return self.store.register_domain(contribution())
+        self.store = register_work(self.store)
+        return contribution()
 
     # ---- public creation commands -------------------------------------------------
 

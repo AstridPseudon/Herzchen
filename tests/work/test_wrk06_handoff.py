@@ -15,6 +15,7 @@ from typing import Any
 import pytest
 
 from herzchen.content import ContentCommandHandler
+from herzchen.content.model import domain_contribution as content_contribution
 from herzchen.contracts import AuthenticatedActor, CommandEnvelope, EventCursor, ReferenceBinding, ResourceRef, TransactionContext
 from herzchen.domains.assessment import AssessmentModule, Verdict
 from herzchen.domains.work import WorkGraph
@@ -93,18 +94,12 @@ def _admit(store: Store, kind: str, ident: str, value: str) -> ResourceRef:
 def _revise_fixture(store: Store, ref: ResourceRef, value: str, key: str, actor: AuthenticatedActor) -> ResourceRef:
     current = store.get_identity(ResourceRef(ref.authority, ref.kind, ref.id))
     assert current is not None
-    envelope = CommandEnvelope(
-        "fixture.revise", "fixture.v1", ResourceRef(ref.authority, ref.kind, ref.id),
-        TransactionContext(actor, key, "a" * 64, expected_revision=current.ref.revision, expected_version=current.version),
-        {"record_type": ref.kind, "value": value},
+    revised = store.revise_identity(
+        current.ref, {"record_type": ref.kind, "value": value},
+        revision=f"rev-{current.version + 1}", expected_revision=current.ref.revision,
+        expected_version=current.version,
     )
-    receipt = store.mutate(
-        envelope, event_type="fixture.revised",
-        result_ref=ResourceRef(ref.authority, ref.kind, ref.id, f"rev-{current.version + 1}"),
-        effects={"changed": True}, stream=f"fixture:{ref.id}",
-    )
-    assert receipt.result_ref is not None
-    return receipt.result_ref
+    return revised.ref
 
 
 def _rejection(store: Store, pool_ref: ResourceRef, call: Any) -> dict[str, Any]:
@@ -126,6 +121,7 @@ def test_wrk06_public_handoff_rehearsal(tmp_path: Path) -> None:
     actor = AuthenticatedActor(authority, "manager", "credential")
     store = Store.create(db, authority=authority)
     graph = WorkGraph(store, actor=actor); graph.register()
+    store.register_domain(content_contribution())
     assessment = AssessmentModule(store, actor=actor); assessment.register()
     decisions = DecisionsModule(store, assessment=assessment, actor=actor); decisions.register()
     expected_domains = store.registered_domains()

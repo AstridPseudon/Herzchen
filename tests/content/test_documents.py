@@ -178,6 +178,7 @@ class FND03ContentIntegrationTests(unittest.TestCase):
     def setUp(self):
         self.tempdir = tempfile.TemporaryDirectory()
         self.store = Store.create(self.tempdir.name + "/content.sqlite", authority="dat-store")
+        self.store.register_domain_handler((domain_contribution(),))
         self.handler = ContentCommandHandler(self.store)
         self.doc = document()
         self.initial = revision(self.doc)
@@ -230,8 +231,9 @@ class FND03ContentIntegrationTests(unittest.TestCase):
         replay = self.handler.execute(self.create)
         self.assertEqual(replay, first)
         self.assertEqual(len(self.store.list_events()), 1)
+        changed = ContentRevision(self.doc.ref, "rev-1", {"title": "Changed"}, actor(), initial=True)
         with self.assertRaises(Exception) as conflict:
-            self.handler.execute(self.handler.build_create_document(context("create", digest="b" * 64), self.doc, self.initial))
+            self.handler.execute(self.handler.build_create_document(context("create", digest="b" * 64), self.doc, changed))
         self.assertIn("changed request digest", str(conflict.exception))
 
         updated = ContentRevision(self.doc.ref, "rev-2", {"title": "Edited"}, actor(), parent_revision="rev-1")

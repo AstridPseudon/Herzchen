@@ -31,8 +31,8 @@ from herzchen.contracts import (
 )
 from herzchen.content import ContentCommandHandler, ContentDocument, ContentRevision, DocumentAssociation
 from herzchen.content.model import domain_contribution as content_contribution
-from herzchen.content.packets import AccessDeniedError, ContextPacketService
-from herzchen.domains.work import WorkGraph, WorkKind, contribution as work_contribution
+from herzchen.content.packets import AccessDeniedError, ContextPacketService, domain_contribution as packet_contribution
+from herzchen.domains.work import WorkGraph, WorkKind, contribution as work_contribution, contributions as work_contributions
 from herzchen.domains.work.assignments import ResponsibilityAssignments, StaleAssignmentError
 from herzchen.domains.work.batches import ProjectBatches
 from herzchen.extensions import (
@@ -57,6 +57,7 @@ from herzchen.packs.authoring import (
     ManagedPackAuthoringHandler,
     PackContentError,
     read_managed_pack,
+    domain_contribution as pack_authoring_contribution,
 )
 from herzchen.packs.composition import CompositionMetadata, TrustedDomain, compose
 from herzchen.packs.templates import TemplateEngine, WorkProtocol, work_template
@@ -144,7 +145,7 @@ def _contest_reservation(path: str, reservation_id: str, key: str, output: Any) 
     """Two real processes contend for the one remaining public capacity unit."""
     for _attempt in range(80):
         try:
-            store = Store.open(path, authority=AUTHORITY)
+            store = Store.open(path, authority=AUTHORITY, expected_domains=tuple(sorted(work_contributions(), key=lambda item: item.domain_id)))
         except WriterBusyError:
             time.sleep(0.003)
             continue
@@ -318,36 +319,37 @@ def test_int03_installed_public_api_probes(tmp_path: Path) -> None:
     observations: list[dict[str, Any]] = []
     db_path = tmp_path / "int03.sqlite"
 
-    # FND: one public mutation boundary, receipt/event identity, replay, and reopen.
+    # FND/C33: a supported registered command handler, replay, and reopen.
     store = Store.create(db_path, authority=AUTHORITY)
-    target = ResourceRef(AUTHORITY, "probe.record", "record-1")
-    payload = {"record_type": "probe.record", "value": "one", "unchanged": {"keep": True}}
-    envelope = CommandEnvelope("probe.record.create", "int03.probe.v1", target, _context("fnd-create", payload, version=0), payload)
-    before = {"get_record": store.get_record(target), "get_identity": store.get_identity(target), "get_receipt": store.get_receipt("fnd-create"), "events": store.list_events(stream="probe:record-1")}
-    with store.transaction() as tx:
-        receipt = store.mutate(envelope, event_type="probe.record.created", effects={"changed": ["value"], "unchanged": ["unchanged"]}, stream="probe:record-1", transaction=tx)
-    fresh = {"get_record": store.get_record(target), "get_identity": store.get_identity(target), "get_receipt": store.get_receipt("fnd-create"), "events": store.list_events(stream="probe:record-1")}
-    replay = store.mutate(envelope, event_type="probe.record.created", effects={"changed": ["value"]}, stream="probe:record-1")
-    reject = _error(lambda: store.mutate(CommandEnvelope("probe.record.create", "int03.probe.v1", target, _context("fnd-create", {"value": "changed"}, version=0), {"value": "changed"})))
+    public_graph = WorkGraph(store, actor=ACTOR)
+    work_registration = public_graph.register()
+    before = {"projects": public_graph.list(kind=WorkKind.PROJECT), "get_receipt": store.get_receipt("fnd-create"), "events": store.list_events()}
+    created = public_graph.create_project(title="C33 public command", metadata={"keep": True}, logical_request_key="fnd-create", actor=ACTOR)
+    target = created.ref
+    receipt = store.get_receipt("fnd-create")
+    assert receipt is not None
+    fresh = {"get_record": store.get_record(target), "get_identity": store.get_identity(target), "get_receipt": receipt, "events": store.list_events(stream="work:" + target.id)}
+    replay = public_graph.create_project(title="C33 public command", metadata={"keep": True}, logical_request_key="fnd-create", actor=ACTOR)
+    reject = _error(lambda: public_graph.create_project(title="changed", metadata={"keep": True}, logical_request_key="fnd-create", actor=ACTOR))
     domains = store.registered_domains()
     store.close()
     reopened = Store.open(db_path, authority=AUTHORITY, expected_domains=domains)
-    reopen = {"get_record": reopened.get_record(target), "get_identity": reopened.get_identity(target), "get_receipt": reopened.get_receipt("fnd-create"), "events": reopened.list_events(stream="probe:record-1")}
-    observations.append(_observation("INT03-FND-001", "Store.create/open + Store.transaction/mutate/get_record/get_identity/get_receipt/list_events", before, {"operation": envelope.operation, "target": target, "payload": payload}, receipt, fresh, replay=replay, reject=reject, reopen=reopen))
+    public_graph = WorkGraph(reopened, actor=ACTOR)
+    reopen = {"get_record": reopened.get_record(target), "get_identity": reopened.get_identity(target), "get_receipt": reopened.get_receipt("fnd-create"), "events": reopened.list_events(stream="work:" + target.id)}
+    observations.append(_observation("INT03-FND-001", "WorkGraph.register/create_project + Store.open/read-only public observations", before, {"operation": "work.create", "target": target, "payload": {"title": "C33 public command", "metadata": {"keep": True}}}, receipt, fresh, replay=replay, reject=reject, reopen=reopen))
 
     # FND cursor: a fresh reader catches up from a prior cursor after restart.
     reader = EventCursorReader(reopened)
-    page = reader.page("probe:record-1", limit=1)
+    page = reader.page("work:" + target.id, limit=1)
     cursor = page.cursor
     cursor_before = {"page": page, "cursor": cursor}
-    cursor_payload = {"record_type": "probe.record", "value": "two", "unchanged": {"keep": True}}
-    cursor_target = ResourceRef(AUTHORITY, "probe.record", "record-1", "rev-1")
-    cursor_env = CommandEnvelope("probe.record.update", "int03.probe.v1", cursor_target, _context("fnd-update", cursor_payload, version=1, revision="rev-1"), cursor_payload)
-    cursor_receipt = reopened.mutate(cursor_env, event_type="probe.record.updated", effects={"changed": ["value"]}, stream="probe:record-1")
+    revised = public_graph.revise(target, title="C33 revised", logical_request_key="fnd-update", actor=ACTOR)
+    cursor_receipt = reopened.get_receipt("fnd-update")
+    assert cursor_receipt is not None
     reopened.close()
     reopened = Store.open(db_path, authority=AUTHORITY, expected_domains=domains)
-    cursor_after = EventCursorReader(reopened).catch_up("probe:record-1", cursor=cursor, limit=10)
-    observations.append(_observation("INT03-CURSOR-001", "EventCursorReader.page/catch_up", cursor_before, {"operation": cursor_env.operation, "receipt": cursor_receipt}, cursor_after, cursor_after, replay={"unsupported": "cursor reader is read-only; business same-key replay is captured on the public mutator"}, reject={"unsupported": "cursor reader has no write rejection path"}, reopen={"fresh_process": True, "events": reopened.list_events(stream="probe:record-1")}))
+    cursor_after = EventCursorReader(reopened).catch_up("work:" + target.id, cursor=cursor, limit=10)
+    observations.append(_observation("INT03-CURSOR-001", "EventCursorReader.page/catch_up", cursor_before, {"operation": "work.revise", "receipt": cursor_receipt}, cursor_after, cursor_after, replay={"unsupported": "cursor reader is read-only; business same-key replay is captured on the public mutator"}, reject={"unsupported": "cursor reader has no write rejection path"}, reopen={"fresh_process": True, "record": revised, "events": reopened.list_events(stream="work:" + target.id)}))
 
     # C04: close the parent writer, then start two real processes for one last unit.
     limits = LimitService(reopened)
@@ -369,7 +371,7 @@ def test_int03_installed_public_api_probes(tmp_path: Path) -> None:
     winners = [item for item in results if item["outcome"] == "winner"]
     losers = [item for item in results if item["outcome"] == "loser"]
     assert len(winners) == 1 and len(losers) == 1
-    reopened = Store.open(db_path, authority=AUTHORITY)
+    reopened = Store.open(db_path, authority=AUTHORITY, expected_domains=domains)
     limits = LimitService(reopened)
     winner_id = winners[0]["contender"]
     winner_ref = ResourceRef(AUTHORITY, "reservation", winner_id)
@@ -387,11 +389,11 @@ def test_int03_installed_public_api_probes(tmp_path: Path) -> None:
     observations.append(_observation("INT03-LIMIT-001", "LimitService.reserve/mark_uncertain/settle/release", {"pool": pool, "contenders": 2, "winner": winner_id, "loser": losers[0]}, {"winner": winner_id, "uncertainty": uncertain, "settlement": settled, "capacity_reuse": reused, "release": released, "cumulative_charge": final_pool.cumulative_used_units, "overrun": settled.overrun_units}, {"winner": settled.receipt, "uncertainty": uncertain.receipt, "reuse": released.receipt}, {"pool": final_pool, "winner": limits.get_reservation(winner_ref), "reused": limits.get_reservation(ResourceRef(AUTHORITY, "reservation", "reservation-reuse"))}, replay=replay_limit, reject=limit_reject, reopen={"fresh_process": True, "pool": limits.get_pool(pool_ref)}))
 
     # Compose the accepted content/work contributions through the public PKG seam.
-    work_registration = WorkGraph(reopened, actor=ACTOR).register()
     composition = compose(
         reopened,
         [
-            TrustedDomain(content_contribution(), CompositionMetadata(edit_scope_resolver="dat.scope", conformance_adapters=("dat.adapter",))),
+                TrustedDomain(content_contribution(), CompositionMetadata(edit_scope_resolver="dat.scope", conformance_adapters=("dat.adapter",))),
+                TrustedDomain(packet_contribution(), CompositionMetadata(edit_scope_resolver="dat.scope", conformance_adapters=("dat.adapter",))),
         ],
     )
     assert composition.ready
@@ -406,7 +408,8 @@ def test_int03_installed_public_api_probes(tmp_path: Path) -> None:
     create_receipt = content.execute(create_env)
     content_after = content.read(document.ref)
     content_replay = content.execute(create_env)
-    content_changed_reject = _error(lambda: content.execute(content.build_create_document(_context("content-create", {"changed": True}), document, initial)))
+    changed_initial = ContentRevision(document.ref, "rev-1", {"title": "Changed", "keep": True}, ACTOR, initial=True)
+    content_changed_reject = _error(lambda: content.execute(content.build_create_document(_context("content-create", {"changed": True}), document, changed_initial)))
     second = ContentRevision(document.ref, "rev-2", {"title": "Updated", "keep": True}, ACTOR, parent_revision="rev-1")
     append_env = content.build_append_revision(_context("content-append", {"revision": second}, version=1, revision="rev-1"), document, second)
     append_receipt = content.execute(append_env)
@@ -455,6 +458,7 @@ def test_int03_installed_public_api_probes(tmp_path: Path) -> None:
 
     pack_root, manifest_path, handles, discoverer, loader = _managed_pack_fixture()
     managed_pack = read_managed_pack("megado", project_root=ROOT, discoverer=discoverer, loader=loader)
+    reopened.register_domain(pack_authoring_contribution())
     pack_handler = ManagedPackAuthoringHandler(reopened)
     pack_result = pack_handler.author(managed_pack, {"skill/SKILL.md": b"# INT03 fixture adoption\n"}, logical_request_key="pack-author", actor=ACTOR)
     pack_fresh = pack_handler.read("megado")

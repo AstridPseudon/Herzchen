@@ -15,14 +15,17 @@ from herzchen.contracts import (
     TransactionContext,
     canonical_json,
     canonical_request_digest,
+    ContractError,
     ReplayConflictError,
 )
 from herzchen.kernel import ConsumerStore, MutationAdmissionError, Store, StoreAdmissionError
+from herzchen.domains.work import contributions as work_contributions, register_work
 from herzchen.packs.authoring import (
     ManagedPack,
     ManagedPackAuthoringHandler,
     ManagedResource,
     ManagedSourceIdentity,
+    domain_contribution as pack_authoring_contribution,
 )
 
 
@@ -239,6 +242,63 @@ def test_non_owner_actor_cannot_use_an_admitted_combination(tmp_path):
         owner.close()
 
 
+def test_wrk_handler_is_required_store_bound_and_preserves_foreign_actor(tmp_path):
+    owner = Store.create(tmp_path / "wrk-handler.sqlite", authority="gf01-store")
+    foreign_owner = Store.create(tmp_path / "foreign-handler.sqlite", authority="foreign-store")
+    try:
+        handler = register_work(owner)
+        foreign_handler = register_work(foreign_owner)
+        actor = AuthenticatedActor("dat-auth", "dat-worker", "dat-credential")
+        payload = {"record_type": "work.project", "title": "handler proof"}
+        target = ResourceRef("gf01-store", "work.project", "handler-proof")
+        envelope = CommandEnvelope(
+            "work.create", "work.v1", target,
+            TransactionContext(actor, "wrk-handler", "a" * 64, expected_version=0),
+            payload,
+        )
+        before = dict(owner.consumer().snapshot_counts())
+        for fake in (None, "wrk", foreign_handler):
+            with pytest.raises(MutationAdmissionError):
+                owner.mutate(envelope, event_type="work.created", _handler=fake)
+            assert owner.consumer().snapshot_counts() == before
+        with pytest.raises(MutationAdmissionError):
+            handler.mutate(envelope, event_type="work.revised")
+        assert owner.consumer().snapshot_counts() == before
+
+        receipt = handler.mutate(envelope, event_type="work.created")
+        event = owner.consumer().list_events()[0]
+        assert receipt.event_ids == (event.event_id,)
+        assert event.actor == actor
+        assert owner.consumer().get_identity(target) is not None
+        with pytest.raises(Exception):
+            owner.register_domain(work_contributions()[0])
+    finally:
+        owner.close()
+        foreign_owner.close()
+
+
+def test_wrk_shared_event_identity_is_deliberate_and_foreign_duplicate_is_rejected(tmp_path):
+    owner = Store.create(tmp_path / "wrk-event-identity.sqlite", authority="gf01-store")
+    try:
+        register_work(owner)
+        # Assignment reports own work.report.appended. Batch reports use the
+        # distinct work.project-report.appended identity.
+        declared = {event for item in work_contributions() for event in item.event_types}
+        assert "work.report.appended" in declared
+        assert "work.project-report.appended" in declared
+        duplicate = DomainContribution(
+            "fixture.duplicate-work-event", "1", "fixture-owner",
+            ("fixture.report",), (), (), ("fixture.report.append",),
+            ("work.report.appended",), "fixture.report.v1", (),
+        )
+        before = owner.consumer().snapshot_counts()
+        with pytest.raises(ContractError, match="duplicate event type identity"):
+            owner.register_domain(duplicate)
+        assert owner.consumer().snapshot_counts() == before
+    finally:
+        owner.close()
+
+
 def test_existing_pkg_handler_succeeds_through_explicit_admitted_port(tmp_path):
     pack_root = tmp_path / "pack"
     pack_root.mkdir()
@@ -263,21 +323,7 @@ def test_existing_pkg_handler_succeeds_through_explicit_admitted_port(tmp_path):
         ResourceRef("astrid-managed", "managed_pack", "fixture-pack", "1" * 40),
     )
     pack = ManagedPack("fixture-pack", "1", source, {"schema_version": 2}, (resource,), (), ())
-    declaration = DomainContribution(
-        "pkg.managed-authoring",
-        "1",
-        "pkg",
-        ("managed_pack",),
-        (),
-        (),
-        ("pack.content.author",),
-        ("managed_pack.content_authored",),
-        "pkg-05.managed-pack.v1",
-        (
-            "handler:herzchen.packs.authoring.ManagedPackAuthoringHandler",
-            "actor-authority:pkg-auth",
-        ),
-    )
+    declaration = pack_authoring_contribution()
     owner = Store.create(tmp_path / "pkg.sqlite", authority="gf01-store")
     try:
         owner.register_domain(declaration)

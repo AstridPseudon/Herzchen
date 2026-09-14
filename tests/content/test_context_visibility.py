@@ -6,7 +6,7 @@ import unittest
 from typing import Optional, Tuple
 
 from herzchen.content import ContentCommandHandler, ContentDocument, ContentRevision, DocumentAssociation
-from herzchen.content.model import revision_identity
+from herzchen.content.model import domain_contribution, revision_identity
 from herzchen.content.packets import (
     AccessDeniedError,
     ContextPacketService,
@@ -14,6 +14,7 @@ from herzchen.content.packets import (
     PacketInput,
     SchemaAdoptionRequiredError,
     VisibilityContext,
+    domain_contribution as packet_contribution,
 )
 from herzchen.contracts import AuthenticatedActor, EventCursor, ReferenceBinding, ResourceRef, TransactionContext
 from herzchen.kernel import Store
@@ -32,6 +33,7 @@ class ContextVisibilityTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tempdir = tempfile.TemporaryDirectory()
         self.store = Store.create(self.tempdir.name + "/dat.sqlite", authority="dat-store")
+        self.store.register_domain_handler((domain_contribution(), packet_contribution()))
         self.content = ContentCommandHandler(self.store)
         self.service = ContextPacketService(self.store)
         self.owner = actor("owner")

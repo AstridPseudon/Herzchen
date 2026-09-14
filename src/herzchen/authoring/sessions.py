@@ -28,18 +28,64 @@ from herzchen.contracts import (
     CleanupStatus,
     CommandEnvelope,
     CommandReceipt,
+    DomainContribution,
     FinishClaim,
     ReceiptStatus,
     ReplayConflictError,
     ResourceRef,
     TransactionContext,
     canonical_json,
+    canonical_request_digest,
 )
 
 
 FND02_CONTRACT_REVISION = "fnd-02.v1.1"
 FND02_CONTRACT_DIGEST = "28ee051bef55163e79be8acf17513eccd258769f9cebcb5a2608bdb8bd300264"
 AUTHORING_SCHEMA_REVISION = "edt-02.authoring.v1"
+
+
+def domain_contribution() -> DomainContribution:
+    """Return EDT's exact durable authoring command declaration."""
+    ports = tuple(
+        "mutation-port:{}|{}|{}|authoring.{}".format(
+            AUTHORING_SCHEMA_REVISION, operation, resource, operation
+        )
+        for operation, resource in (
+            ("actor.open", "authoring-actor"),
+            ("actor.release", "authoring-actor"),
+            ("open", "authoring-scope"),
+            ("metadata", "authoring-scope"),
+            ("autosave", "authoring-scope"),
+            ("finish.claim", "authoring-scope"),
+            ("finish", "authoring-scope"),
+            ("finish.recovery", "authoring-scope"),
+            ("release", "authoring-scope"),
+            ("cleanup", "authoring-scope"),
+        )
+    )
+    return DomainContribution(
+        "herzchen.authoring.sessions", "1", "edt",
+        ("authoring-actor", "authoring-scope"), (),
+        ("authoring.sessions",),
+        tuple(operation for operation, _resource in (
+            ("actor.open", "authoring-actor"), ("actor.release", "authoring-actor"),
+            ("open", "authoring-scope"), ("metadata", "authoring-scope"),
+            ("autosave", "authoring-scope"), ("finish.claim", "authoring-scope"),
+            ("finish", "authoring-scope"), ("finish.recovery", "authoring-scope"),
+            ("release", "authoring-scope"), ("cleanup", "authoring-scope"),
+        )),
+        tuple("authoring." + operation for operation in (
+            "actor.open", "actor.release", "open", "metadata", "autosave",
+            "finish.claim", "finish", "finish.recovery", "release", "cleanup",
+        )),
+        AUTHORING_SCHEMA_REVISION,
+        ("fnd-03.identities", "fnd-03.record_references", "fnd-03.transaction", "handler-required") + ports,
+    )
+
+
+def register_authoring(store: Any) -> Any:
+    """Persist EDT's declaration and return its sealed writer capability."""
+    return store.register_domain_handler((domain_contribution(),))
 
 
 class AuthoringError(RuntimeError):
@@ -260,6 +306,8 @@ class AuthoringSessionService:
         materializer: Optional[Callable[..., Any]] = None,
         snapshot_store: Optional[Callable[..., Any]] = None,
     ) -> None:
+        if hasattr(writer, "domain_handler"):
+            writer = writer.domain_handler((domain_contribution(),))
         self.writer = writer
         self.scope_resolver = scope_resolver
         self.event_waiter = event_waiter
@@ -318,8 +366,15 @@ class AuthoringSessionService:
         holder = bool(actor and self._active(payload) and self._payload_checkout(payload).actor == actor)  # type: ignore[union-attr]
         return self._masked_read(scope, payload, holder=holder)
 
-    def _request_digest(self, operation: str, request_id: str, values: Mapping[str, Any]) -> str:
-        return _digest({"operation": operation, "request_id": request_id, "values": values})
+    def _request_digest(
+        self, operation: str, request_id: str, values: Mapping[str, Any],
+        *, target: ResourceRef, actor: AuthenticatedActor,
+    ) -> str:
+        return canonical_request_digest(
+            logical_request_key=request_id, operation=operation,
+            schema_revision=AUTHORING_SCHEMA_REVISION, target=target,
+            actor=actor, payload=values,
+        )
 
     def _envelope(
         self,
@@ -354,6 +409,7 @@ class AuthoringSessionService:
         record: Optional[_Record],
         payload: Mapping[str, Any],
         effects: Mapping[str, Any],
+        request_payload: Optional[Mapping[str, Any]] = None,
         no_op: bool = False,
     ) -> CommandReceipt:
         envelope = self._envelope(
@@ -361,7 +417,7 @@ class AuthoringSessionService:
             revision=None if record is None else record.ref.revision,
             version=0 if record is None else record.version,
             edit_token=None if record is None else record.edit_token,
-            payload=payload,
+            payload=payload if request_payload is None else request_payload,
         )
         return self.writer.mutate(
             envelope,
@@ -370,6 +426,7 @@ class AuthoringSessionService:
             stream="authoring:" + target.id,
             transaction=tx,
             no_op=no_op,
+            identity_payload=payload,
         )
 
     def _put_refs(self, tx: Any, *refs: Optional[ResourceRef]) -> None:
@@ -455,8 +512,8 @@ class AuthoringSessionService:
         base_revision = base_revision or target.revision or "initial"
         initial_bytes = _bytes(initial_content)
         values = {"scope": scope.to_dict(), "target": target.to_dict(), "target_kind": target_kind, "base_revision": base_revision, "purpose": purpose, "activity": activity, "allowed_fields": tuple(allowed_fields), "initial_digest": sha256(initial_bytes).hexdigest(), "pending": pending, "project": project}
-        digest = self._request_digest("open", request_id, values)
         scope_ref = _scope_key(scope)
+        digest = self._request_digest("open", request_id, values, target=scope_ref, actor=actor)
 
         authority = getattr(self.writer, "authority", scope.authority)
         actor_ref = _actor_key(actor, authority)
@@ -482,7 +539,7 @@ class AuthoringSessionService:
 
                 checkout, draft, handle, payload = self._new_checkout(scope, actor, target_kind, base_revision, allowed_fields, initial_bytes, pending=pending, purpose=purpose, activity=activity)
                 self._mutate(tx, actor=actor, operation="actor.open", request_id=request_id + ":actor", target=actor_ref, digest=digest, record=actor_record, payload={"type": "authoring_actor", "active": True, "scope": scope.to_dict(), "session_id": checkout.session_id, "purpose": purpose, "activity": activity}, effects={"scope": scope.id, "session_id": checkout.session_id})
-                receipt = self._mutate(tx, actor=actor, operation="open", request_id=request_id, target=scope_ref, digest=digest, record=scope_record, payload=payload, effects={"session_id": checkout.session_id, "scope": scope.id})
+                receipt = self._mutate(tx, actor=actor, operation="open", request_id=request_id, target=scope_ref, digest=digest, record=scope_record, payload=payload, effects={"session_id": checkout.session_id, "scope": scope.id}, request_payload=values)
                 self._put_snapshot(tx, draft)
                 self._put_refs(tx, checkout.draft_snapshot_ref)
         except (OccupiedError, ActorOccupiedError):
@@ -574,7 +631,7 @@ class AuthoringSessionService:
             payload["checkout_path"] = str(checkout_path)
         if registered_files:
             payload["registered_files"] = list(registered_files)
-        digest = self._request_digest("metadata", request_id, payload)
+        digest = self._request_digest("metadata", request_id, payload, target=handle.scope, actor=handle.actor)
         with self.writer.transaction() as tx:
             current = _as_record(self.writer.get_identity(handle.scope))
             assert current is not None
@@ -638,12 +695,13 @@ class AuthoringSessionService:
         payload["activity"] = activity
         updated_checkout = AuthoringCheckout(checkout.target_scope, checkout.target_kind, checkout.actor, checkout.session_id, checkout.token, checkout.fence, checkout.base_revision, snap.ref, checkout.final_snapshot_ref, checkout.allowed_fields, checkout.state, checkout.cleanup, checkout.finish_claim, checkout.unmanaged_writers)
         payload["checkout"] = updated_checkout.to_dict()
-        digest = self._request_digest("autosave", request_id, {"session": handle.session_id, "snapshot": snap.digest, "bytes": len(snap.data), "activity": activity})
+        request_payload = {"session": handle.session_id, "snapshot": snap.digest, "bytes": len(snap.data), "activity": activity}
+        digest = self._request_digest("autosave", request_id, request_payload, target=handle.scope, actor=handle.actor)
         with self.writer.transaction() as tx:
             current = _as_record(self.writer.get_identity(handle.scope))
             assert current is not None
             self._validate_record(handle, current)
-            self._mutate(tx, actor=handle.actor, operation="autosave", request_id=request_id, target=handle.scope, digest=digest, record=current, payload=payload, effects={"draft_digest": snap.digest, "draft_bytes": len(snap.data)})
+            self._mutate(tx, actor=handle.actor, operation="autosave", request_id=request_id, target=handle.scope, digest=digest, record=current, payload=payload, effects={"draft_digest": snap.digest, "draft_bytes": len(snap.data)}, request_payload=request_payload)
             self._put_snapshot(tx, snap)
             self._put_refs(tx, snap.ref)
         return snap
@@ -691,7 +749,8 @@ class AuthoringSessionService:
             record = _as_record(self.writer.get_identity(handle.scope))
             if record is None:
                 raise InvalidSessionError("scope is not admitted")
-            digest = self._request_digest("finish", request_id, {"session": handle.session_id, "mode": mode, "expected_base_revision": expected_base_revision, "pending": pending})
+            request_payload = {"session": handle.session_id, "mode": mode, "expected_base_revision": expected_base_revision, "pending": pending}
+            digest = self._request_digest("finish", request_id, request_payload, target=handle.scope, actor=handle.actor)
             prior = self._prior_receipt(request_id, digest)
             if prior is not None:
                 current = _as_record(self.writer.get_identity(handle.scope))
@@ -758,7 +817,7 @@ class AuthoringSessionService:
                         "fence": claimed.fence,
                         "manifest_digest": _digest(list(retirement_manifest if retirement_manifest is not None else snap.manifest)),
                     }
-                    receipt = self._mutate(tx, actor=handle.actor, operation="finish", request_id=request_id, target=scope_ref, digest=digest, record=_as_record(self.writer.get_identity(scope_ref)), payload=final_payload, effects={"mode": mode, "final_digest": snap.digest, "pending": is_pending})
+                    receipt = self._mutate(tx, actor=handle.actor, operation="finish", request_id=request_id, target=scope_ref, digest=digest, record=_as_record(self.writer.get_identity(scope_ref)), payload=final_payload, effects={"mode": mode, "final_digest": snap.digest, "pending": is_pending}, request_payload=request_payload)
                     actor_record = _as_record(self.writer.get_identity(actor_ref))
                     if actor_record is not None:
                         self._mutate(tx, actor=handle.actor, operation="actor.release", request_id=request_id + ":actor-release", target=actor_ref, digest=digest, record=actor_record, payload={"type": "authoring_actor", "active": False, "scope": scope_ref.to_dict(), "session_id": handle.session_id}, effects={"session_id": handle.session_id})
@@ -916,11 +975,12 @@ class AuthoringSessionService:
         payload = dict(record.payload)
         payload["checkout"] = updated.to_dict()
         payload["cleanup_outcome"] = status.value
-        digest = self._request_digest("cleanup", request_id, {"session": handle.session_id, "status": status.value})
+        request_payload = {"session": handle.session_id, "status": status.value}
+        digest = self._request_digest("cleanup", request_id, request_payload, target=handle.scope, actor=handle.actor)
         with self.writer.transaction() as tx:
             current = _as_record(self.writer.get_identity(handle.scope))
             assert current is not None
-            self._mutate(tx, actor=handle.actor, operation="cleanup", request_id=request_id, target=handle.scope, digest=digest, record=current, payload=payload, effects={"cleanup": status.value})
+            self._mutate(tx, actor=handle.actor, operation="cleanup", request_id=request_id, target=handle.scope, digest=digest, record=current, payload=payload, effects={"cleanup": status.value}, request_payload=request_payload)
         return CleanupResult(status.value, handle.scope, handle.session_id, status)
 
 
@@ -931,6 +991,7 @@ SessionManager = AuthoringSessionService
 
 __all__ = [
     "AUTHORING_SCHEMA_REVISION", "FND02_CONTRACT_DIGEST", "FND02_CONTRACT_REVISION",
+    "domain_contribution", "register_authoring",
     "AuthoringError", "ScopeResolutionError", "OccupiedError", "ActorOccupiedError",
     "InvalidSessionError", "BaseRevisionMismatchError", "MaterializationError", "CaptureError",
     "FNDWriterPort", "Snapshot", "SessionHandle", "OpenResult", "ReadResult", "WaitResult",

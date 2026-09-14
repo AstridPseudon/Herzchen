@@ -15,6 +15,8 @@ from herzchen.content.authoring import (
 )
 from herzchen.contracts import AuthenticatedActor, ResourceRef, TransactionContext
 from herzchen.kernel import Store
+from herzchen.authoring.sessions import register_authoring
+from herzchen.content.model import domain_contribution
 
 
 AUTHORITY = "dat-store"
@@ -43,6 +45,8 @@ class DocumentAuthoringContractTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tempdir = tempfile.TemporaryDirectory()
         self.store = Store.create(Path(self.tempdir.name) / "content.sqlite", authority=AUTHORITY)
+        self.store.register_domain_handler((domain_contribution(),))
+        register_authoring(self.store)
         self.handler = DocumentAuthoringHandler(self.store)
         self.content = ContentCommandHandler(self.store)
 

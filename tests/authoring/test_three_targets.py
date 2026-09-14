@@ -12,8 +12,9 @@ import pytest
 
 from herzchen.authoring import AuthoringLifecycle, AuthoringTarget
 from herzchen.authoring.snapshots import DurableSnapshotAdapter
-from herzchen.authoring.sessions import AuthoringSessionService, InvalidSessionError
+from herzchen.authoring.sessions import AuthoringSessionService, InvalidSessionError, register_authoring
 from herzchen.content import ContentCommandHandler, ContentDocument, ContentRevision
+from herzchen.content.model import domain_contribution as content_contribution
 from herzchen.content.authoring import DocumentAuthoringHandler, ScopeAuthorizationError
 from herzchen.contracts import AuthenticatedActor, ResourceRef, TransactionContext
 from herzchen.domains.work import WorkGraph
@@ -26,7 +27,16 @@ from herzchen.packs.authoring import (
     ManagedPackAuthoringHandler,
     ManagedResource,
     ManagedSourceIdentity,
+    domain_contribution as pack_contribution,
 )
+
+
+def _register_public_handlers(store: Store, *, content: bool = False, pack: bool = False) -> None:
+    register_authoring(store)
+    if content:
+        store.register_domain_handler((content_contribution(),))
+    if pack:
+        store.register_domain_handler((pack_contribution(),))
 
 
 def _actor(name: str) -> AuthenticatedActor:
@@ -78,6 +88,7 @@ def _pack(tmp_path: Path, authority: str) -> ManagedPack:
 
 def test_all_real_targets_share_finish_idle_cleanup_and_owner_application(tmp_path: Path):
     store = Store.create(tmp_path / "all.sqlite", authority="edt05")
+    _register_public_handlers(store, content=True, pack=True)
     graph = WorkGraph(store, actor=_actor("manager"))
     graph.register()
     batches = ProjectBatches(store, actor=_actor("manager"))
@@ -112,7 +123,7 @@ def test_all_real_targets_share_finish_idle_cleanup_and_owner_application(tmp_pa
             opened_project, request_id="project-finish", mode="manual", checkout_root=project_root,
             registered_files=[], handler=batches.lifecycle_handler(project, authoring=lifecycle.service, handle=opened_project.handle, request_id="project-domain"), cleanup=False,
         )
-        assert replay.status == "replayed"
+        assert replay.status == "replayed", replay.finish.error
 
         doc = _document(store.authority, "doc-1", scope=project.ref)
         seed = ContentRevision(doc.ref, "rev-1", {"body": "before", "untouched": True}, _actor("seed"), initial=True)
@@ -161,6 +172,7 @@ def test_all_real_targets_share_finish_idle_cleanup_and_owner_application(tmp_pa
 
 def test_project_creation_and_reopen_share_handler_and_untouched_pending_is_retained(tmp_path: Path):
     store = Store.create(tmp_path / "pending.sqlite", authority="edt05-pending")
+    _register_public_handlers(store)
     actor = _actor("pending")
     graph = WorkGraph(store, actor=actor)
     graph.register()
@@ -200,6 +212,7 @@ def test_project_creation_and_reopen_share_handler_and_untouched_pending_is_reta
 
 def test_document_scope_rules_external_attachment_rejection_and_closed_fence(tmp_path: Path):
     store = Store.create(tmp_path / "scope.sqlite", authority="edt05-scope")
+    _register_public_handlers(store, content=True)
     content = ContentCommandHandler(store)
     service = AuthoringSessionService(store)
     document_handler = DocumentAuthoringHandler(store, authoring=service)
@@ -234,6 +247,7 @@ def test_document_scope_rules_external_attachment_rejection_and_closed_fence(tmp
 
 def test_wrk_direct_and_sheet_owner_path_reject_replay_and_preserve_unrelated_fields(tmp_path: Path):
     store = Store.create(tmp_path / "wrk.sqlite", authority="edt05-wrk")
+    _register_public_handlers(store)
     actor = _actor("wrk")
     graph = WorkGraph(store, actor=actor)
     graph.register()
@@ -281,6 +295,7 @@ def test_wrk_direct_and_sheet_owner_path_reject_replay_and_preserve_unrelated_fi
 
 def test_rejected_bytes_are_durable_and_no_success_receipt_or_unowned_change(tmp_path: Path):
     store = Store.create(tmp_path / "reject.sqlite", authority="edt05-reject")
+    _register_public_handlers(store, pack=True)
     lifecycle = AuthoringLifecycle(AuthoringSessionService(store))
     actor = _actor("reject")
     root = tmp_path / "reject-checkout"
@@ -292,7 +307,7 @@ def test_rejected_bytes_are_durable_and_no_success_receipt_or_unowned_change(tmp
     opened = lifecycle.open(_ref(store.authority, "managed_pack", pack.pack_id), actor, request_id="reject-open", target_kind="managed-pack", base_revision="initial", initial_content=b"{}")
     try:
         result = lifecycle.finish(opened, request_id="reject-finish", mode="manual", checkout_root=root, registered_files=["pack-content.json"], handler=handler.lifecycle_handler(pack, request_id="reject-domain"), writer_check=lambda: True)
-        assert result.status == "rejected"
+        assert result.status == "rejected", result.finish.error
         assert result.finish.finish is not None and result.finish.finish.receipt is None
         assert (root / "pack-content.json").exists() is False
         snapshot = result.finish.snapshot
@@ -316,6 +331,7 @@ def test_shared_adapter_is_neutral_and_reuses_one_finish_boundary(tmp_path: Path
     assert "herzchen.packs" not in source
     store = Store.create(tmp_path / "boundary.sqlite", authority="edt05-boundary")
     try:
+        _register_public_handlers(store)
         lifecycle = AuthoringLifecycle(AuthoringSessionService(store))
         assert lifecycle.finish_adapter is lifecycle.idle_service.finish_adapter
         assert lifecycle.cleanup is lifecycle.idle_service._cleanup

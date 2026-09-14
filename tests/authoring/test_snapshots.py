@@ -13,7 +13,7 @@ from herzchen.authoring.snapshots import (
     UnsettledWriteError,
     capture_tree,
 )
-from herzchen.authoring.sessions import AuthoringSessionService
+from herzchen.authoring.sessions import AuthoringSessionService, domain_contribution, register_authoring
 from herzchen.contracts import AuthenticatedActor, ResourceRef
 from herzchen.kernel import Store
 
@@ -63,6 +63,7 @@ class SnapshotTests(unittest.TestCase):
     def test_autosave_noop_preserves_raw_draft_and_reads_after_restart(self) -> None:
         db = Path(self.tempdir.name) / "store.sqlite3"
         store = Store.create(db)
+        register_authoring(store)
         service = AuthoringSessionService(store)
         opened = service.open(
             ResourceRef("neutral-store", "project", "p-snapshot", "base-1"),
@@ -79,7 +80,7 @@ class SnapshotTests(unittest.TestCase):
         self.assertEqual(again.status, "no_op")
         ref = saved.session_snapshot.ref
         store.close()
-        reopened = Store.open(db)
+        reopened = Store.open(db, expected_domains=(domain_contribution(),))
         reread = DurableSnapshotAdapter(AuthoringSessionService(reopened)).read(ref)
         self.assertEqual(reread.data, saved.snapshot.data)
         self.assertEqual(reread.file_bytes("document.txt"), b"incomplete\x00draft")

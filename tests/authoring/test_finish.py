@@ -6,7 +6,7 @@ import threading
 import unittest
 
 from herzchen.authoring.finish import SemanticFinishAdapter, ValidationResult
-from herzchen.authoring.sessions import AuthoringSessionService
+from herzchen.authoring.sessions import AuthoringSessionService, register_authoring
 from herzchen.authoring.snapshots import DurableSnapshotAdapter
 from herzchen.contracts import AuthenticatedActor, ResourceRef
 from herzchen.kernel import Store
@@ -38,6 +38,7 @@ class FinishTests(unittest.TestCase):
         (self.root / "project.json").write_bytes(b"{\"title\":\"draft\"}")
         self.db = Path(self.tempdir.name) / "store.sqlite3"
         self.store = Store.create(self.db)
+        register_authoring(self.store)
         self.service = AuthoringSessionService(self.store)
         self.scope = ResourceRef("neutral-store", "project", "finish-project", "base-1")
         self.actor = AuthenticatedActor("auth", "finish-actor", "credential")

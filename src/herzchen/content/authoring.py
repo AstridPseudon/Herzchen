@@ -23,7 +23,7 @@ from herzchen.authoring.sessions import (
     SessionHandle,
     Snapshot,
 )
-from herzchen.contracts import AuthenticatedActor, ReplayConflictError, ResourceRef, TransactionContext, canonical_json
+from herzchen.contracts import AuthenticatedActor, ReplayConflictError, ResourceRef, TransactionContext, canonical_json, canonical_request_digest
 
 from .commands import ContentCommandHandler
 from .model import (
@@ -487,7 +487,17 @@ class DocumentAuthoringHandler:
         for link in all_links:
             validate_document_binding(document, link.document)
         values = {"target": target, "content": parsed.content, "revision": revision_name, "links": all_links, "scope": scope}
-        request_digest = _digest(values)
+        replay_revision = ContentRevision(
+            document.ref, revision_name, parsed.content, actor,
+            parent_revision=handle.base_revision if current_revision_ref is not None else None,
+            initial=current_revision_ref is None,
+        )
+        replay_operation = "dat.content.document.create" if current_revision_ref is None else "dat.content.revision.append"
+        request_digest = canonical_request_digest(
+            logical_request_key=request_id + ":document", operation=replay_operation,
+            schema_revision="dat-content.v1", target=document.ref, actor=actor,
+            payload={"document": document, "revision": replay_revision},
+        )
         prior = self.writer.get_receipt(request_id + ":document")
         if prior is not None:
             if prior.request_digest != request_digest:

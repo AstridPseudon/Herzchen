@@ -26,19 +26,12 @@ def _admit(store: Store, kind: str, ident: str, value: str = "original") -> Reso
 def _revise(store: Store, ref: ResourceRef, value: str, key: str) -> ResourceRef:
     current = store.get_identity(ResourceRef(ref.authority, ref.kind, ref.id))
     assert current is not None
-    actor = AuthenticatedActor(store.authority, "fixture", "fixture-credential")
-    envelope = CommandEnvelope(
-        "fixture.revise", "fixture.v1", ResourceRef(ref.authority, ref.kind, ref.id),
-        TransactionContext(actor, key, "a" * 64, expected_revision=current.ref.revision, expected_version=current.version),
-        {"record_type": ref.kind, "value": value},
+    revised = store.revise_identity(
+        current.ref, {"record_type": ref.kind, "value": value},
+        revision="rev-" + str(current.version + 1),
+        expected_revision=current.ref.revision, expected_version=current.version,
     )
-    receipt = store.mutate(
-        envelope, event_type="fixture.revised",
-        result_ref=ResourceRef(ref.authority, ref.kind, ref.id, "rev-" + str(current.version + 1)),
-        effects={"changed": True}, stream="fixture:" + ref.id,
-    )
-    assert receipt.result_ref is not None
-    return receipt.result_ref
+    return revised.ref
 
 
 @pytest.fixture

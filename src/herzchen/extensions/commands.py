@@ -74,6 +74,8 @@ class ExtensionCommandService:
             self._ensure_registered()
         elif writer is not None:
             self._verify_registered()
+        if writer is not None and hasattr(writer, "domain_handler"):
+            self._writer = writer.domain_handler((domain_contribution(),))
 
     def _require_writer(self) -> FNDExtensionWriter:
         if self._writer is None:

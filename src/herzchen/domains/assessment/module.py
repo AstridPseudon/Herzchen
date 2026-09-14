@@ -20,6 +20,7 @@ from herzchen.contracts import (
     ResourceRef,
     TransactionContext,
     canonical_json,
+    canonical_request_digest,
     validate_replay,
 )
 from herzchen.kernel import (
@@ -127,16 +128,18 @@ def contribution() -> DomainContribution:
             "assessment.scope.declare", "assessment.input.freeze", "assessment.candidate.select",
             "assessment.run", "assessment.correction.create", "assessment.finding.close",
             "assessment.accept", "assessment.unknown.disposition", "assessment.loop-facts.record",
+            "assessment.result.link-correction",
         ),
         event_types=(
             "assessment.scope.declared", "assessment.input.frozen", "assessment.candidate.selected",
             "assessment.completed", "assessment.correction.created", "assessment.finding.closed",
             "assessment.accepted", "assessment.unknown.disposed", "assessment.loop-facts.recorded",
+            "assessment.result.correction-linked",
         ),
         schema_revision=SCHEMA_REVISION,
         composition_bindings=(
             "fnd-03.identities", "fnd-03.record_references", "fnd-03.transaction",
-            "fnd-04.limits", "fnd-04.operations",
+            "fnd-04.limits", "fnd-04.operations", "handler-required",
         ),
     )
 
@@ -147,13 +150,18 @@ class AssessmentModule:
     def __init__(self, store: Store, *, actor: Optional[AuthenticatedActor] = None) -> None:
         if not isinstance(store, Store):
             raise TypeError("store must be the supplied FND Store")
-        self.store = store
+        try:
+            self.store = store.domain_handler((contribution(),))
+        except Exception:
+            self.store = store
         self.default_actor = actor
         self.limits = LimitService(store)
         self.operations = OperationManager(store)
 
     def register(self) -> DomainContribution:
-        return self.store.register_domain(contribution())
+        descriptor = contribution()
+        self.store = self.store.register_domain_handler((descriptor,))
+        return descriptor
 
     # ---- scope and frozen input -------------------------------------------------
 
@@ -314,7 +322,7 @@ class AssessmentModule:
         selected_actor = self._actor(actor)
         parent_payload = {"record_type": RESULT_KIND, "schema_revision": SCHEMA_REVISION, "scope_ref": scope_record.ref, "parent_obligation_ref": parent_ref, "criterion_ref": criterion_ref, "candidate_ref": candidate_ref, "input_packet_ref": packet.ref, "verdict": selected_verdict.value, "guidance": _safe(dict(guidance or {})), "protocol_result": _safe(dict(protocol_result or {})), "route": route, "role": role, "invocation_ref": invocation_ref, "reservation_ref": reservation_ref, "finding_refs": (), "correction_refs": (), "accepted": False}
         with self.store.transaction() as tx:
-            envelope = self._envelope("assessment.run", result_ref, parent_payload, request_key, selected_actor, expected_version=0, digest_payload=body_for_digest)
+            envelope = self._envelope("assessment.run", result_ref, body_for_digest, request_key, selected_actor, expected_version=0)
             prior = self.store.get_receipt(request_key)
             if prior is not None:
                 validate_replay(prior, envelope)
@@ -345,8 +353,8 @@ class AssessmentModule:
             # Rebuild the envelope after composing children: CommandEnvelope
             # copies its payload, so a pre-child envelope would lose the
             # finding links even though the transaction remained atomic.
-            envelope = self._envelope("assessment.run", result_ref, parent_payload, request_key, selected_actor, expected_version=0, digest_payload=body_for_digest)
-            receipt = self.store.mutate(envelope, event_type="assessment.completed", result_ref=ResourceRef(self.store.authority, RESULT_KIND, result_ref.id, "rev-1"), before_refs=(scope_record.ref, parent_ref, candidate_ref, criterion_ref, packet.ref), effects={"logical_parent": True, "invocation_ref": invocation_ref, "reservation_ref": reservation_stable, "finding_refs": tuple(finding_refs), "verdict": selected_verdict.value, "protocol": scope_record.protocol}, stream=ASSESSMENT_STREAM, transaction=tx)
+            envelope = self._envelope("assessment.run", result_ref, body_for_digest, request_key, selected_actor, expected_version=0)
+            receipt = self.store.mutate(envelope, identity_payload=parent_payload, event_type="assessment.completed", result_ref=ResourceRef(self.store.authority, RESULT_KIND, result_ref.id, "rev-1"), before_refs=(scope_record.ref, parent_ref, candidate_ref, criterion_ref, packet.ref), effects={"logical_parent": True, "invocation_ref": invocation_ref, "reservation_ref": reservation_stable, "finding_refs": tuple(finding_refs), "verdict": selected_verdict.value, "protocol": scope_record.protocol}, stream=ASSESSMENT_STREAM, transaction=tx)
             if failure_injector is not None:
                 failure_injector("after-parent")
         return self.get_result(receipt.result_ref or result_ref)
@@ -607,7 +615,12 @@ class AssessmentModule:
         return finding_ref
 
     def _envelope(self, operation: str, target: ResourceRef, payload: Mapping[str, Any], key: str, actor: AuthenticatedActor, *, expected_version: Optional[int] = None, expected_revision: Optional[str] = None, digest_payload: Optional[Mapping[str, Any]] = None) -> CommandEnvelope:
-        return CommandEnvelope(operation, SCHEMA_REVISION, target, TransactionContext(actor, key, _digest(digest_payload or payload), expected_revision=expected_revision, expected_version=expected_version), dict(payload))
+        envelope_payload = dict(payload)
+        digest = canonical_request_digest(
+            logical_request_key=key, operation=operation, schema_revision=SCHEMA_REVISION,
+            target=target, actor=actor, payload=envelope_payload,
+        )
+        return CommandEnvelope(operation, SCHEMA_REVISION, target, TransactionContext(actor, key, digest, expected_revision=expected_revision, expected_version=expected_version), envelope_payload)
 
     def _actor(self, actor: Optional[AuthenticatedActor]) -> AuthenticatedActor:
         value = actor or self.default_actor or AuthenticatedActor("herzchen.assessment", "assessment-module", "herzchen.assessment")

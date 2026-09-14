@@ -485,6 +485,7 @@ def domain_contribution() -> DomainContribution:
             "fnd-03.six-table-composition",
             "dat.content.document-roles",
             "handler:herzchen.extensions.ExtensionCommandService",
+            "handler-required",
             "actor-authority:dat-auth",
             "mutation-resource:work.task",
             "mutation-resource:work.project",

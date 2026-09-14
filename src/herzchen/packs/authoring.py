@@ -19,6 +19,7 @@ from typing import Any, Callable, Iterable, Mapping, Optional, Protocol, Sequenc
 from herzchen.contracts import (
     AuthenticatedActor,
     CommandEnvelope,
+    DomainContribution,
     PackResourceDescriptor,
     ResourceRef,
     TransactionContext,
@@ -32,6 +33,15 @@ MANAGED_PACK_KIND = "managed_pack"
 MANAGED_PACK_STREAM = "managed-pack"
 _SAFE_PATH = re.compile(r"^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$")
 _HEX = re.compile(r"^[0-9a-f]+$")
+
+
+def domain_contribution() -> DomainContribution:
+    return DomainContribution(
+        "herzchen.packs.authoring", "1", "pkg", (MANAGED_PACK_KIND,), (),
+        ("pack.authoring",), ("pack.content.author",),
+        ("managed_pack.content_authored",), PACK_SCHEMA_REVISION,
+        ("fnd-03.identities", "fnd-03.record_references", "fnd-03.transaction", "handler-required"),
+    )
 
 
 class PackAuthoringError(ValueError):
@@ -488,8 +498,10 @@ class ManagedPackAuthoringHandler:
     """Content-only managed pack handler over the injected FND store."""
 
     def __init__(self, store: Store) -> None:
-        if not isinstance(store, Store):
-            raise TypeError("store must be the supplied FND Store")
+        if not hasattr(store, "transaction") or not hasattr(store, "mutate"):
+            raise TypeError("store must be the supplied FND writer")
+        if hasattr(store, "domain_handler"):
+            store = store.domain_handler((domain_contribution(),))
         self.store = store
 
     def author(
@@ -659,7 +671,7 @@ def _coerce_content(value: bytes | bytearray | str) -> bytes:
 __all__ = [
     "AuthoringResult", "CompatibilityDescription", "ExecutionPin", "ManagedPack",
     "ManagedPackAuthoringHandler", "ManagedResource", "ManagedSourceIdentity",
-    "MANAGED_PACK_KIND", "PACK_SCHEMA_REVISION", "PackAuthoringError",
+    "MANAGED_PACK_KIND", "PACK_SCHEMA_REVISION", "PackAuthoringError", "domain_contribution",
     "PackContentError", "PackLoaderUnavailableError", "PackPathError",
     "PackProvenanceError", "describe_compatibility", "read_managed_pack",
     "verify_skill_export",

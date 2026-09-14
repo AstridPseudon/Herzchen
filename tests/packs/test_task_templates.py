@@ -8,12 +8,12 @@ from pathlib import Path
 import pytest
 
 from herzchen.content import ContentCommandHandler
+from herzchen.content.model import domain_contribution as content_contribution
 from herzchen.contracts import AuthenticatedActor, ReferenceBinding, ReplayConflictError, ResourceRef
 from herzchen.authoring.finish import SemanticFinishAdapter
 from herzchen.authoring.idle import IdleCloseService
-from herzchen.authoring.sessions import AuthoringSessionService
+from herzchen.authoring.sessions import AuthoringSessionService, register_authoring
 from herzchen.domains.work import WorkGraph, WorkKind
-from herzchen.domains.work.module import contribution as work_contribution
 from herzchen.kernel import Store
 from herzchen.packs.templates import (
     CRITERION_NAMESPACE,
@@ -37,6 +37,8 @@ def harness(tmp_path):
     actor = AuthenticatedActor("pkg03-test", "tester", "test-credential")
     graph = WorkGraph(store, actor=actor)
     graph.register()
+    store.register_domain(content_contribution())
+    register_authoring(store)
     engine = TemplateEngine(store, graph=graph, actor=actor)
     try:
         yield store, graph, engine, actor
@@ -123,8 +125,9 @@ def test_shipped_delivery_seed_work_is_expanded_from_real_resource(harness):
     assert document_receipt.result_ref.revision == document_read["current_revision"]["revision"]
     assert link_receipt.target == result.association_refs["effort:megado:goal"]
 
+    expected_domains = store.registered_domains()
     store.close()
-    reopened = Store.open(store.path, authority=store.authority, expected_domains=(work_contribution(),))
+    reopened = Store.open(store.path, authority=store.authority, expected_domains=expected_domains)
     try:
         reopened_content = ContentCommandHandler(reopened)
         assert reopened_content.read(result.document_refs["goal"])["revision"]["content"] == "Build"
@@ -469,8 +472,7 @@ def test_profile_and_allowance_are_resolved_but_not_granted(harness):
     refs = []
     for kind, ident in (("profile", "normal-profile"), ("allowance", "existing-pool")):
         ref = ResourceRef(store.authority, kind, ident)
-        context = TransactionContext(actor, "fixture-" + ident, "0" * 64, expected_version=0)
-        store.mutate(CommandEnvelope("fixture.create", "fixture.v1", ref, context, {"kind": kind}), event_type="fixture.created")
+        store.put_identity(ResourceRef(ref.authority, ref.kind, ref.id, "rev-1"), {"kind": kind}, version=1)
         refs.append(ref)
     template = work_template("resolved-refs", seed={"tasks": [{
         "local_id": "task", "profile_ref": refs[0].to_dict(), "allowance_ref": refs[1].to_dict(),

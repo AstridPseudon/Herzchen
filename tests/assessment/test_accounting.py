@@ -29,6 +29,7 @@ def context(tmp_path):
     store = Store.create(tmp_path / "assessment.sqlite", authority="assessment-test")
     actor = AuthenticatedActor("assessment-test", "approver", "credential")
     graph = WorkGraph(store, actor=actor)
+    graph.register()
     parent = graph.create_task(graph.create_project(logical_request_key="project"), title="Parent obligation", logical_request_key="parent")
     criterion = graph.create_criterion(parent, title="Criterion", logical_request_key="criterion")
 
@@ -81,14 +82,12 @@ def context(tmp_path):
 def revise_fixture(store: Store, ref: ResourceRef, payload: dict, key: str) -> ResourceRef:
     current = store.get_identity(ref)
     assert current is not None
-    actor = AuthenticatedActor("assessment-test", "fixture", "fixture-credential")
-    envelope = CommandEnvelope(
-        "fixture.revise", "fixture.v1", ref, TransactionContext(actor, key, "a" * 64, expected_revision=current.ref.revision, expected_version=current.version),
-        payload,
+    revised = store.revise_identity(
+        ref, payload, expected_version=current.version,
+        expected_revision=current.ref.revision,
+        revision="rev-" + str(current.version + 1),
     )
-    receipt = store.mutate(envelope, event_type="fixture.revised", result_ref=ResourceRef(ref.authority, ref.kind, ref.id, "rev-" + str(current.version + 1)), effects={"changed": True}, stream="fixture:" + ref.id)
-    assert receipt.result_ref is not None
-    return receipt.result_ref
+    return revised.ref
 
 
 def run_assessment(ctx, *, key: str, verdict: Verdict, route: str = "normal", role: str = "review", findings=(), actual_units=1, **extra):

@@ -14,7 +14,7 @@ import json
 import uuid
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
-from herzchen.contracts import AuthenticatedActor, CommandEnvelope, ReferenceBinding, ResourceRef, TransactionContext, canonical_json, ReplayConflictError
+from herzchen.contracts import AuthenticatedActor, CommandEnvelope, DomainContribution, ReferenceBinding, ResourceRef, TransactionContext, canonical_json, ReplayConflictError
 from herzchen.kernel import VersionConflictError
 
 from .model import Lifecycle, WorkKind, WorkNotFoundError, WorkRecord, WorkValidationError
@@ -22,9 +22,31 @@ from .module import KIND_PREFIX, SCHEMA_REVISION, WorkGraph
 
 
 BATCH_SCHEMA_REVISION = "work.batch.v1"
+DOMAIN_ID = "herzchen.work.batches"
 RESERVATION_KIND = "wrk.authoring-reservation"
 READINESS_KIND = "wrk.readiness"
 AMENDMENT_KIND = "wrk.amendment"
+
+
+def contribution() -> DomainContribution:
+    ports = (
+        ("work.project-sheet.apply", "work.project", "work.project-sheet.applied"),
+        ("work.project.create", "work.project", "work.project.created"),
+        ("work.project.activate", "work.project", "work.project.activated"),
+        ("work.readiness.observe", READINESS_KIND, "work.readiness.observed"),
+        ("work.project-report.append", "wrk.report", "work.project-report.appended"),
+        ("work.amendment.link", AMENDMENT_KIND, "work.amendment.partially-linked"),
+        ("work.authoring.reconcile", RESERVATION_KIND, "work.authoring.reconciled"),
+    )
+    return DomainContribution(
+        DOMAIN_ID, "1.0", "wrk", (RESERVATION_KIND, READINESS_KIND, AMENDMENT_KIND),
+        (), ("work.batches",), tuple(port[0] for port in ports),
+        tuple(port[2] for port in ports), BATCH_SCHEMA_REVISION,
+        (
+            "fnd-03.identities", "fnd-03.record_references", "fnd-03.transaction",
+            "handler-required", "mutation-resource:work.project", "mutation-resource:wrk.report",
+        ) + tuple("mutation-port:{}|{}|{}|{}".format(BATCH_SCHEMA_REVISION, *port) for port in ports),
+    )
 
 
 class MaterialisationError(WorkValidationError):
@@ -95,7 +117,8 @@ class ProjectBatches:
     def __init__(self, store: Any, *, actor: Optional[AuthenticatedActor] = None) -> None:
         if not hasattr(store, "transaction") or not hasattr(store, "mutate"):
             raise TypeError("store must be the supplied FND writer")
-        self.store = store
+        from .module import work_handler
+        self.store = work_handler(store)
         self.default_actor = actor
         self.graph = WorkGraph(store, actor=actor)
 
@@ -122,13 +145,19 @@ class ProjectBatches:
         parent_payload = plan["project_payload"]
         with self.store.transaction() as tx:
             prior = self.store.get_receipt(request_key)
+            replay_target = prior.target if prior is not None else record.ref
+            command_payload = {
+                "sheet": _safe(sheet),
+                "decision_ref": _safe(decision_ref),
+                "next_action": next_action,
+            }
             envelope = self._envelope(
-                "work.project-sheet.apply", record.ref, parent_payload, request_key, actor,
+                "work.project-sheet.apply", replay_target, command_payload, request_key, actor,
                 expected_version=record.version, expected_revision=record.revision,
-                digest_payload={"sheet": _safe(sheet), "decision_ref": _safe(decision_ref), "next_action": next_action},
             )
             receipt = self.store.mutate(
                 envelope,
+                identity_payload=parent_payload,
                 event_type="work.project-sheet.applied",
                 result_ref=ResourceRef(record.ref.authority, record.ref.kind, record.ref.id, "rev-" + str(record.version + 1)),
                 before_refs=(record.ref,),
@@ -368,7 +397,7 @@ class ProjectBatches:
         ident = ResourceRef(self.store.authority, "wrk.report", "report-" + hashlib.sha256((record.id + ":" + key).encode()).hexdigest()[:28])
         payload = {"record_type": "work.report", "project": record.ref, "value": value, "append_only": True}
         with self.store.transaction() as tx:
-            self.store.mutate(self._envelope("work.report.append", ident, payload, key, actor, expected_version=0), event_type="work.report.appended", result_ref=ResourceRef(ident.authority, ident.kind, ident.id, "rev-1"), after_refs=(record.ref,), effects={"append_only": True, "authoring_lock": False}, stream="report:" + record.id, transaction=tx)
+            self.store.mutate(self._envelope("work.project-report.append", ident, payload, key, actor, expected_version=0), event_type="work.project-report.appended", result_ref=ResourceRef(ident.authority, ident.kind, ident.id, "rev-1"), after_refs=(record.ref,), effects={"append_only": True, "authoring_lock": False}, stream="report:" + record.id, transaction=tx)
         return ident
 
     report = append_report

@@ -16,7 +16,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Iterator, Mapping, Optional, Sequence, Tuple
 
-from herzchen.contracts import AuthenticatedActor, ReferenceBinding, ResourceRef, canonical_json
+from herzchen.contracts import AuthenticatedActor, DomainContribution, ReferenceBinding, ResourceRef, canonical_json
 from herzchen.kernel import VersionConflictError
 
 from .assignments import ASSIGNMENT_KIND, DISPATCH_KIND, RESULT_KIND, REPORT_KIND, ResponsibilityAssignments
@@ -26,6 +26,23 @@ from .model import Lifecycle, WorkKind, WorkRecord, WorkValidationError
 
 
 SHEET_SCHEMA_REVISION = "work.project-sheet.v1"
+DOMAIN_ID = "herzchen.work.sheet"
+
+
+def contribution() -> DomainContribution:
+    operation = "work.assignment.route-pin"
+    event = "work.assignment.route-pinned"
+    resource = "wrk.assignment"
+    mutation_schema = "work.batch.v1"
+    return DomainContribution(
+        DOMAIN_ID, "1.0", "wrk", (), (), ("work.sheet",), (operation,), (event,),
+        mutation_schema,
+        (
+            "fnd-03.identities", "fnd-03.record_references", "fnd-03.transaction",
+            "handler-required", "mutation-resource:" + resource,
+            "mutation-port:{}|{}|{}|{}".format(mutation_schema, operation, resource, event),
+        ),
+    )
 
 
 class SheetError(WorkValidationError):
@@ -217,12 +234,13 @@ class ProjectSheet:
     ) -> None:
         if not hasattr(store, "transaction") or not hasattr(store, "get_identity"):
             raise TypeError("store must be the supplied FND writer")
-        self.store = store
+        from .module import work_handler
+        self.store = work_handler(store)
         self.actor = actor
-        self.batches = batches or _SheetBatches(store, actor=actor)
+        self.batches = batches or _SheetBatches(self.store, actor=actor)
         self.graph = self.batches.graph
-        self.decisions = decisions or DecisionsModule(store, actor=actor)
-        self.assignments = assignments or ResponsibilityAssignments(store, actor=actor)
+        self.decisions = decisions or DecisionsModule(self.store, actor=actor)
+        self.assignments = assignments or ResponsibilityAssignments(self.store, actor=actor)
 
     # ---- common sheet commands -------------------------------------------------
 

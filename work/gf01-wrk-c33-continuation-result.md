@@ -98,8 +98,3 @@ The implementation worktree cannot write the linked-worktree Git metadata at `/U
 Final attempt: `/usr/bin/git add src tests work/gf01-wrk-c33-continuation-result.md && /usr/bin/git commit -m "Complete typed public admission across affected consumers"`
 
 It exited `128` before staging: `fatal: Unable to create .../index.lock: Operation not permitted`. Therefore no truthful follow-up commit/tree can be reported by this sandbox. A manager holding parent-repository metadata custody must stage the listed paths plus this result, commit once on `gf01-correction-worker`, copy this result to `/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/gf01-wrk-c33-continuation-result.md`, and record the resulting commit/tree and external result digest. There is no identified source compatibility gap in the requested test matrix.
-
-
-## Manager custody completion
-
-The manager staged the 37 listed owned source, test, and result paths from the worker checkout after the worker's linked-worktree metadata restriction. The resulting commit is `7911f36edf38fecd80615dd4643379e37e26c760`, tree `914cfc1dfda244c8b4d3578729deaf53e5865532`. The final result artifact is copied to the control workspace as `work/gf01-wrk-c33-continuation-result.md`; its post-copy SHA-256 is recorded by the manager handoff.

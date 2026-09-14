@@ -91,6 +91,7 @@ DOMAIN_KIND = "domain"
 DOMAIN_DESCRIPTOR_DIGEST_KEY = "domain_descriptor_digest"
 EMPTY_DOMAIN_DESCRIPTOR_DIGEST = hashlib.sha256(b"[]").hexdigest()
 _OWNER_CONSTRUCTION_TOKEN = object()
+_HANDLER_CONSTRUCTION_TOKEN = object()
 
 
 def _authority_root(value: str) -> str:
@@ -276,6 +277,7 @@ class Store:
         self._local = threading.local()
         self._domain_descriptors: Dict[str, DomainContribution] = dict(domain_descriptors or {})
         self._domain_descriptor_digest = _descriptor_digest(self._domain_descriptors.values())
+        self._issued_handlers: set[DomainHandler] = set()
 
     @classmethod
     def create(cls, path: Union[os.PathLike, str], *, authority: str = "neutral-store") -> "Store":
@@ -720,6 +722,30 @@ class Store:
         candidate, candidate_digest = self._validated_domain_candidate(contribution, tx._domain_working)
         return self._register_domain(tx, contribution, candidate, candidate_digest)
 
+    def register_domain_handler(self, contributions: Sequence[DomainContribution]) -> "DomainHandler":
+        """Atomically register exact descriptors and issue their sealed handler."""
+        descriptors = tuple(contributions)
+        if not descriptors or any(not isinstance(item, DomainContribution) for item in descriptors):
+            raise TypeError("contributions must be a non-empty sequence of DomainContribution values")
+        with self.transaction() as tx:
+            for contribution in descriptors:
+                self.register_domain(contribution, transaction=tx)
+        return self.domain_handler(descriptors)
+
+    def domain_handler(self, contributions: Sequence[DomainContribution]) -> "DomainHandler":
+        """Issue a handler only for an exact, already-persisted descriptor set."""
+        descriptors = tuple(contributions)
+        if not descriptors or any(not isinstance(item, DomainContribution) for item in descriptors):
+            raise TypeError("contributions must be a non-empty sequence of DomainContribution values")
+        for contribution in descriptors:
+            if self._domain_descriptors.get(contribution.domain_id) != contribution:
+                raise MutationAdmissionError(
+                    "handler descriptor is not the exact registered definition: {}".format(contribution.domain_id)
+                )
+        handler = DomainHandler(self, descriptors, _construction_token=_HANDLER_CONSTRUCTION_TOKEN)
+        self._issued_handlers.add(handler)
+        return handler
+
     def _validated_domain_candidate(
         self,
         contribution: DomainContribution,
@@ -845,6 +871,8 @@ class Store:
         occurred_at: Optional[str] = None,
         no_op: bool = False,
         transaction: Optional[Transaction] = None,
+        _handler: Optional["DomainHandler"] = None,
+        _identity_payload: Optional[Mapping[str, Any]] = None,
     ) -> CommandReceipt:
         if not isinstance(envelope, CommandEnvelope):
             raise TypeError("envelope must be a CommandEnvelope")
@@ -852,6 +880,8 @@ class Store:
             raise ValueError("event_type must be a non-blank string")
         if not isinstance(effects or {}, Mapping):
             raise TypeError("effects must be a mapping")
+        if _identity_payload is not None and not isinstance(_identity_payload, Mapping):
+            raise TypeError("identity payload must be a mapping")
         request_digest = canonical_request_digest(
             logical_request_key=envelope.context.logical_request_key,
             operation=envelope.operation,
@@ -873,12 +903,12 @@ class Store:
         # Resolve the trusted owner before transaction admission.  A rejected
         # combination therefore cannot allocate an identity, sequence,
         # reference, event, or receipt.
-        self._admit_mutation(envelope, event_type)
+        self._admit_mutation(envelope, event_type, _handler)
         tx, own = self._active_or_transaction(transaction)
         if own:
             with self.transaction() as owned:
-                return self._mutate(owned, envelope, event_type, result_ref, before_refs, after_refs, effects_json, stream, event_schema_revision, occurred_at, no_op)
-        return self._mutate(tx, envelope, event_type, result_ref, before_refs, after_refs, effects_json, stream, event_schema_revision, occurred_at, no_op)
+                return self._mutate(owned, envelope, event_type, result_ref, before_refs, after_refs, effects_json, stream, event_schema_revision, occurred_at, no_op, _identity_payload)
+        return self._mutate(tx, envelope, event_type, result_ref, before_refs, after_refs, effects_json, stream, event_schema_revision, occurred_at, no_op, _identity_payload)
 
     @staticmethod
     def _actor_bound_to_owner(envelope: CommandEnvelope, owner: str, bindings: Iterable[str] = ()) -> bool:
@@ -903,7 +933,7 @@ class Store:
             or _authority_root(actor.actor) == owner_root
         )
 
-    def _admit_mutation(self, envelope: CommandEnvelope, event_type: str) -> str:
+    def _admit_mutation(self, envelope: CommandEnvelope, event_type: str, handler: Optional["DomainHandler"] = None) -> str:
         """Resolve one command to its persisted domain owner or neutral port."""
         matches = []
         for descriptor in self._domain_descriptors.values():
@@ -922,9 +952,32 @@ class Store:
                 continue
             if envelope.schema_revision != descriptor.schema_revision:
                 continue
+            declared_ports = {
+                binding.split(":", 1)[1]
+                for binding in bindings
+                if binding.startswith("mutation-port:")
+            }
+            if declared_ports and "|".join((
+                envelope.schema_revision,
+                envelope.operation,
+                envelope.target.kind,
+                event_type,
+            )) not in declared_ports:
+                continue
             matches.append(descriptor)
         if len(matches) == 1:
             admitted = matches[0]
+            if "handler-required" in admitted.composition_bindings:
+                if (
+                    handler is None
+                    or handler not in self._issued_handlers
+                    or handler._owner is not self
+                    or admitted.domain_id not in handler.domain_ids
+                ):
+                    raise MutationAdmissionError(
+                        "mutation requires the sealed handler for admitted owner {!r}".format(admitted.owner)
+                    )
+                return admitted.owner
             if not self._actor_bound_to_owner(envelope, admitted.owner, admitted.composition_bindings):
                 raise MutationAdmissionError(
                     "authenticated actor {!r} is not bound to admitted owner {!r}".format(
@@ -947,11 +1000,12 @@ class Store:
             )
         )
 
+
     def _mutate(
         self, tx: Transaction, envelope: CommandEnvelope, event_type: str,
         result_ref: Optional[ResourceRef], before_refs: Tuple[ResourceRef, ...], after_refs: Tuple[ResourceRef, ...],
         effects_json: str, stream: Optional[str], event_schema_revision: str,
-        occurred_at: Optional[str], no_op: bool,
+        occurred_at: Optional[str], no_op: bool, identity_payload: Optional[Mapping[str, Any]],
     ) -> CommandReceipt:
         with tx.savepoint():
             existing = tx.execute(
@@ -1001,6 +1055,7 @@ class Store:
                 return receipt
 
             next_version = current_version + 1
+            persisted_payload = envelope.payload if identity_payload is None else identity_payload
             if result_ref is None:
                 revision = "rev-{}".format(next_version)
                 result_ref = ResourceRef(target.authority, target.kind, target.id, revision)
@@ -1010,12 +1065,12 @@ class Store:
                 created_at = _now()
                 tx.execute(
                     "INSERT INTO identities(authority, kind, id, current_revision, version, edit_token, payload_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    (target.authority, target.kind, target.id, result_ref.revision, next_version, None, _json(envelope.payload), created_at, created_at),
+                    (target.authority, target.kind, target.id, result_ref.revision, next_version, None, _json(persisted_payload), created_at, created_at),
                 )
             else:
                 tx.execute(
                     "UPDATE identities SET current_revision = ?, version = ?, payload_json = ?, updated_at = ? WHERE authority = ? AND kind = ? AND id = ?",
-                    (result_ref.revision, next_version, _json(envelope.payload), _now(), target.authority, target.kind, target.id),
+                    (result_ref.revision, next_version, _json(persisted_payload), _now(), target.authority, target.kind, target.id),
                 )
 
             stream_name = stream or "{}:{}".format(target.kind, target.id)
@@ -1132,6 +1187,66 @@ class Store:
         )
 
 
+class DomainHandler:
+    """Sealed trusted-domain writer; the command actor remains provenance."""
+
+    __slots__ = ("_owner", "_descriptors")
+
+    def __init__(self, owner: Store, descriptors: Sequence[DomainContribution], *, _construction_token: object = None) -> None:
+        if _construction_token is not _HANDLER_CONSTRUCTION_TOKEN or not isinstance(owner, Store):
+            raise StoreAdmissionError("domain handlers are issued only by an admitted Store")
+        self._owner = owner
+        self._descriptors = tuple(descriptors)
+
+    @property
+    def authority(self) -> str:
+        return self._owner.authority
+
+    @property
+    def domain_ids(self) -> Tuple[str, ...]:
+        return tuple(item.domain_id for item in self._descriptors)
+
+    @property
+    def connection(self) -> sqlite3.Connection:
+        return self._owner.connection
+
+    def transaction(self) -> Any:
+        return self._owner.transaction()
+
+    def mutate(self, envelope: CommandEnvelope, *, identity_payload: Optional[Mapping[str, Any]] = None, **kwargs: Any) -> CommandReceipt:
+        return self._owner.mutate(envelope, _handler=self, _identity_payload=identity_payload, **kwargs)
+
+    def get_identity(self, ref: ResourceRef) -> Optional[IdentityRecord]:
+        return self._owner.get_identity(ref)
+
+    def get_record(self, ref: ResourceRef) -> Optional[IdentityRecord]:
+        return self._owner.get_record(ref)
+
+    def get_reference(self, ref: ResourceRef) -> Optional[ResourceRef]:
+        return self._owner.get_reference(ref)
+
+    def get_receipt(self, logical_request_key: str) -> Optional[CommandReceipt]:
+        return self._owner.get_receipt(logical_request_key)
+
+    def registered_domains(self) -> Tuple[DomainContribution, ...]:
+        return self._owner.registered_domains()
+
+    def list_events(self, *, stream: Optional[str] = None) -> Tuple[EventEnvelope, ...]:
+        return self._owner.list_events(stream=stream)
+
+    def put_identity(self, *args: Any, **kwargs: Any) -> IdentityRecord:
+        return self._owner.put_identity(*args, **kwargs)
+
+    def revise_identity(self, *args: Any, **kwargs: Any) -> IdentityRecord:
+        return self._owner.revise_identity(*args, **kwargs)
+
+    def put_reference(self, *args: Any, **kwargs: Any) -> ResourceRef:
+        return self._owner.put_reference(*args, **kwargs)
+
+    def consumer(self) -> "ConsumerStore":
+        return self._owner.consumer()
+
+
 class ConsumerStore:
     """Concrete read-only Store view safe to give to an ordinary consumer.
 
@@ -1194,7 +1309,7 @@ RealmStore = Store
 
 
 __all__ = [
-    "Store", "SQLiteStore", "RealmStore", "ConsumerStore", "Transaction", "IdentityRecord",
+    "Store", "SQLiteStore", "RealmStore", "ConsumerStore", "DomainHandler", "Transaction", "IdentityRecord",
     "StoreError", "StoreAdmissionError", "StoreExistsError", "SchemaMismatchError",
     "CompositionMismatchError", "WriterBusyError", "ClosedStoreError",
     "TargetMismatchError", "VersionConflictError", "DescriptorDigestMismatchError",

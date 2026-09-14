@@ -295,6 +295,12 @@ def domain_contribution() -> DomainContribution:
         ("dat.content.document.create", "dat.content.revision.append", "dat.content.link", "dat.content.unlink"),
         ("dat.content.document.created", "dat.content.revision.appended", "dat.content.linked", "dat.content.unlinked"),
         CONTENT_SCHEMA_REVISION,
+        (
+            "fnd-03.identities", "fnd-03.record_references", "fnd-03.transaction",
+            "handler-required", "mutation-resource:document-association",
+            "mutation-resource:dat.context.packet", "mutation-resource:project.specification",
+            "mutation-resource:document",
+        ),
     )
 
 

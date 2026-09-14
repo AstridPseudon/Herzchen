@@ -156,7 +156,9 @@ class IdleCloseService:
         if record is None:
             raise InvalidSessionError("authoring scope disappeared")
         service._validate_record(handle, record)
-        digest = service._request_digest("metadata", request_id, payload)
+        digest = service._request_digest(
+            "metadata", request_id, payload, target=handle.scope, actor=handle.actor
+        )
         with service.writer.transaction() as tx:
             current = service._records(handle.target_scope, handle.actor)[0]
             if current is None:

@@ -10,7 +10,7 @@ import unittest
 from herzchen.authoring.cleanup import RegisteredFile, cleanup_registered_files
 from herzchen.authoring.finish import SemanticFinishAdapter, ValidationResult
 from herzchen.authoring.idle import IdleCloseService
-from herzchen.authoring.sessions import AuthoringSessionService, InvalidSessionError
+from herzchen.authoring.sessions import AuthoringSessionService, InvalidSessionError, register_authoring
 from herzchen.authoring.snapshots import DurableSnapshotAdapter
 from herzchen.contracts import AuthenticatedActor, AuthoringState, CleanupStatus, ResourceRef
 from herzchen.kernel import Store
@@ -37,6 +37,7 @@ class FailureMatrixTests(unittest.TestCase):
         self.root.mkdir()
         self.db = self.base / "store.sqlite3"
         self.store = Store.create(self.db)
+        register_authoring(self.store)
         self.service = AuthoringSessionService(self.store)
         self.finish = SemanticFinishAdapter(self.service)
         self.clock_value = 100.0
