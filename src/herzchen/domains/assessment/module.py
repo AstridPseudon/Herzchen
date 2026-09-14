@@ -107,6 +107,14 @@ def _safe(value: Any) -> Any:
     return value
 
 
+def _logical_ref(value: Any, field: str) -> ResourceRef:
+    """Normalize only projection objects; explicit refs retain their pins."""
+    ref = _ref(value, field)
+    if isinstance(value, (AssessmentResult, Finding)):
+        return ResourceRef(ref.authority, ref.kind, ref.id)
+    return ref
+
+
 def _opaque(value: Any, field: str) -> str:
     if not isinstance(value, str) or not value.strip() or "\x00" in value or "/" in value or "\\" in value:
         raise AssessmentError(f"{field} must be a non-blank opaque identifier")
@@ -387,6 +395,41 @@ class _AssessmentModuleEngine:
         logical_request_key: Optional[str] = None,
         actor: Optional[AuthenticatedActor] = None,
     ) -> Correction:
+        key = self._key(logical_request_key, "correction")
+        selected_actor = self._actor(actor)
+        request_payload = {
+            "result": _safe(_logical_ref(result, "result")),
+            "instruction": instruction,
+            "finding_refs": tuple(_safe(_logical_ref(value, "finding")) for value in finding_refs),
+        }
+        prior = self.__writer.get_receipt(key)
+        if prior is not None:
+            replay_target = prior.target
+            envelope = self._envelope(
+                "assessment.correction.create", replay_target, request_payload, key,
+                selected_actor, expected_version=0, expected_revision=replay_target.revision,
+            )
+            receipt = self.__writer.mutate(
+                envelope, event_type="assessment.correction.created", result_ref=prior.result_ref,
+                stream=ASSESSMENT_STREAM,
+            )
+            link_key = key + "-result"
+            link_prior = self.__writer.get_receipt(link_key)
+            if link_prior is not None:
+                link_event = next((event for event in self.__writer.list_events(stream=ASSESSMENT_STREAM) if event.event_id in link_prior.event_ids), None)
+                link_payload = {} if link_event is None else link_event.effects.get("request_payload", {})
+                link_target = link_prior.target
+                link_version = self._replay_version(link_target.revision, link_prior.result_ref)
+                link_envelope = self._envelope(
+                    "assessment.result.link-correction", link_target, link_payload, link_key,
+                    selected_actor, expected_version=link_version, expected_revision=link_target.revision,
+                )
+                self.__writer.mutate(
+                    link_envelope, event_type="assessment.result.correction-linked", result_ref=link_prior.result_ref,
+                    stream=ASSESSMENT_STREAM,
+                )
+            correction_target = prior.result_ref or replay_target
+            return self.get_correction(ResourceRef(correction_target.authority, correction_target.kind, correction_target.id))
         current = self.get_result(result)
         if current.verdict is not Verdict.REWORK:
             raise AssessmentStateError("only a REWORK result creates a correction")
@@ -395,14 +438,14 @@ class _AssessmentModuleEngine:
             finding = self.get_finding(finding_ref)
             if finding.result_ref.id != current.ref.id:
                 raise AssessmentError("correction finding belongs to another result")
-        key = self._key(logical_request_key, "correction")
         correction_ref = ResourceRef(self.__writer.authority, CORRECTION_KIND, key)
         payload = {"record_type": CORRECTION_KIND, "schema_revision": SCHEMA_REVISION, "result_ref": current.ref, "parent_obligation_ref": current.parent_obligation_ref, "finding_refs": refs, "instruction": _opaque(instruction, "instruction"), "status": "open"}
         result_payload = dict(current.payload)
         result_payload["correction_refs"] = tuple(list(result_payload.get("correction_refs", ())) + [correction_ref])
+        link_payload = {"result": _safe(_logical_ref(current, "result")), "correction": _safe(correction_ref)}
         with self.__writer.transaction() as tx:
-            receipt = self.__writer.mutate(self._envelope("assessment.correction.create", correction_ref, payload, key, self._actor(actor), expected_version=0), event_type="assessment.correction.created", result_ref=ResourceRef(self.__writer.authority, CORRECTION_KIND, key, "rev-1"), before_refs=(current.ref, current.parent_obligation_ref), effects={"result_ref": current.ref, "finding_refs": refs, "parent_obligation_ref": current.parent_obligation_ref}, stream=ASSESSMENT_STREAM, transaction=tx)
-            self.__writer.mutate(self._envelope("assessment.result.link-correction", current.ref, result_payload, key + "-result", self._actor(actor), expected_version=current.version, expected_revision=current.ref.revision), event_type="assessment.result.correction-linked", effects={"correction_ref": correction_ref, "parent_obligation_ref": current.parent_obligation_ref}, stream=ASSESSMENT_STREAM, transaction=tx)
+            receipt = self.__writer.mutate(self._envelope("assessment.correction.create", correction_ref, request_payload, key, selected_actor, expected_version=0), identity_payload=payload, event_type="assessment.correction.created", result_ref=ResourceRef(self.__writer.authority, CORRECTION_KIND, key, "rev-1"), before_refs=(current.ref, current.parent_obligation_ref), effects={"result_ref": current.ref, "finding_refs": refs, "parent_obligation_ref": current.parent_obligation_ref, "request_payload": request_payload}, stream=ASSESSMENT_STREAM, transaction=tx)
+            self.__writer.mutate(self._envelope("assessment.result.link-correction", current.ref, link_payload, key + "-result", selected_actor, expected_version=current.version, expected_revision=current.ref.revision), identity_payload=result_payload, event_type="assessment.result.correction-linked", effects={"correction_ref": correction_ref, "parent_obligation_ref": current.parent_obligation_ref, "request_payload": link_payload}, stream=ASSESSMENT_STREAM, transaction=tx)
         return self.get_correction(receipt.result_ref or correction_ref)
 
     request_correction = create_correction
@@ -417,6 +460,38 @@ class _AssessmentModuleEngine:
         logical_request_key: Optional[str] = None,
         actor: Optional[AuthenticatedActor] = None,
     ) -> Finding:
+        key = self._key(logical_request_key, "finding-close")
+        selected_actor = self._actor(actor)
+        request_payload = {
+            "finding": _safe(_logical_ref(finding, "finding")),
+            "evidence_refs": tuple(_safe(_logical_ref(value, "evidence")) for value in evidence_refs),
+            "test_only": bool(test_only),
+            "rationale": rationale,
+        }
+        prior = self.__writer.get_receipt(key)
+        if prior is not None:
+            replay_target = prior.target
+            replay_version = None
+            if replay_target.revision is not None and replay_target.revision.startswith("rev-"):
+                try:
+                    replay_version = int(replay_target.revision.removeprefix("rev-"))
+                except ValueError:
+                    replay_version = None
+            if replay_version is None and prior.result_ref is not None and prior.result_ref.revision and prior.result_ref.revision.startswith("rev-"):
+                try:
+                    replay_version = max(0, int(prior.result_ref.revision.removeprefix("rev-")) - 1)
+                except ValueError:
+                    replay_version = None
+            envelope = self._envelope(
+                "assessment.finding.close", replay_target, request_payload, key, selected_actor,
+                expected_version=replay_version, expected_revision=replay_target.revision,
+            )
+            receipt = self.__writer.mutate(
+                envelope, event_type="assessment.finding.closed", result_ref=prior.result_ref,
+                stream=ASSESSMENT_STREAM,
+            )
+            unpinned = ResourceRef(replay_target.authority, replay_target.kind, replay_target.id)
+            return self.get_finding(unpinned)
         current = self.get_finding(finding)
         result = self.get_result(current.result_ref)
         if current.subjective and test_only:
@@ -426,9 +501,8 @@ class _AssessmentModuleEngine:
         refs = tuple(self._current_ref(_ref(value, "evidence"), "evidence") for value in evidence_refs)
         payload = dict(current.payload)
         payload.update({"status": "closed", "evidence_refs": refs, "closure_rationale": rationale, "closure_test_only": bool(test_only)})
-        key = self._key(logical_request_key, "finding-close")
         with self.__writer.transaction() as tx:
-            receipt = self.__writer.mutate(self._envelope("assessment.finding.close", current.ref, payload, key, self._actor(actor), expected_version=current.version, expected_revision=current.ref.revision), event_type="assessment.finding.closed", effects={"finding_ref": current.ref, "evidence_refs": refs, "test_only": bool(test_only)}, stream=ASSESSMENT_STREAM, transaction=tx)
+            receipt = self.__writer.mutate(self._envelope("assessment.finding.close", current.ref, request_payload, key, selected_actor, expected_version=current.version, expected_revision=current.ref.revision), identity_payload=payload, event_type="assessment.finding.closed", effects={"finding_ref": current.ref, "evidence_refs": refs, "test_only": bool(test_only)}, stream=ASSESSMENT_STREAM, transaction=tx)
         return self.get_finding(receipt.result_ref or current.ref)
 
     resolve_finding = close_finding
@@ -647,6 +721,23 @@ class _AssessmentModuleEngine:
         if not isinstance(value, AuthenticatedActor):
             raise TypeError("actor must be an AuthenticatedActor")
         return value
+
+    @staticmethod
+    def _replay_version(target_revision: Optional[str], result_ref: Optional[ResourceRef]) -> Optional[int]:
+        revision = target_revision
+        if revision is None and result_ref is not None:
+            revision = result_ref.revision
+            if revision is not None and revision.startswith("rev-"):
+                try:
+                    return max(0, int(revision.removeprefix("rev-")) - 1)
+                except ValueError:
+                    return None
+        if revision is None or not revision.startswith("rev-"):
+            return None
+        try:
+            return int(revision.removeprefix("rev-"))
+        except ValueError:
+            return None
 
     def _key(self, value: Optional[str], prefix: str) -> str:
         return _opaque(value or prefix + "-" + uuid.uuid4().hex, "logical_request_key")

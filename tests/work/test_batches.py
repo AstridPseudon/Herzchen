@@ -59,6 +59,43 @@ def test_parent_sheet_is_atomic_replay_safe_and_retains_observations(environment
     assert store.get_receipt("sheet") is not None
 
 
+def test_sheet_replay_precedes_stale_base_after_advance_and_changed_base_has_no_effect(environment):
+    store, actor, graph, project = environment
+    batches = ProjectBatches(store, actor=actor)
+    sheet = {"tasks": [{"id": "replay-task", "title": "Original"}]}
+    original_base = project.ref.revision
+    applied = batches.apply_project_sheet(
+        project,
+        sheet,
+        logical_request_key="advance-replay",
+        base_revision=original_base,
+    )
+    batch_event = next(event for event in store.list_events() if event.event_id in applied.receipt.event_ids)
+    assert batch_event.effects["request_context"]["expected_revision"] == original_base
+    advanced = graph.revise(applied.project, outcome="intervening state", logical_request_key="intervening")
+    before = store.consumer().snapshot_counts()
+
+    replay = batches.apply_project_sheet(
+        project,
+        sheet,
+        logical_request_key="advance-replay",
+        base_revision=original_base,
+    )
+    assert replay.receipt == applied.receipt
+    assert replay.mappings == applied.mappings
+    assert store.consumer().snapshot_counts() == before
+
+    with pytest.raises(ReplayConflictError):
+        batches.apply_project_sheet(
+            project,
+            sheet,
+            logical_request_key="advance-replay",
+            base_revision=advanced.ref.revision,
+        )
+    assert store.consumer().snapshot_counts() == before
+    assert store.get_receipt("advance-replay") == applied.receipt
+
+
 def test_invalid_child_rolls_back_all_rows_events_and_receipt(environment):
     store, actor, graph, project = environment
     batches = ProjectBatches(store, actor=actor)

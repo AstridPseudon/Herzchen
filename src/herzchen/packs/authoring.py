@@ -528,7 +528,50 @@ class _ManagedPackAuthoringHandlerEngine:
             _validate_relative_path(path)
             if path not in declared:
                 raise PackPathError(f"authoring update is not an admitted resource: {path!r}")
+        normalized_updates = {path: _coerce_content(value) for path, value in updates.items()}
+        request_payload = {
+            "pack": pack.to_dict(),
+            "updates": {
+                path: base64.b64encode(normalized_updates[path]).decode("ascii")
+                for path in sorted(normalized_updates)
+            },
+        }
         current_ref = ResourceRef(self.__writer.authority, MANAGED_PACK_KIND, pack.pack_id)
+        prior = self.__writer.get_receipt(logical_request_key)
+        if prior is not None:
+            replay_target = prior.target
+            replay_version = 0
+            if replay_target.revision is not None and replay_target.revision.startswith("rev-"):
+                try:
+                    replay_version = int(replay_target.revision.removeprefix("rev-"))
+                except ValueError:
+                    replay_version = None
+            replay_digest = _digest_payload(request_payload)
+            replay_envelope = CommandEnvelope(
+                "pack.content.author", PACK_SCHEMA_REVISION, replay_target,
+                TransactionContext(
+                    actor, logical_request_key, replay_digest,
+                    expected_revision=replay_target.revision,
+                    expected_version=replay_version,
+                ),
+                request_payload,
+            )
+            receipt = self.__writer.mutate(
+                replay_envelope, event_type="managed_pack.content_authored", result_ref=prior.result_ref,
+                stream=f"{MANAGED_PACK_STREAM}:{pack.pack_id}", transaction=transaction,
+            )
+            current = self.__writer.get_identity(current_ref)
+            if current is None:
+                raise PackAuthoringError(f"managed pack replay lost its durable identity: {pack.pack_id!r}")
+            event = next((item for item in self.__writer.list_events(stream=f"{MANAGED_PACK_STREAM}:{pack.pack_id}") if item.event_id in prior.event_ids), None)
+            if event is None:
+                raise PackAuthoringError(f"managed pack replay receipt has no event lineage: {pack.pack_id!r}")
+            effects = event.effects
+            return AuthoringResult(
+                pack.pack_id, (prior.result_ref.revision if prior.result_ref else current.ref.revision) or "",
+                prior.result_ref or current.ref, receipt, tuple(effects.get("changed_paths", ())),
+                effects.get("content_snapshot", {}), tuple(effects.get("execution_pins", ())),
+            )
         current = self.__writer.get_identity(current_ref)
         if current is not None:
             current_ref = current.ref
@@ -544,7 +587,7 @@ class _ManagedPackAuthoringHandlerEngine:
         for item in pack.resources:
             content = item.content
             if item.path in updates:
-                content = _coerce_content(updates[item.path])
+                content = normalized_updates[item.path]
             merged[item.path] = _content_record(item, next_revision, content)
         # Existing resources not present in a newer source remain untouched;
         # this is the unknown-sibling retention boundary.
@@ -568,7 +611,7 @@ class _ManagedPackAuthoringHandlerEngine:
                 pack.pack_id, current.ref.revision or "", current.ref, None, (),
                 payload["resources"], tuple(execution_pins),
             )
-        digest = _digest_payload(payload)
+        digest = _digest_payload(request_payload)
         context = TransactionContext(
             actor,
             logical_request_key,
@@ -577,10 +620,11 @@ class _ManagedPackAuthoringHandlerEngine:
             expected_version=current.version if current is not None else 0,
         )
         target = current_ref if current is not None else ResourceRef(self.__writer.authority, MANAGED_PACK_KIND, pack.pack_id)
-        envelope = CommandEnvelope("pack.content.author", PACK_SCHEMA_REVISION, target, context, payload)
+        envelope = CommandEnvelope("pack.content.author", PACK_SCHEMA_REVISION, target, context, request_payload)
         result_ref = ResourceRef(self.__writer.authority, MANAGED_PACK_KIND, pack.pack_id, next_revision)
         receipt = self.__writer.mutate(
             envelope,
+            identity_payload=payload,
             event_type="managed_pack.content_authored",
             result_ref=result_ref,
             effects={

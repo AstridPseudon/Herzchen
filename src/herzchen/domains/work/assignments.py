@@ -203,16 +203,19 @@ class _ResponsibilityAssignmentsEngine:
         identity = self.__writer.get_identity(ref) if ref is not None else None
         if identity is None or identity.ref.kind != ASSIGNMENT_KIND:
             raise WorkNotFoundError(f"assignment not found: {target!r}")
-        payload = dict(identity.payload)
+        return self._from_payload(identity.ref, identity.version, identity.payload)
+
+    def _from_payload(self, ref: ResourceRef, version: int, payload: Mapping[str, Any]) -> ResponsibilityAssignment:
+        payload = dict(payload)
         pins = tuple(self._as_ref(value) for value in payload.get("pins", ()))
         return ResponsibilityAssignment(
-            identity.ref,
+            ref,
             self._as_ref(payload.get("scope")),
             payload.get("role", "responsibility"),
             payload.get("principal"), payload.get("reporter"), payload.get("launcher"),
             payload.get("agent"), payload.get("session"), int(payload.get("generation", 1)),
             AssignmentStatus(payload.get("status", AssignmentStatus.QUEUED.value)), pins,
-            tuple(payload.get("history", ())), identity.version, payload,
+            tuple(payload.get("history", ())), version, payload,
         )
 
     resolve = get
@@ -231,6 +234,38 @@ class _ResponsibilityAssignmentsEngine:
         logical_request_key: Optional[str] = None,
         actor: Optional[AuthenticatedActor] = None,
     ) -> ResponsibilityAssignment:
+        key = self._request_key(logical_request_key)
+        request_payload = {
+            "target": self._request_locator(target),
+            "principal": _json_safe(principal),
+            "reporter": _json_safe(reporter),
+            "launcher": _json_safe(launcher),
+            "agent": _json_safe(agent),
+            "session": _json_safe(session),
+            "reason": _opaque(reason, "reason"),
+            "expected_generation": expected_generation,
+        }
+        prior = self.__writer.get_receipt(key)
+        if prior is not None:
+            replay_target = prior.target
+            replay_version = None
+            if replay_target.revision is not None and replay_target.revision.startswith("rev-"):
+                try:
+                    replay_version = int(replay_target.revision.removeprefix("rev-"))
+                except ValueError:
+                    replay_version = None
+            envelope = self._envelope(
+                "work.assignment.reassign", replay_target, request_payload, key, actor,
+                expected_version=replay_version, expected_revision=replay_target.revision,
+            )
+            receipt = self.__writer.mutate(
+                envelope, event_type="work.assignment.reassigned", result_ref=prior.result_ref,
+                stream="assignment:" + replay_target.id,
+            )
+            event = next((item for item in self.__writer.list_events(stream="assignment:" + replay_target.id) if item.event_id in prior.event_ids), None)
+            if event is not None and isinstance(event.effects.get("result_payload"), Mapping):
+                return self._from_payload(prior.result_ref or replay_target, self._revision_version(prior.result_ref.revision if prior.result_ref else replay_target.revision), event.effects["result_payload"])
+            return self.get(ResourceRef(replay_target.authority, replay_target.kind, replay_target.id))
         current = self.get(target)
         self._fence(current, expected_generation)
         payload = dict(current.payload)
@@ -247,10 +282,9 @@ class _ResponsibilityAssignmentsEngine:
         history = list(current.history)
         history.append({"generation": next_generation, "principal": payload["principal"], "agent": payload["agent"], "session": payload["session"], "reason": _opaque(reason, "reason")})
         payload["history"] = history
-        key = self._request_key(logical_request_key)
         with self.__writer.transaction() as tx:
-            envelope = self._envelope("work.assignment.reassign", current.ref, payload, key, actor, expected_version=current.version, expected_revision=current.revision)
-            self.__writer.mutate(envelope, event_type="work.assignment.reassigned", effects={"from_generation": current.generation, "to_generation": next_generation, "history_length": len(history)}, stream="assignment:" + current.id, transaction=tx)
+            envelope = self._envelope("work.assignment.reassign", current.ref, request_payload, key, actor, expected_version=current.version, expected_revision=current.revision)
+            self.__writer.mutate(envelope, identity_payload=payload, event_type="work.assignment.reassigned", effects={"from_generation": current.generation, "to_generation": next_generation, "history_length": len(history), "result_payload": payload}, stream="assignment:" + current.id, transaction=tx)
         return self.get(current.ref)
 
     def fence(self, target: Any, generation: int) -> ResponsibilityAssignment:
@@ -371,6 +405,22 @@ class _ResponsibilityAssignmentsEngine:
 
     def _request_key(self, value: Optional[str]) -> str:
         return _opaque(value or "request-" + uuid.uuid4().hex, "logical_request_key")
+
+    def _request_locator(self, value: Any) -> Any:
+        if isinstance(value, ResourceRef):
+            return value.to_dict()
+        if hasattr(value, "ref") and isinstance(value.ref, ResourceRef):
+            return value.ref.to_dict()
+        return value
+
+    @staticmethod
+    def _revision_version(revision: Optional[str]) -> int:
+        if revision is None or not revision.startswith("rev-"):
+            return 0
+        try:
+            return int(revision.removeprefix("rev-"))
+        except ValueError:
+            return 0
 
     def _envelope(self, operation: str, target: ResourceRef, payload: Mapping[str, Any], key: str, actor: Optional[AuthenticatedActor], *, expected_version: Optional[int] = None, expected_revision: Optional[str] = None) -> CommandEnvelope:
         selected = actor or self.default_actor or AuthenticatedActor("herzchen.work", "work-assignment", "herzchen.work")

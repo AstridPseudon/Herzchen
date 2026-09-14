@@ -1,0 +1,13 @@
+Completed the bounded GF02/C33 persisted replay closure.
+
+- Added fixes across six service/domain modules and 9 focused regression tests.
+- Source tests: 153 passed, 11 skipped.
+- Installed-wheel tests: 153 passed, 11 skipped.
+- Python 3.12 unavailable on host; Python 3.11.16 used.
+- Changes remain unstaged; no review, gate, push, or merge performed.
+
+Evidence:
+
+- [Result](.../work/gf02-c33-replay-closure-result.md)
+- [JSONL receipt](.../work/gf02-c33-replay-closure-worker-receipt-20260914/receipt.jsonl)
+- [Focused tests](.../tests/work/test_gf02_c33_replay_closure.py)

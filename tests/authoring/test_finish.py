@@ -6,10 +6,10 @@ import threading
 import unittest
 
 from herzchen.authoring.finish import SemanticFinishAdapter, ValidationResult
-from herzchen.authoring.sessions import AuthoringSessionService, register_authoring
+from herzchen.authoring.sessions import AuthoringSessionService, Snapshot, register_authoring
 from herzchen.authoring.snapshots import DurableSnapshotAdapter
 from herzchen.authoring.writer_lease import FileWriterLeaseAuthority
-from herzchen.contracts import AuthenticatedActor, ResourceRef
+from herzchen.contracts import AuthenticatedActor, ReplayConflictError, ResourceRef
 from herzchen.kernel import Store
 
 
@@ -147,6 +147,66 @@ class FinishTests(unittest.TestCase):
         self.assertTrue(result.recovery_pending)
         self.assertIsNone(self.store.get_receipt("capture-fails"))
         self.assertEqual(self.service.read(self.scope).status, "occupied")
+
+    def test_direct_capture_failure_returns_actual_recovery_receipt(self) -> None:
+        opened = self.service.open(self.scope, self.actor, request_id="direct-open", target_kind="project", base_revision="base-1", initial_content=b"initial")
+
+        def fail_capture(*_args, **_kwargs):
+            raise RuntimeError("direct capture failed")
+
+        result = self.service.finish(opened.handle, request_id="direct-fails", mode="manual", capture=fail_capture)
+        recovery_key = "direct-fails:capture-failure"
+        recovery_receipt = self.store.get_receipt(recovery_key)
+        self.assertEqual(result.status, "recovery_pending")
+        self.assertTrue(result.recovery_pending)
+        self.assertIsNotNone(result.receipt)
+        self.assertEqual(result.receipt, recovery_receipt)
+        self.assertIsNotNone(recovery_receipt)
+        self.assertEqual(recovery_receipt.operation, "finish.recovery")
+        self.assertIsNone(self.store.get_receipt("direct-fails"))
+        self.assertTrue(any(event.event_id in recovery_receipt.event_ids and event.operation == "finish.recovery" for event in self.store.list_events()))
+
+    def test_cleanup_refresh_replays_without_hashing_projection_or_fence(self) -> None:
+        opened = self.service.open(self.scope, self.actor, request_id="refresh-open", target_kind="project", base_revision="base-1", initial_content=b"initial")
+        self.service.release(opened.handle, request_id="refresh-release")
+        refresh_root = Path(self.tempdir.name) / "refresh-checkout"
+        refresh_root.mkdir()
+        (refresh_root / "draft.txt").write_bytes(b"refresh bytes")
+        snapshot_adapter = DurableSnapshotAdapter(self.service)
+        captured = snapshot_adapter.capture(refresh_root, ["draft.txt"])
+        snapshot = captured.as_session_snapshot(ResourceRef(self.store.authority, "authoring-snapshot", "refresh-final"))
+
+        with self.writer_leases.hold_retirement(refresh_root, owner_identity="editor") as guard:
+            first = self.service.refresh_final_snapshot(opened.handle, request_id="refresh", snapshot=snapshot, retirement_guard=guard)
+            receipt = self.store.get_receipt("refresh")
+            self.assertIsNotNone(receipt)
+            before = (
+                self.store.connection.execute("SELECT COUNT(*) FROM identities").fetchone()[0],
+                self.store.connection.execute("SELECT COUNT(*) FROM record_references").fetchone()[0],
+                self.store.connection.execute("SELECT COUNT(*) FROM command_receipts").fetchone()[0],
+                len(self.store.list_events()),
+            )
+            replay = self.service.refresh_final_snapshot(opened.handle, request_id="refresh", snapshot=snapshot, retirement_guard=guard)
+            self.assertEqual(replay, first)
+            self.assertEqual(self.store.get_receipt("refresh"), receipt)
+            self.assertEqual((
+                self.store.connection.execute("SELECT COUNT(*) FROM identities").fetchone()[0],
+                self.store.connection.execute("SELECT COUNT(*) FROM record_references").fetchone()[0],
+                self.store.connection.execute("SELECT COUNT(*) FROM command_receipts").fetchone()[0],
+                len(self.store.list_events()),
+            ), before)
+            with self.assertRaises(ReplayConflictError):
+                self.service.refresh_final_snapshot(
+                    opened.handle, request_id="refresh",
+                    snapshot=Snapshot(snapshot.ref, b"changed bytes", snapshot.manifest),
+                    retirement_guard=guard,
+                )
+            self.assertEqual((
+                self.store.connection.execute("SELECT COUNT(*) FROM identities").fetchone()[0],
+                self.store.connection.execute("SELECT COUNT(*) FROM record_references").fetchone()[0],
+                self.store.connection.execute("SELECT COUNT(*) FROM command_receipts").fetchone()[0],
+                len(self.store.list_events()),
+            ), before)
 
 
 if __name__ == "__main__":

@@ -306,17 +306,35 @@ class _WorkGraphEngine:
         logical_request_key: Optional[str] = None,
         actor: Any = None,
     ) -> WorkRecord:
+        request_key = self._request_key(logical_request_key)
+        request_payload = {
+            "target": self._request_locator(target),
+            "title": title,
+            "name": name,
+            "outcome": outcome,
+            "add_alias": add_alias,
+            "aliases": tuple(aliases),
+            "fields": None if fields is None else dict(fields),
+            "lifecycle": lifecycle.value if isinstance(lifecycle, Lifecycle) else lifecycle,
+        }
+        replay = self._replay_revision(request_key, request_payload, actor, "work.revised")
+        if replay is not None:
+            return self._replay_result(replay)
         record = self._require(target)
         changes = self._revision_changes(record, title=title, name=name, outcome=outcome, add_alias=add_alias, aliases=aliases, fields=fields, lifecycle=lifecycle)
         self._validate_payload(changes)
-        request_key = self._request_key(logical_request_key)
         with self.__writer.transaction() as tx:
-            self._write_revision(tx, record, changes, request_key, actor, "work.revised")
+            self._write_revision(tx, record, changes, request_key, actor, "work.revised", request_payload=request_payload)
         return self.get(record.ref)
 
     update = revise
 
     def link_parent(self, child: Any, parent: Any, *, logical_request_key: Optional[str] = None, actor: Any = None) -> WorkRecord:
+        request_key = self._request_key(logical_request_key)
+        request_payload = {"child": self._request_locator(child), "parent": self._request_locator(parent)}
+        replay = self._replay_revision(request_key, request_payload, actor, "work.parent-linked")
+        if replay is not None:
+            return self._replay_result(replay)
         child_record = self._require(child)
         parent_record = self._require(parent)
         self._validate_parent(child_record, parent_record)
@@ -325,11 +343,16 @@ class _WorkGraphEngine:
         if child_record.kind is not WorkKind.PROJECT and not payload.get("project_ref"):
             payload["project_ref"] = self._ref_dict(self._project_ref(parent_record))
         with self.__writer.transaction() as tx:
-            self._write_revision(tx, child_record, payload, self._request_key(logical_request_key), actor, "work.parent-linked")
+            self._write_revision(tx, child_record, payload, request_key, actor, "work.parent-linked", request_payload=request_payload)
             self._retain_links(tx, parent_record.ref, ())
         return self.get(child_record.ref)
 
     def link_dependency(self, record: Any, prerequisite: Any, *, logical_request_key: Optional[str] = None, actor: Any = None) -> WorkRecord:
+        request_key = self._request_key(logical_request_key)
+        request_payload = {"record": self._request_locator(record), "prerequisite": self._request_locator(prerequisite)}
+        replay = self._replay_revision(request_key, request_payload, actor, "work.dependency-linked")
+        if replay is not None:
+            return self._replay_result(replay)
         record_value = self._require(record)
         prerequisite_value = self._require(prerequisite)
         dependencies = list(record_value.dependencies)
@@ -339,7 +362,7 @@ class _WorkGraphEngine:
         proposed["dependencies"] = [self._ref_dict(ref) for ref in dependencies] + [self._ref_dict(prerequisite_value.ref)]
         self._validate_dependency_graph(record_value.ref, prerequisite_value.ref)
         with self.__writer.transaction() as tx:
-            self._write_revision(tx, record_value, proposed, self._request_key(logical_request_key), actor, "work.dependency-linked")
+            self._write_revision(tx, record_value, proposed, request_key, actor, "work.dependency-linked", request_payload=request_payload)
             self._retain_links(tx, None, (prerequisite_value.ref,))
         return self.get(record_value.ref)
 
@@ -350,6 +373,11 @@ class _WorkGraphEngine:
         return self.revise(target, lifecycle=lifecycle, logical_request_key=logical_request_key, actor=actor)
 
     def set_readiness(self, target: Any, observation: Mapping[str, Any], *, logical_request_key: Optional[str] = None, actor: Any = None) -> WorkRecord:
+        request_key = self._request_key(logical_request_key)
+        request_payload = {"target": self._request_locator(target), "observation": dict(observation) if isinstance(observation, Mapping) else observation}
+        replay = self._replay_revision(request_key, request_payload, actor, "work.state-changed")
+        if replay is not None:
+            return self._replay_result(replay)
         record = self._require(target)
         if not isinstance(observation, Mapping):
             raise WorkValidationError("readiness observation must be a mapping")
@@ -358,7 +386,7 @@ class _WorkGraphEngine:
         payload = dict(record.payload)
         payload["readiness"] = readiness
         with self.__writer.transaction() as tx:
-            self._write_revision(tx, record, payload, self._request_key(logical_request_key), actor, "work.state-changed")
+            self._write_revision(tx, record, payload, request_key, actor, "work.state-changed", request_payload=request_payload)
         return self.get(record.ref)
 
     def state_view(self, target: Any) -> WorkStateView:
@@ -397,9 +425,63 @@ class _WorkGraphEngine:
         self._retain_links(tx, self._payload_ref(payload.get("parent")), tuple(self._payload_ref(value) for value in payload.get("dependencies", ())))
         return receipt
 
-    def _write_revision(self, tx: Any, record: WorkRecord, payload: Mapping[str, Any], request_key: str, actor: Any, event_type: str) -> Any:
+    def _write_revision(self, tx: Any, record: WorkRecord, payload: Mapping[str, Any], request_key: str, actor: Any, event_type: str, *, request_payload: Optional[Mapping[str, Any]] = None) -> Any:
         envelope = self._envelope("work.revise", record.ref, payload, request_key, actor, expected_version=record.version, expected_revision=record.revision)
-        return self.__writer.mutate(envelope, event_type=event_type, effects={"kind": record.kind.value, "id": record.id}, stream="work:" + record.id, transaction=tx)
+        if request_payload is not None:
+            envelope = self._envelope("work.revise", record.ref, request_payload, request_key, actor, expected_version=record.version, expected_revision=record.revision)
+        return self.__writer.mutate(envelope, identity_payload=payload, event_type=event_type, effects={"kind": record.kind.value, "id": record.id, "result_payload": dict(payload)}, stream="work:" + record.id, transaction=tx)
+
+    def _replay_revision(self, request_key: str, request_payload: Mapping[str, Any], actor: Any, event_type: str) -> Any:
+        prior = self.__writer.get_receipt(request_key)
+        if prior is None:
+            return None
+        target = prior.target
+        expected_version = None
+        if target.revision is not None and target.revision.startswith("rev-"):
+            try:
+                expected_version = int(target.revision.removeprefix("rev-"))
+            except ValueError:
+                expected_version = None
+        envelope = self._envelope("work.revise", target, request_payload, request_key, actor, expected_version=expected_version, expected_revision=target.revision)
+        with self.__writer.transaction() as tx:
+            return self.__writer.mutate(
+                envelope, event_type=event_type, result_ref=prior.result_ref,
+                stream="work:" + target.id, transaction=tx,
+            )
+
+    def _replay_result(self, receipt: Any) -> WorkRecord:
+        target = receipt.target
+        event = next((item for item in self.__writer.list_events(stream="work:" + target.id) if item.event_id in receipt.event_ids), None)
+        if event is not None and isinstance(event.effects.get("result_payload"), Mapping):
+            revision = receipt.result_ref or target
+            return self._from_payload(revision, self._revision_version(revision.revision), event.effects["result_payload"])
+        return self.get(self._unPinned(receipt.result_ref or target))
+
+    @staticmethod
+    def _revision_version(revision: Optional[str]) -> int:
+        if revision is None or not revision.startswith("rev-"):
+            return 0
+        try:
+            return int(revision.removeprefix("rev-"))
+        except ValueError:
+            return 0
+
+    @staticmethod
+    def _unPinned(ref: Any) -> Any:
+        if ref is None:
+            return ref
+        ResourceRef = _contract_types()[3]
+        if isinstance(ref, ResourceRef):
+            return ResourceRef(ref.authority, ref.kind, ref.id)
+        return ref
+
+    def _request_locator(self, value: Any) -> Any:
+        ResourceRef = _contract_types()[3]
+        if isinstance(value, ResourceRef):
+            return value.to_dict()
+        if hasattr(value, "ref") and isinstance(value.ref, ResourceRef):
+            return value.ref.to_dict()
+        return value
 
     def _envelope(self, operation: str, ref: Any, payload: Mapping[str, Any], request_key: str, actor: Any, *, expected_version: Optional[int] = None, expected_revision: Optional[str] = None) -> Any:
         AuthenticatedActor, CommandEnvelope, _, _, TransactionContext, _ = _contract_types()
@@ -438,16 +520,19 @@ class _WorkGraphEngine:
         return tuple(records)
 
     def _from_identity(self, identity: Any) -> WorkRecord:
-        payload = dict(identity.payload)
-        kind = self._kind(payload.get("kind", identity.ref.kind.removeprefix("work.")))
+        return self._from_payload(identity.ref, identity.version, identity.payload)
+
+    def _from_payload(self, ref: Any, version: int, payload_value: Mapping[str, Any]) -> WorkRecord:
+        payload = dict(payload_value)
+        kind = self._kind(payload.get("kind", ref.kind.removeprefix("work.")))
         parent = self._payload_ref(payload.get("parent"))
         deps = tuple(self._payload_ref(ref) for ref in payload.get("dependencies", ()))
         project_ref = self._payload_ref(payload.get("project_ref"))
         lifecycle = self._lifecycle(payload.get("lifecycle", Lifecycle.PENDING))
         aliases = tuple(payload.get("aliases", ()))
         if not aliases:
-            aliases = (payload.get("alias", identity.ref.id),)
-        return WorkRecord(identity.ref, kind, payload.get("title", payload.get("name", kind.value.title())), payload.get("name", payload.get("title", kind.value.title())), aliases, parent, deps, project_ref, lifecycle, dict(payload.get("readiness", {})), payload, identity.version)
+            aliases = (payload.get("alias", ref.id),)
+        return WorkRecord(ref, kind, payload.get("title", payload.get("name", kind.value.title())), payload.get("name", payload.get("title", kind.value.title())), aliases, parent, deps, project_ref, lifecycle, dict(payload.get("readiness", {})), payload, version)
 
     def _resolve(self, target: Any) -> Optional[WorkRecord]:
         ResourceRef = _contract_types()[3]

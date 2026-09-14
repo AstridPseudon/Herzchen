@@ -301,7 +301,7 @@ class _OperationManagerEngine:
             ResourceRef.from_dict(event_effects.get("adapter_ref", request.adapter_ref.to_dict())),
             AuthenticatedActor.from_dict(event_effects.get("request_actor", request.actor.to_dict())),
             request.logical_request_key,
-            request.request_digest,
+            event_effects.get("request_digest", request.request_digest),
             event_effects.get("request_payload", request.payload),
             _ref(event_effects.get("physical_invocation_ref")),
             _ref(event_effects.get("external_owner_ref")),
@@ -349,9 +349,18 @@ class _OperationManagerEngine:
         if not isinstance(request, OperationRequest):
             raise TypeError("request must be an OperationRequest")
         target = self._target(request.logical_request_key)
-        request = request.canonicalized(target, expected_version=0)
+        # Keep the caller's request context as the logical operation identity.
+        # The create-state check is an admitted Store concern and must not
+        # overwrite that context before it is hashed or persisted.
+        request = request.canonicalized(target)
         payload = self._payload(request, OperationState.PREPARED, {})
-        envelope = request.envelope(target, expected_version=0, payload=payload)
+        envelope = request.envelope(
+            target,
+            expected_revision=None,
+            expected_version=0,
+            edit_token=None,
+            payload=payload,
+        )
         effects = {
             "state": OperationState.PREPARED.value,
             "result": {},
@@ -360,6 +369,12 @@ class _OperationManagerEngine:
             "physical_invocation_ref": _ref_dict(request.physical_invocation_ref),
             "external_owner_ref": _ref_dict(request.external_owner_ref),
             "request_payload": dict(request.payload),
+            "request_digest": request.request_digest,
+            "expected_revision": request.expected_revision,
+            "expected_version": request.expected_version,
+            "edit_token": request.edit_token,
+            "correlation_id": request.correlation_id,
+            "causation_id": request.causation_id,
             "version": 1,
         }
         receipt = self.__writer.mutate(
@@ -409,6 +424,11 @@ class _OperationManagerEngine:
             },
             physical_invocation_ref if physical_invocation_ref is not None else record.request.physical_invocation_ref,
             external_owner_ref if external_owner_ref is not None else record.request.external_owner_ref,
+            record.request.expected_revision,
+            record.request.expected_version,
+            record.request.edit_token,
+            record.request.correlation_id,
+            record.request.causation_id,
         )
         target = record.operation_ref
         if target.revision is None:
@@ -423,11 +443,17 @@ class _OperationManagerEngine:
             record.request.payload,
             next_request.physical_invocation_ref,
             next_request.external_owner_ref,
+            record.request.expected_revision,
+            record.request.expected_version,
+            record.request.edit_token,
+            record.request.correlation_id,
+            record.request.causation_id,
         )
         envelope = next_request.envelope(
             target,
             expected_revision=target.revision,
             expected_version=record.version,
+            edit_token=None,
             payload=self._payload(identity_request, state, result),
         )
         prior = self.__writer.get_receipt(next_request_key)
@@ -447,6 +473,12 @@ class _OperationManagerEngine:
             "physical_invocation_ref": _ref_dict(next_request.physical_invocation_ref),
             "external_owner_ref": _ref_dict(next_request.external_owner_ref),
             "request_payload": dict(record.request.payload),
+            "request_digest": record.request.request_digest,
+            "expected_revision": record.request.expected_revision,
+            "expected_version": record.request.expected_version,
+            "edit_token": record.request.edit_token,
+            "correlation_id": record.request.correlation_id,
+            "causation_id": record.request.causation_id,
             "version": record.version + 1,
         }
         receipt = self.__writer.mutate(

@@ -35,7 +35,7 @@ class ReceiptAndLimitTests(unittest.TestCase):
         self.store.close()
         self.tempdir.cleanup()
 
-    def operation_request(self, *, key: str = "logical-1", digest: str = "a" * 64, payload: Optional[dict] = None, adapter_ref: Optional[ResourceRef] = None, operation: str = "adapter.invoke") -> OperationRequest:
+    def operation_request(self, *, key: str = "logical-1", digest: str = "a" * 64, payload: Optional[dict] = None, adapter_ref: Optional[ResourceRef] = None, operation: str = "adapter.invoke", expected_revision: Optional[str] = None, expected_version: Optional[int] = None, edit_token: Optional[str] = None, correlation_id: Optional[str] = None, causation_id: Optional[str] = None) -> OperationRequest:
         return OperationRequest(
             operation,
             "adapter.v1",
@@ -46,6 +46,11 @@ class ReceiptAndLimitTests(unittest.TestCase):
             payload or {"input": "value"},
             ResourceRef("physical", "invocation", "invocation-1"),
             ResourceRef("external", "owner", "owner-1"),
+            expected_revision,
+            expected_version,
+            edit_token,
+            correlation_id,
+            causation_id,
         )
 
     def pool(self, *, capacity: int = 2, allowance: int = 10):
@@ -150,6 +155,74 @@ class ReceiptAndLimitTests(unittest.TestCase):
         )
         self.assertEqual(replay.receipt, resolved.receipt)
         self.assertEqual(len(self.store.list_events(stream="operations")), before_events + 1)
+
+    def test_all_original_context_fields_survive_transition_and_reopen(self) -> None:
+        context = {
+            "expected_revision": "caller-base-7",
+            "expected_version": 7,
+            "edit_token": "edit-7",
+            "correlation_id": "corr-7",
+            "causation_id": "cause-6",
+        }
+        manager = OperationManager(self.store)
+        request = self.operation_request(key="context-reopen", **context)
+        prepared = manager.prepare(request)
+        for field, value in context.items():
+            self.assertEqual(getattr(prepared.request, field), value)
+
+        before = dict(self.store.consumer().snapshot_counts())
+        for field, changed in (
+            ("expected_revision", "caller-base-8"),
+            ("expected_version", 8),
+            ("edit_token", "edit-8"),
+            ("correlation_id", "corr-8"),
+            ("causation_id", "cause-7"),
+        ):
+            changed_context = dict(context)
+            changed_context[field] = changed
+            with self.assertRaises(ReplayConflictError):
+                manager.prepare(
+                    self.operation_request(
+                        key="context-reopen",
+                        digest=prepared.request.request_digest,
+                        **changed_context,
+                    )
+                )
+            self.assertEqual(self.store.consumer().snapshot_counts(), before)
+
+        uncertain = manager.record_outcome(prepared, OperationState.UNKNOWN, {"reason": "timeout"})
+        for field, value in context.items():
+            self.assertEqual(getattr(uncertain.request, field), value)
+        outcome = [event for event in self.store.list_events(stream="operations") if event.event_type == "operation.outcome"][-1]
+        self.assertEqual(outcome.correlation_id, context["correlation_id"])
+        self.assertEqual(outcome.causation_id, context["causation_id"])
+
+        self.store.close()
+        self.store = Store.open(self.path)
+        reopened = OperationManager(self.store)
+        loaded = reopened.get("context-reopen")
+        self.assertIsNotNone(loaded)
+        assert loaded is not None
+        for field, value in context.items():
+            self.assertEqual(getattr(loaded.request, field), value)
+
+        resolved = reopened.resolve_unknown(
+            loaded,
+            OperationState.COMMITTED,
+            {"value": 1},
+            resolver=AuthenticatedActor("resolution-auth", "resolver-1", "resolution-credential"),
+            transition_key="context-reopen:resolve",
+        )
+        for field, value in context.items():
+            self.assertEqual(getattr(resolved.request, field), value)
+
+        self.store.close()
+        self.store = Store.open(self.path)
+        final = OperationManager(self.store).get("context-reopen")
+        self.assertIsNotNone(final)
+        assert final is not None
+        for field, value in context.items():
+            self.assertEqual(getattr(final.request, field), value)
 
     def test_outcome_replay_binds_full_semantics_before_any_delta(self) -> None:
         manager = OperationManager(self.store)

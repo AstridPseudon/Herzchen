@@ -138,33 +138,57 @@ class _ProjectBatchesEngine:
         if not isinstance(sheet, Mapping):
             raise WorkValidationError("project sheet must be a mapping")
         request_key = self._request_key(logical_request_key)
-        record = self.graph.get(project)
-        if record.kind is not WorkKind.PROJECT:
-            raise WorkValidationError("project sheet target must be a project")
-        if base_revision is not None and base_revision != record.revision:
-            raise VersionConflictError("sheet base revision is stale")
-        plan = self.validate_project_sheet(record, sheet, decision_ref=decision_ref, next_action=next_action)
-        parent_payload = plan["project_payload"]
+        command_payload = {
+            "sheet": _safe(sheet),
+            "decision_ref": _safe(decision_ref),
+            "next_action": next_action,
+        }
         with self.__writer.transaction() as tx:
             prior = self.__writer.get_receipt(request_key)
-            replay_target = prior.target if prior is not None else record.ref
-            if prior is not None and prior.target.revision is not None and prior.target.revision.startswith("rev-"):
-                try:
-                    replay_version = int(prior.target.revision.removeprefix("rev-"))
-                except ValueError:
-                    replay_version = None
-                replay_revision = prior.target.revision
-            else:
-                replay_version = record.version
-                replay_revision = record.revision
-            command_payload = {
-                "sheet": _safe(sheet),
-                "decision_ref": _safe(decision_ref),
-                "next_action": next_action,
+            if prior is not None:
+                # Same-key replay must be decided from the original receipt
+                # before current projection or stale-base validation.
+                replay_target = prior.target
+                replay_revision = base_revision if base_revision is not None else replay_target.revision
+                replay_version = None
+                if replay_target.revision is not None and replay_target.revision.startswith("rev-"):
+                    try:
+                        replay_version = int(replay_target.revision.removeprefix("rev-"))
+                    except ValueError:
+                        replay_version = None
+                envelope = self._envelope(
+                    "work.project-sheet.apply", replay_target, command_payload, request_key, actor,
+                    expected_version=replay_version, expected_revision=replay_revision,
+                )
+                receipt = self.__writer.mutate(
+                    envelope,
+                    event_type="work.project-sheet.applied",
+                    result_ref=prior.result_ref,
+                    stream="work:" + replay_target.id,
+                    transaction=tx,
+                )
+                current = self.graph.get(project)
+                return self._result_from_replay(receipt, current)
+
+            record = self.graph.get(project)
+            if record.kind is not WorkKind.PROJECT:
+                raise WorkValidationError("project sheet target must be a project")
+            if base_revision is not None and base_revision != record.revision:
+                raise VersionConflictError("sheet base revision is stale")
+            plan = self.validate_project_sheet(record, sheet, decision_ref=decision_ref, next_action=next_action)
+            parent_payload = plan["project_payload"]
+            last_batch = dict(parent_payload["last_batch"])
+            last_batch["request_context"] = {
+                "expected_revision": base_revision if base_revision is not None else record.revision,
+                "expected_version": record.version,
+                "edit_token": None,
+                "correlation_id": None,
+                "causation_id": None,
             }
+            parent_payload["last_batch"] = last_batch
             envelope = self._envelope(
-                "work.project-sheet.apply", replay_target, command_payload, request_key, actor,
-                expected_version=replay_version, expected_revision=replay_revision,
+                "work.project-sheet.apply", record.ref, command_payload, request_key, actor,
+                expected_version=record.version, expected_revision=record.revision,
             )
             receipt = self.__writer.mutate(
                 envelope,
@@ -182,17 +206,19 @@ class _ProjectBatchesEngine:
                     "child_refs": tuple(plan["mappings"].values()),
                     "mapping": plan["mappings"],
                     "document_refs": tuple(plan["document_refs"]),
+                    "request_context": {
+                        "expected_revision": base_revision if base_revision is not None else record.revision,
+                        "expected_version": record.version,
+                        "edit_token": None,
+                        "correlation_id": None,
+                        "causation_id": None,
+                    },
                     "logical_batch": True,
                     "next_action": next_action,
                 },
                 stream="work:" + record.id,
                 transaction=tx,
             )
-            # FND replay is decided before any child write.  A replay returns
-            # here with no duplicate rows; the original result is reconstructed
-            # from the parent's durable batch history below.
-            if prior is not None:
-                return self._result_from_replay(receipt, record)
             self._write_child_rows(tx, plan)
         fresh = self.graph.get(record.ref)
         mappings = dict(plan["mappings"])
@@ -370,21 +396,47 @@ class _ProjectBatchesEngine:
     def activate_project(
         self, project: Any, *, manager: Any, logical_request_key: Optional[str] = None,
         actor: Optional[AuthenticatedActor] = None, resources: Optional[Mapping[str, Any]] = None,
+        base_revision: Optional[str] = None,
     ) -> WorkRecord:
+        key = self._request_key(logical_request_key)
+        command_payload = {
+            "project": self._request_locator(project),
+            "manager": _safe(manager),
+            "resources": None if resources is None else _safe(dict(resources)),
+            "base_revision": base_revision,
+        }
+        prior = self.__writer.get_receipt(key)
+        if prior is not None:
+            replay_target = prior.target
+            envelope = self._envelope(
+                "work.project.activate", replay_target, command_payload, key, actor,
+                expected_version=self._revision_version(replay_target.revision),
+                expected_revision=replay_target.revision,
+            )
+            receipt = self.__writer.mutate(
+                envelope, event_type="work.project.activated", result_ref=prior.result_ref,
+                stream="work:" + replay_target.id,
+            )
+            return self.graph.get(self._unPinned(receipt.result_ref or replay_target))
         record = self.graph.get(project)
         if record.kind is not WorkKind.PROJECT:
             raise WorkValidationError("only a project can be activated")
         if not manager:
             raise WorkValidationError("explicit manager authorisation is required")
+        if base_revision is not None and base_revision != record.revision:
+            raise VersionConflictError("project activation base revision is stale")
         payload = dict(record.payload)
         payload["lifecycle"] = Lifecycle.ACTIVE.value
         payload["manager"] = _safe(manager)
         payload["resources"] = dict(resources or payload.get("resources", {}))
         payload["admitted"] = True
         payload["readiness"] = dict(payload.get("readiness", {}), dispatch=False)
-        key = self._request_key(logical_request_key)
         with self.__writer.transaction() as tx:
-            self.__writer.mutate(self._envelope("work.project.activate", record.ref, payload, key, actor, expected_version=record.version, expected_revision=record.revision), event_type="work.project.activated", effects={"explicit": True, "dispatch": False, "manager": _safe(manager)}, stream="work:" + record.id, transaction=tx)
+            self.__writer.mutate(
+                self._envelope("work.project.activate", record.ref, command_payload, key, actor, expected_version=record.version, expected_revision=base_revision or record.revision),
+                identity_payload=payload,
+                event_type="work.project.activated", effects={"explicit": True, "dispatch": False, "manager": _safe(manager)}, stream="work:" + record.id, transaction=tx,
+            )
         return self.graph.get(record.ref)
 
     activate = activate_project
@@ -827,8 +879,15 @@ class _ProjectBatchesEngine:
 
     def _result_from_replay(self, receipt: Any, original: WorkRecord) -> BatchResult:
         project = self.graph.get(receipt.result_ref or original.ref)
-        last = project.payload.get("last_batch", {})
-        mappings = {str(k): self._as_ref(v) for k, v in dict(last.get("mapping", {})).items()}
+        mappings: Mapping[str, ResourceRef] = {}
+        event_ids = set(getattr(receipt, "event_ids", ()))
+        for event in self.__writer.list_events(stream="work:" + original.id):
+            if event.event_id in event_ids:
+                mappings = {str(k): self._as_ref(v) for k, v in dict(event.effects.get("mapping", {})).items()}
+                break
+        if not mappings:
+            last = project.payload.get("last_batch", {})
+            mappings = {str(k): self._as_ref(v) for k, v in dict(last.get("mapping", {})).items()}
         return BatchResult(project, receipt, mappings, project_id=project.id)
 
     def _document_ref(self, value: Any) -> ResourceRef:
@@ -860,6 +919,26 @@ class _ProjectBatchesEngine:
 
     def _request_key(self, value: Optional[str]) -> str:
         return _opaque(value or "request-" + uuid.uuid4().hex, "logical_request_key")
+
+    @staticmethod
+    def _revision_version(revision: Optional[str]) -> Optional[int]:
+        if revision is None or not revision.startswith("rev-"):
+            return None
+        try:
+            return int(revision.removeprefix("rev-"))
+        except ValueError:
+            return None
+
+    @staticmethod
+    def _unPinned(ref: ResourceRef) -> ResourceRef:
+        return ResourceRef(ref.authority, ref.kind, ref.id)
+
+    def _request_locator(self, value: Any) -> Any:
+        if isinstance(value, ResourceRef):
+            return value.to_dict()
+        if hasattr(value, "ref") and isinstance(value.ref, ResourceRef):
+            return value.ref.to_dict()
+        return value
 
     def _envelope(self, operation: str, target: ResourceRef, payload: Mapping[str, Any], key: str, actor: Optional[AuthenticatedActor], *, expected_version: Optional[int], expected_revision: Optional[str] = None, digest_payload: Any = None) -> CommandEnvelope:
         selected = actor or self.default_actor or AuthenticatedActor("herzchen.work", "work-batch", "herzchen.work")

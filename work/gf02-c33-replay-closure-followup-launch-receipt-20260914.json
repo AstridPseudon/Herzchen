@@ -1,0 +1,28 @@
+{
+  "schema": "gf02-c33-replay-closure-followup-launch/v1",
+  "brief": "work/gf02-c33-replay-closure-followup-brief-20260914.md",
+  "requested_model": "gpt-5.6-luna",
+  "requested_reasoning": "high",
+  "launcher": "/Users/hannahomalley/.local/bin/codex",
+  "worker_checkout": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-gf02-context-replay-closure-worker-v2",
+  "resume_thread_id": "01a09edc-1141-79e2-b94c-a7f59c9e2c4f",
+  "shell_session_id": 53464,
+  "launcher_pid_observed": 97782,
+  "base_commit": "ff5d85cc09ace8731845e8c7fb54d63bfd07e081",
+  "implementation_commit": "ef13cfed36f8d43925a28e8312bf0235379b1488",
+  "source_base_tree": "a6f030b399a747524dc356e632e90b02a1647083",
+  "started_at_utc": "2026-09-14T07:59:50.792304Z",
+  "sandbox": "dangerously-bypass-approvals-and-sandbox",
+  "observed_model": null,
+  "observed_reasoning": null,
+  "status": "running",
+  "no_review_or_gate_call": true,
+  "scope": [
+    "WorkGraph exact retry and changed-precondition paths",
+    "ProjectBatches work.project.activate",
+    "AssessmentModule assessment.finding.close",
+    "ResponsibilityAssignments.reassign",
+    "ManagedPackAuthoringHandler pack.content.author",
+    "authoring actor.release/release valid-first-action retry semantics"
+  ]
+}

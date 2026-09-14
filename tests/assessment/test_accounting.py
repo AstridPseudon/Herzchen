@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from herzchen.contracts import AuthenticatedActor, CommandEnvelope, ResourceRef, TransactionContext
+from herzchen.contracts import AuthenticatedActor, CommandEnvelope, ReplayConflictError, ResourceRef, TransactionContext
 from herzchen.domains.assessment import (
     AssessmentAuthorityError,
     AssessmentModule,
@@ -172,6 +172,121 @@ def test_invocation_success_does_not_close_parent_and_rework_keeps_parent_lineag
     decision = ctx["assessment"].accept(fresh, authority="review-board", rationale="later review accepted", logical_request_key="later-approval")
     assert decision.parent_obligation_ref == ctx["parent"].ref
 
+
+def test_correction_and_result_link_exact_retry_preserve_receipts_and_conflict_on_changed_input(context):
+    rework = run_assessment(
+        context, key="correction-replay-source", verdict=Verdict.REWORK,
+        findings=({"summary": "replayable finding"},),
+    )
+    first = context["assessment"].create_correction(
+        rework, instruction="same instruction", finding_refs=(rework.findings[0],),
+        logical_request_key="correction-replay",
+    )
+    correction_receipt = context["store"].get_receipt("correction-replay")
+    link_receipt = context["store"].get_receipt("correction-replay-result")
+    assert correction_receipt is not None and link_receipt is not None
+    before = (
+        context["store"].connection.execute("SELECT COUNT(*) FROM identities").fetchone()[0],
+        context["store"].connection.execute("SELECT COUNT(*) FROM record_references").fetchone()[0],
+        context["store"].connection.execute("SELECT COUNT(*) FROM command_receipts").fetchone()[0],
+        len(context["store"].list_events()),
+    )
+
+    replay = context["assessment"].create_correction(
+        context["assessment"].get_result(ResourceRef(rework.ref.authority, rework.ref.kind, rework.ref.id)), instruction="same instruction",
+        finding_refs=(context["assessment"].get_finding(rework.findings[0].ref),),
+        logical_request_key="correction-replay",
+    )
+    assert replay.ref == first.ref
+    assert context["store"].get_receipt("correction-replay") == correction_receipt
+    assert context["store"].get_receipt("correction-replay-result") == link_receipt
+    assert (
+        context["store"].connection.execute("SELECT COUNT(*) FROM identities").fetchone()[0],
+        context["store"].connection.execute("SELECT COUNT(*) FROM record_references").fetchone()[0],
+        context["store"].connection.execute("SELECT COUNT(*) FROM command_receipts").fetchone()[0],
+        len(context["store"].list_events()),
+    ) == before
+
+    current_result = context["store"].get_identity(ResourceRef(rework.ref.authority, rework.ref.kind, rework.ref.id))
+    current_finding = context["store"].get_identity(ResourceRef(rework.findings[0].ref.authority, rework.findings[0].ref.kind, rework.findings[0].ref.id))
+    assert current_result is not None and current_finding is not None
+    with pytest.raises(ReplayConflictError):
+        context["assessment"].create_correction(
+            current_result.ref, instruction="same instruction", finding_refs=(current_finding.ref,),
+            logical_request_key="correction-replay",
+        )
+    assert (
+        context["store"].connection.execute("SELECT COUNT(*) FROM identities").fetchone()[0],
+        context["store"].connection.execute("SELECT COUNT(*) FROM record_references").fetchone()[0],
+        context["store"].connection.execute("SELECT COUNT(*) FROM command_receipts").fetchone()[0],
+        len(context["store"].list_events()),
+    ) == before
+
+    with pytest.raises(ReplayConflictError):
+        context["assessment"].create_correction(
+            context["assessment"].get_result(ResourceRef(rework.ref.authority, rework.ref.kind, rework.ref.id)), instruction="changed instruction",
+            finding_refs=(context["assessment"].get_finding(rework.findings[0].ref),),
+            logical_request_key="correction-replay",
+        )
+    assert (
+        context["store"].connection.execute("SELECT COUNT(*) FROM identities").fetchone()[0],
+        context["store"].connection.execute("SELECT COUNT(*) FROM record_references").fetchone()[0],
+        context["store"].connection.execute("SELECT COUNT(*) FROM command_receipts").fetchone()[0],
+        len(context["store"].list_events()),
+    ) == before
+
+
+def test_finding_close_exact_retry_returns_original_receipt_and_changed_request_conflicts(context):
+    result = run_assessment(context, key="finding-close-replay-source", verdict=Verdict.PASS, findings=({"summary": "closeable"},))
+    finding = result.findings[0]
+    first = context["assessment"].close_finding(
+        finding, evidence_refs=(context["artifact"],), rationale="verified",
+        logical_request_key="finding-close-replay",
+    )
+    receipt = context["store"].get_receipt("finding-close-replay")
+    assert receipt is not None
+    before = (
+        context["store"].connection.execute("SELECT COUNT(*) FROM identities").fetchone()[0],
+        context["store"].connection.execute("SELECT COUNT(*) FROM record_references").fetchone()[0],
+        context["store"].connection.execute("SELECT COUNT(*) FROM command_receipts").fetchone()[0],
+        len(context["store"].list_events()),
+    )
+    replay = context["assessment"].close_finding(
+        context["assessment"].get_finding(finding.ref), evidence_refs=(context["artifact"],), rationale="verified",
+        logical_request_key="finding-close-replay",
+    )
+    assert replay.status == first.status == "closed"
+    assert context["store"].get_receipt("finding-close-replay") == receipt
+    assert (
+        context["store"].connection.execute("SELECT COUNT(*) FROM identities").fetchone()[0],
+        context["store"].connection.execute("SELECT COUNT(*) FROM record_references").fetchone()[0],
+        context["store"].connection.execute("SELECT COUNT(*) FROM command_receipts").fetchone()[0],
+        len(context["store"].list_events()),
+    ) == before
+    current_finding = context["store"].get_identity(ResourceRef(finding.ref.authority, finding.ref.kind, finding.ref.id))
+    assert current_finding is not None
+    with pytest.raises(ReplayConflictError):
+        context["assessment"].close_finding(
+            current_finding.ref, evidence_refs=(context["artifact"],), rationale="verified",
+            logical_request_key="finding-close-replay",
+        )
+    assert (
+        context["store"].connection.execute("SELECT COUNT(*) FROM identities").fetchone()[0],
+        context["store"].connection.execute("SELECT COUNT(*) FROM record_references").fetchone()[0],
+        context["store"].connection.execute("SELECT COUNT(*) FROM command_receipts").fetchone()[0],
+        len(context["store"].list_events()),
+    ) == before
+    with pytest.raises(ReplayConflictError):
+        context["assessment"].close_finding(
+            context["assessment"].get_finding(finding), evidence_refs=(context["artifact"],),
+            rationale="changed rationale", logical_request_key="finding-close-replay",
+        )
+    assert (
+        context["store"].connection.execute("SELECT COUNT(*) FROM identities").fetchone()[0],
+        context["store"].connection.execute("SELECT COUNT(*) FROM record_references").fetchone()[0],
+        context["store"].connection.execute("SELECT COUNT(*) FROM command_receipts").fetchone()[0],
+        len(context["store"].list_events()),
+    ) == before
 
 def test_route_change_resume_unknown_and_overrun_do_not_refill_allowance(context):
     ctx = context

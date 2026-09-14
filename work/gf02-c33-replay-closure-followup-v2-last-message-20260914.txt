@@ -1,0 +1,15 @@
+Completed the bounded GF02/C33 follow-up v2. Changes remain unstaged.
+
+- Fixed persisted exact replay for assessment correction/result-link and `cleanup.refresh`.
+- Added focused regression tests for exact retry, changed-input conflicts, and zero durable deltas.
+- Classified `finish.recovery` as intentional no-success-receipt behavior; no fabricated receipt added.
+- Source focused tests: 4 passed.
+- C33 closure tests: 9 passed source and installed wheel.
+- Affected suites: 69 passed/1 skipped source; 70 passed installed wheel.
+- Fresh wheel SHA: `dba4580da66c08173e2557ddc239a8a5769a8c8f399af5809c050d50e0b5f420`.
+- No commits, pushes, merges, DAT, FND, Store, or contract changes.
+
+Evidence:
+
+- [Result](</Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-gf02-context-replay-closure-worker-v2/work/gf02-c33-replay-closure-followup-v2-result.md>)
+- [JSONL receipt](</Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-gf02-context-replay-closure-worker-v2/work/gf02-c33-replay-closure-followup-v2-receipt-20260914/receipt.jsonl>)

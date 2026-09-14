@@ -876,8 +876,8 @@ class _AuthoringSessionServiceEngine:
                 snap = self._capture(checkout, capture)
             except BaseException as exc:
                 draft = Snapshot(checkout.draft_snapshot_ref, b64decode(record.payload.get("draft_bytes_b64", "")))
-                self._transition_recovery(handle, request_id + ":capture-failure", draft, str(exc), retirement_guard=retirement_guard)
-                return FinishResult("recovery_pending", handle.scope, handle.session_id, final_snapshot=draft, recovery_pending=True, cleanup=CleanupStatus.PENDING, error=str(exc))
+                recovery_receipt = self._transition_recovery(handle, request_id + ":capture-failure", draft, str(exc), retirement_guard=retirement_guard)
+                return FinishResult("recovery_pending", handle.scope, handle.session_id, recovery_receipt, final_snapshot=draft, recovery_pending=True, cleanup=CleanupStatus.PENDING, error=str(exc))
             base_expected = expected_base_revision or checkout.base_revision
             if base_expected != checkout.base_revision:
                 return self._reject_finish(handle, request_id, digest, checkout, snap, "base revision mismatch", BaseRevisionMismatchError, retirement_guard=retirement_guard)
@@ -947,8 +947,8 @@ class _AuthoringSessionServiceEngine:
             except BaseRevisionMismatchError:
                 raise
             except BaseException as exc:
-                self._transition_recovery(handle, request_id + ":recovery", snap, str(exc), retirement_guard=retirement_guard)
-                return FinishResult("recovery_pending", scope_ref, handle.session_id, final_snapshot=snap, recovery_pending=True, cleanup=CleanupStatus.PENDING, error=str(exc))
+                recovery_receipt = self._transition_recovery(handle, request_id + ":recovery", snap, str(exc), retirement_guard=retirement_guard)
+                return FinishResult("recovery_pending", scope_ref, handle.session_id, recovery_receipt, final_snapshot=snap, recovery_pending=True, cleanup=CleanupStatus.PENDING, error=str(exc))
 
     def _reject_finish(self, handle: SessionHandle, request_id: str, digest: str, checkout: AuthoringCheckout, snap: Snapshot, error: str, exc_type: type[Exception], *, retirement_guard: Optional[object] = None) -> FinishResult:
         self._transition_recovery(handle, request_id + ":rejected", snap, error, rejected=True, retirement_guard=retirement_guard)
@@ -976,13 +976,13 @@ class _AuthoringSessionServiceEngine:
             retirement_guard=retirement_guard,
         )
 
-    def _transition_recovery(self, handle: SessionHandle, request_id: str, snap: Snapshot, error: str, *, rejected: bool = False, retirement_guard: Optional[object] = None) -> None:
+    def _transition_recovery(self, handle: SessionHandle, request_id: str, snap: Snapshot, error: str, *, rejected: bool = False, retirement_guard: Optional[object] = None) -> Optional[CommandReceipt]:
         record = _as_record(self.__writer.get_identity(handle.scope))
         if record is None:
-            return
+            return None
         checkout = self._payload_checkout(record.payload)
         if checkout is None:
-            return
+            return None
         new_checkout = AuthoringCheckout(checkout.target_scope, checkout.target_kind, checkout.actor, checkout.session_id, checkout.token, checkout.fence, checkout.base_revision, checkout.draft_snapshot_ref, None, checkout.allowed_fields, AuthoringState.REJECTED if rejected else AuthoringState.RELEASED, CleanupStatus.PENDING, checkout.finish_claim, checkout.unmanaged_writers)
         payload = dict(record.payload)
         payload["checkout"] = new_checkout.to_dict()
@@ -1008,12 +1008,13 @@ class _AuthoringSessionServiceEngine:
             current = _as_record(self.__writer.get_identity(handle.scope))
             if current is None:
                 return
-            self._mutate(tx, actor=handle.actor, operation="finish.recovery", request_id=request_id, target=handle.scope, digest=digest, record=current, payload=payload, effects={"recovery_pending": not rejected, "error": error})
+            recovery_receipt = self._mutate(tx, actor=handle.actor, operation="finish.recovery", request_id=request_id, target=handle.scope, digest=digest, record=current, payload=payload, effects={"recovery_pending": not rejected, "error": error})
             actor_record = _as_record(self.__writer.get_identity(actor_ref))
             if actor_record is not None:
                 self._mutate(tx, actor=handle.actor, operation="actor.release", request_id=request_id + ":actor", target=actor_ref, digest=digest, record=actor_record, payload={"type": "authoring_actor", "active": False, "scope": handle.scope.to_dict(), "session_id": handle.session_id}, effects={"session_id": handle.session_id})
             self._put_snapshot(tx, snap)
             self._put_refs(tx, snap.ref)
+        return recovery_receipt
 
     def record_finish_recovery(
         self, handle: SessionHandle, *, request_id: str, snapshot: Snapshot,
@@ -1045,6 +1046,26 @@ class _AuthoringSessionServiceEngine:
         checkout = self._validate_record(handle, record, require_open=False)
         if checkout.state == AuthoringState.OPEN:
             raise InvalidSessionError("fresh cleanup capture requires a released checkout")
+        request_payload = {
+            "session": handle.session_id,
+            "snapshot": snapshot.digest,
+            "manifest": tuple(snapshot.manifest),
+        }
+        digest = self._request_digest("cleanup.refresh", request_id, request_payload, target=handle.scope, actor=handle.actor)
+        if not isinstance(retirement_guard, HeldRetirementLease):
+            raise InvalidSessionError("retirement guard is not an issued held lease")
+        issuer = getattr(retirement_guard, "issue_fence", None)
+        if not callable(issuer):
+            raise InvalidSessionError("retirement guard is not a held authenticated capability")
+        prior = self._prior_receipt(request_id, digest)
+        if prior is not None:
+            with self.__writer.transaction() as tx:
+                self._mutate(
+                    tx, actor=handle.actor, operation="cleanup.refresh", request_id=request_id,
+                    target=handle.scope, digest=digest, record=record, payload=record.payload,
+                    effects={"final_digest": snapshot.digest}, request_payload=request_payload,
+                )
+            return snapshot
         updated_checkout = AuthoringCheckout(
             checkout.target_scope, checkout.target_kind, checkout.actor,
             checkout.session_id, checkout.token, checkout.fence,
@@ -1058,20 +1079,10 @@ class _AuthoringSessionServiceEngine:
         payload["final_digest"] = snapshot.digest
         payload["final_snapshot_ref"] = snapshot.ref.to_dict()
         manifest = validated_retirement_manifest(snapshot.manifest)
-        if not isinstance(retirement_guard, HeldRetirementLease):
-            raise InvalidSessionError("retirement guard is not an issued held lease")
-        issuer = getattr(retirement_guard, "issue_fence", None)
-        if not callable(issuer):
-            raise InvalidSessionError("retirement guard is not a held authenticated capability")
         payload["retirement_manifest"] = list(manifest)
         payload["retirement_fence"] = dict(issuer(handle, manifest, snapshot_digest=snapshot.digest))
         payload["recovery_pending"] = False
         payload.pop("error", None)
-        digest = self._request_digest(
-            "cleanup.refresh", request_id,
-            {"session": handle.session_id, "snapshot": snapshot.digest},
-            target=handle.scope, actor=handle.actor,
-        )
         with self.__writer.transaction() as tx:
             current = _as_record(self.__writer.get_identity(handle.scope))
             if current is None:
@@ -1080,41 +1091,66 @@ class _AuthoringSessionServiceEngine:
             self._mutate(
                 tx, actor=handle.actor, operation="cleanup.refresh", request_id=request_id,
                 target=handle.scope, digest=digest, record=current, payload=payload,
-                effects={"final_digest": snapshot.digest},
+                effects={"final_digest": snapshot.digest}, request_payload=request_payload,
             )
             self._put_snapshot(tx, snapshot)
             self._put_refs(tx, snapshot.ref)
         return snapshot
 
-    def _transition_release(self, handle: SessionHandle, request_id: str, *, status: str, project: Any = None, error: Optional[str] = None) -> None:
+    def _transition_release(self, handle: SessionHandle, request_id: str, *, status: str, project: Any = None, error: Optional[str] = None) -> Optional[CommandReceipt]:
+        project_value = project.to_dict() if isinstance(project, ResourceRef) else project
+        request_payload = {
+            "session": handle.session_id,
+            "status": status,
+            "project": project_value,
+            "error": error,
+        }
+        digest = self._request_digest("release", request_id, request_payload, target=handle.scope, actor=handle.actor)
         record = _as_record(self.__writer.get_identity(handle.scope))
         if record is None:
             raise InvalidSessionError("scope is not admitted")
-        checkout = self._validate_record(handle, record)
+        checkout = self._validate_record(handle, record, require_open=False)
+        prior = self._prior_receipt(request_id, digest)
+        if prior is not None:
+            # Capability identity is still checked above, but a valid exact
+            # retry is resolved from its original receipt before the now-
+            # released projection can reject the request as stale.
+            with self.__writer.transaction() as tx:
+                self._mutate(
+                    tx, actor=handle.actor, operation="release", request_id=request_id,
+                    target=handle.scope, digest=digest, record=record,
+                    payload=record.payload, effects={"status": status},
+                    request_payload=request_payload,
+                )
+            return prior
+        if checkout.state != AuthoringState.OPEN:
+            raise InvalidSessionError("authoring session is no longer open")
         released = AuthoringCheckout(checkout.target_scope, checkout.target_kind, checkout.actor, checkout.session_id, checkout.token, checkout.fence, checkout.base_revision, checkout.draft_snapshot_ref, checkout.final_snapshot_ref, checkout.allowed_fields, AuthoringState.RELEASED, CleanupStatus.PENDING, checkout.finish_claim, checkout.unmanaged_writers)
         payload = dict(record.payload)
         payload["checkout"] = released.to_dict()
         payload["status"] = status
         if project is not None:
-            payload["project"] = project.to_dict() if isinstance(project, ResourceRef) else project
+            payload["project"] = project_value
         if error:
             payload["error"] = error
         actor_ref = _actor_key(handle.actor, getattr(self.__writer, "authority", handle.scope.authority))
-        digest = _digest({"status": status, "session": handle.session_id, "error": error})
         with self.__writer.transaction() as tx:
             current = _as_record(self.__writer.get_identity(handle.scope))
             assert current is not None
             self._validate_record(handle, current)
-            self._mutate(tx, actor=handle.actor, operation="release", request_id=request_id, target=handle.scope, digest=digest, record=current, payload=payload, effects={"status": status})
+            self._mutate(tx, actor=handle.actor, operation="release", request_id=request_id, target=handle.scope, digest=digest, record=current, payload=payload, effects={"status": status}, request_payload=request_payload)
             actor_record = _as_record(self.__writer.get_identity(actor_ref))
             if actor_record is not None:
-                self._mutate(tx, actor=handle.actor, operation="actor.release", request_id=request_id + ":actor", target=actor_ref, digest=digest, record=actor_record, payload={"type": "authoring_actor", "active": False, "scope": handle.scope.to_dict(), "session_id": handle.session_id}, effects={"session_id": handle.session_id})
+                actor_payload = {"type": "authoring_actor", "active": False, "scope": handle.scope.to_dict(), "session_id": handle.session_id}
+                actor_request_payload = {"scope": handle.scope.to_dict(), "session": handle.session_id, "status": status}
+                self._mutate(tx, actor=handle.actor, operation="actor.release", request_id=request_id + ":actor", target=actor_ref, digest=digest, record=actor_record, payload=actor_payload, effects={"session_id": handle.session_id}, request_payload=actor_request_payload)
+        return self.__writer.get_receipt(request_id)
 
     def release(self, handle: SessionHandle, *, request_id: str) -> FinishResult:
-        self._transition_release(handle, request_id, status="released")
+        receipt = self._transition_release(handle, request_id, status="released")
         record = _as_record(self.__writer.get_identity(handle.scope))
         checkout = None if record is None else self._payload_checkout(record.payload)
-        return FinishResult("released", handle.scope, handle.session_id, checkout=checkout, cleanup=CleanupStatus.PENDING)
+        return FinishResult("released", handle.scope, handle.session_id, receipt=receipt, checkout=checkout, cleanup=CleanupStatus.PENDING)
 
     def validate_retirement_handoff(self, handle: SessionHandle, retirement_guard: object) -> Tuple[str, ...]:
         """Validate the exact durable snapshot, manifest, fence, and held lease."""
@@ -1213,19 +1249,32 @@ class _AuthoringSessionServiceEngine:
                 or old_fence.get("root_ino") != getattr(retirement_guard, "root_ino", None)
             ):
                 raise InvalidSessionError("retirement fence belongs to a different checkout")
-            new_fence = dict(issue(handle, manifest, snapshot_digest=final_digest))
         except BaseException as exc:
             if isinstance(exc, InvalidSessionError):
                 raise
             raise InvalidSessionError(str(exc) or "retirement exclusion cannot be re-established") from exc
+        request_payload = {
+            "session": handle.session_id,
+            "manifest": _digest(list(manifest)),
+            "snapshot": final_digest,
+        }
+        digest = self._request_digest(
+            "cleanup.refresh", request_id, request_payload,
+            target=handle.scope, actor=handle.actor,
+        )
+        prior = self._prior_receipt(request_id, digest)
+        if prior is not None:
+            with self.__writer.transaction() as tx:
+                self._mutate(
+                    tx, actor=handle.actor, operation="cleanup.refresh", request_id=request_id,
+                    target=handle.scope, digest=digest, record=record, payload=record.payload,
+                    effects={"retirement_lease": None}, request_payload=request_payload,
+                )
+            return manifest
+        new_fence = dict(issue(handle, manifest, snapshot_digest=final_digest))
         payload = dict(record.payload)
         payload["retirement_fence"] = new_fence
         payload["recovery_pending"] = False
-        digest = self._request_digest(
-            "cleanup.refresh", request_id,
-            {"session": handle.session_id, "manifest": _digest(list(manifest)), "lease": new_fence.get("lease_id")},
-            target=handle.scope, actor=handle.actor,
-        )
         with self.__writer.transaction() as tx:
             current = _as_record(self.__writer.get_identity(handle.scope))
             if current is None:
@@ -1234,7 +1283,7 @@ class _AuthoringSessionServiceEngine:
             self._mutate(
                 tx, actor=handle.actor, operation="cleanup.refresh", request_id=request_id,
                 target=handle.scope, digest=digest, record=current, payload=payload,
-                effects={"retirement_lease": new_fence.get("lease_id")},
+                effects={"retirement_lease": new_fence.get("lease_id")}, request_payload=request_payload,
             )
         return manifest
 
