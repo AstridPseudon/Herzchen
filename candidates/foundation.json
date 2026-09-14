@@ -26,6 +26,13 @@
       "implementation_commit": "1735eadcbf0c5a447a7c74e9ab213b225e4e5ed8",
       "implementation_tree": "fc8c13750d8bb1a7c3d1247d86d6233e1818e64d"
     },
+    "SNEW-01": {
+      "commit": "acd9ae3666574add8b9289d368a9b9f6f74b694a7",
+      "handoff": "work/snew01-blank-project-worker-result.md",
+      "manager_supplement_sha256": "5b7a08a6ec1fefc38ad08ba68e37d6d1c030c25260b1f161eb8edf42ccd64940",
+      "static_seed_sha256": "5675a02cc9a34bf90de0d5e91dc0617965fe15b133ab1b0cb4b0340bb19af31b",
+      "tree": "793c435567261ad077f093ac4a7f5ba30bcd05a7"
+    },
     "WRK-06": {
       "commit": "b036bbbe11e93811a62b95150338a192b5fd6806",
       "handoff": "handoffs/WRK.json",
@@ -44,7 +51,7 @@
     "No publication/upstream/control mutation",
     "Future Otto/Astrid journeys remain later-stage obligations",
     "C39 real manager/host action remains a later consumer journey; foundation packet claims only shared candidate/decision primitives",
-    "S-NEW-01 atomic initial-spec document/ref/receipt is an explicit owner follow-up; packet is not gate-ready while it remains open"
+    "C39 real manager/host action remains later consumer journey; foundation packet claims only shared candidate/decision primitives"
   ],
   "candidate_head_frozen": true,
   "coverage_artifact": "evidence/foundation-coverage.json",
@@ -73,17 +80,18 @@
     "C38",
     "C39"
   ],
-  "follow_up_brief": "work/int-03-snew01-gap-brief.md",
+  "follow_up_brief": "work/int-03-snew01-gap-brief.md (historical gap brief; closed by accepted SNEW01 correction)",
+  "follow_up_brief_sha256": "fd2756e4c4f0b790637db11a5df399cb848778057889ecc03b6fb32fe1696c36",
   "foundation_scope": {
     "C38": "supported_by_current_candidate",
     "C39": "supported_foundation_slice_with_later_manager_host_action_pending",
-    "S-NEW-01": "partial_pending_followup_atomic_initial_spec_creation"
+    "S-NEW-01": "supported_by_current_candidate"
   },
   "gate_state": "pending",
   "gate_verdict_claimed": false,
   "inputs": {
     "area_contracts_sha256": "0fdbd9ed47f16da3b11f0750503e7f5dfbd58f41ef18368e9fb27553096e4e04",
-    "extraction_map_sha256": "8740730f3b9896d04f608fda745843a6887993aafe8955ea3df46ddf63804784",
+    "extraction_map_sha256": "e273cb7b7e9c26f83a8e1002753c835863333b77e9bfce5b5a3909b1801dbbd5",
     "scenario_count": 49,
     "scenario_seed_sha256": "99ece17752f2b67cc5658ae344067dc7bcb4089608e27b1e426b291b177624f9",
     "scenario_state_counts": {
@@ -94,23 +102,27 @@
   },
   "review_requested": false,
   "schema": "foundation-candidate/v2",
-  "source_commit": "c7156360ab601533a38710b8957887e582db669e",
-  "source_tree": "f547137f5804c0d8958d68d08633b35698aa2e43",
+  "source_commit": "046b9acfdc9ba541faff65ff3713961890684303",
+  "source_tree": "047a43ba687f45c298139b595756dac84ab729da",
   "state": "worker-candidate",
   "tests": {
     "c38_foundation_probe": "work/int-03-c38-foundation-probe-20260914.json",
     "c38_foundation_probe_result": "overall_ok=true; 6 checks passed",
-    "c38_foundation_probe_script_sha256": "b37ce5caded5cb67e22671a2057908b8338eda91eed833127ce17cd293251721",
-    "c38_foundation_probe_sha256": "c2b7aeebdb9aac719ad07cb1419dd33f6ddcf199f0a320b739969513aab56b56",
+    "c38_foundation_probe_script_sha256": "61527f89f5ecd7073a260f8cd28c6df45138cb3b17c2d0c940ee01a25da75891",
+    "c38_foundation_probe_sha256": "3eb6d389dbfa5431d7ab587edea3f59cb25a974cee1a56688d68f56495875f88",
     "c38_foundation_probe_transcript": "work/int-03-c38-foundation-probe-20260914.txt",
-    "c38_foundation_probe_transcript_sha256": "3effb2c89dcf5415ba93faeff84447534dceb44dfa64a4fcfa430c4135b14472",
+    "c38_foundation_probe_transcript_sha256": "72aa2e09e0242f0dd378d116ce3e717bc8b1adaf1276e9b813c43f4e92c95724",
     "combined_installed_result": "249 passed, 80 subtests passed in 3.70s",
     "combined_transcript": "work/int-03-final-installed-run-20260914.txt",
     "combined_transcript_sha256": "5b4b47bb010d0694da7c249864f20f3731a11314ff37a0d23294f59c32d67892",
     "installed_origins_verified": true,
     "public_api_probe_result": "1 passed in 0.17s",
     "public_api_probe_transcript": "work/int-03-final-public-api-probe-run-20260914.txt",
-    "public_api_probe_transcript_sha256": "d2f31c46add23a7712adc7adfd29bbcf276b8e1f0c9aece1fdbef9bdd8ace104"
+    "public_api_probe_transcript_sha256": "d2f31c46add23a7712adc7adfd29bbcf276b8e1f0c9aece1fdbef9bdd8ace104",
+    "snew01_affected_installed_result": "154 passed, 0 skipped",
+    "snew01_affected_installed_transcript": "work/int-03-snew01-installed-affected-run-20260914.txt",
+    "snew01_affected_installed_transcript_sha256": "5fdf6e0dee5b340f5e76718c5798958153af362be54fb4bccab3a81a74b457ca",
+    "snew01_wheel_sha256": "4a6dc658fd3b71e9d9d64323bd6539a2feef2521cc5e2e9b472daf2bf3dfbb2f"
   },
   "wheel": {
     "distribution": "herzchen-contracts==0.1.0",
@@ -118,9 +130,9 @@
       "PYTHONPATH",
       "PYTHONHOME"
     ],
-    "path": "/tmp/herzchen-int03-final-wheel.20260914042342.out/herzchen_contracts-0.1.0-py3-none-any.whl",
+    "path": "/tmp/herzchen-int03-snew01-final-wheel/herzchen_contracts-0.1.0-py3-none-any.whl",
     "pytest": "9.1.1",
     "python": "3.11.16",
-    "sha256": "7b44a33a187dc8a23bc0f1b768ba2052df02e2bddbeceb8aede748dda8927567"
+    "sha256": "4a6dc658fd3b71e9d9d64323bd6539a2feef2521cc5e2e9b472daf2bf3dfbb2f"
   }
 }

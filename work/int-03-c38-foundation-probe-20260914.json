@@ -1,21 +1,21 @@
 {
   "candidate": {
     "environment": "env -u PYTHONPATH -u PYTHONHOME",
-    "head": "c7156360ab601533a38710b8957887e582db669e",
+    "head": "046b9acfdc9ba541faff65ff3713961890684303",
     "pytest": "9.1.1",
     "python": "3.11.16",
-    "tree": "f547137f5804c0d8958d68d08633b35698aa2e43",
-    "venv": "/tmp/herzchen-int03-pkg05-fnd06-dat06-candidate.pwUzWY/venv",
-    "wheel": "/tmp/herzchen-int03-final-wheel.20260914042342.out/herzchen_contracts-0.1.0-py3-none-any.whl",
-    "wheel_sha256": "7b44a33a187dc8a23bc0f1b768ba2052df02e2bddbeceb8aede748dda8927567"
+    "tree": "047a43ba687f45c298139b595756dac84ab729da",
+    "venv": "/tmp/herzchen-int03-snew01-venv",
+    "wheel": "/tmp/herzchen-int03-snew01-final-wheel/herzchen_contracts-0.1.0-py3-none-any.whl",
+    "wheel_sha256": "4a6dc658fd3b71e9d9d64323bd6539a2feef2521cc5e2e9b472daf2bf3dfbb2f"
   },
-  "command": "env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-int03-pkg05-fnd06-dat06-candidate.pwUzWY/venv/bin/python work/int-03-c38-foundation-probe.py",
+  "command": "env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-int03-snew01-venv/bin/python work/int-03-c38-foundation-probe.py",
   "interpretation": {
     "admission": "Only an explicit manager admission changes lifecycle to active; admission still leaves dispatch false.",
-    "blank_close": "The shipped work.blank_project template has zero tasks; create receipt and fresh SQLite read are present; opening with initial empty content then untouched idle-close preserves the pending project revision and removes only the registered checkout file, with no project-sheet mutation.",
+    "blank_close": "The shipped work.blank_project dynamically composes one initial-specification DAT document and project.documents/specification association from the rendered shared projection in the same FND transaction. Fresh reads show the empty initial revision and template revision; untouched idle-close retains project/spec/revision/association and removes only the registered checkout file.",
     "creation": "A blank pending project is written immediately with zero tasks, empty outcome, no manager/budget/allowance, and a committed creation receipt.",
     "query_edit_attach": "Fresh ProjectSheet export observes the pending project and one pinned initial-spec document association after an ordinary sheet edit; curator and why/revisit metadata survive.",
-    "remaining": "No named C38 foundation behavior remains unexercised in this probe. Full Otto host action remains C39/later and is not pulled into foundation.",
+    "remaining": "No named C38/S-NEW-01 foundation behavior remains unexercised in this bounded installed proof. Full Otto host action remains C39/later and is not pulled into foundation.",
     "replay_invalid": "Same logical request replays the same identity without a new event; changed arguments raise a replay conflict.",
     "revisit": "A typed wait records owner, awaited reference, revisit condition and residual why metadata; readiness observation is attention-only and keeps pending/admission/dispatch false."
   },
@@ -1185,13 +1185,19 @@
       "details": {
         "built_in_blank_and_untouched_close": {
           "after": "WorkRecord(ref=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), kind=<WorkKind.PROJECT: 'project'>, title='Untitled project', name='Untitled project', aliases=('project-d2c9e890f5',), parent=None, dependencies=(), project_ref=None, lifecycle=<Lifecycle.PENDING: 'pending'>, readiness={'dispatch': False, 'ready': False, 'status': 'not-evaluated'}, payload={'acceptance': {}, 'alias': 'project-d2c9e890f5', 'aliases': ['project-d2c9e890f5'], 'approach': '', 'budget': None, 'custom': {}, 'dependencies': [], 'documents': [], 'execution': None, 'external_action': None, 'gate': None, 'id': 'project-9618088f4bcd9d9336d2c9e890f5', 'kind': 'project', 'lifecycle': 'pending', 'manager': None, 'metadata': {'template_origin': {'authority': 'pack', 'id': 'work.blank_project', 'kind': 'work_template', 'revision': 'pkg-03.v1'}}, 'name': 'Untitled project', 'outcome': '', 'parent': None, 'project_ref': None, 'protocol': None, 'provenance': {'creator': {'actor': 'curator', 'authenticated': True, 'authority': 'int03-c38', 'credential_ref': 'credential'}, 'curator': {'actor': 'curator', 'authenticated': True, 'authority': 'int03-c38', 'credential_ref': 'credential'}}, 'readiness': {'dispatch': False, 'ready': False, 'status': 'not-evaluated'}, 'schema_revision': 'work.v1', 'scope': '', 'tasks': [], 'title': 'Untitled project', 'worker': None}, version=1)",
+          "association_ref": {
+            "authority": "int03-c38",
+            "id": "link-671c3b73a275f0ec5605a496615304ac",
+            "kind": "document-association",
+            "revision": null
+          },
           "before": "WorkRecord(ref=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), kind=<WorkKind.PROJECT: 'project'>, title='Untitled project', name='Untitled project', aliases=('project-d2c9e890f5',), parent=None, dependencies=(), project_ref=None, lifecycle=<Lifecycle.PENDING: 'pending'>, readiness={'dispatch': False, 'ready': False, 'status': 'not-evaluated'}, payload={'acceptance': {}, 'alias': 'project-d2c9e890f5', 'aliases': ['project-d2c9e890f5'], 'approach': '', 'budget': None, 'custom': {}, 'dependencies': [], 'documents': [], 'execution': None, 'external_action': None, 'gate': None, 'id': 'project-9618088f4bcd9d9336d2c9e890f5', 'kind': 'project', 'lifecycle': 'pending', 'manager': None, 'metadata': {'template_origin': {'authority': 'pack', 'id': 'work.blank_project', 'kind': 'work_template', 'revision': 'pkg-03.v1'}}, 'name': 'Untitled project', 'outcome': '', 'parent': None, 'project_ref': None, 'protocol': None, 'provenance': {'creator': {'actor': 'curator', 'authenticated': True, 'authority': 'int03-c38', 'credential_ref': 'credential'}, 'curator': {'actor': 'curator', 'authenticated': True, 'authority': 'int03-c38', 'credential_ref': 'credential'}}, 'readiness': {'dispatch': False, 'ready': False, 'status': 'not-evaluated'}, 'schema_revision': 'work.v1', 'scope': '', 'tasks': [], 'title': 'Untitled project', 'worker': None}, version=1)",
-          "close": "IdleCloseResult(status='closed_cleaned', scope=ResourceRef(authority='int03-c38', kind='authoring-scope', id='project-9618088f4bcd9d9336d2c9e890f5', revision=None), session_id='session-f3ea9fcf92ad51a7c2d9a48f', idle_seconds=10.0, last_content_edit=0.0, finish=SemanticFinishResult(status='pending_released', finish=FinishResult(status='pending_released', scope=ResourceRef(authority='int03-c38', kind='authoring-scope', id='project-9618088f4bcd9d9336d2c9e890f5', revision=None), session_id='session-f3ea9fcf92ad51a7c2d9a48f', receipt=CommandReceipt(logical_request_key='snew-idle-close', request_digest='3eca048f72ec78511a75ef52fb11f806bf39ee000019755b7f466dc636218792', operation='finish', target=ResourceRef(authority='int03-c38', kind='authoring-scope', id='project-9618088f4bcd9d9336d2c9e890f5', revision=None), status=<ReceiptStatus.COMMITTED: 'committed'>, transaction_id='a1061d2c393ac43580737887c21f5cbc', event_ids=('event-6cc6a4bfc210add0bfdc7487077bd878',), result_ref=ResourceRef(authority='int03-c38', kind='authoring-scope', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-3'), error_code=None, replayed=False, observed_revision='rev-3', unknown_reason=None), checkout=AuthoringCheckout(target_scope=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), target_kind='project-sheet', actor=AuthenticatedActor(authority='int03-c38', actor='curator', credential_ref='credential', authenticated=True), session_id='session-f3ea9fcf92ad51a7c2d9a48f', token='token-1f63f907d49c3f48ebf68dc5', fence='fence-e43e4903588b9dbae1820b79', base_revision='rev-1', draft_snapshot_ref=ResourceRef(authority='int03-c38', kind='authoring-snapshot', id='draft-session-f3ea9fcf92ad51a7c2d9a48f', revision='44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a'), final_snapshot_ref=None, allowed_fields=(), state=<AuthoringState.RELEASED: 'released'>, cleanup=<CleanupStatus.PENDING: 'pending'>, finish_claim=FinishClaim(finalization_identity='finish-session-f3ea9fcf92ad51a7c2d9a48f', mode='idle', claim_id='claim-e3a865f1ad4e51bc272389cb'), unmanaged_writers=False), final_snapshot=Snapshot(ref=ResourceRef(authority='int03-c38', kind='authoring-snapshot', id='draft-session-f3ea9fcf92ad51a7c2d9a48f', revision='44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a'), data=b'{}', manifest=()), recovery_pending=False, cleanup=<CleanupStatus.PENDING: 'pending'>, error=None), snapshot=DurableSnapshot(root='/var/folders/0n/hj_vqrps2bz8pnbyvgd58k740000gn/T/int03-c38-5_3fpy6p/blank-checkout', files=(SnapshotFile(relative_path='project.json', data=b'{}', size=2, sha256='44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a'),), tree_digest='85ee6cffed306a19019805c3a4b819454bfc296d9a4ed4710efdd6d800317055', data=b'{\"files\":[{\"bytes_b64\":\"e30=\",\"relative_path\":\"project.json\"}],\"format\":\"herzchen.edt-03.tree.v1\",\"manifest\":[{\"relative_path\":\"project.json\",\"sha256\":\"44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a\",\"size\":2}],\"tree_digest\":\"85ee6cffed306a19019805c3a4b819454bfc296d9a4ed4710efdd6d800317055\"}', ref=None), validation=ValidationResult(valid=True, diagnostics=None), application=None, recovery_pending=False, error=None), cleanup=CleanupObservation(status=<CleanupStatus.COMPLETE: 'complete'>, root='/var/folders/0n/hj_vqrps2bz8pnbyvgd58k740000gn/T/int03-c38-5_3fpy6p/blank-checkout', deleted=('project.json',), remaining=(), error=None), recovery_pending=False, error=None)",
+          "close": "IdleCloseResult(status='closed_cleaned', scope=ResourceRef(authority='int03-c38', kind='authoring-scope', id='project-9618088f4bcd9d9336d2c9e890f5', revision=None), session_id='session-2a2e3b65b0a82b36b1242343', idle_seconds=10.0, last_content_edit=0.0, finish=SemanticFinishResult(status='pending_released', finish=FinishResult(status='pending_released', scope=ResourceRef(authority='int03-c38', kind='authoring-scope', id='project-9618088f4bcd9d9336d2c9e890f5', revision=None), session_id='session-2a2e3b65b0a82b36b1242343', receipt=CommandReceipt(logical_request_key='snew-idle-close', request_digest='ff12709719b229b8d548834fd49014dcdf328344e04308e26406805ce6da8246', operation='finish', target=ResourceRef(authority='int03-c38', kind='authoring-scope', id='project-9618088f4bcd9d9336d2c9e890f5', revision=None), status=<ReceiptStatus.COMMITTED: 'committed'>, transaction_id='18eaadc85d8de86ca89e16680b776fba', event_ids=('event-6210ec4c24e8e9ea5f534dd422e99071',), result_ref=ResourceRef(authority='int03-c38', kind='authoring-scope', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-3'), error_code=None, replayed=False, observed_revision='rev-3', unknown_reason=None), checkout=AuthoringCheckout(target_scope=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), target_kind='project-sheet', actor=AuthenticatedActor(authority='int03-c38', actor='curator', credential_ref='credential', authenticated=True), session_id='session-2a2e3b65b0a82b36b1242343', token='token-650330dbf23d522d46d9d77a', fence='fence-3a58b874a3f72e71233ff834', base_revision='rev-1', draft_snapshot_ref=ResourceRef(authority='int03-c38', kind='authoring-snapshot', id='draft-session-2a2e3b65b0a82b36b1242343', revision='0de483a040474e0f7dccd6db2b630298f88fcc5ed5422be68cde87d12c4d3f5f'), final_snapshot_ref=None, allowed_fields=(), state=<AuthoringState.RELEASED: 'released'>, cleanup=<CleanupStatus.PENDING: 'pending'>, finish_claim=FinishClaim(finalization_identity='finish-session-2a2e3b65b0a82b36b1242343', mode='idle', claim_id='claim-19664d655f323e2a1a53290c'), unmanaged_writers=False), final_snapshot=Snapshot(ref=ResourceRef(authority='int03-c38', kind='authoring-snapshot', id='draft-session-2a2e3b65b0a82b36b1242343', revision='0de483a040474e0f7dccd6db2b630298f88fcc5ed5422be68cde87d12c4d3f5f'), data=b'{\"acceptance\":{},\"custom\":{},\"documents\":[],\"fields\":{},\"instructions\":\"\",\"kind\":\"project\",\"metadata\":{\"projection_schema\":\"pending-project-sheet/v1\",\"template_ref\":{\"authority\":\"pack\",\"id\":\"work.blank_project\",\"kind\":\"work_template\",\"revision\":\"pkg-03.v1\"},\"template_revision\":\"pkg-03.v1\"},\"outcome\":\"\",\"requires\":[],\"tasks\":[],\"title\":\"Untitled project\"}', manifest=()), recovery_pending=False, cleanup=<CleanupStatus.PENDING: 'pending'>, error=None), snapshot=DurableSnapshot(root='/var/folders/0n/hj_vqrps2bz8pnbyvgd58k740000gn/T/int03-c38-exzsrzim/blank-checkout', files=(SnapshotFile(relative_path='project.json', data=b'{\"acceptance\":{},\"custom\":{},\"documents\":[],\"fields\":{},\"instructions\":\"\",\"kind\":\"project\",\"metadata\":{\"projection_schema\":\"pending-project-sheet/v1\",\"template_ref\":{\"authority\":\"pack\",\"id\":\"work.blank_project\",\"kind\":\"work_template\",\"revision\":\"pkg-03.v1\"},\"template_revision\":\"pkg-03.v1\"},\"outcome\":\"\",\"requires\":[],\"tasks\":[],\"title\":\"Untitled project\"}', size=356, sha256='0de483a040474e0f7dccd6db2b630298f88fcc5ed5422be68cde87d12c4d3f5f'),), tree_digest='f6df2b6fa160cc621c9eb31b6fd7255c3f220816fec27005e079f6b7e4d2ddd2', data=b'{\"files\":[{\"bytes_b64\":\"eyJhY2NlcHRhbmNlIjp7fSwiY3VzdG9tIjp7fSwiZG9jdW1lbnRzIjpbXSwiZmllbGRzIjp7fSwiaW5zdHJ1Y3Rpb25zIjoiIiwia2luZCI6InByb2plY3QiLCJtZXRhZGF0YSI6eyJwcm9qZWN0aW9uX3NjaGVtYSI6InBlbmRpbmctcHJvamVjdC1zaGVldC92MSIsInRlbXBsYXRlX3JlZiI6eyJhdXRob3JpdHkiOiJwYWNrIiwiaWQiOiJ3b3JrLmJsYW5rX3Byb2plY3QiLCJraW5kIjoid29ya190ZW1wbGF0ZSIsInJldmlzaW9uIjoicGtnLTAzLnYxIn0sInRlbXBsYXRlX3JldmlzaW9uIjoicGtnLTAzLnYxIn0sIm91dGNvbWUiOiIiLCJyZXF1aXJlcyI6W10sInRhc2tzIjpbXSwidGl0bGUiOiJVbnRpdGxlZCBwcm9qZWN0In0=\",\"relative_path\":\"project.json\"}],\"format\":\"herzchen.edt-03.tree.v1\",\"manifest\":[{\"relative_path\":\"project.json\",\"sha256\":\"0de483a040474e0f7dccd6db2b630298f88fcc5ed5422be68cde87d12c4d3f5f\",\"size\":356}],\"tree_digest\":\"f6df2b6fa160cc621c9eb31b6fd7255c3f220816fec27005e079f6b7e4d2ddd2\"}', ref=None), validation=ValidationResult(valid=True, diagnostics=None), application=None, recovery_pending=False, error=None), cleanup=CleanupObservation(status=<CleanupStatus.COMPLETE: 'complete'>, root='/var/folders/0n/hj_vqrps2bz8pnbyvgd58k740000gn/T/int03-c38-exzsrzim/blank-checkout', deleted=('project.json',), remaining=(), error=None), recovery_pending=False, error=None)",
           "creation_receipts": [
             {
               "error_code": null,
               "event_ids": [
-                "event-493de1ada739570f8ea1ebeb23d29f05"
+                "event-c3beac7012b78c38b513c8788c5a80ec"
               ],
               "logical_request_key": "snew-template:project",
               "observed_revision": "rev-1",
@@ -1211,12 +1217,302 @@
                 "kind": "work.project",
                 "revision": null
               },
-              "transaction_id": "803143fd8d18dd8350061646ffd7b287",
+              "transaction_id": "1322af483fc26404256fe9223a4a5e67",
+              "unknown_reason": null
+            },
+            {
+              "error_code": null,
+              "event_ids": [
+                "event-20e8f08dd844d6b86235c24b3751cd52"
+              ],
+              "logical_request_key": "snew-template:document:initial-specification",
+              "observed_revision": "rev-c6773818681f1131932beb219dd5c262",
+              "operation": "dat.content.document.create",
+              "replayed": false,
+              "request_digest": "09c340fd657dc63969f92329fc1c5e58a3391f0823ffd003572ad1e70110dbd7",
+              "result_ref": {
+                "authority": "int03-c38",
+                "id": "template-c1f7cb17f3b6037209d99a7604a833d4",
+                "kind": "dat.content.document",
+                "revision": "rev-c6773818681f1131932beb219dd5c262"
+              },
+              "status": "committed",
+              "target": {
+                "authority": "int03-c38",
+                "id": "template-c1f7cb17f3b6037209d99a7604a833d4",
+                "kind": "dat.content.document",
+                "revision": null
+              },
+              "transaction_id": "63b8ffbdf505755ef872206f0737d58a",
+              "unknown_reason": null
+            },
+            {
+              "error_code": null,
+              "event_ids": [
+                "event-9ada146dbf0b39d8265184d237e7745b"
+              ],
+              "logical_request_key": "snew-template:link:project:project.documents:specification",
+              "observed_revision": "rev-1",
+              "operation": "dat.content.link",
+              "replayed": false,
+              "request_digest": "1992dd2b45167732d2a34e6278920435559dc079d6a21976efb33e2da5959dbb",
+              "result_ref": {
+                "authority": "int03-c38",
+                "id": "link-671c3b73a275f0ec5605a496615304ac",
+                "kind": "document-association",
+                "revision": "rev-1"
+              },
+              "status": "committed",
+              "target": {
+                "authority": "int03-c38",
+                "id": "link-671c3b73a275f0ec5605a496615304ac",
+                "kind": "document-association",
+                "revision": null
+              },
+              "transaction_id": "72a3c2f4e1db5b6e8bdb147ee40ad0d5",
               "unknown_reason": null
             }
           ],
-          "initial_content_bytes": 2,
-          "open": "AuthoringTarget(target=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), scope=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), opened=OpenResult(status='opened', scope=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), handle=SessionHandle(scope=ResourceRef(authority='int03-c38', kind='authoring-scope', id='project-9618088f4bcd9d9336d2c9e890f5', revision=None), target_scope=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), target_kind='project-sheet', actor=AuthenticatedActor(authority='int03-c38', actor='curator', credential_ref='credential', authenticated=True), session_id='session-f3ea9fcf92ad51a7c2d9a48f', token='token-1f63f907d49c3f48ebf68dc5', fence='fence-e43e4903588b9dbae1820b79', base_revision='rev-1', checkout_path=None), checkout=AuthoringCheckout(target_scope=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), target_kind='project-sheet', actor=AuthenticatedActor(authority='int03-c38', actor='curator', credential_ref='credential', authenticated=True), session_id='session-f3ea9fcf92ad51a7c2d9a48f', token='token-1f63f907d49c3f48ebf68dc5', fence='fence-e43e4903588b9dbae1820b79', base_revision='rev-1', draft_snapshot_ref=ResourceRef(authority='int03-c38', kind='authoring-snapshot', id='draft-session-f3ea9fcf92ad51a7c2d9a48f', revision='44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a'), final_snapshot_ref=None, allowed_fields=(), state=<AuthoringState.OPEN: 'open'>, cleanup=<CleanupStatus.NOT_REQUESTED: 'not_requested'>, finish_claim=None, unmanaged_writers=False), purpose='authoring', activity='editing', waitable=True, project_ref=None, error=None))",
+          "initial_content_bytes": 356,
+          "open": "AuthoringTarget(target=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), scope=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), opened=OpenResult(status='opened', scope=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), handle=SessionHandle(scope=ResourceRef(authority='int03-c38', kind='authoring-scope', id='project-9618088f4bcd9d9336d2c9e890f5', revision=None), target_scope=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), target_kind='project-sheet', actor=AuthenticatedActor(authority='int03-c38', actor='curator', credential_ref='credential', authenticated=True), session_id='session-2a2e3b65b0a82b36b1242343', token='token-650330dbf23d522d46d9d77a', fence='fence-3a58b874a3f72e71233ff834', base_revision='rev-1', checkout_path=None), checkout=AuthoringCheckout(target_scope=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), target_kind='project-sheet', actor=AuthenticatedActor(authority='int03-c38', actor='curator', credential_ref='credential', authenticated=True), session_id='session-2a2e3b65b0a82b36b1242343', token='token-650330dbf23d522d46d9d77a', fence='fence-3a58b874a3f72e71233ff834', base_revision='rev-1', draft_snapshot_ref=ResourceRef(authority='int03-c38', kind='authoring-snapshot', id='draft-session-2a2e3b65b0a82b36b1242343', revision='0de483a040474e0f7dccd6db2b630298f88fcc5ed5422be68cde87d12c4d3f5f'), final_snapshot_ref=None, allowed_fields=(), state=<AuthoringState.OPEN: 'open'>, cleanup=<CleanupStatus.NOT_REQUESTED: 'not_requested'>, finish_claim=None, unmanaged_writers=False), purpose='authoring', activity='editing', waitable=True, project_ref=None, error=None))",
+          "project_ref": {
+            "authority": "int03-c38",
+            "id": "project-9618088f4bcd9d9336d2c9e890f5",
+            "kind": "work.project",
+            "revision": "rev-1"
+          },
+          "spec_after": {
+            "current_revision": {
+              "authority": "int03-c38",
+              "id": "template-c1f7cb17f3b6037209d99a7604a833d4",
+              "kind": "dat.content.document",
+              "revision": "rev-c6773818681f1131932beb219dd5c262"
+            },
+            "document": {
+              "access_mode": "append",
+              "authoring_scope": {
+                "authority": "int03-c38",
+                "id": "project-9618088f4bcd9d9336d2c9e890f5",
+                "kind": "work.project",
+                "revision": "rev-1"
+              },
+              "import_mode": "owned",
+              "maintainer": "curator",
+              "ref": {
+                "authority": "int03-c38",
+                "id": "template-c1f7cb17f3b6037209d99a7604a833d4",
+                "kind": "dat.content.document",
+                "revision": null
+              },
+              "role": "initial-specification",
+              "source_ref": null,
+              "visibility": "private",
+              "writable": true
+            },
+            "identity": {
+              "authority": "int03-c38",
+              "id": "template-c1f7cb17f3b6037209d99a7604a833d4",
+              "kind": "dat.content.document",
+              "revision": null
+            },
+            "payload": {
+              "current_revision": {
+                "authority": "int03-c38",
+                "id": "template-c1f7cb17f3b6037209d99a7604a833d4",
+                "kind": "dat.content.document",
+                "revision": "rev-c6773818681f1131932beb219dd5c262"
+              },
+              "document": {
+                "access_mode": "append",
+                "authoring_scope": {
+                  "authority": "int03-c38",
+                  "id": "project-9618088f4bcd9d9336d2c9e890f5",
+                  "kind": "work.project",
+                  "revision": "rev-1"
+                },
+                "import_mode": "owned",
+                "maintainer": "curator",
+                "ref": {
+                  "authority": "int03-c38",
+                  "id": "template-c1f7cb17f3b6037209d99a7604a833d4",
+                  "kind": "dat.content.document",
+                  "revision": null
+                },
+                "role": "initial-specification",
+                "source_ref": null,
+                "visibility": "private",
+                "writable": true
+              },
+              "record_type": "dat.content.document"
+            },
+            "revision": {
+              "author": {
+                "actor": "curator",
+                "authenticated": true,
+                "authority": "int03-c38",
+                "credential_ref": "credential"
+              },
+              "content": {
+                "acceptance": {},
+                "custom": {},
+                "documents": [],
+                "fields": {},
+                "instructions": "",
+                "kind": "project",
+                "metadata": {
+                  "projection_schema": "pending-project-sheet/v1",
+                  "template_ref": {
+                    "authority": "pack",
+                    "id": "work.blank_project",
+                    "kind": "work_template",
+                    "revision": "pkg-03.v1"
+                  },
+                  "template_revision": "pkg-03.v1"
+                },
+                "outcome": "",
+                "requires": [],
+                "tasks": [],
+                "title": "Untitled project"
+              },
+              "content_digest": "0de483a040474e0f7dccd6db2b630298f88fcc5ed5422be68cde87d12c4d3f5f",
+              "document": {
+                "authority": "int03-c38",
+                "id": "template-c1f7cb17f3b6037209d99a7604a833d4",
+                "kind": "dat.content.document",
+                "revision": null
+              },
+              "initial": true,
+              "parent_revision": null,
+              "record_type": "dat.content.revision",
+              "revision": "rev-c6773818681f1131932beb219dd5c262"
+            },
+            "storage_identity": {
+              "authority": "int03-c38",
+              "id": "template-c1f7cb17f3b6037209d99a7604a833d4",
+              "kind": "dat.content.document",
+              "revision": "rev-c6773818681f1131932beb219dd5c262"
+            },
+            "version": 1
+          },
+          "spec_before": {
+            "current_revision": {
+              "authority": "int03-c38",
+              "id": "template-c1f7cb17f3b6037209d99a7604a833d4",
+              "kind": "dat.content.document",
+              "revision": "rev-c6773818681f1131932beb219dd5c262"
+            },
+            "document": {
+              "access_mode": "append",
+              "authoring_scope": {
+                "authority": "int03-c38",
+                "id": "project-9618088f4bcd9d9336d2c9e890f5",
+                "kind": "work.project",
+                "revision": "rev-1"
+              },
+              "import_mode": "owned",
+              "maintainer": "curator",
+              "ref": {
+                "authority": "int03-c38",
+                "id": "template-c1f7cb17f3b6037209d99a7604a833d4",
+                "kind": "dat.content.document",
+                "revision": null
+              },
+              "role": "initial-specification",
+              "source_ref": null,
+              "visibility": "private",
+              "writable": true
+            },
+            "identity": {
+              "authority": "int03-c38",
+              "id": "template-c1f7cb17f3b6037209d99a7604a833d4",
+              "kind": "dat.content.document",
+              "revision": null
+            },
+            "payload": {
+              "current_revision": {
+                "authority": "int03-c38",
+                "id": "template-c1f7cb17f3b6037209d99a7604a833d4",
+                "kind": "dat.content.document",
+                "revision": "rev-c6773818681f1131932beb219dd5c262"
+              },
+              "document": {
+                "access_mode": "append",
+                "authoring_scope": {
+                  "authority": "int03-c38",
+                  "id": "project-9618088f4bcd9d9336d2c9e890f5",
+                  "kind": "work.project",
+                  "revision": "rev-1"
+                },
+                "import_mode": "owned",
+                "maintainer": "curator",
+                "ref": {
+                  "authority": "int03-c38",
+                  "id": "template-c1f7cb17f3b6037209d99a7604a833d4",
+                  "kind": "dat.content.document",
+                  "revision": null
+                },
+                "role": "initial-specification",
+                "source_ref": null,
+                "visibility": "private",
+                "writable": true
+              },
+              "record_type": "dat.content.document"
+            },
+            "revision": {
+              "author": {
+                "actor": "curator",
+                "authenticated": true,
+                "authority": "int03-c38",
+                "credential_ref": "credential"
+              },
+              "content": {
+                "acceptance": {},
+                "custom": {},
+                "documents": [],
+                "fields": {},
+                "instructions": "",
+                "kind": "project",
+                "metadata": {
+                  "projection_schema": "pending-project-sheet/v1",
+                  "template_ref": {
+                    "authority": "pack",
+                    "id": "work.blank_project",
+                    "kind": "work_template",
+                    "revision": "pkg-03.v1"
+                  },
+                  "template_revision": "pkg-03.v1"
+                },
+                "outcome": "",
+                "requires": [],
+                "tasks": [],
+                "title": "Untitled project"
+              },
+              "content_digest": "0de483a040474e0f7dccd6db2b630298f88fcc5ed5422be68cde87d12c4d3f5f",
+              "document": {
+                "authority": "int03-c38",
+                "id": "template-c1f7cb17f3b6037209d99a7604a833d4",
+                "kind": "dat.content.document",
+                "revision": null
+              },
+              "initial": true,
+              "parent_revision": null,
+              "record_type": "dat.content.revision",
+              "revision": "rev-c6773818681f1131932beb219dd5c262"
+            },
+            "storage_identity": {
+              "authority": "int03-c38",
+              "id": "template-c1f7cb17f3b6037209d99a7604a833d4",
+              "kind": "dat.content.document",
+              "revision": "rev-c6773818681f1131932beb219dd5c262"
+            },
+            "version": 1
+          },
+          "spec_ref": {
+            "authority": "int03-c38",
+            "id": "template-c1f7cb17f3b6037209d99a7604a833d4",
+            "kind": "dat.content.document",
+            "revision": null
+          },
           "template": {
             "parameters": {
               "title": "Untitled project"
@@ -1296,7 +1592,7 @@
           "receipt": {
             "error_code": null,
             "event_ids": [
-              "event-aceba5eaf39d23210d3daab7424bd61c"
+              "event-65341a2fc3f3dddaf5935238bc144678"
             ],
             "logical_request_key": "c38-create",
             "observed_revision": "rev-1",
@@ -1316,7 +1612,7 @@
               "kind": "work.project",
               "revision": null
             },
-            "transaction_id": "9e67495e8f47d6a1a83e8f577b52d1bb",
+            "transaction_id": "df06f1e0ffe01ad4e841af58b22cb775",
             "unknown_reason": null
           }
         },
@@ -1383,7 +1679,7 @@
           "receipt": {
             "error_code": null,
             "event_ids": [
-              "event-113f735553a639521284e39a018f57a6"
+              "event-64f86f9a7c0dd81a5133a52dbee42057"
             ],
             "logical_request_key": "c38-admit",
             "observed_revision": "rev-3",
@@ -1403,7 +1699,7 @@
               "kind": "work.project",
               "revision": "rev-2"
             },
-            "transaction_id": "fedc71042ad9b328c86fb29862cc157d",
+            "transaction_id": "f99931a76db97fda73cd5733af19a774",
             "unknown_reason": null
           }
         },
@@ -1525,7 +1821,7 @@
           "receipt": {
             "error_code": null,
             "event_ids": [
-              "event-76c0e0baf4100ba71f613221e88db16c"
+              "event-d4b96368702f5dbe1414b1e8d48a34ee"
             ],
             "logical_request_key": "c38-edit",
             "observed_revision": "rev-2",
@@ -1545,7 +1841,7 @@
               "kind": "work.project",
               "revision": "rev-1"
             },
-            "transaction_id": "1cc2695d73c121c1144352adfefc6c68",
+            "transaction_id": "8e3357121d0a671d713c81784a04aa70",
             "unknown_reason": null
           }
         },
@@ -1627,7 +1923,7 @@
             "kind": "wrk.readiness",
             "revision": null
           },
-          "wait": "WaitingExplanation(ref=ResourceRef(authority='int03-c38', kind='wrk.wait', id='c38-wait', revision='rev-1'), subject_ref=ResourceRef(authority='int03-c38', kind='work.project', id='project-6d7d4bb300539f8f2b5b8f682ac8', revision='rev-2'), missing_obligation='source scope', owner='curator-1', owner_ref=None, awaited_ref=ResourceRef(authority='int03-c38', kind='work.project', id='project-6d7d4bb300539f8f2b5b8f682ac8', revision='rev-2'), awaited_revision='rev-2', current_revision='rev-2', revisit_condition='when source revision or attention changes', attention_event_id='event-16cc777cb0cc6c3088d1e8051d894a10', attention_key='attention-a9c7ec464bf42a27a554cbe72bac', required_decision_ref=None, cap_reached=False, residual_risk={'why': 'scope pending'}, verification_choice=None, metadata={'curator': 'curator-1', 'why_pending': 'awaiting source owner'}, version=1, payload={'allowance': None, 'attention_key': 'attention-a9c7ec464bf42a27a554cbe72bac', 'awaited_ref': {'authority': 'int03-c38', 'id': 'project-6d7d4bb300539f8f2b5b8f682ac8', 'kind': 'work.project', 'revision': 'rev-2'}, 'awaited_revision': 'rev-2', 'cap_reached': False, 'current_revision': 'rev-2', 'dispatch': False, 'launch': False, 'metadata': {'curator': 'curator-1', 'why_pending': 'awaiting source owner'}, 'missing_obligation': 'source scope', 'owner': 'curator-1', 'owner_ref': None, 'record_type': 'wrk.wait', 'required_decision_ref': None, 'reservation_ref': None, 'residual_risk': {'why': 'scope pending'}, 'revisit_condition': 'when source revision or attention changes', 'schema_revision': 'work.decisions.v1', 'subject_ref': {'authority': 'int03-c38', 'id': 'project-6d7d4bb300539f8f2b5b8f682ac8', 'kind': 'work.project', 'revision': 'rev-2'}, 'verification_choice': None}, receipt=CommandReceipt(logical_request_key='c38-wait', request_digest='119e10990edd9dc2b5a7588a7f0f4db1ca61a85a76274e150a62a7e846f423ae', operation='work.wait.record', target=ResourceRef(authority='int03-c38', kind='wrk.wait', id='c38-wait', revision=None), status=<ReceiptStatus.COMMITTED: 'committed'>, transaction_id='b3d26c8cd64924de700ab0717c994ef5', event_ids=('event-16cc777cb0cc6c3088d1e8051d894a10',), result_ref=ResourceRef(authority='int03-c38', kind='wrk.wait', id='c38-wait', revision='rev-1'), error_code=None, replayed=False, observed_revision='rev-1', unknown_reason=None))"
+          "wait": "WaitingExplanation(ref=ResourceRef(authority='int03-c38', kind='wrk.wait', id='c38-wait', revision='rev-1'), subject_ref=ResourceRef(authority='int03-c38', kind='work.project', id='project-6d7d4bb300539f8f2b5b8f682ac8', revision='rev-2'), missing_obligation='source scope', owner='curator-1', owner_ref=None, awaited_ref=ResourceRef(authority='int03-c38', kind='work.project', id='project-6d7d4bb300539f8f2b5b8f682ac8', revision='rev-2'), awaited_revision='rev-2', current_revision='rev-2', revisit_condition='when source revision or attention changes', attention_event_id='event-34a8c25ae9f617862bd8f206b89b4a41', attention_key='attention-a9c7ec464bf42a27a554cbe72bac', required_decision_ref=None, cap_reached=False, residual_risk={'why': 'scope pending'}, verification_choice=None, metadata={'curator': 'curator-1', 'why_pending': 'awaiting source owner'}, version=1, payload={'allowance': None, 'attention_key': 'attention-a9c7ec464bf42a27a554cbe72bac', 'awaited_ref': {'authority': 'int03-c38', 'id': 'project-6d7d4bb300539f8f2b5b8f682ac8', 'kind': 'work.project', 'revision': 'rev-2'}, 'awaited_revision': 'rev-2', 'cap_reached': False, 'current_revision': 'rev-2', 'dispatch': False, 'launch': False, 'metadata': {'curator': 'curator-1', 'why_pending': 'awaiting source owner'}, 'missing_obligation': 'source scope', 'owner': 'curator-1', 'owner_ref': None, 'record_type': 'wrk.wait', 'required_decision_ref': None, 'reservation_ref': None, 'residual_risk': {'why': 'scope pending'}, 'revisit_condition': 'when source revision or attention changes', 'schema_revision': 'work.decisions.v1', 'subject_ref': {'authority': 'int03-c38', 'id': 'project-6d7d4bb300539f8f2b5b8f682ac8', 'kind': 'work.project', 'revision': 'rev-2'}, 'verification_choice': None}, receipt=CommandReceipt(logical_request_key='c38-wait', request_digest='119e10990edd9dc2b5a7588a7f0f4db1ca61a85a76274e150a62a7e846f423ae', operation='work.wait.record', target=ResourceRef(authority='int03-c38', kind='wrk.wait', id='c38-wait', revision=None), status=<ReceiptStatus.COMMITTED: 'committed'>, transaction_id='818d7bb6fc4d6269f9934e8e31490917', event_ids=('event-34a8c25ae9f617862bd8f206b89b4a41',), result_ref=ResourceRef(authority='int03-c38', kind='wrk.wait', id='c38-wait', revision='rev-1'), error_code=None, replayed=False, observed_revision='rev-1', unknown_reason=None))"
         }
       },
       "overall_ok": true,
@@ -1649,5 +1945,13 @@
     "template": "src/herzchen/packs/templates.py::TemplateEngine.instantiate/work.blank_project",
     "waiting": "src/herzchen/domains/work/decisions.py::DecisionsModule.record_wait/get_wait"
   },
-  "state": "observed-installed-candidate"
+  "state": "observed-installed-candidate",
+  "worker_correction": {
+    "commit": "acd9ae3666574add8b9289d368a9b9f6f74b694a7",
+    "manager_supplement": "work/snew01-blank-project-manager-completion-supplement-20260914.md",
+    "manager_supplement_sha256": "5b7a08a6ec1fefc38ad08ba68e37d6d1c030c25260b1f161eb8edf42ccd64940",
+    "static_seed_sha256": "fcf99881754a155da027b2b1e775260a349376e6ccc9e5edc94ee1cecfa087f8",
+    "tree": "793c435567261ad077f093ac4a7f5ba30bcd05a7",
+    "worker_wheel_sha256": "aaf946d925d76cdf0ad4c35f6d3cd1a7b7179b43795d0feff61d9b2a73382c66"
+  }
 }

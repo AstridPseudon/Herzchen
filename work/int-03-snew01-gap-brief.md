@@ -16,3 +16,7 @@ Implement the smallest supported public composition that makes the shipped/defau
 Preserve the shipped template schema/version and stable request-derived IDs. Do not add a private SQLite writer or test-only setup. Update only owner paths plus focused tests under `tests/packs/`, `tests/authoring/`, or the shared conformance fixture path. Run the focused blank-template/authoring matrix and installed wheel proof with `env -u PYTHONPATH -u PYTHONHOME`; report exact source commit/tree, wheel digest, refs, event/receipt counts, replay/invalid/close results, and installed origins.
 
 Acceptance blocker is the exact pre-open atomic initial-spec ref/receipt proof; C39 manager-host action remains later scope. Do not mark a gate or acceptance verdict.
+
+## Closure receipt
+
+Root accepted the bounded correction as S-NEW-01 source `acd9ae3666574add8b9289d368a9b9f6f74b694a7`, tree `793c435567261ad077f093ac4a7f5ba30bcd05a7`. The dynamic blank composition is integrated in INT-03 commits `becafe9`, `d5e4892`, and `046b9ac`; the final installed affected campaign is recorded at `work/int-03-snew01-installed-affected-run-20260914.txt` with 154 passed and zero skips. This brief is retained as the historical gap specification, not an open blocker.

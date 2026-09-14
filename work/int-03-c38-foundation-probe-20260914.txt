@@ -1,11 +1,12 @@
-INT03 C38/S-NEW-01 installed public API probe
+INT03 C38/S-NEW-01 installed public API probe after accepted atomic blank-spec correction
 Observed in this turn; command and result are recorded below
-Candidate: c7156360ab601533a38710b8957887e582db669e / f547137f5804c0d8958d68d08633b35698aa2e43
-Wheel: 7b44a33a187dc8a23bc0f1b768ba2052df02e2bddbeceb8aede748dda8927567
+Candidate source: 046b9acfdc9ba541faff65ff3713961890684303 / 047a43ba687f45c298139b595756dac84ab729da
+Wheel: 4a6dc658fd3b71e9d9d64323bd6539a2feef2521cc5e2e9b472daf2bf3dfbb2f
 Command:
-env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-int03-pkg05-fnd06-dat06-candidate.pwUzWY/venv/bin/python work/int-03-c38-foundation-probe.py
-Probe script SHA-256: b37ce5caded5cb67e22671a2057908b8338eda91eed833127ce17cd293251721
+env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-int03-snew01-venv/bin/python work/int-03-c38-foundation-probe.py
+Probe script SHA-256: 61527f89f5ecd7073a260f8cd28c6df45138cb3b17c2d0c940ee01a25da75891
 Result: overall_ok=true; all six checks true.
 Checks: create_durable_receipt; replay_and_invalid_create; pending_edit_attach_query; revisit_attention_no_dispatch; explicit_admission_boundary; built_in_blank_and_untouched_close.
-Evidence JSON SHA-256: c2b7aeebdb9aac719ad07cb1419dd33f6ddcf199f0a320b739969513aab56b56
+The final blank check now reads the initial DAT document/ref and active project association before opening, verifies three creation receipts and empty template revision, then verifies untouched close preserves the document revision/association.
+Evidence JSON SHA-256 before this transcript rewrite: 3eb6d389dbfa5431d7ab587edea3f59cb25a974cee1a56688d68f56495875f88
 The probe uses only installed public Herzchen APIs and a disposable SQLite store. It does not use SQL to mutate state.

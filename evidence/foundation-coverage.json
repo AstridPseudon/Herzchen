@@ -66,6 +66,14 @@
         "implementation_commit": "1735eadcbf0c5a447a7c74e9ab213b225e4e5ed8",
         "implementation_tree": "fc8c13750d8bb1a7c3d1247d86d6233e1818e64d"
       },
+      "SNEW-01": {
+        "commit": "acd9ae3666574add8b9289d368a9b9f6f74b694a7",
+        "handoff": "work/snew01-blank-project-worker-result.md",
+        "manager_supplement": "work/snew01-blank-project-manager-completion-supplement-20260914.md",
+        "manager_supplement_sha256": "5b7a08a6ec1fefc38ad08ba68e37d6d1c030c25260b1f161eb8edf42ccd64940",
+        "static_seed_sha256": "5675a02cc9a34bf90de0d5e91dc0617965fe15b133ab1b0cb4b0340bb19af31b",
+        "tree": "793c435567261ad077f093ac4a7f5ba30bcd05a7"
+      },
       "WRK-06": {
         "commit": "b036bbbe11e93811a62b95150338a192b5fd6806",
         "handoff": "handoffs/WRK.json",
@@ -115,7 +123,7 @@
     "gate_verdict_claimed": false,
     "inputs": {
       "area_contracts_sha256": "0fdbd9ed47f16da3b11f0750503e7f5dfbd58f41ef18368e9fb27553096e4e04",
-      "extraction_map_sha256": "8740730f3b9896d04f608fda745843a6887993aafe8955ea3df46ddf63804784",
+      "extraction_map_sha256": "e273cb7b7e9c26f83a8e1002753c835863333b77e9bfce5b5a3909b1801dbbd5",
       "scenario_count": 49,
       "scenario_seed_sha256": "99ece17752f2b67cc5658ae344067dc7bcb4089608e27b1e426b291b177624f9",
       "scenario_state_counts": {
@@ -126,17 +134,27 @@
     },
     "review_requested": false,
     "schema": "foundation-candidate/v2",
-    "source_commit": "c7156360ab601533a38710b8957887e582db669e",
-    "source_tree": "f547137f5804c0d8958d68d08633b35698aa2e43",
+    "source_commit": "046b9acfdc9ba541faff65ff3713961890684303",
+    "source_tree": "047a43ba687f45c298139b595756dac84ab729da",
     "state": "worker-candidate",
     "tests": {
+      "c38_foundation_probe": "work/int-03-c38-foundation-probe-20260914.json",
+      "c38_foundation_probe_result": "overall_ok=true; 6 checks passed with pre-open initial DAT spec/ref/receipt proof",
+      "c38_foundation_probe_script_sha256": "61527f89f5ecd7073a260f8cd28c6df45138cb3b17c2d0c940ee01a25da75891",
+      "c38_foundation_probe_sha256": "3eb6d389dbfa5431d7ab587edea3f59cb25a974cee1a56688d68f56495875f88",
+      "c38_foundation_probe_transcript": "work/int-03-c38-foundation-probe-20260914.txt",
+      "c38_foundation_probe_transcript_sha256": "72aa2e09e0242f0dd378d116ce3e717bc8b1adaf1276e9b813c43f4e92c95724",
       "combined_installed_result": "249 passed, 80 subtests passed in 3.70s",
       "combined_transcript": "work/int-03-final-installed-run-20260914.txt",
       "combined_transcript_sha256": "5b4b47bb010d0694da7c249864f20f3731a11314ff37a0d23294f59c32d67892",
       "installed_origins_verified": true,
       "public_api_probe_result": "1 passed in 0.17s",
       "public_api_probe_transcript": "work/int-03-final-public-api-probe-run-20260914.txt",
-      "public_api_probe_transcript_sha256": "d2f31c46add23a7712adc7adfd29bbcf276b8e1f0c9aece1fdbef9bdd8ace104"
+      "public_api_probe_transcript_sha256": "d2f31c46add23a7712adc7adfd29bbcf276b8e1f0c9aece1fdbef9bdd8ace104",
+      "snew01_affected_installed_result": "154 passed, 0 skipped",
+      "snew01_affected_installed_transcript": "work/int-03-snew01-installed-affected-run-20260914.txt",
+      "snew01_affected_installed_transcript_sha256": "5fdf6e0dee5b340f5e76718c5798958153af362be54fb4bccab3a81a74b457ca",
+      "snew01_wheel_sha256": "4a6dc658fd3b71e9d9d64323bd6539a2feef2521cc5e2e9b472daf2bf3dfbb2f"
     },
     "wheel": {
       "distribution": "herzchen-contracts==0.1.0",
@@ -144,10 +162,10 @@
         "PYTHONPATH",
         "PYTHONHOME"
       ],
-      "path": "/tmp/herzchen-int03-final-wheel.20260914042342.out/herzchen_contracts-0.1.0-py3-none-any.whl",
+      "path": "/tmp/herzchen-int03-snew01-final-wheel/herzchen_contracts-0.1.0-py3-none-any.whl",
       "pytest": "9.1.1",
       "python": "3.11.16",
-      "sha256": "7b44a33a187dc8a23bc0f1b768ba2052df02e2bddbeceb8aede748dda8927567"
+      "sha256": "4a6dc658fd3b71e9d9d64323bd6539a2feef2521cc5e2e9b472daf2bf3dfbb2f"
     }
   },
   "correction_history": {
@@ -163,7 +181,22 @@
       "d04fd77",
       "601ad73",
       "c715636"
-    ]
+    ],
+    "snew01_correction": {
+      "accepted_worker_commit": "acd9ae3666574add8b9289d368a9b9f6f74b694a7",
+      "accepted_worker_tree": "793c435567261ad077f093ac4a7f5ba30bcd05a7",
+      "affected_installed": "154 passed, 0 skipped",
+      "baseline": "c7156360ab601533a38710b8957887e582db669e",
+      "final_source": "src/herzchen/packs/templates.py dynamic _blank_dat_seed and composition_seed",
+      "integration_commits": [
+        "becafe9",
+        "d5e4892",
+        "046b9ac"
+      ],
+      "prior_gap": "blank project returned before DAT document/link composition; initial-spec persistence was absent",
+      "static_seed_sha256": "5675a02cc9a34bf90de0d5e91dc0617965fe15b133ab1b0cb4b0340bb19af31b",
+      "wheel_sha256": "4a6dc658fd3b71e9d9d64323bd6539a2feef2521cc5e2e9b472daf2bf3dfbb2f"
+    }
   },
   "criteria": [
     {
@@ -370,10 +403,12 @@
         "tests/authoring/test_three_targets.py::test_project_creation_and_reopen_share_handler_and_untouched_pending_is_retained",
         "tests/work/test_candidates_decisions_waiting.py::test_cap_wait_and_timer_do_not_close_parent_grant_budget_or_choose_action",
         "work/int-03-c38-foundation-probe-20260914.json",
-        "work/int-03-c38-foundation-probe-20260914.txt"
+        "work/int-03-c38-foundation-probe-20260914.txt",
+        "work/int-03-snew01-installed-affected-run-20260914.txt",
+        "work/snew01-blank-project-worker-result.md"
       ],
       "id": "C38",
-      "note": "Installed public API probe closes the named C38 foundation boundary: durable blank pending creation with committed receipt, fresh query, curator/why/revisit retention, pinned document attachment, same-key replay and changed-argument rejection, attention-only revisit, explicit admission, no allowance/manager/dispatch before admission, and untouched blank close without a fake revision.",
+      "note": "Installed public API probe plus accepted S-NEW-01 correction close the named C38 foundation boundary: durable blank pending creation with committed WRK/DAT/link receipts, fresh query, curator/why/revisit retention, pinned document attachment, same-key replay and changed-argument rejection, attention-only revisit, explicit admission, no allowance/manager/dispatch before admission, and untouched blank close without a fake revision.",
       "status": "supported_by_current_candidate"
     },
     {
@@ -427,12 +462,17 @@
     "historical_packet_receipt": "work/int-03-foundation-coverage-packet-receipt.json",
     "public_api_probe": "work/int-03-final-api-probe-evidence.json",
     "public_api_probe_transcript": "work/int-03-final-public-api-probe-run-20260914.txt",
-    "snew01_gap_brief": "work/int-03-snew01-gap-brief.md"
+    "snew01_affected_installed_run": "work/int-03-snew01-installed-affected-run-20260914.txt",
+    "snew01_gap_brief": "work/int-03-snew01-gap-brief.md",
+    "snew01_gap_brief_sha256": "fd2756e4c4f0b790637db11a5df399cb848778057889ecc03b6fb32fe1696c36",
+    "snew01_manager_supplement": "work/snew01-blank-project-manager-completion-supplement-20260914.md",
+    "snew01_worker_result": "work/snew01-blank-project-worker-result.md",
+    "snew01_worker_result_sha256": "8466b6eea9434e2b6451a205622ccd255923d83883b6f885a32c03f8fc1fea55"
   },
   "foundation_slice_notes": {
-    "C38": "The installed public API probe closes the named C38 foundation boundary: create/query/edit/attach document, retain why/revisit/curator, revisit as attention only, explicit admission, replay/invalid rejection, no cloned allowance/dispatch, and blank idle close with unchanged project revision. Full future manager/host journeys remain later C39/OTT scope.",
+    "C38": "The installed public API probe and accepted S-NEW-01 correction close the named C38 foundation boundary: create/query/edit/attach document, retain why/revisit/curator, revisit as attention only, explicit admission, replay/invalid rejection, no cloned allowance/dispatch, and blank idle close with unchanged project/spec/revision/association.",
     "C39": "Foundation candidate/decision primitives are supported by retained installed tests. A real manager next action through a supported host remains later-stage C39/OTT evidence and is not claimed here.",
-    "S-NEW-01": "The probe proves built-in blank template rendering, fresh pending project receipt/read, initial empty authoring bytes, replay/invalid rejection and unchanged untouched close. Remaining exact gap: work.blank_project atomically persists only the project with documents=[]; no public create-and-open path currently persists an initial-spec document/ref/receipt in the same creation transaction before optional authoring."
+    "S-NEW-01": "Accepted S-NEW-01 dynamically composes the initial DAT specification and project.documents/specification association from the rendered shared projection in the same FND transaction. The installed 154-test affected campaign has no skips; the direct probe reads the document/ref/association and three creation receipts before optional open, then verifies untouched close preserves them."
   },
   "gate_state": "pending",
   "gate_verdict_claimed": false,
@@ -1408,8 +1448,8 @@
         "third_specialist/PKG",
         "work_assessment/WRK"
       ],
-      "coverage_status": "partial_pending_followup",
-      "evidence_reference": "tests/packs/test_task_templates.py::test_blank_resource_uses_common_fields_and_has_no_side_effects; tests/work/test_identity_graph.py::test_pending_project_is_durable_sparse_and_replay_safe; tests/authoring/test_three_targets.py::test_project_creation_and_reopen_share_handler_and_untouched_pending_is_retained; work/int-03-c38-foundation-probe-20260914.json (replay/invalid/close mechanics; atomic initial-spec creation gap remains)",
+      "coverage_status": "supported_by_current_candidate",
+      "evidence_reference": "tests/packs/test_task_templates.py::test_blank_resource_persists_pending_project_initial_spec_and_association; tests/packs/test_task_templates.py::test_blank_creation_replays_conflicts_and_rejects_invalid_input_before_mutation; tests/packs/test_task_templates.py::test_blank_initial_spec_untouched_pending_close_retains_durable_content_and_cleans_registered_files; work/int-03-c38-foundation-probe-20260914.json; work/int-03-snew01-installed-affected-run-20260914.txt",
       "id": "S-NEW-01"
     },
     {
@@ -1497,6 +1537,6 @@
     "status": "not_executed"
   },
   "schema": "foundation-coverage/v2",
-  "scope_note": "C38 is supported by the direct installed probe. S-NEW-01 remains partial pending a bounded owner implementation/fixture for atomic blank-project initial-spec persistence; do not call the foundation packet gate-ready while that exact obligation is open. C39 host action remains later. The exact owner brief is sealed at work/int-03-snew01-gap-brief.md.",
+  "scope_note": "C38 and S-NEW-01 foundation obligations are supported by the accepted installed candidate. C39 host action remains later; no gate verdict or product qualification is claimed. Historical gap brief is retained with closure receipt.",
   "state": "prepared"
 }

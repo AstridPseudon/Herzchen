@@ -1,0 +1,16 @@
+INT03 S-NEW-01 affected installed campaign
+Candidate checkout HEAD/tree are recorded in packet; installed wheel SHA-256: 4a6dc658fd3b71e9d9d64323bd6539a2feef2521cc5e2e9b472daf2bf3dfbb2f
+Environment: env -u PYTHONPATH -u PYTHONHOME
+Command:
+env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-int03-snew01-venv/bin/python -m pytest -q -rs tests/packs tests/authoring tests/content tests/work/test_batches.py tests/work/test_sheet_batches.py tests/work/test_identity_graph.py tests/conformance/test_dat_handoff.py tests/conformance/test_int03_public_api_probes.py
+
+........................................................................ [ 46%]
+........................................................................ [ 93%]
+..........                                                               [100%]
+154 passed in 2.34s
+
+Installed origins:
+/private/tmp/herzchen-int03-snew01-venv/lib/python3.11/site-packages/herzchen/__init__.py
+/private/tmp/herzchen-int03-snew01-venv/lib/python3.11/site-packages/astrid/__init__.py
+Astrid wheel SHA-256: 1da76f252f96e7db84c31a387704e8a6ecdf22333098528139b3db83c8fda67a
+No skips: PyYAML/jsonschema and pinned Astrid loader dependencies installed in this disposable venv; no applicable Astrid tests were skipped.
