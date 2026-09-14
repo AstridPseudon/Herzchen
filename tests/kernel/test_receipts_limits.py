@@ -3,6 +3,7 @@ from __future__ import annotations
 import tempfile
 import threading
 import unittest
+from dataclasses import replace
 from pathlib import Path
 from typing import Optional
 
@@ -149,6 +150,91 @@ class ReceiptAndLimitTests(unittest.TestCase):
         )
         self.assertEqual(replay.receipt, resolved.receipt)
         self.assertEqual(len(self.store.list_events(stream="operations")), before_events + 1)
+
+    def test_outcome_replay_binds_full_semantics_before_any_delta(self) -> None:
+        manager = OperationManager(self.store)
+        prepared = manager.prepare(self.operation_request(key="outcome-semantics"))
+        transition_key = "outcome-semantics:outcome"
+        first = manager.record_outcome(
+            prepared,
+            OperationState.UNKNOWN,
+            {"reason": "timeout"},
+            transition_key=transition_key,
+            transition_digest="a" * 64,
+        )
+        before = dict(self.store.consumer().snapshot_counts())
+
+        exact = manager.record_outcome(
+            prepared,
+            OperationState.UNKNOWN,
+            {"reason": "timeout"},
+            transition_key=transition_key,
+            transition_digest="f" * 64,
+        )
+        self.assertEqual(exact.receipt, first.receipt)
+        self.assertEqual(self.store.consumer().snapshot_counts(), before)
+
+        changed_operation = replace(
+            prepared,
+            request=replace(prepared.request, operation="adapter.other"),
+        )
+        changed_target = replace(
+            prepared,
+            operation_ref=ResourceRef(
+                prepared.operation_ref.authority,
+                prepared.operation_ref.kind,
+                "different-operation",
+                prepared.operation_ref.revision,
+            ),
+        )
+        variants = (
+            (prepared, OperationState.UNKNOWN, {"reason": "changed"}),
+            (prepared, OperationState.UNCERTAIN, {"reason": "timeout"}),
+            (changed_operation, OperationState.UNKNOWN, {"reason": "timeout"}),
+            (changed_target, OperationState.UNKNOWN, {"reason": "timeout"}),
+        )
+        for record, state, result in variants:
+            with self.assertRaises(ReplayConflictError):
+                manager.record_outcome(
+                    record,
+                    state,
+                    result,
+                    transition_key=transition_key,
+                    transition_digest="a" * 64,
+                )
+            self.assertEqual(self.store.consumer().snapshot_counts(), before)
+
+        resolver = AuthenticatedActor("resolution-auth", "resolver-1", "resolution-credential")
+        resolved = manager.resolve_unknown(
+            first,
+            OperationState.COMMITTED,
+            {"value": 1},
+            resolver=resolver,
+            transition_key="outcome-semantics:resolve",
+        )
+        resolution_counts = dict(self.store.consumer().snapshot_counts())
+        replay = manager.resolve_unknown(
+            first,
+            OperationState.COMMITTED,
+            {"value": 1},
+            resolver=resolver,
+            transition_key="outcome-semantics:resolve",
+        )
+        self.assertEqual(replay.receipt, resolved.receipt)
+        self.assertEqual(self.store.consumer().snapshot_counts(), resolution_counts)
+        with self.assertRaises(ReplayConflictError):
+            manager.resolve_unknown(
+                first,
+                OperationState.COMMITTED,
+                {"value": 1},
+                resolver=AuthenticatedActor("resolution-auth", "resolver-2", "other-credential"),
+                transition_key="outcome-semantics:resolve",
+                transition_digest=resolved.receipt.request_digest,
+            )
+        self.assertEqual(self.store.consumer().snapshot_counts(), resolution_counts)
+        self.assertEqual(resolved.request.actor, prepared.request.actor)
+        outcome_events = [event for event in self.store.list_events(stream="operations") if event.event_type == "operation.outcome"]
+        self.assertEqual(outcome_events[-1].actor, resolver)
 
     def test_exact_request_replay_after_reopen_is_single_effect(self) -> None:
         manager = OperationManager(self.store)

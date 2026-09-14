@@ -113,6 +113,7 @@ class OperationRequest:
         return replace(self, request_digest=self.canonical_digest(target))
 
     def envelope(self, target: ResourceRef, *, expected_revision: Optional[str] = None, expected_version: Optional[int] = None, payload: Optional[Mapping[str, Any]] = None) -> CommandEnvelope:
+        envelope_payload = dict(self.payload if payload is None else payload)
         return CommandEnvelope(
             self.operation,
             self.schema_revision,
@@ -120,11 +121,18 @@ class OperationRequest:
             TransactionContext(
                 self.actor,
                 self.logical_request_key,
-                self.canonical_digest(target),
+                canonical_request_digest(
+                    logical_request_key=self.logical_request_key,
+                    operation=self.operation,
+                    schema_revision=self.schema_revision,
+                    target=target,
+                    actor=self.actor,
+                    payload=envelope_payload,
+                ),
                 expected_revision=expected_revision,
                 expected_version=expected_version,
             ),
-            dict(self.payload if payload is None else payload),
+            envelope_payload,
         )
 
 
@@ -306,10 +314,26 @@ class OperationManager:
         target = record.operation_ref
         if target.revision is None:
             raise OperationError("operation record must carry its current revision")
-        replay_envelope = next_request.envelope(target, expected_revision=target.revision, expected_version=record.version)
+        identity_request = OperationRequest(
+            record.request.operation,
+            record.request.schema_revision,
+            record.request.adapter_ref,
+            record.request.actor,
+            record.request.logical_request_key,
+            record.request.request_digest,
+            record.request.payload,
+            next_request.physical_invocation_ref,
+            next_request.external_owner_ref,
+        )
+        envelope = next_request.envelope(
+            target,
+            expected_revision=target.revision,
+            expected_version=record.version,
+            payload=self._payload(identity_request, state, result),
+        )
         prior = self.store.get_receipt(next_request_key)
         if prior is not None:
-            validate_replay(prior, replay_envelope)
+            validate_replay(prior, envelope)
             event_effects = self._event_for_receipt(prior)
             return self._record_from_event(prior, event_effects, record.request, prior.result_ref or target, int(event_effects.get("version", record.version + 1)))
         if record.state in (OperationState.UNKNOWN, OperationState.UNCERTAIN) and not allow_unknown_resolution:
@@ -326,18 +350,6 @@ class OperationManager:
             "request_payload": dict(record.request.payload),
             "version": record.version + 1,
         }
-        identity_request = OperationRequest(
-            record.request.operation,
-            record.request.schema_revision,
-            record.request.adapter_ref,
-            record.request.actor,
-            record.request.logical_request_key,
-            record.request.request_digest,
-            record.request.payload,
-            next_request.physical_invocation_ref,
-            next_request.external_owner_ref,
-        )
-        envelope = next_request.envelope(target, expected_revision=target.revision, expected_version=record.version, payload=self._payload(identity_request, state, result))
         receipt = self.store.mutate(
             envelope,
             event_type="operation.outcome",
