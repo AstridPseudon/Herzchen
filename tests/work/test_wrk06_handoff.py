@@ -8,13 +8,14 @@ does not invoke a model or add a persistence surface.
 from __future__ import annotations
 
 import json
-from copy import deepcopy
+import hashlib
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-from herzchen.contracts import AuthenticatedActor, CommandEnvelope, EventCursor, ResourceRef, TransactionContext
+from herzchen.content import ContentCommandHandler
+from herzchen.contracts import AuthenticatedActor, CommandEnvelope, EventCursor, ReferenceBinding, ResourceRef, TransactionContext
 from herzchen.domains.assessment import AssessmentModule, Verdict
 from herzchen.domains.work import WorkGraph
 from herzchen.domains.work.assignments import ResponsibilityAssignments
@@ -205,36 +206,92 @@ def test_wrk06_public_handoff_rehearsal(tmp_path: Path) -> None:
 
     root = Path(__file__).resolve().parents[2]
     megado_protocol_data = json.loads((root / "packs/megado/protocols/megado.json").read_text())
-    delivery_data = json.loads((root / "packs/megado/templates/delivery.json").read_text())
+    delivery_bytes = (root / "packs/megado/templates/delivery.json").read_bytes()
+    delivery_sha256 = hashlib.sha256(delivery_bytes).hexdigest()
+    delivery_data = json.loads(delivery_bytes)
     scene_protocol_data = json.loads((root / "packs/scene-production/protocols/scene.json").read_text())
     megado_protocol = work_protocol(megado_protocol_data["id"], str(megado_protocol_data["schema_version"]), definition=megado_protocol_data, source_ref=ResourceRef("pack", "work_protocol", megado_protocol_data["id"], str(megado_protocol_data["schema_version"])))
     delivery = work_template(delivery_data["id"], delivery_data["version"], parameters=delivery_data["parameters"], seed=delivery_data["seed"], source_ref=ResourceRef("pack", "work_template", delivery_data["id"], delivery_data["version"]))
     import_project = graph.create_project(title="Imported Megado project", outcome="imported structure", logical_request_key="import-project")
     engine = TemplateEngine(store, graph=graph, actor=actor, resources=(delivery, megado_protocol))
     import_before = _counts(store, pool.ref)
-    direct_import = engine.instantiate(delivery, {"title": "Imported effort", "outcome": "Implement", "proof": "Demonstrate"}, project=import_project, logical_request_key="megado-import-direct")
+    import_parameters = {"title": "Imported effort", "outcome": "Implement", "proof": "Demonstrate"}
+    import_key = "megado-import"
+    direct_import = engine.instantiate(delivery, import_parameters, project=import_project, logical_request_key=import_key)
     direct_after = _counts(store, pool.ref)
-    direct_replay = engine.instantiate(delivery, {"title": "Imported effort", "outcome": "Implement", "proof": "Demonstrate"}, project=import_project, logical_request_key="megado-import-direct")
+    assert set(direct_import.local_refs) == {"effort", "implement", "verify", "criterion"}
+    assert len(direct_import.records) == 4
+    direct_by_local = {record.payload["fields"]["template_origin"]["local_id"]: record for record in direct_import.records}
+    assert direct_by_local["effort"].title == "Imported effort"
+    assert direct_by_local["effort"].payload["fields"]["outcome"] == "Implement"
+    assert direct_by_local["effort"].payload["fields"]["status"] == "planning_only"
+    assert direct_by_local["implement"].title == "Deliver the specified outcome"
+    assert direct_by_local["implement"].payload["fields"]["outcome"] == "Implement"
+    assert direct_by_local["implement"].payload["fields"]["custom"] == {"megado": {"execution_class": "normal"}}
+    assert direct_by_local["verify"].title == "Demonstrate the outcome"
+    assert direct_by_local["verify"].payload["fields"]["outcome"] == "Demonstrate"
+    assert direct_by_local["verify"].payload["fields"]["custom"] == {"megado": {"execution_class": "normal"}}
+    assert direct_by_local["criterion"].title == "Required observable behavior"
+    assert direct_by_local["criterion"].payload["fields"]["outcome"] == "Demonstrate"
+    assert direct_by_local["effort"].payload["fields"]["documents"] == [{"local_id": "goal", "title": "Bounded goal", "content": "Implement"}]
+    assert direct_by_local["effort"].payload["fields"]["document_links"] == delivery_data["seed"]["document_links"]
+    assert direct_after["pool"] == import_before["pool"]
+    assert direct_by_local["effort"].parent.id == direct_import.project.id
+    assert all(direct_by_local[name].parent.id == direct_by_local["effort"].id for name in ("implement", "verify", "criterion"))
+    assert direct_by_local["verify"].dependencies == (ResourceRef(direct_by_local["implement"].ref.authority, direct_by_local["implement"].ref.kind, direct_by_local["implement"].ref.id),)
+    assert direct_by_local["implement"].dependencies == ()
+    assert direct_by_local["criterion"].ref.id not in {dependency.id for dependency in direct_by_local["implement"].dependencies}
+    assert direct_by_local["implement"].payload["fields"]["links"] == [{
+        "from": {"$local": "implement"}, "to": {"$local": "criterion"}, "relation": "covers",
+    }]
+    assert direct_by_local["verify"].payload["fields"]["links"] == [{
+        "from": {"$local": "verify"}, "to": {"$local": "implement"}, "relation": "requires",
+    }]
+    direct_content = ContentCommandHandler(store)
+    direct_document_read = direct_content.read(direct_import.document_refs["goal"])
+    direct_association_read = direct_content.read(direct_import.association_refs["effort:megado:goal"])
+    assert direct_import.rendered.seed["documents"][0]["content"] == "Implement"
+    assert direct_document_read["identity"] == direct_import.document_refs["goal"]
+    assert direct_document_read["current_revision"]["revision"] == direct_document_read["revision"]["revision"]
+    assert direct_document_read["revision"]["initial"] is True
+    assert direct_document_read["revision"]["content"] == "Implement"
+    binding = ReferenceBinding.from_dict(direct_association_read["payload"]["association"]["document"])
+    assert isinstance(binding, ReferenceBinding)
+    assert binding.mode == "current" and binding.ref == direct_import.document_refs["goal"]
+    assert direct_association_read["payload"]["association"]["document"]["ref"] == direct_import.document_refs["goal"].to_dict()
+    assert direct_association_read["payload"]["association"]["document"]["mode"] == "current"
+    assert direct_association_read["payload"]["active"] is True
+    assert len(direct_import.receipts) == 6
+    assert all(receipt.status.value == "committed" and receipt.event_ids for receipt in direct_import.receipts)
+    store.close()
+    store = Store.open(db, authority=authority, expected_domains=expected_domains)
+    graph = WorkGraph(store, actor=actor)
+    direct_reopened_content = ContentCommandHandler(store)
+    reopened_document_read = direct_reopened_content.read(direct_import.document_refs["goal"])
+    reopened_association_read = direct_reopened_content.read(direct_import.association_refs["effort:megado:goal"])
+    assert reopened_document_read["revision"]["content"] == "Implement"
+    assert reopened_association_read["payload"]["association"]["document"]["mode"] == "current"
+    engine = TemplateEngine(store, graph=graph, actor=actor, resources=(delivery, megado_protocol))
+    direct_replay = engine.instantiate(delivery, import_parameters, project=direct_import.project, logical_request_key=import_key)
     direct_replay_after = _counts(store, pool.ref)
-    normalized_nodes = [deepcopy(node) for node in delivery_data["seed"]["work"]]
-    by_local = {node["local_id"]: node for node in normalized_nodes}
-    for link in delivery_data["seed"]["links"]:
-        if link["relation"] in {"requires", "covers"}:
-            by_local[link["from"]["$local"]].setdefault("dependencies", []).append({"$local": link["to"]["$local"]})
-    normalized_seed = {"efforts": [by_local["effort"]], "tasks": [by_local["implement"], by_local["verify"]], "criteria": [by_local["criterion"]], "documents": delivery_data["seed"]["documents"]}
-    normalized_delivery = work_template(delivery_data["id"] + ".baseline-adapted", delivery_data["version"], parameters=delivery_data["parameters"], seed=normalized_seed, source_ref=delivery.ref)
-    normalized = engine.instantiate(normalized_delivery, {"title": "Imported effort", "outcome": "Implement", "proof": "Demonstrate"}, project=import_project, logical_request_key="megado-import-normalized")
-    normalized_after = _counts(store, pool.ref)
-    normalized_replay = engine.instantiate(normalized_delivery, {"title": "Imported effort", "outcome": "Implement", "proof": "Demonstrate"}, project=import_project, logical_request_key="megado-import-normalized")
-    normalized_replay_after = _counts(store, pool.ref)
+    assert direct_replay.project.ref == direct_import.project.ref
+    assert [record.ref for record in direct_replay.records] == [record.ref for record in direct_import.records]
+    assert direct_replay.local_refs == direct_import.local_refs
+    assert direct_replay.document_refs == direct_import.document_refs
+    assert direct_replay.association_refs == direct_import.association_refs
+    assert direct_replay.receipts == direct_import.receipts
+    assert direct_replay_after == direct_after
+    assert direct_reopened_content.read(direct_import.document_refs["goal"])["revision"]["content"] == "Implement"
+    assert direct_reopened_content.read(direct_import.association_refs["effort:megado:goal"])["payload"]["active"] is True
     second_project = graph.create_project(title="Independent scene project", outcome="scene protocol", logical_request_key="scene-project")
     scene_protocol = work_protocol(scene_protocol_data["id"], str(scene_protocol_data["schema_version"]), definition=scene_protocol_data, source_ref=ResourceRef("pack", "work_protocol", scene_protocol_data["id"], str(scene_protocol_data["schema_version"])))
     scene_engine = TemplateEngine(store, graph=graph, actor=actor, resources=(scene_protocol,))
     scene_project = scene_engine.adopt_protocol(second_project, scene_protocol, logical_request_key="scene-adopt")
 
     imported_records = []
-    for record in (normalized.project,) + normalized.records:
-        imported_records.append({"kind": record.kind.value, "id": record.id, "ref": _ref(record.ref), "parent_ref": _ref(record.parent), "dependencies": [_ref(x) for x in record.dependencies], "aliases": list(record.payload.get("aliases", ())), "template_origin": record.payload.get("fields", {}).get("template_origin")})
+    for record in direct_import.records:
+        fields = record.payload.get("fields", {})
+        imported_records.append({"local_id": fields.get("template_origin", {}).get("local_id"), "kind": record.kind.value, "id": record.id, "title": record.title, "outcome": fields.get("outcome"), "custom": fields.get("custom"), "status": fields.get("status"), "namespace": fields.get("namespace"), "key": fields.get("key"), "ref": _ref(record.ref), "parent_ref": _ref(record.parent), "dependencies": [_ref(x) for x in record.dependencies], "links": fields.get("links", []), "documents": fields.get("documents", []), "document_links": fields.get("document_links", []), "template_origin": fields.get("template_origin")})
 
     evidence = {
         "db_path": str(db), "authority": authority,
@@ -244,8 +301,56 @@ def test_wrk06_public_handoff_rehearsal(tmp_path: Path) -> None:
         "no_review": {"positive": {"decision_ref": _ref(no_review.ref), "result_ref": _ref(no_review.result_ref), "no_review": no_review.payload["no_review"], "before": no_review_before, "after": no_review_after, "receipt": _events_for(store, "accept-without-review")}, "negative": no_review_rejection},
         "candidate_boundary": {"mismatch_rejection": mismatch, "annotation_ref": _ref(annotation), "after_annotation": {"status": applicable_annotation.status.value, "affected_refs": [_ref(x) for x in applicable_annotation.affected_refs]}, "source_before": _ref(source_before), "source_after": _ref(source_after), "after_source": {"status": applicable_source.status.value, "affected_refs": [_ref(x) for x in applicable_source.affected_refs]}, "historical_decision": {"ref": _ref(historical_decision.ref), "candidate_ref": _ref(historical_decision.candidate_ref), "disposition": historical_decision.disposition}},
         "waiting": {"assignment_ref": _ref(assignment.ref), "wait_ref": _ref(wait.ref), "receipt": _events_for(store, "wait-1"), "owner_ref": _ref(wait_reopened.owner_ref), "awaited_ref": _ref(wait_reopened.awaited_ref), "awaited_revision": wait_reopened.awaited_revision, "current_revision": wait_reopened.current_revision, "attention_event_id": wait_reopened.attention_event_id, "dispatch": wait_reopened.dispatch, "reservation_ref": wait_reopened.payload["reservation_ref"], "restart_readback": wait_reopened.ref == wait.ref, "stream": stream, "events": [{"event_id": e.event_id, "sequence": e.sequence, "event_type": e.event_type} for e in events], "page1": {"events": [e.event_id for e in page1.page.events], "cursor": _json(page1.cursor), "work_ready": page1.work_ready, "business_dispatches": page1.business_dispatches}, "page2": {"events": [e.event_id for e in page2.page.events], "cursor": _json(page2.cursor), "work_ready": page2.work_ready, "business_dispatches": page2.business_dispatches}, "duplicate": _json(duplicate), "reordered": _json(reordered), "bypass_rejection": bypass},
-        "import": {"resources": {"megado_protocol_ref": _ref(megado_protocol.ref), "delivery_template_ref": _ref(delivery.ref), "megado_role_slots": megado_protocol_data["role_slots"], "megado_routes": megado_protocol_data["routes"]}, "direct_shipped_resource": {"before": import_before, "after": direct_after, "replay_after": direct_replay_after, "records": len(direct_import.records), "replay_records": len(direct_replay.records), "limitation": "TemplateEngine._node_list accepts nodes/efforts/tasks/criteria/scenarios/gates, but shipped delivery.json uses seed.work plus separate links; direct public instantiation created only the supplied owner project and no work children."}, "normalized_public_import": {"source_ref": _ref(delivery.ref), "adapter_template_ref": _ref(normalized_delivery.ref), "before": direct_replay_after, "after": normalized_after, "replay_after": normalized_replay_after, "ids_by_local_ref": {name: _ref(value) for name, value in normalized.local_refs.items()}, "records": imported_records, "replay_record_refs": [_ref(normalized_replay.project.ref)] + [_ref(x.ref) for x in normalized_replay.records], "replay_receipts": [_json(x) for x in normalized_replay.receipts if x is not None], "gate_ids": [], "no_new_limit_or_scheduler_state": normalized_after["pool"] == normalized_replay_after["pool"] and normalized_after["identities"] - direct_replay_after["identities"] == len(normalized.records)}, "records": imported_records},
-        "second_protocol": {"scene_protocol_ref": _ref(scene_protocol.ref), "role_slots": scene_protocol_data["role_slots"], "routes": scene_protocol_data["routes"], "project_ref": _ref(scene_project.ref), "protocol_ref": scene_project.payload.get("fields", {}).get("protocol_ref"), "separate_from_import": scene_project.ref != normalized.project.ref, "receipt": _events_for(store, "scene-adopt")},
+        "import": {
+            "resources": {
+                "megado_protocol_ref": _ref(megado_protocol.ref),
+                "delivery_template_ref": _ref(delivery.ref),
+                "delivery_source_path": str(root / "packs/megado/templates/delivery.json"),
+                "delivery_sha256": delivery_sha256,
+                "megado_role_slots": megado_protocol_data["role_slots"],
+                "megado_routes": megado_protocol_data["routes"],
+            },
+            "direct_shipped_resource": {
+                "request_key": import_key,
+                "parameters": import_parameters,
+                "owner_project_ref": _ref(direct_import.project.ref),
+                "before": import_before,
+                "after": direct_after,
+                "replay_after_reopen": direct_replay_after,
+                "fresh_store_open_expected_domains": [domain.domain_id for domain in expected_domains],
+                "records": len(direct_import.records),
+                "replay_records": len(direct_replay.records),
+                "ids_by_local_ref": {name: _ref(value) for name, value in direct_import.local_refs.items()},
+                "replay_same_ids": direct_replay.local_refs == direct_import.local_refs,
+                "dependencies": {
+                    "verify": [_ref(value) for value in direct_by_local["verify"].dependencies],
+                    "implement": [_ref(value) for value in direct_by_local["implement"].dependencies],
+                },
+                "records_detail": imported_records,
+                "rendered_seed_work": direct_import.rendered.seed["work"],
+                "rendered_goal_content": direct_import.rendered.seed["documents"][0]["content"],
+                "document_ref": _ref(direct_import.document_refs["goal"]),
+                "document_read": _json(direct_document_read),
+                "reopened_document_read": _json(reopened_document_read),
+                "association_ref": _ref(direct_import.association_refs["effort:megado:goal"]),
+                "association_read": _json(direct_association_read),
+                "reopened_association_read": _json(reopened_association_read),
+                "receipts": [_events_for(store, import_key + ":" + name) for name in ("effort", "criterion", "implement", "verify")] + [_events_for(store, import_key + ":document:goal"), _events_for(store, import_key + ":link:effort:megado:goal")],
+                "no_duplicate_receipts_events_references_counters": direct_replay_after == direct_after,
+                "requires_only_dependency_projection": direct_by_local["verify"].dependencies[0].id == direct_import.local_refs["implement"].id and direct_by_local["implement"].dependencies == (),
+                "gate_ids": [],
+                "model_invocations": 0,
+                "new_allowance_units": 0,
+                "new_scheduler_state": False,
+                "new_review_pool": False,
+                "new_dispatches": 0,
+            },
+            "rollback_proof": {
+                "focused_tests": ["tests/packs/test_task_templates.py::test_invalid_shipped_shape_writes_nothing", "tests/packs/test_task_templates.py::test_document_association_failure_rolls_back_work_and_dat_savepoints"],
+                "claim": "The focused PKG tests prove malformed shipped resources and failed DAT association leave the complete transaction unchanged; this rehearsal cites them without duplicating the broad failure suites.",
+            },
+        },
+        "second_protocol": {"scene_protocol_ref": _ref(scene_protocol.ref), "role_slots": scene_protocol_data["role_slots"], "routes": scene_protocol_data["routes"], "project_ref": _ref(scene_project.ref), "protocol_ref": scene_project.payload.get("fields", {}).get("protocol_ref"), "separate_from_import": scene_project.ref != direct_import.project.ref, "receipt": _events_for(store, "scene-adopt")},
         "receipt_index": {key: _events_for(store, key) for key in ("assessment-A", "accept-A", "creative-rework", "creative-correction", "accept-without-review", "annotation-A", "source-revision", "assignment-wait", "wait-decision", "wait-1", "wait-2", "megado-import", "scene-adopt")},
         "final_counters": _counts(store, pool.ref),
         "registered_domains": [item.domain_id for item in store.registered_domains()],

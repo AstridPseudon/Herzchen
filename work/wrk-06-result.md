@@ -2,7 +2,7 @@
 
 State: `worker-candidate`. `acceptance_claimed: false`; `gate_verdict_claimed: false`.
 
-The owned handoff is [handoffs/WRK.json](/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-wrk06-worker/handoffs/WRK.json). The fresh public-API rehearsal is implemented in [tests/work/test_wrk06_handoff.py](/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-wrk06-worker/tests/work/test_wrk06_handoff.py), with the exact observed IDs, revisions, request keys, receipt/event references, counters, restart evidence, and limitations copied into the JSON handoff.
+The owned handoff is [handoffs/WRK.json](/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-wrk06-pkg-correction-worker/handoffs/WRK.json). The fresh public-API rehearsal is implemented in [tests/work/test_wrk06_handoff.py](/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-wrk06-pkg-correction-worker/tests/work/test_wrk06_handoff.py), with the exact observed IDs, revisions, request keys, receipt/event references, counters, restart evidence, and limitations copied into the JSON handoff.
 
 ## Evidence summary
 
@@ -34,6 +34,84 @@ Source checkout used `/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/wo
 The disposable Python 3.11 candidate was `/tmp/wrk06-candidate.ksQiaP/venv311`; installed proof ran with `env -u PYTHONPATH -u PYTHONHOME`, using wheel SHA-256 `bcceec60013c77c549227e20198fc84ef8593a085e6d001fdcf09a54b40fda44`, and passed the same **82 tests**. Installed origins were under `/private/tmp/wrk06-candidate.ksQiaP/venv311/lib/python3.11/site-packages/` for `herzchen`, `herzchen.contracts`, `herzchen.kernel`, `herzchen.domains.assessment`, `herzchen.domains.work`, and `herzchen.packs.templates`; they are distinct from checkout origins.
 
 The EDT-04 target was rechecked once and passed in that single run (`1 passed in 0.07s`). The prior race output remains an explicit foundation blocker at `/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/wrk-05-edt04-race-traceback-20260914.txt`, SHA-256 `f96f4067625e20079e74eede66380903f9e0a181f6bb003f850b3a1da44c72bf`; no EDT file was changed.
+
+## v2 `pkg_correction` / integration supplement
+
+This supplement preserves the preceding WRK-06 evidence and corrects only its
+shipped-resource limitation. The old candidate is preserved at commit
+`2c6c586b4fada18e9115f5f249b7735dc25fbd48`, tree
+`8a28fa21060624dc54302175091b1f1b03af86ab`. The accepted PKG correction base
+is `a2ed902e863bb55d8ae1e4155a55dc638e69f744`, tree
+`67ebb127151736791a19036c77d2af3dceca5e24`; its implementation is commit
+`1735eadcbf0c5a447a7c74e9ab213b225e4e5ed8`, tree
+`fc8c13750d8bb1a7c3d1247d86d6233e1818e64d`. The PKG implementation wheel
+SHA-256 is `9b30a88a9d38803a88d2bdb3ef44bda6503fd3e27b9c54a54053abc7317fa64f`.
+
+The integration loaded the real bytes of
+`packs/megado/templates/delivery.json` (SHA-256
+`fcf99881754a155da027b2b1e775260a349376e6ccc9e5edc94ee1cecfa087f`), typed
+them with the public `work_template`, and instantiated through
+`TemplateEngine` with the supplied FND `Store`/`Transaction` and public DAT
+composition. The source resource is
+`pack/work_template/megado.delivery_seed@1.1.0`; the fresh owner project is
+`work.project/project-563c9c21d45fd84d6712edbb2289@rev-1`; request key is
+`megado-import`; parameters are `title=Imported effort`,
+`outcome=Implement`, `proof=Demonstrate`.
+
+The unadapted `seed.work` produced these exact local refs:
+
+- `effort` → `work.effort/effort-8ca04c9de8d82631a6737efdf260@rev-1`, parent owner project, title `Imported effort`, outcome `Implement`, status `planning_only`.
+- `implement` → `work.task/task-f34c66852415f567ea376278679c@rev-1`, parent `effort`, title `Deliver the specified outcome`, outcome `Implement`, `custom.megado.execution_class=normal`.
+- `verify` → `work.task/task-8f1d4bf6b7f2c339008de2b1d2c4@rev-1`, parent `effort`, title `Demonstrate the outcome`, outcome `Demonstrate`, `custom.megado.execution_class=normal`.
+- `criterion` → `work.criterion/criterion-b126299fd187ab61ced6c8236786@rev-1`, parent `effort`, title `Required observable behavior`, outcome `Demonstrate`.
+
+The public work fields retain the complete rendered goal payload
+`{local_id: goal, title: Bounded goal, content: Implement}` and both original
+relation objects. `verify.dependencies` contains the unversioned
+`implement` ref; `implement.dependencies` is empty and does not contain
+`criterion`. The `requires` and `covers` objects remain inspectable as their
+original `{from,to,relation}` payloads; `covers` was not projected into
+dependencies.
+
+DAT public readback materialized document identity
+`dat.content.document/template-b6d75948c27995aefdb3a6e6d8601920`, initial and
+current revision `rev-dd207585a60afdb88e0be275054916b5`, exact content
+`Implement`, and association identity
+`document-association/link-cc73e449daaeae6ef218558c3ddbfb10`. The association
+readback reconstructs as `ReferenceBinding(ref=document identity, mode=current)`
+and is active. The six committed public receipts/events are recorded in the
+JSON handoff for `effort`, `criterion`, `implement`, `verify`, DAT document
+create, and DAT link. A fresh `Store.open(db, expected_domains=...)` read the
+same document and association. Replaying `megado-import` after reopen returned
+identical work/DAT refs and receipts; identities, references, receipts, events,
+and event-sequence counters were unchanged. The import added zero allowance
+units, scheduler state, review pools, dispatches, gates, or model invocations.
+
+The existing WRK fake-assessment, all named crash/replay points, creative
+subjective rejection/correction, candidate A/B boundary, no-review boundary,
+waiting restart/cursor occupancy/no-bypass, and independent second-protocol
+cases remain in the same rehearsal. No real model review was added. The
+focused PKG real-resource lineage is in
+`tests/packs/test_task_templates.py` (23 tests, including
+`test_shipped_delivery_seed_work_is_expanded_from_real_resource`, idempotency,
+invalid-shape rollback, DAT association rollback, and typed external document
+linking), with the full source focused command passing 97 tests. A disposable
+Python 3.12 wheel proof used `env -u PYTHONPATH -u PYTHONHOME`; wheel
+`/private/tmp/wrk06-pkg-correction-integration.9HusrK/wheel/herzchen_contracts-0.1.0-py3-none-any.whl`
+has SHA-256
+`e39bdbc8ea1b5b01832e482bd1342f8ee65652a79eb369077443f25e295fdebd`, and
+the installed PKG+WRK focused run passed 24 tests. Installed origins were
+under `/private/tmp/wrk06-pkg-correction-integration.9HusrK/venv311/lib/python3.12/site-packages/`
+for `herzchen`, `herzchen.contracts`, `herzchen.kernel`, `herzchen.content`,
+`herzchen.domains.assessment`, `herzchen.domains.work`, and
+`herzchen.packs.templates`; these are separate from source-checkout origins
+under this worktree's `src/` loaded with `PYTHONPATH=src`.
+
+The known EDT race lineage remains explicit: the prior traceback is retained at
+`/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/wrk-05-edt04-race-traceback-20260914.txt`
+(SHA-256 `f96f4067625e20079e74eede66380903f9e0a181f6bb003f850b3a1da44c72bf`);
+no EDT file was changed. This remains `state=worker-candidate` with
+`acceptance_claimed=false` and `gate_verdict_claimed=false`.
 
 ## Custody
 
