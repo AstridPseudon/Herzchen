@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 
-from herzchen.contracts import AuthenticatedActor
+from herzchen.contracts import AuthenticatedActor, ReplayConflictError
 from herzchen.domains.work import WorkGraph, WorkKind
 from herzchen.kernel import Store
 from herzchen.packs.templates import (
@@ -34,6 +37,116 @@ def harness(tmp_path):
         yield store, graph, engine, actor
     finally:
         store.close()
+
+
+def _shipped_delivery():
+    root = Path(__file__).resolve().parents[2]
+    data = json.loads((root / "packs/megado/templates/delivery.json").read_bytes())
+    return work_template(data["id"], data["version"], parameters=data["parameters"], seed=data["seed"])
+
+
+def _shipped_delivery_data():
+    root = Path(__file__).resolve().parents[2]
+    return json.loads((root / "packs/megado/templates/delivery.json").read_bytes())
+
+
+def _durable_counts(store):
+    counts = {}
+    for table in ("identities", "record_references", "command_receipts", "events", "event_sequences"):
+        counts[table] = store.connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+    return counts
+
+
+def test_shipped_delivery_seed_work_is_expanded_from_real_resource(harness):
+    store, graph, engine, _ = harness
+    project = graph.create_project(title="Owner", outcome="Import", logical_request_key="owner")
+    template = _shipped_delivery()
+    engine.register(template)
+    result = engine.instantiate(template.id, {"title": "Ship", "outcome": "Build", "proof": "Check"}, project=project, logical_request_key="delivery")
+    assert result.project.ref == project.ref
+    assert set(result.local_refs) == {"effort", "implement", "verify", "criterion"}
+    assert {record.kind for record in result.records} == {WorkKind.EFFORT, WorkKind.TASK, WorkKind.CRITERION}
+    by_id = {record.payload["fields"]["template_origin"]["local_id"]: record for record in result.records}
+    assert by_id["effort"].title == "Ship"
+    assert by_id["effort"].payload["fields"]["outcome"] == "Build"
+    assert by_id["effort"].payload["fields"]["status"] == "planning_only"
+    assert by_id["effort"].payload["fields"]["namespace"] == "work"
+    assert by_id["effort"].payload["fields"]["documents"] == [{"local_id": "goal", "title": "Bounded goal", "content": "Build"}]
+    assert by_id["effort"].payload["fields"]["document_links"] == [{
+        "subject": {"$local": "effort"}, "document": {"$local": "goal"},
+        "namespace": "megado", "key": "goal", "binding": "current",
+    }]
+    assert by_id["implement"].payload["fields"]["outcome"] == "Build"
+    assert by_id["implement"].payload["fields"]["custom"] == {"megado": {"execution_class": "normal"}}
+    assert by_id["implement"].payload["fields"]["namespace"] == "work.tasks"
+    assert by_id["implement"].payload["fields"]["key"] == "implement"
+    assert by_id["implement"].payload["fields"]["links"] == [{
+        "from": {"$local": "implement"}, "to": {"$local": "criterion"}, "relation": "covers",
+    }]
+    assert by_id["verify"].payload["fields"]["custom"] == {"megado": {"execution_class": "normal"}}
+    assert by_id["verify"].payload["fields"]["links"] == [{
+        "from": {"$local": "verify"}, "to": {"$local": "implement"}, "relation": "requires",
+    }]
+    assert by_id["criterion"].payload["fields"]["outcome"] == "Check"
+    assert by_id["criterion"].payload["fields"]["namespace"] == "work.criteria"
+    assert by_id["implement"].parent.id == by_id["effort"].id
+    assert by_id["verify"].parent.id == by_id["effort"].id
+    assert by_id["criterion"].parent.id == by_id["effort"].id
+    assert by_id["implement"].dependencies[0].id == by_id["criterion"].id
+    assert by_id["verify"].dependencies[0].id == by_id["implement"].id
+    assert result.rendered.seed["work"][0]["title"] == "Ship"
+    assert result.rendered.seed["work"][0]["outcome"] == "Build"
+    assert result.rendered.seed["documents"][0]["content"] == "Build"
+    assert len(result.receipts) == 4
+    assert all(receipt.status.value == "committed" and receipt.event_ids for receipt in result.receipts)
+    assert len(store.list_events()) == 5
+
+
+def test_shipped_delivery_is_idempotent_and_conflicts_on_changed_parameters(harness):
+    store, graph, engine, _ = harness
+    project = graph.create_project(title="Owner", outcome="Import", logical_request_key="owner")
+    template = _shipped_delivery()
+    first = engine.instantiate(template, {"title": "Ship", "outcome": "Build", "proof": "Check"}, project=project, logical_request_key="delivery")
+    before_replay = _durable_counts(store)
+    replay = engine.instantiate(template, {"title": "Ship", "outcome": "Build", "proof": "Check"}, project=project, logical_request_key="delivery")
+    assert replay.project.ref == first.project.ref
+    assert [x.ref for x in replay.records] == [x.ref for x in first.records]
+    assert replay.local_refs == first.local_refs
+    assert tuple(receipt.logical_request_key for receipt in replay.receipts) == tuple(receipt.logical_request_key for receipt in first.receipts)
+    assert _durable_counts(store) == before_replay
+    before_conflict = (graph.list(), store.list_events(), _durable_counts(store))
+    with pytest.raises(ReplayConflictError):
+        engine.instantiate(template, {"title": "Changed", "outcome": "Build", "proof": "Check"}, project=project, logical_request_key="delivery")
+    assert (graph.list(), store.list_events(), _durable_counts(store)) == before_conflict
+
+
+@pytest.mark.parametrize("mutation, error", [
+    (lambda data: data["seed"].update(work="not-a-list"), TemplateValidationError),
+    (lambda data: data["seed"]["work"][0].pop("local_id"), TemplateValidationError),
+    (lambda data: data["seed"]["work"].append(dict(data["seed"]["work"][0])), TemplateValidationError),
+    (lambda data: data["seed"]["links"][0].update(to={"$local": "missing"}), TemplateReferenceError),
+    (lambda data: data["seed"]["links"][0].update(relation="blocks"), TemplateValidationError),
+    (lambda data: data["seed"]["document_links"][0].update(document={"$local": "missing"}), TemplateReferenceError),
+    (lambda data: data["seed"]["document_links"][0].update(binding="pinned"), TemplateValidationError),
+])
+def test_invalid_shipped_shape_writes_nothing(harness, mutation, error):
+    store, graph, engine, _ = harness
+    project = graph.create_project(title="Owner", outcome="Import", logical_request_key="owner")
+    data = _shipped_delivery_data()
+    mutation(data)
+    bad = work_template(data["id"] + ".bad", data["version"], parameters=data["parameters"], seed=data["seed"])
+    before = (graph.list(), store.list_events(), _durable_counts(store))
+    with pytest.raises(error):
+        engine.instantiate(bad, {"title": "Ship", "outcome": "Build", "proof": "Check"}, project=project, logical_request_key="bad")
+    assert (graph.list(), store.list_events(), _durable_counts(store)) == before
+
+
+def test_existing_plural_seed_shape_remains_compatible(harness):
+    _, graph, engine, _ = harness
+    project = graph.create_project(title="Owner", outcome="Import", logical_request_key="owner")
+    template = work_template("legacy-shape", seed={"tasks": [{"local_id": "task", "title": "Still works"}]})
+    result = engine.instantiate(template, project=project, logical_request_key="legacy")
+    assert [record.title for record in result.records] == ["Still works"]
 
 
 def test_blank_resource_uses_common_fields_and_has_no_side_effects(harness):

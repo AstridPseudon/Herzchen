@@ -33,6 +33,7 @@ RESOURCE_REVISION = "pkg-03.v1"
 BLANK_TEMPLATE_ID = "work.blank_project"
 TASK_NAMESPACE = "work.tasks"
 CRITERION_NAMESPACE = "work.criteria"
+_WORK_LINKS_KEY = "__template_links__"
 
 
 class TemplateError(ValueError):
@@ -465,6 +466,52 @@ class TemplateResult:
 
 def _node_list(seed: Mapping[str, Any]) -> list[dict[str, Any]]:
     nodes: list[dict[str, Any]] = []
+    if "work" in seed:
+        work = seed["work"]
+        if not isinstance(work, list):
+            raise TemplateValidationError("seed work must be a list")
+        all_work: dict[str, dict[str, Any]] = {}
+        project_names: set[str] = set()
+        for node in work:
+            if not isinstance(node, Mapping):
+                raise TemplateValidationError("each seed work entry must be an object")
+            value = dict(node)
+            name = _local_name(value)
+            if name in all_work:
+                raise TemplateValidationError("seed local identities must be unique")
+            kind = value.get("kind")
+            if not isinstance(kind, str) or not kind.strip():
+                raise TemplateValidationError(f"work kind for {name!r} must be text")
+            all_work[name] = value
+            if kind.removeprefix("work.") == "project":
+                project_names.add(name)
+                continue
+            nodes.append(value)
+        if len(project_names) > 1:
+            raise TemplateValidationError("seed work may contain at most one project")
+        links = seed.get("links", [])
+        if not isinstance(links, list):
+            raise TemplateValidationError("seed links must be a list")
+        for link in links:
+            if not isinstance(link, Mapping):
+                raise TemplateValidationError("each seed link must be an object")
+            relation = link.get("relation")
+            if relation not in {"requires", "covers"}:
+                raise TemplateValidationError(f"unsupported work link relation: {relation!r}")
+            source = _marker_name(link.get("from"))
+            target = _marker_name(link.get("to"))
+            if source is None or target is None:
+                raise TemplateReferenceError("work links must use local references")
+            _text(source, "work link from")
+            _text(target, "work link to")
+            if source not in all_work or target not in all_work:
+                raise TemplateReferenceError("work link references an unknown local identity")
+            source_node = all_work[source]
+            if source not in project_names:
+                source_node.setdefault("dependencies", []).append({"$local": target})
+                source_node.setdefault(_WORK_LINKS_KEY, []).append(
+                    {"from": {"$local": source}, "to": {"$local": target}, "relation": relation}
+                )
     categories = (("efforts", "effort"), ("tasks", "task"), ("criteria", "criterion"), ("scenarios", "scenario"), ("gates", "gate"))
     if "nodes" in seed:
         if not isinstance(seed["nodes"], list):
@@ -496,6 +543,23 @@ def _node_list(seed: Mapping[str, Any]) -> list[dict[str, Any]]:
             value.setdefault("kind", kind)
             nodes.append(value)
     return nodes
+
+
+def _seed_work_fields(node: Mapping[str, Any], *, status: Any = None, links: Any = None, documents: Any = None, document_links: Any = None) -> dict[str, Any]:
+    """Admit neutral seed fields into the public WRK ``fields`` mapping."""
+    fields = dict(node.get("fields", {}))
+    for key in ("outcome", "custom", "description", "instructions", "criteria", "body", "acceptance", "metadata", "documents", "document_links"):
+        if key in node:
+            fields[key] = deepcopy(node[key])
+    if status is not None:
+        fields["status"] = deepcopy(status)
+    if links:
+        fields["links"] = deepcopy(links)
+    if documents:
+        fields["documents"] = deepcopy(documents)
+    if document_links:
+        fields["document_links"] = deepcopy(document_links)
+    return fields
 
 
 def _local_name(node: Mapping[str, Any]) -> str:
@@ -649,6 +713,12 @@ class TemplateEngine:
         namespaces = seed.get("namespaces", {})
         owner_target = project if project is not None else owner
         project_seed = seed.get("project")
+        if project_seed is None and isinstance(seed.get("work"), list):
+            project_seed = next(
+                (node for node in seed["work"]
+                 if isinstance(node, Mapping) and node.get("kind") == "project"),
+                None,
+            )
         if project_seed is not None and not isinstance(project_seed, Mapping):
             raise TemplateValidationError("seed project must be an object")
         if owner_target is None and resource.id != BLANK_TEMPLATE_ID and project_seed is None:
@@ -662,6 +732,7 @@ class TemplateEngine:
         if resource.id == BLANK_TEMPLATE_ID and nodes:
             raise TemplateValidationError("blank project must contain zero work nodes")
         self._validate_seed_references(seed, nodes, owner_record, name_set)
+        document_values, document_link_values = self._document_seed_values(seed, name_set)
         ordered = self._ordered_nodes(nodes, edges)
         request = _request_key(logical_request_key, resource, rendered)
 
@@ -696,10 +767,16 @@ class TemplateEngine:
                 if parent is None:
                     parent = owner_record
                 dependencies = tuple(self._resolve_seed_ref(ref, local_refs, owner_record, required=True) for ref in node.get("dependencies", node.get("depends_on", [])))
-                fields = dict(node.get("fields", {}))
                 if not isinstance(node.get("fields", {}), Mapping):
                     raise TemplateValidationError(f"fields for {name!r} must be an object")
-                fields.update({key: deepcopy(value) for key, value in node.items() if key in {"namespace", "key", "instructions", "description", "criteria", "documents", "profile_ref", "allowance_ref"}})
+                fields = _seed_work_fields(
+                    node,
+                    status=seed.get("status") if "work" in seed else None,
+                    links=node.get(_WORK_LINKS_KEY),
+                    documents=document_values.get(name),
+                    document_links=document_link_values.get(name),
+                )
+                fields.update({key: deepcopy(value) for key, value in node.items() if key in {"namespace", "key", "instructions", "description", "criteria", "profile_ref", "allowance_ref"}})
                 default_namespace = TASK_NAMESPACE if work_kind is WorkKind.TASK else CRITERION_NAMESPACE if work_kind is WorkKind.CRITERION else "work"
                 namespace = node.get("namespace", namespaces.get(work_kind.value, namespaces.get(work_kind.value + "s", default_namespace)))
                 fields["namespace"] = _text(namespace, "node namespace")
@@ -805,11 +882,7 @@ class TemplateEngine:
         # Document references are resolved, but document creation/adoption is
         # DAT's responsibility.  A template cannot smuggle an untyped path or
         # a same-looking identifier into a work payload.
-        for document in seed.get("documents", []):
-            if not isinstance(document, Mapping):
-                raise TemplateValidationError("document entries must be objects")
-            if "ref" in document:
-                self._resolve_external(_ref(document["ref"], "document ref"), "document ref")
+        self._document_seed_values(seed, names)
         for field in ("profile_ref", "allowance_ref"):
             if field in seed:
                 self._resolve_external(_ref(seed[field], field), field)
@@ -822,6 +895,68 @@ class TemplateEngine:
                     raise TemplateReferenceError("protocol ref revision is not the catalog revision")
             else:
                 self._resolve_external(reference, "protocol ref")
+
+    def _document_seed_values(self, seed: Mapping[str, Any], names: set[str]) -> tuple[dict[str, dict[str, Any]], dict[str, list[dict[str, Any]]]]:
+        documents = seed.get("documents", [])
+        if not isinstance(documents, list):
+            raise TemplateValidationError("seed documents must be a list")
+        by_local: dict[str, dict[str, Any]] = {}
+        for index, document in enumerate(documents):
+            if not isinstance(document, Mapping):
+                raise TemplateValidationError(f"document[{index}] must be an object")
+            _json(document)
+            if "local_id" in document:
+                local_id = _text(document["local_id"], f"document[{index}] local_id")
+                if local_id in by_local:
+                    raise TemplateValidationError(f"duplicate document local_id: {local_id}")
+                by_local[local_id] = dict(document)
+            elif "ref" in document:
+                self._resolve_external(_ref(document["ref"], f"document[{index}] ref"), f"document[{index}] ref")
+            else:
+                raise TemplateValidationError(f"document[{index}] requires local_id or typed ref")
+
+        links = seed.get("document_links", [])
+        if not isinstance(links, list):
+            raise TemplateValidationError("seed document_links must be a list")
+        by_subject: dict[str, list[dict[str, Any]]] = {}
+        for index, link in enumerate(links):
+            if not isinstance(link, Mapping):
+                raise TemplateValidationError(f"document link[{index}] must be an object")
+            _json(link)
+            subject = _marker_name(link.get("subject"))
+            if subject is None:
+                raise TemplateReferenceError(f"document link[{index}] subject must use a local reference")
+            _text(subject, f"document link[{index}] subject")
+            if subject not in names:
+                raise TemplateReferenceError(f"document link[{index}] references unknown subject: {subject}")
+            document = link.get("document")
+            document_local = _marker_name(document)
+            if document_local is not None:
+                _text(document_local, f"document link[{index}] document")
+                if document_local not in by_local:
+                    raise TemplateReferenceError(f"document link[{index}] references unknown document: {document_local}")
+            else:
+                self._resolve_external(_ref(document, f"document link[{index}] document"), f"document link[{index}] document")
+            namespace = _text(link.get("namespace", "work"), f"document link[{index}] namespace")
+            key = _text(link.get("key", "document"), f"document link[{index}] key")
+            binding = link.get("binding", "current")
+            if binding not in {"current", "pinned"}:
+                raise TemplateValidationError(f"document link[{index}] binding must be current or pinned")
+            if binding == "pinned":
+                revision = link.get("revision_ref", link.get("revision"))
+                if revision is None:
+                    raise TemplateValidationError(f"document link[{index}] pinned binding requires a revision")
+                if isinstance(revision, Mapping):
+                    self._resolve_external(_ref(revision, f"document link[{index}] revision"), f"document link[{index}] revision")
+                else:
+                    _text(revision, f"document link[{index}] revision")
+            value = dict(link)
+            value["namespace"] = namespace
+            value["key"] = key
+            value["binding"] = binding
+            by_subject.setdefault(subject, []).append(value)
+
+        return ({subject: [deepcopy(by_local[_marker_name(link["document"])]) for link in subject_links if _marker_name(link.get("document")) is not None] for subject, subject_links in by_subject.items()}, by_subject)
 
     def _validate_ref_value(self, value: Any, names: set[str], owner: Optional[WorkRecord], field: str) -> None:
         if value is None:
