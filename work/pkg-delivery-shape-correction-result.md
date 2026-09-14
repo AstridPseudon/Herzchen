@@ -223,6 +223,7 @@ file or PTY command receipt. The retained prior-candidate JSONL lineage is
 the commands printed in this addendum; their installed origins and wheel hash
 are recorded above.
 
-Final correction commit: `97bbf82cf7035e80ae098daca3435d948df0eebb`;
-final correction tree: `eb81d3a301ee3fa605bb6c2d99861ae4cd2871e0`.
+Final correction implementation commit: `1735eadcbf0c5a447a7c74e9ab213b225e4e5ed8`;
+implementation tree: `fc8c13750d8bb1a7c3d1247d86d6233e1818e64d`.
+The final report-only handoff commit is the immediate child of that commit.
 This report does not call INT-03 complete and does not claim any gate complete.
