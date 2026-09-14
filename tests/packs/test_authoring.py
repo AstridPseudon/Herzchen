@@ -18,6 +18,7 @@ from herzchen.contracts import AuthenticatedActor
 from herzchen.kernel import Store
 from herzchen.packs.authoring import (
     ManagedPackAuthoringHandler,
+    PackContentError,
     PackPathError,
     PackAuthoringError,
     PackProvenanceError,
@@ -84,9 +85,7 @@ def test_public_managed_reader_uses_real_discovery_and_loader(managed_state: Pat
     assert packs["scene_production"].pack_id == "scene_production"
 
 
-def test_neutral_admission_adapter_avoids_astrid_imports_and_preserves_identity(
-    monkeypatch: pytest.MonkeyPatch,
-):
+def _neutral_megado_adapter(*, wrong_digest_path: str | None = None):
     pack_root = ROOT / "packs/megado"
     manifest_path = pack_root / "pack.yaml"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -95,7 +94,11 @@ def test_neutral_admission_adapter_avoids_astrid_imports_and_preserves_identity(
         SimpleNamespace(
             path=path,
             resolved=pack_root / path,
-            sha256=hashlib.sha256((pack_root / path).read_bytes()).hexdigest(),
+            sha256=(
+                "0" * 64
+                if path == wrong_digest_path
+                else hashlib.sha256((pack_root / path).read_bytes()).hexdigest()
+            ),
             kind="resource:skill",
         )
         for path in resource_paths
@@ -111,9 +114,13 @@ def test_neutral_admission_adapter_avoids_astrid_imports_and_preserves_identity(
         entry=entry,
         source_kind="managed",
         source_revision="62503c6bf1e08e6399ed97bc4ee5aab7d3f3d96e",
-        source_tree_sha256="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        # Fixture-only identity derived from the actual pack bytes below; it
+        # is not an authoritative Astrid source-tree admission claim.
+        source_tree_sha256=_fixture_tree_identity(pack_root),
         source_manifest_sha256=entry.manifest.sha256,
-        source_inventory_identity="21f6272fb3b4303c51d386f0e726c7c605841549b8750367376a0d6088973cbf",
+        # This is the accepted PKG-04 inventory identity supplied to a fake
+        # adapter, not a live managed-source inventory assertion.
+        source_inventory_identity="3a5406c6c8640c0f3a771b21c0c30a88242b904150dc5c1362c925a334453974",
         pack_dir=pack_root,
     )
 
@@ -125,6 +132,27 @@ def test_neutral_admission_adapter_avoids_astrid_imports_and_preserves_identity(
         assert Path(path) == manifest_path
         assert expected_pack_id == "megado"
         return SimpleNamespace(id="megado", schema_version="2")
+
+    return pack_root, manifest_path, handles, discovered, fake_discoverer, fake_loader
+
+
+def _fixture_tree_identity(pack_root: Path) -> str:
+    """Hash the actual fake-adapter pack bytes; not live Astrid provenance."""
+    digest = hashlib.sha256()
+    for path in sorted(item for item in pack_root.rglob("*") if item.is_file()):
+        relative = path.relative_to(pack_root).as_posix().encode("utf-8")
+        payload = path.read_bytes()
+        digest.update(len(relative).to_bytes(8, "big"))
+        digest.update(relative)
+        digest.update(len(payload).to_bytes(8, "big"))
+        digest.update(payload)
+    return digest.hexdigest()
+
+
+def test_neutral_admission_adapter_avoids_astrid_imports_and_preserves_identity(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    _, manifest_path, handles, discovered, fake_discoverer, fake_loader = _neutral_megado_adapter()
 
     real_import = builtins.__import__
 
@@ -146,6 +174,19 @@ def test_neutral_admission_adapter_avoids_astrid_imports_and_preserves_identity(
     assert pack.source.source_manifest_sha256 == discovered.source_manifest_sha256
     assert pack.resource("skill/SKILL.md").source_digest == handles[0].sha256
     assert pack.resource("skill/references/improvement-loop.md").source_ref.revision == discovered.source_revision
+
+
+def test_neutral_admission_adapter_rejects_actual_resource_digest_mismatch():
+    _, _, _, _, fake_discoverer, fake_loader = _neutral_megado_adapter(
+        wrong_digest_path="skill/references/improvement-loop.md"
+    )
+    with pytest.raises(PackContentError, match="resource digest mismatch"):
+        read_managed_pack(
+            "megado",
+            project_root=ROOT,
+            discoverer=fake_discoverer,
+            loader=fake_loader,
+        )
 
 
 def test_partial_admission_adapter_is_rejected_before_default_import():
