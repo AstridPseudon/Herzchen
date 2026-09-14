@@ -38,6 +38,42 @@ def canonical_json(value: Any) -> str:
     return json.dumps(_json_value(value), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
+def canonical_request_digest(
+    *,
+    logical_request_key: str,
+    operation: str,
+    schema_revision: str,
+    target: "ResourceRef",
+    actor: "AuthenticatedActor",
+    payload: Mapping[str, Any],
+) -> str:
+    """Hash the complete admitted command semantics used for replay identity.
+
+    Callers may supply a digest-shaped value for compatibility, but the kernel
+    never trusts it as request identity.  The digest is derived from the
+    logical key, command contract, target, authenticated actor, and JSON-safe
+    payload at the public command boundary.
+    """
+    if not isinstance(target, ResourceRef):
+        raise ContractError("target must be a ResourceRef")
+    if not isinstance(actor, AuthenticatedActor):
+        raise ContractError("actor must be AuthenticatedActor")
+    if not isinstance(payload, Mapping):
+        raise ContractError("payload must be a mapping")
+    _text(logical_request_key, "logical_request_key")
+    _text(operation, "operation")
+    _revision(schema_revision, "schema_revision")
+    material = {
+        "logical_request_key": logical_request_key,
+        "operation": operation,
+        "schema_revision": schema_revision,
+        "target": target.to_dict(),
+        "actor": actor.to_dict(),
+        "payload": dict(payload),
+    }
+    return hashlib.sha256(canonical_json(material).encode("utf-8")).hexdigest()
+
+
 def _json_value(value: Any) -> Any:
     if isinstance(value, Enum):
         return value.value
@@ -1048,6 +1084,6 @@ __all__ = [
     "ExtensionDescriptor", "ExtensionRegistry", "FinishClaim", "HostIdentity", "HostOperation", "HostOutcome", "HostPort",
     "HostReceipt", "HostRequest", "OperationBinding", "PackResourceDescriptor", "ReceiptStatus", "ReferenceBinding",
     "Reconsideration", "ReplayConflictError", "ReadinessExplanation", "ResourceRef", "RevisionRef", "TransactionContext",
-    "UnsupportedOperationError", "canonical_json", "validate_expected_state", "validate_replay", "CONTRACT_REVISION",
+    "UnsupportedOperationError", "canonical_json", "canonical_request_digest", "validate_expected_state", "validate_replay", "CONTRACT_REVISION",
     "CONTRACT_DIGEST", "SCHEMA_DIGEST", "SCHEMA_DEFINITIONS",
 ]

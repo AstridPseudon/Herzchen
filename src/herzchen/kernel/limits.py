@@ -19,7 +19,7 @@ from herzchen.contracts import (
     CommandReceipt,
     ResourceRef,
     TransactionContext,
-    canonical_json,
+    canonical_request_digest,
     validate_replay,
 )
 
@@ -148,11 +148,17 @@ class LimitService:
             dict(payload),
         )
 
-    def _digest(self, key: str, value: Mapping[str, Any], supplied: Optional[str]) -> str:
-        if supplied is not None:
-            return supplied
-        import hashlib
-        return hashlib.sha256(canonical_json({"key": key, "value": dict(value)}).encode("utf-8")).hexdigest()
+    def _digest(self, operation: str, target: ResourceRef, actor: AuthenticatedActor, key: str, value: Mapping[str, Any], supplied: Optional[str]) -> str:
+        # ``supplied`` remains accepted for API compatibility, but a caller
+        # cannot select replay identity with an unrelated digest-shaped value.
+        return canonical_request_digest(
+            logical_request_key=key,
+            operation=operation,
+            schema_revision=LIMIT_SCHEMA_REVISION,
+            target=target,
+            actor=actor,
+            payload=value,
+        )
 
     def _event_effects(self, receipt: CommandReceipt) -> Mapping[str, Any]:
         if not receipt.event_ids:
@@ -220,8 +226,9 @@ class LimitService:
         capacity_units = _units(capacity_units, "capacity_units")
         cumulative_allowance_units = _units(cumulative_allowance_units, "cumulative_allowance_units")
         body = {"record_type": LIMIT_KIND, "capacity_units": capacity_units, "cumulative_allowance_units": cumulative_allowance_units}
-        digest = self._digest(logical_request_key, body, request_digest)
-        envelope = self._envelope("limit.create", pool_ref, _actor(actor), logical_request_key, digest, body, expected_version=0)
+        selected_actor = _actor(actor)
+        digest = self._digest("limit.create", pool_ref, selected_actor, logical_request_key, body, request_digest)
+        envelope = self._envelope("limit.create", pool_ref, selected_actor, logical_request_key, digest, body, expected_version=0)
         replay = self._replayed(envelope, LIMIT_KIND, pool_ref=pool_ref)
         if replay is not None:
             return replay
@@ -255,8 +262,9 @@ class LimitService:
         reservation_ref = self._reservation_ref(reservation_ref)
         declared_units = _positive_units(declared_units, "declared_units")
         body = {"record_type": RESERVATION_KIND, "pool_ref": _ref_dict(pool_ref), "declared_units": declared_units, "status": ReservationStatus.HELD.value, "actual_units": 0, "charged_units": 0}
-        digest = self._digest(logical_request_key, body, request_digest)
-        envelope = self._envelope("limit.reserve", reservation_ref, _actor(actor), logical_request_key, digest, body, expected_version=0)
+        selected_actor = _actor(actor)
+        digest = self._digest("limit.reserve", reservation_ref, selected_actor, logical_request_key, body, request_digest)
+        envelope = self._envelope("limit.reserve", reservation_ref, selected_actor, logical_request_key, digest, body, expected_version=0)
         if transaction is None:
             with self.store.transaction() as owned:
                 return self._reserve_with_transaction(pool_ref, reservation_ref, declared_units, envelope, body, owned)
@@ -307,8 +315,9 @@ class LimitService:
 
     def _transition(self, reservation: ReservationRecord, target_state: ReservationStatus, actual_units: int, *, logical_request_key: str, request_digest: Optional[str], actor: Optional[AuthenticatedActor], transaction: Optional[Transaction]) -> ReservationRecord:
         body = {"record_type": RESERVATION_KIND, "pool_ref": _ref_dict(reservation.pool_ref), "declared_units": reservation.declared_units, "status": target_state.value, "actual_units": actual_units, "charged_units": actual_units if target_state in (ReservationStatus.CONSUMED, ReservationStatus.RELEASED) else reservation.charged_units}
-        digest = self._digest(logical_request_key, body, request_digest)
-        envelope = self._envelope("limit." + target_state.value, reservation.ref, _actor(actor), logical_request_key, digest, body, expected_revision=reservation.ref.revision, expected_version=reservation.version)
+        selected_actor = _actor(actor)
+        digest = self._digest("limit." + target_state.value, reservation.ref, selected_actor, logical_request_key, body, request_digest)
+        envelope = self._envelope("limit." + target_state.value, reservation.ref, selected_actor, logical_request_key, digest, body, expected_revision=reservation.ref.revision, expected_version=reservation.version)
         replay = self._replayed(envelope, RESERVATION_KIND)
         if replay is not None:
             return replay

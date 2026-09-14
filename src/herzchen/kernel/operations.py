@@ -9,7 +9,7 @@ one product-specific authority.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 import hashlib
 from typing import Any, Mapping, Optional
@@ -20,6 +20,7 @@ from herzchen.contracts import (
     CommandReceipt,
     ResourceRef,
     TransactionContext,
+    canonical_request_digest,
     canonical_json,
     validate_replay,
 )
@@ -88,6 +89,29 @@ class OperationRequest:
         TransactionContext(self.actor, self.logical_request_key, self.request_digest)
         canonical_json(dict(self.payload))
 
+    def semantic_payload(self) -> dict[str, Any]:
+        """Return request arguments whose meaning is fixed by this request."""
+        return {
+            "adapter_ref": self.adapter_ref.to_dict(),
+            "payload": dict(self.payload),
+            "physical_invocation_ref": _ref_dict(self.physical_invocation_ref),
+            "external_owner_ref": _ref_dict(self.external_owner_ref),
+        }
+
+    def canonical_digest(self, target: ResourceRef) -> str:
+        return canonical_request_digest(
+            logical_request_key=self.logical_request_key,
+            operation=self.operation,
+            schema_revision=self.schema_revision,
+            target=target,
+            actor=self.actor,
+            payload=self.semantic_payload(),
+        )
+
+    def canonicalized(self, target: ResourceRef) -> "OperationRequest":
+        """Return the request with its digest bound to admitted semantics."""
+        return replace(self, request_digest=self.canonical_digest(target))
+
     def envelope(self, target: ResourceRef, *, expected_revision: Optional[str] = None, expected_version: Optional[int] = None, payload: Optional[Mapping[str, Any]] = None) -> CommandEnvelope:
         return CommandEnvelope(
             self.operation,
@@ -96,7 +120,7 @@ class OperationRequest:
             TransactionContext(
                 self.actor,
                 self.logical_request_key,
-                self.request_digest,
+                self.canonical_digest(target),
                 expected_revision=expected_revision,
                 expected_version=expected_version,
             ),
@@ -161,6 +185,7 @@ class OperationManager:
             "operation": request.operation,
             "schema_revision": request.schema_revision,
             "adapter_ref": request.adapter_ref.to_dict(),
+            "request_actor": request.actor.to_dict(),
             "logical_request_key": request.logical_request_key,
             "request_digest": request.request_digest,
             "request_payload": dict(request.payload),
@@ -177,7 +202,7 @@ class OperationManager:
             request.operation,
             request.schema_revision,
             ResourceRef.from_dict(event_effects.get("adapter_ref", request.adapter_ref.to_dict())),
-            request.actor,
+            AuthenticatedActor.from_dict(event_effects.get("request_actor", request.actor.to_dict())),
             request.logical_request_key,
             request.request_digest,
             event_effects.get("request_payload", request.payload),
@@ -195,16 +220,17 @@ class OperationManager:
                 return event.effects
         raise OperationError("receipt event is not visible in the admitted store")
 
-    def _request_from_identity(self, payload: Mapping[str, Any]) -> OperationRequest:
+    def _request_from_identity(self, payload: Mapping[str, Any], actor: Optional[AuthenticatedActor] = None) -> OperationRequest:
+        request_actor = actor
+        if request_actor is None and payload.get("request_actor") is not None:
+            request_actor = AuthenticatedActor.from_dict(payload["request_actor"])
+        if request_actor is None:
+            raise OperationError("operation actor is absent from identity and event lineage")
         return OperationRequest(
             payload["operation"],
             payload["schema_revision"],
             ResourceRef.from_dict(payload["adapter_ref"]),
-            # The actor is carried in the event, not mutable operation state;
-            # the current identity is only used for reads.  A neutral actor is
-            # sufficient to reconstitute the typed request without guessing a
-            # product authority.
-            AuthenticatedActor("neutral-store", "record-reader", "record-reader"),
+            request_actor,
             payload["logical_request_key"],
             payload["request_digest"],
             payload.get("request_payload", {}),
@@ -216,12 +242,14 @@ class OperationManager:
         if not isinstance(request, OperationRequest):
             raise TypeError("request must be an OperationRequest")
         target = self._target(request.logical_request_key)
+        request = request.canonicalized(target)
         payload = self._payload(request, OperationState.PREPARED, {})
         envelope = request.envelope(target, expected_version=0, payload=payload)
         effects = {
             "state": OperationState.PREPARED.value,
             "result": {},
             "adapter_ref": request.adapter_ref.to_dict(),
+            "request_actor": request.actor.to_dict(),
             "physical_invocation_ref": _ref_dict(request.physical_invocation_ref),
             "external_owner_ref": _ref_dict(request.external_owner_ref),
             "request_payload": dict(request.payload),
@@ -252,20 +280,26 @@ class OperationManager:
         physical_invocation_ref: Optional[ResourceRef],
         external_owner_ref: Optional[ResourceRef],
         allow_unknown_resolution: bool,
+        transition_actor: AuthenticatedActor,
         transaction: Optional[Transaction],
     ) -> OperationRecord:
         if not isinstance(result, Mapping):
             raise OperationError("result must be a mapping")
         next_request_key = transition_key or (record.request.logical_request_key + ":outcome")
-        next_digest = transition_digest or request_digest({"operation": record.request.logical_request_key, "state": state.value, "result": dict(result)})
+        # The optional legacy digest is deliberately not trusted.  The
+        # envelope derives the transition digest from its full semantics.
         next_request = OperationRequest(
             "operation.outcome",
             record.request.schema_revision,
             record.request.adapter_ref,
-            record.request.actor,
+            transition_actor,
             next_request_key,
-            next_digest,
-            record.request.payload,
+            request_digest({"operation": record.request.logical_request_key, "state": state.value, "result": dict(result)}),
+            {
+                "original_request_payload": dict(record.request.payload),
+                "state": state.value,
+                "result": dict(result),
+            },
             physical_invocation_ref if physical_invocation_ref is not None else record.request.physical_invocation_ref,
             external_owner_ref if external_owner_ref is not None else record.request.external_owner_ref,
         )
@@ -286,6 +320,7 @@ class OperationManager:
             "state": state.value,
             "result": dict(result),
             "adapter_ref": next_request.adapter_ref.to_dict(),
+            "request_actor": record.request.actor.to_dict(),
             "physical_invocation_ref": _ref_dict(next_request.physical_invocation_ref),
             "external_owner_ref": _ref_dict(next_request.external_owner_ref),
             "request_payload": dict(record.request.payload),
@@ -320,20 +355,34 @@ class OperationManager:
             state = OperationState(state)
         if state not in (OperationState.COMMITTED, OperationState.FAILED, OperationState.UNKNOWN, OperationState.UNCERTAIN):
             raise OperationError("record_outcome requires a terminal or uncertain state")
-        return self._transition(record, state, result or {}, transition_key=transition_key, transition_digest=transition_digest, physical_invocation_ref=physical_invocation_ref, external_owner_ref=external_owner_ref, allow_unknown_resolution=False, transaction=transaction)
+        return self._transition(record, state, result or {}, transition_key=transition_key, transition_digest=transition_digest, physical_invocation_ref=physical_invocation_ref, external_owner_ref=external_owner_ref, allow_unknown_resolution=False, transition_actor=record.request.actor, transaction=transaction)
 
-    def resolve_unknown(self, record: OperationRecord, state: OperationState, result: Optional[Mapping[str, Any]] = None, *, transition_key: Optional[str] = None, transition_digest: Optional[str] = None, physical_invocation_ref: Optional[ResourceRef] = None, external_owner_ref: Optional[ResourceRef] = None, transaction: Optional[Transaction] = None) -> OperationRecord:
+    def resolve_unknown(self, record: OperationRecord, state: OperationState, result: Optional[Mapping[str, Any]] = None, *, resolver: Optional[AuthenticatedActor] = None, transition_key: Optional[str] = None, transition_digest: Optional[str] = None, physical_invocation_ref: Optional[ResourceRef] = None, external_owner_ref: Optional[ResourceRef] = None, transaction: Optional[Transaction] = None) -> OperationRecord:
         if state not in (OperationState.COMMITTED, OperationState.FAILED):
             raise OperationError("unknown resolution must be committed or failed")
-        return self._transition(record, state, result or {}, transaction=transaction, transition_key=transition_key, transition_digest=transition_digest, physical_invocation_ref=physical_invocation_ref, external_owner_ref=external_owner_ref, allow_unknown_resolution=True)
+        if not isinstance(resolver, AuthenticatedActor):
+            raise OperationError("unknown resolution requires an authenticated resolver")
+        return self._transition(record, state, result or {}, transaction=transaction, transition_key=transition_key, transition_digest=transition_digest, physical_invocation_ref=physical_invocation_ref, external_owner_ref=external_owner_ref, allow_unknown_resolution=True, transition_actor=resolver)
 
     def get(self, logical_request_key: str) -> Optional[OperationRecord]:
         target = self._target(logical_request_key)
         identity = self.store.get_identity(target)
         if identity is None or identity.payload.get("record_type") != OPERATION_KIND:
             return None
-        request = self._request_from_identity(identity.payload)
-        return OperationRecord(identity.ref, request, OperationState(identity.payload["state"]), dict(identity.payload.get("result", {})), None, identity.version)
+        lineage_actor = next(
+            (
+                event.actor
+                for event in self.store.list_events(stream=OPERATION_STREAM)
+                if event.subject.authority == identity.ref.authority
+                and event.subject.kind == identity.ref.kind
+                and event.subject.id == identity.ref.id
+                and event.event_type == "operation.prepared"
+            ),
+            None,
+        )
+        request = self._request_from_identity(identity.payload, actor=lineage_actor)
+        receipt = self.store.get_receipt(request.logical_request_key)
+        return OperationRecord(identity.ref, request, OperationState(identity.payload["state"]), dict(identity.payload.get("result", {})), receipt, identity.version)
 
 
 OperationAdapter = OperationManager

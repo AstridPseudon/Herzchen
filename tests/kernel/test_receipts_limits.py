@@ -12,6 +12,7 @@ from herzchen.kernel import (
     AllowanceExhaustedError,
     CapacityExhaustedError,
     LimitService,
+    OperationError,
     OperationManager,
     OperationRequest,
     OperationState,
@@ -33,11 +34,11 @@ class ReceiptAndLimitTests(unittest.TestCase):
         self.store.close()
         self.tempdir.cleanup()
 
-    def operation_request(self, *, key: str = "logical-1", digest: str = "a" * 64, payload: Optional[dict] = None) -> OperationRequest:
+    def operation_request(self, *, key: str = "logical-1", digest: str = "a" * 64, payload: Optional[dict] = None, adapter_ref: Optional[ResourceRef] = None, operation: str = "adapter.invoke") -> OperationRequest:
         return OperationRequest(
-            "adapter.invoke",
+            operation,
             "adapter.v1",
-            ResourceRef("neutral-adapter", "adapter", "adapter-1"),
+            adapter_ref or ResourceRef("neutral-adapter", "adapter", "adapter-1"),
             self.actor,
             key,
             digest,
@@ -59,12 +60,14 @@ class ReceiptAndLimitTests(unittest.TestCase):
         manager = OperationManager(self.store)
         first = manager.prepare(self.operation_request())
         self.assertEqual(first.state, OperationState.PREPARED)
-        replay = manager.prepare(self.operation_request(payload={"changed": True}))
+        replay = manager.prepare(self.operation_request())
         self.assertEqual(replay.receipt, first.receipt)
         self.assertEqual(replay.result, first.result)
         self.assertEqual(replay.state, first.state)
         with self.assertRaises(ReplayConflictError):
-            manager.prepare(self.operation_request(digest="b" * 64))
+            manager.prepare(self.operation_request(payload={"changed": True}, digest=first.request.request_digest))
+        with self.assertRaises(ReplayConflictError):
+            manager.prepare(self.operation_request(adapter_ref=ResourceRef("neutral-adapter", "adapter", "adapter-2"), digest=first.request.request_digest))
 
         uncertain = manager.record_outcome(first, OperationState.UNKNOWN, {"reason": "no response"})
         self.assertEqual(uncertain.state, OperationState.UNKNOWN)
@@ -72,10 +75,135 @@ class ReceiptAndLimitTests(unittest.TestCase):
         self.assertEqual(uncertain_replay.receipt, uncertain.receipt)
         with self.assertRaises(UnknownOutcomeError):
             manager.record_outcome(uncertain, OperationState.COMMITTED, {"value": 1}, transition_key="logical-1:retry")
-        resolved = manager.resolve_unknown(uncertain, OperationState.COMMITTED, {"value": 1}, transition_key="logical-1:resolve")
+        resolved = manager.resolve_unknown(uncertain, OperationState.COMMITTED, {"value": 1}, resolver=AuthenticatedActor("resolver-auth", "resolver-1", "resolver-credential"), transition_key="logical-1:resolve")
         self.assertEqual(resolved.state, OperationState.COMMITTED)
         self.assertEqual(resolved.physical_invocation_ref, first.physical_invocation_ref)
         self.assertEqual(resolved.external_owner_ref, first.external_owner_ref)
+
+    def test_same_key_changed_arguments_conflict_even_with_reused_digest(self) -> None:
+        manager = OperationManager(self.store)
+        first = manager.prepare(self.operation_request(key="changed-args"))
+        before_identity = self.store.get_identity(first.operation_ref)
+        before_event_count = len(self.store.list_events(stream="operations"))
+        before_receipt_count = self.store.connection.execute("SELECT COUNT(*) FROM command_receipts").fetchone()[0]
+        before_invocation_count = sum(
+            1 for event in self.store.list_events(stream="operations")
+            if event.effects.get("physical_invocation_ref") is not None
+        )
+
+        variants = (
+            self.operation_request(key="changed-args", operation="adapter.other", digest=first.request.request_digest),
+            self.operation_request(
+                key="changed-args",
+                adapter_ref=ResourceRef("neutral-adapter", "adapter", "adapter-2"),
+                digest=first.request.request_digest,
+            ),
+            self.operation_request(key="changed-args", payload={"input": "changed"}, digest=first.request.request_digest),
+        )
+        for changed in variants:
+            with self.assertRaises(ReplayConflictError):
+                manager.prepare(changed)
+            self.assertEqual(self.store.get_identity(first.operation_ref), before_identity)
+            self.assertEqual(len(self.store.list_events(stream="operations")), before_event_count)
+            self.assertEqual(self.store.connection.execute("SELECT COUNT(*) FROM command_receipts").fetchone()[0], before_receipt_count)
+            self.assertEqual(
+                sum(1 for event in self.store.list_events(stream="operations") if event.effects.get("physical_invocation_ref") is not None),
+                before_invocation_count,
+            )
+
+    def test_unknown_reopen_resolution_preserves_attribution(self) -> None:
+        manager = OperationManager(self.store)
+        first = manager.prepare(self.operation_request(key="unknown-reopen"))
+        uncertain = manager.record_outcome(first, OperationState.UNKNOWN, {"reason": "no response"})
+        self.store.close()
+        self.store = Store.open(self.path)
+        reopened = OperationManager(self.store)
+        loaded = reopened.get("unknown-reopen")
+        self.assertIsNotNone(loaded)
+        assert loaded is not None
+        self.assertEqual(loaded.request.actor, self.actor)
+        self.assertNotEqual(loaded.request.actor.actor, "record-reader")
+        resolver = AuthenticatedActor("resolution-auth", "resolver-1", "resolution-credential")
+        before_events = len(self.store.list_events(stream="operations"))
+        with self.assertRaises(OperationError):
+            reopened.resolve_unknown(loaded, OperationState.COMMITTED, {"value": 1}, transition_key="unknown-reopen:resolve")
+        self.assertEqual(len(self.store.list_events(stream="operations")), before_events)
+
+        resolved = reopened.resolve_unknown(
+            loaded,
+            OperationState.COMMITTED,
+            {"value": 1},
+            resolver=resolver,
+            transition_key="unknown-reopen:resolve",
+        )
+        self.assertEqual(resolved.request.actor, self.actor)
+        outcome_events = [event for event in self.store.list_events(stream="operations") if event.event_type == "operation.outcome"]
+        self.assertEqual(len(outcome_events), 2)
+        self.assertEqual(outcome_events[-1].actor, resolver)
+        replay = reopened.resolve_unknown(
+            loaded,
+            OperationState.COMMITTED,
+            {"value": 1},
+            resolver=resolver,
+            transition_key="unknown-reopen:resolve",
+        )
+        self.assertEqual(replay.receipt, resolved.receipt)
+        self.assertEqual(len(self.store.list_events(stream="operations")), before_events + 1)
+
+    def test_exact_request_replay_after_reopen_is_single_effect(self) -> None:
+        manager = OperationManager(self.store)
+        request = self.operation_request(key="reopen-replay")
+        first = manager.prepare(request)
+        before_events = len(self.store.list_events(stream="operations"))
+        self.store.close()
+        self.store = Store.open(self.path)
+        reopened = OperationManager(self.store)
+        replay = reopened.prepare(request)
+        self.assertEqual(replay.receipt, first.receipt)
+        self.assertEqual(replay.result, first.result)
+        self.assertEqual(len(self.store.list_events(stream="operations")), before_events)
+
+    def test_limit_replay_uses_canonical_semantics_after_reopen(self) -> None:
+        service = LimitService(self.store)
+        pool = self.pool(capacity=2, allowance=10)
+        reservation = service.reserve(pool.ref, "canonical-reservation", 1, logical_request_key="canonical-reserve", actor=self.actor)
+        reserve_events = len(self.store.list_events(stream="limits"))
+        replay = service.reserve(
+            pool.ref,
+            "canonical-reservation",
+            1,
+            logical_request_key="canonical-reserve",
+            request_digest="f" * 64,
+            actor=self.actor,
+        )
+        self.assertEqual(replay.receipt, reservation.receipt)
+        with self.assertRaises(ReplayConflictError):
+            service.reserve(
+                pool.ref,
+                "canonical-reservation",
+                2,
+                logical_request_key="canonical-reserve",
+                request_digest=reservation.receipt.request_digest,
+                actor=self.actor,
+            )
+        self.assertEqual(len(self.store.list_events(stream="limits")), reserve_events)
+        settled = service.settle(reservation, 1, logical_request_key="canonical-settle", actor=self.actor)
+        settled_replay = service.settle(
+            reservation,
+            1,
+            logical_request_key="canonical-settle",
+            request_digest="e" * 64,
+            actor=self.actor,
+        )
+        self.assertEqual(settled_replay.receipt, settled.receipt)
+        with self.assertRaises(ReplayConflictError):
+            service.settle(
+                reservation,
+                2,
+                logical_request_key="canonical-settle",
+                request_digest=settled.receipt.request_digest,
+                actor=self.actor,
+            )
 
     def test_limit_reusable_capacity_is_separate_from_cumulative_usage_and_overrun_is_truthful(self) -> None:
         service = LimitService(self.store)
@@ -121,7 +249,7 @@ class ReceiptAndLimitTests(unittest.TestCase):
         self.assertEqual(replay.receipt, first.receipt)
         self.assertEqual(replay.status, ReservationStatus.HELD)
         with self.assertRaises(ReplayConflictError):
-            service.reserve(pool.ref, "reservation-1", 1, logical_request_key="reserve-1", request_digest="c" * 64, actor=self.actor)
+            service.reserve(pool.ref, "reservation-1", 2, logical_request_key="reserve-1", request_digest=first.receipt.request_digest, actor=self.actor)
 
     def test_last_unit_race_allows_only_one_contender(self) -> None:
         service = LimitService(self.store)
