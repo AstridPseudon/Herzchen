@@ -160,3 +160,56 @@ this worker result makes no publication or gate claim.
   provenance.
 - Candidate installed-origin evidence is not production Otto/Astrid installed
   product evidence and does not prove G-OTTO or INT-03.
+
+## Bounded adapter correction supplement
+
+This supplement preserves the earlier implementation/result commits and the
+original boundary evidence. The earlier candidate implementation was:
+
+- Implementation: `19f3d632454aad353fb11ed77364ab2915bd42f1`
+- Result: `2de637db3aebc4646c747ebf5443cb419ebb3575`
+- Original focused evidence: 13 tests passed, but no neutral-adapter test
+  exercised the missing import boundary.
+
+The defect was confirmed by inspection: `read_managed_pack` called
+`_public_apis()` before honoring injected `discoverer` and `loader` callables.
+The correction requires both callables together, rejects a partial adapter
+before default resolution, and leaves the explicit Astrid default route
+unchanged. It does not copy Astrid loader code into Herzchen.
+
+Correction commit/tree:
+
+- `bb34312be1eb2bbe3c0af65d0a5941d2b783e99b` /
+  `7e8425fad3f849704ad0de73ab6f1479460753f5`
+
+The new structural fake-adapter test reads the real `packs/megado` root,
+preserves managed source kind/revision/tree/manifest/inventory identity and
+resource digests, and blocks any attempted `astrid`, `otto`, or `runtime`
+import. A separate assertion proves that supplying only one admission callable
+fails clearly. Existing actual Astrid managed discovery/loader coverage remains
+the default-path proof; its provenance fixture now supplies the matching pair
+as required by the corrected contract.
+
+Correction verification used the known candidate toolchain with
+`env -u PYTHONPATH`:
+
+- Source-focused command: `/tmp/herzchen-pkg05-candidate.7zo9W7/bin/python -m pytest -q tests/packs/test_authoring.py`
+  — `15 passed in 1.03s`, exit `0`.
+- Installed-focused command: same command after corrected wheel installation
+  — `15 passed in 0.99s`, exit `0`.
+- Candidate Python: `3.11.16`; pytest: `9.1.1`.
+- Corrected wheel:
+  `/tmp/herzchen-pkg05-correction-wheel.Oi1DvR/herzchen_contracts-0.1.0-py3-none-any.whl`
+- Corrected wheel SHA-256:
+  `969bc8e9c595426ba19eb57a1eef857e682dfba2ce4ff7a4b3ce480a4ab224d5`
+- Source-focused origins: `herzchen` and `herzchen.packs.authoring` resolved
+  from this worker checkout's `src/` tree.
+- Installed origins: Astrid, Herzchen, and `herzchen.packs.authoring` resolved
+  from `/private/tmp/herzchen-pkg05-candidate.7zo9W7/lib/python3.11/site-packages/`.
+- The neutral test's blocked-import result is the evidence that the injected
+  path does not trigger `_public_apis()` or require Astrid.
+
+The remaining caveat is unchanged: the Astrid helper's hyphenated-subpath tree
+digest is an observed managed-fixture artifact, not a standalone live-source
+certification. This correction claims neither PKG-05 acceptance nor INT-03
+completion.
