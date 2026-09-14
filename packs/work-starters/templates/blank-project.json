@@ -30,41 +30,8 @@
       }
     ],
     "links": [],
-    "documents": [
-      {
-        "local_id": "initial-specification",
-        "title": "Initial project specification",
-        "role": "initial-specification",
-        "visibility": "private",
-        "access_mode": "append",
-        "content": {
-          "title": {
-            "$param": "title"
-          },
-          "outcome": "",
-          "instructions": "",
-          "requires": [],
-          "acceptance": {},
-          "custom": {},
-          "documents": [],
-          "tasks": []
-        }
-      }
-    ],
-    "document_links": [
-      {
-        "subject": {
-          "$local": "project"
-        },
-        "document": {
-          "$local": "initial-specification"
-        },
-        "namespace": "project.documents",
-        "key": "specification",
-        "binding": "current",
-        "access_mode": "append"
-      }
-    ],
+    "documents": [],
+    "document_links": [],
     "assessments": [],
     "status": "planning_only"
   },

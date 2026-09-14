@@ -389,32 +389,7 @@ def validate_template(template: WorkTemplate) -> WorkTemplate:
 def _blank_seed() -> dict[str, Any]:
     return {
         "project": {"local_id": "project", "kind": "project", "title": {"$param": "title"}, "outcome": "", "fields": {}},
-        "efforts": [], "tasks": [], "criteria": [],
-        "documents": [{
-            "local_id": "initial-specification",
-            "title": "Initial project specification",
-            "role": "initial-specification",
-            "visibility": "private",
-            "access_mode": "append",
-            "content": {
-                "title": {"$param": "title"},
-                "outcome": "",
-                "instructions": "",
-                "requires": [],
-                "acceptance": {},
-                "custom": {},
-                "documents": [],
-                "tasks": [],
-            },
-        }],
-        "document_links": [{
-            "subject": {"$local": "project"},
-            "document": {"$local": "initial-specification"},
-            "namespace": "project.documents",
-            "key": "specification",
-            "binding": "current",
-            "access_mode": "append",
-        }],
+        "efforts": [], "tasks": [], "criteria": [], "documents": [],
         "protocol": None,
     }
 
@@ -443,6 +418,33 @@ def render_blank_project(parameters: Optional[Mapping[str, Any]] = None) -> dict
     result = {"project": project, "tasks": []}
     validate_project_fields(result["project"])
     return result
+
+
+def _blank_dat_seed(rendered: RenderedTemplate) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Compose the durable initial specification from the shared projection."""
+    projection = render_blank_project(rendered.parameters)
+    content = deepcopy(projection["project"])
+    content["tasks"] = deepcopy(projection["tasks"])
+    content["metadata"] = {
+        "template_ref": rendered.template.ref.to_dict(),
+        "template_revision": rendered.template.revision,
+        "projection_schema": "pending-project-sheet/v1",
+    }
+    return ([{
+        "local_id": "initial-specification",
+        "title": "Initial project specification",
+        "role": "initial-specification",
+        "visibility": "private",
+        "access_mode": "append",
+        "content": content,
+    }], [{
+        "subject": {"$local": "project"},
+        "document": {"$local": "initial-specification"},
+        "namespace": "project.documents",
+        "key": "specification",
+        "binding": "current",
+        "access_mode": "append",
+    }])
 
 
 PROJECT_FIELDS = ("title", "outcome", "scope", "approach", "acceptance", "tasks", "documents", "metadata")
@@ -766,12 +768,18 @@ class TemplateEngine:
         if resource.id == BLANK_TEMPLATE_ID and nodes:
             raise TemplateValidationError("blank project must contain zero work nodes")
         request = _request_key(logical_request_key, resource, rendered)
-        project_local_name = None
-        if project_seed is not None and any(key in project_seed for key in ("local_id", "key", "id")):
-            project_local_name = _local_name(project_seed)
+        dynamic_documents, dynamic_document_links = ([], [])
+        if resource.id == BLANK_TEMPLATE_ID:
+            dynamic_documents, dynamic_document_links = _blank_dat_seed(rendered)
+        composition_seed = seed
+        if dynamic_documents or dynamic_document_links:
+            composition_seed = dict(seed)
+            composition_seed["documents"] = dynamic_documents
+            composition_seed["document_links"] = dynamic_document_links
+        project_local_name = "project" if resource.id == BLANK_TEMPLATE_ID else None
         reference_names = name_set | ({project_local_name} if project_local_name is not None else set())
-        self._validate_seed_references(seed, nodes, owner_record, reference_names)
-        document_values, document_link_values = self._document_seed_values(seed, reference_names)
+        self._validate_seed_references(composition_seed, nodes, owner_record, reference_names)
+        document_values, document_link_values = self._document_seed_values(composition_seed, reference_names)
         ordered = self._ordered_nodes(nodes, edges)
 
         # All checks above are intentionally before the first public WRK
@@ -841,7 +849,7 @@ class TemplateEngine:
             content_actor = self._content_actor(actor)
             document_refs: dict[str, ResourceRef] = {}
             association_refs: dict[str, ResourceRef] = {}
-            for document in seed.get("documents", []):
+            for document in composition_seed.get("documents", []):
                 if "local_id" not in document:
                     continue
                 local_id = document["local_id"]
@@ -872,7 +880,7 @@ class TemplateEngine:
                 document_refs[local_id] = document_value.ref
                 receipts.append(document_receipt)
 
-            for index, link in enumerate(seed.get("document_links", [])):
+            for index, link in enumerate(composition_seed.get("document_links", [])):
                 subject_name = _marker_name(link["subject"])
                 if subject_name is None:
                     raise TemplateReferenceError(f"document link[{index}] subject must use a local reference")

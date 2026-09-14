@@ -241,7 +241,10 @@ def test_blank_resource_persists_pending_project_initial_spec_and_association(ha
     assert rendered["project"]["title"] == "Untitled project"
     assert rendered["project"]["outcome"] == ""
     assert rendered["tasks"] == []
-    assert render_template(blank_project_template()).seed["tasks"] == []
+    static_seed = render_template(blank_project_template()).seed
+    assert static_seed["tasks"] == []
+    assert static_seed["documents"] == []
+    assert static_seed.get("document_links", []) == []
 
     result = engine.instantiate("work.blank_project", logical_request_key="blank")
     project = graph.get(result.project.ref)
@@ -259,10 +262,14 @@ def test_blank_resource_persists_pending_project_initial_spec_and_association(ha
     assert document["document"]["role"] == "initial-specification"
     assert document["revision"]["initial"] is True
     assert document["revision"]["parent_revision"] is None
-    assert document["revision"]["content"] == {
-        "title": "Untitled project", "outcome": "", "instructions": "", "requires": [],
-        "acceptance": {}, "custom": {}, "documents": [], "tasks": [],
+    expected_content = dict(rendered["project"])
+    expected_content["tasks"] = rendered["tasks"]
+    expected_content["metadata"] = {
+        "template_ref": blank_project_template().ref.to_dict(),
+        "template_revision": blank_project_template().revision,
+        "projection_schema": "pending-project-sheet/v1",
     }
+    assert document["revision"]["content"] == expected_content
     association = ContentCommandHandler(store).read(result.association_refs["project:project.documents:specification"])
     assert association["payload"]["active"] is True
     assert association["payload"]["association"]["subject"] == project.ref.to_dict()

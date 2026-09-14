@@ -1,155 +1,114 @@
-# SNEW01 blank-project worker result
+# SNEW01 blank-project corrective result
 
-## Scope and implementation
+## Scope correction
 
-Implemented the narrow PKG/WRK public composition for
-`TemplateEngine.instantiate("work.blank_project")`.
+The shipped blank resource and `_blank_seed` are restored to the declared
+baseline: `documents: []` and `document_links: []` in the JSON resource, and
+`documents: []` with no document-link seed in `_blank_seed`. The static seed is
+not the source of the initial specification.
 
-- The built-in blank seed now declares one owned DAT document with role
-  `initial-specification`, an empty pending project specification, and one
-  current `project.documents/specification` association.
-- The existing project-local identity is made available to the existing DAT
-  link resolver.
-- The blank early return was removed. Existing `WorkGraph`,
-  `ContentCommandHandler`, `Store.transaction`, `Store.mutate`,
-  `put_identity`, `put_reference`, and fresh-read paths now compose the WRK,
-  DAT document/revision, and association commands in the one outer FND
-  transaction.
-- No controller, Runtime/Astrid code, SQL/schema owner, private writer,
-  second receipt engine, manager, gate, budget, allowance, task, dispatch, or
-  admission behavior was added.
-
-Implementation commit/tree:
+`TemplateEngine` now composes the blank initial DAT document and its current
+`project.documents/specification` association dynamically from the shared
+`render_blank_project(rendered.parameters)` projection. The canonical content
+contains the rendered project and zero tasks plus:
 
 ```text
-87dde21be00c9a76c2227429d6793c881eea126f
-98b06980fc58db6d8b29abdbe66d9359080de2da
+metadata.template_ref       pack/work.blank_project/pkg-03.v1
+metadata.template_revision  pkg-03.v1
+metadata.projection_schema  pending-project-sheet/v1
 ```
 
-Changed files:
+The composition uses the supplied FND transaction and existing DAT document
+and link commands before any optional checkout materialization. No SQL,
+private writer, second receipt engine, schema owner, controller/control,
+Runtime, Astrid, or generic `{}` content was added.
+
+## Corrective source/tests
+
+Changed source/test paths in the corrective working tree:
 
 ```text
+packs/work-starters/templates/blank-project.json  (restored baseline)
 src/herzchen/packs/templates.py
-packs/work-starters/templates/blank-project.json
+tests/packs/test_authoring.py                     (restored sparse assertion)
+tests/packs/test_protocol_resources.py            (restored sparse assertion)
 tests/packs/test_task_templates.py
-tests/packs/test_protocol_resources.py
-tests/packs/test_authoring.py
 ```
 
-## Source validation
+The linked-worktree sandbox prevented the worker from writing Git metadata;
+the owning manager recorded the validated source, tests, and this handoff
+after the worker completed. The final commit and tree are bound in the
+manager completion supplement because embedding a commit hash in its own
+committed payload would be self-referential.
 
-Interpreter:
-`/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/.venvs/int-02/bin/python`
+## Focused validation
 
-Command:
+Source command, using the required interpreter:
 
 ```text
 PYTHONPATH=src /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/.venvs/int-02/bin/python -m pytest -q tests/packs tests/authoring tests/content tests/work/test_batches.py tests/work/test_sheet_batches.py tests/work/test_identity_graph.py tests/conformance/test_dat_handoff.py tests/conformance/test_int03_public_api_probes.py
+142 passed, 12 skipped
 ```
 
-Result: `142 passed, 12 skipped`.
-
-Additional source checks:
+Fresh-store evidence from the source composition:
 
 ```text
-git diff --check                         exit 0
-PYTHONPATH=src ... python -m compileall -q src/herzchen tests/packs/test_task_templates.py   exit 0
+project_ref       evidence/work.project/project-4555c284bfd698c4d43528e56ec6@rev-1
+spec_document_ref evidence/dat.content.document/template-81166781c31433c7f86b2ba9cbdeeccd
+association_ref   evidence/document-association/link-3c2fb9c50d540a3b4532a05c5385f2ea
+receipts          3
+events            3
+durable counts    identities=5, record_references=7, command_receipts=3,
+                  events=3, event_sequences=3
 ```
 
-## Durable blank evidence
+Fresh supported reads show one pending zero-task project, one initial DAT
+document, an empty-parent initial revision, and one active association. The
+project has no manager, budget, gate, worker, protocol, execution, or dispatch
+readiness. The initial content is the shared projection with provenance.
+Same-input replay returns the same project/spec/association refs and receipts
+with event count unchanged at 3. Changed title raises `ReplayConflictError`.
+Invalid title, actor occupancy, materializer failure/recovery, and untouched
+close are covered by the focused tests. Untouched close retains durable
+project/spec/revision/association state, releases the reservation, removes
+only the registered checkout file, and creates no task or content revision.
 
-The fresh-store/reopen probe produced:
+## Disposable wheel
+
+The supplied wheel was checked with `PYTHONPATH` and `PYTHONHOME` unset. Its
+digest is:
 
 ```text
-project_ref          {"authority":"snew01-evidence","id":"project-36672d5b9f72414cea1b48e3f603","kind":"work.project","revision":"rev-1"}
-spec_document_ref    {"authority":"snew01-evidence","id":"template-f8df8bf101d2c4202130420358c3fa8f","kind":"dat.content.document","revision":null}
-association_ref      {"authority":"snew01-evidence","id":"link-fdee2b3b5ed61cbdc2f33051b7d1e1b1","kind":"document-association","revision":null}
-initial_revision_ref rev-ac82774ab7b68c6ef00435b7f997d5de
+e42e31ef3fc0990f024d9e8ab9c78df519c8625ca8570b96e26d052b47c32f39
 ```
 
-The initial document read is role `initial-specification`, its revision is
-`initial: true` with no parent, and its content has the supplied title,
-empty outcome/instructions, empty acceptance/custom/documents/tasks, and no
-execution metadata. The fresh project read is pending with zero tasks,
-`protocol`, `manager`, `gate`, `budget`, `worker`, `execution`, and
-`external_action` unset, and dispatch false. The association is active and
-current-bound to the document.
+It was built before the final static-seed restoration and consequently gave
+`142 passed, 11 skipped, 1 failed` on the exact matrix (the sparse-seed
+assertion). It is not claimed as a passing corrective artifact.
 
-The creation returned three committed receipts and three events:
+The final wheel built from the restored working tree is:
 
 ```text
-evidence-blank:project
-evidence-blank:document:initial-specification
-evidence-blank:link:project:project.documents:specification
+/private/tmp/herzchen-snew01-final-wheel.fQhR3e/herzchen_contracts-0.1.0-py3-none-any.whl
+sha256 aaf946d925d76cdf0ad4c35f6d3cd1a7b7179b43795d0feff61d9b2a73382c66
 ```
 
-Replaying the same request and title returned the same project/spec/link refs
-and receipt values; receipt count stayed `3` and event count stayed `3`.
-Reusing the request with a changed title raised `ReplayConflictError` before
-mutation. Invalid empty title validation left the fresh store with no project,
-receipt, or event. Closing and reopening the database through `Store.open` and
-fresh WRK/DAT reads retained all three durable identities and the initial
-revision.
-
-## Authoring and negative-path evidence
-
-The new focused untouched-close test opens the created pending project through
-`AuthoringSessionService.open` with the exact initial DAT content, then uses
-the existing `SemanticFinishAdapter`/`IdleCloseService` path. It reports
-`closed_cleaned`, removes the registered checkout file, releases the actor
-reservation, retains the project/spec/active association, keeps the project
-revision unchanged, and creates no task or content revision.
-
-Existing focused authoring tests, run in the matrix above, provide the other
-required negative paths:
-
-- `ExclusivityTests.test_create_and_open_does_not_create_when_actor_is_occupied`:
-  actor occupancy returns before the creator callback (`called == []`).
-- `ExclusivityTests.test_materialization_failure_saves_project_and_releases`:
-  materialization returns `saved_project_edit_not_opened`, preserves the
-  project reference and durable scope payload, and leaves the scope available
-  for recovery.
-- Existing authoring failure/conformance tests cover rejected/capture failure,
-  registered-file cleanup, replay, stale tokens, and unexpected-file safety.
-- Existing PKG template tests cover atomic later-node/DAT failure rollback,
-  replay, changed-parameter conflict, and invalid seed preflight.
-
-The normal `ProjectSheet`/WRK/DAT edit and document-attach path remains
-separate and continues to use its existing public batch composition. Explicit
-admission remains separate; this worker claims no G-FOUNDATION or full-product
-acceptance.
-
-## Installed wheel validation
-
-Disposable wheel build used `pip wheel . --no-deps --no-build-isolation`.
+Installed origins in the disposable venv:
 
 ```text
-Wheel: herzchen_contracts-0.1.0-py3-none-any.whl
-SHA-256: e7021249f7e346785f8da47a7fb99da492a349db739e36a7cab441bd07f0c26b
+/private/tmp/herzchen-snew01-wheel.NwXHBp/venv/lib/python3.12/site-packages/herzchen/__init__.py
+/private/tmp/herzchen-snew01-wheel.NwXHBp/venv/lib/python3.12/site-packages/herzchen/packs/templates.py
+/private/tmp/herzchen-snew01-wheel.NwXHBp/venv/lib/python3.12/site-packages/herzchen/domains/work/sheet.py
 ```
 
-Installed origins, with `env -u PYTHONPATH -u PYTHONHOME`, were:
+With `env -u PYTHONPATH -u PYTHONHOME`, the exact focused matrix returned:
 
 ```text
-/tmp/herzchen-snew01-wheel.NwXHBp/venv/lib/python3.12/site-packages/herzchen/__init__.py
-/tmp/herzchen-snew01-wheel.NwXHBp/venv/lib/python3.12/site-packages/herzchen/packs/templates.py
-/tmp/herzchen-snew01-wheel.NwXHBp/venv/lib/python3.12/site-packages/herzchen/domains/work/sheet.py
+143 passed, 11 skipped
 ```
 
-Exact focused matrix command:
+## Boundary
 
-```text
-env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-snew01-wheel.NwXHBp/venv/bin/python -m pytest -q tests/packs tests/authoring tests/content tests/work/test_batches.py tests/work/test_sheet_batches.py tests/work/test_identity_graph.py tests/conformance/test_dat_handoff.py tests/conformance/test_int03_public_api_probes.py
-```
-
-Result: `143 passed, 11 skipped`. The one-count difference from source is an
-environment-dependent optional skip; the same test paths were used. The
-candidate wheel itself was the installed module origin. Generated build,
-wheel, cache, and temporary checkout artifacts are not in the worker tree.
-
-## Remaining owner boundary
-
-No concrete gap remains in the requested PKG `TemplateEngine` blank path.
-Host/controller exposure of create-and-open and all G-FOUNDATION/product-level
-acceptance remain outside this bounded worker change and require their owning
-integration paths.
+This result covers only the corrected PKG `TemplateEngine` blank composition
+and focused proof. Controller/Runtime/Astrid exposure and G-FOUNDATION remain
+outside this bounded change. No full-product acceptance is claimed.

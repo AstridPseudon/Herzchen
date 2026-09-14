@@ -204,8 +204,7 @@ def test_blank_starter_is_sparse_pack_v2_and_independent_of_megado():
     assert template["seed"]["work"][0]["kind"] == "project"
     assert template["seed"]["work"][0]["custom"] == {}
     assert template["seed"]["links"] == []
-    assert [document["role"] for document in template["seed"]["documents"]] == ["initial-specification"]
-    assert template["seed"]["document_links"][0]["subject"] == {"$local": "project"}
+    assert template["seed"]["documents"] == []
     assert template["seed"]["assessments"] == []
 
 
