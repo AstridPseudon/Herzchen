@@ -18,6 +18,7 @@ from herzchen.contracts import AuthenticatedActor
 from herzchen.kernel import Store
 from herzchen.packs.authoring import (
     ManagedPackAuthoringHandler,
+    domain_contribution as pack_domain_contribution,
     PackContentError,
     PackPathError,
     PackAuthoringError,
@@ -264,6 +265,7 @@ def test_invalid_managed_provenance_fails_closed(managed_state: Path):
 
 def test_content_only_authoring_preserves_unknown_siblings_and_old_pins(managed_pack, tmp_path: Path):
     with Store.create(tmp_path / "pack.sqlite", authority="pkg05-test") as store:
+        store.register_domain_handler((pack_domain_contribution(),))
         handler = ManagedPackAuthoringHandler(store)
         actor = AuthenticatedActor("pkg05-test", "author", "credential")
         tables_before = {
@@ -336,6 +338,7 @@ def test_compatibility_inventory_has_explicit_history_aliases_and_transfer_fixtu
 
 def test_authoring_path_rejects_undeclared_escape_updates(managed_pack, tmp_path: Path):
     with Store.create(tmp_path / "pack.sqlite", authority="pkg05-test") as store:
+        store.register_domain_handler((pack_domain_contribution(),))
         handler = ManagedPackAuthoringHandler(store)
         with pytest.raises(PackPathError):
             handler.author(

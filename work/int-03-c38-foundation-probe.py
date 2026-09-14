@@ -3,8 +3,10 @@ import json, tempfile
 from pathlib import Path
 from typing import Any
 from herzchen.authoring import AuthoringLifecycle
-from herzchen.authoring.sessions import AuthoringSessionService
+from herzchen.authoring.sessions import AuthoringSessionService, register_authoring
 from herzchen.content import ContentCommandHandler
+from herzchen.content.model import domain_contribution as content_contribution
+from herzchen.content.packets import domain_contribution as packet_contribution
 from herzchen.contracts import AuthenticatedActor
 from herzchen.domains.work import WorkGraph
 from herzchen.domains.work.batches import ProjectBatches
@@ -22,7 +24,7 @@ def safe(v: Any) -> Any:
 
 def main() -> None:
     root=Path(tempfile.mkdtemp(prefix='int03-c38-')); store=Store.create(root/'foundation.sqlite',authority='int03-c38')
-    actor=AuthenticatedActor('int03-c38','curator','credential'); graph=WorkGraph(store,actor=actor); graph.register()
+    actor=AuthenticatedActor('int03-c38','curator','credential'); graph=WorkGraph(store,actor=actor); graph.register(); store.register_domain_handler((content_contribution(), packet_contribution())); register_authoring(store)
     batches=ProjectBatches(store,actor=actor); sheet=ProjectSheet(store,actor=actor,batches=batches); decisions=DecisionsModule(store,actor=actor)
     checks={}; details={}
     try:

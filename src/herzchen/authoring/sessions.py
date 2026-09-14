@@ -61,6 +61,7 @@ def domain_contribution() -> DomainContribution:
             ("finish.recovery", "authoring-scope"),
             ("release", "authoring-scope"),
             ("cleanup", "authoring-scope"),
+            ("cleanup.refresh", "authoring-scope"),
         )
     )
     return DomainContribution(
@@ -73,10 +74,11 @@ def domain_contribution() -> DomainContribution:
             ("autosave", "authoring-scope"), ("finish.claim", "authoring-scope"),
             ("finish", "authoring-scope"), ("finish.recovery", "authoring-scope"),
             ("release", "authoring-scope"), ("cleanup", "authoring-scope"),
+            ("cleanup.refresh", "authoring-scope"),
         )),
         tuple("authoring." + operation for operation in (
             "actor.open", "actor.release", "open", "metadata", "autosave",
-            "finish.claim", "finish", "finish.recovery", "release", "cleanup",
+            "finish.claim", "finish", "finish.recovery", "release", "cleanup", "cleanup.refresh",
         )),
         AUTHORING_SCHEMA_REVISION,
         ("fnd-03.identities", "fnd-03.record_references", "fnd-03.transaction", "handler-required") + ports,
@@ -903,7 +905,11 @@ class AuthoringSessionService:
         }
         payload["recovery_pending"] = False
         payload.pop("error", None)
-        digest = self._request_digest("cleanup.refresh", request_id, {"session": handle.session_id, "snapshot": snapshot.digest})
+        digest = self._request_digest(
+            "cleanup.refresh", request_id,
+            {"session": handle.session_id, "snapshot": snapshot.digest},
+            target=handle.scope, actor=handle.actor,
+        )
         with self.writer.transaction() as tx:
             current = _as_record(self.writer.get_identity(handle.scope))
             if current is None:

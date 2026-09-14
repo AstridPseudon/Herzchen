@@ -8,7 +8,7 @@ import pytest
 from herzchen.authoring import AuthoringLifecycle
 from herzchen.authoring.cleanup import CleanupIdentityError, RegisteredFile, cleanup_registered_files
 from herzchen.authoring.finish import ValidationResult
-from herzchen.authoring.sessions import AuthoringSessionService
+from herzchen.authoring.sessions import AuthoringSessionService, register_authoring
 from herzchen.authoring.snapshots import DurableSnapshotAdapter
 from herzchen.contracts import AuthenticatedActor, AuthoringState, CleanupStatus, ResourceRef
 from herzchen.kernel import Store
@@ -40,6 +40,7 @@ def _open(lifecycle: AuthoringLifecycle, target: ResourceRef, request_id: str):
 
 def test_manual_late_write_is_recovery_and_fresh_retry_durably_preserves_it(tmp_path: Path):
     store = Store.create(tmp_path / "manual.sqlite", authority="gf03-store")
+    register_authoring(store)
     lifecycle = AuthoringLifecycle(AuthoringSessionService(store))
     root = tmp_path / "manual-checkout"
     root.mkdir()
@@ -100,6 +101,7 @@ def test_manual_late_write_is_recovery_and_fresh_retry_durably_preserves_it(tmp_
 
 def test_idle_late_write_uses_same_recovery_barrier_and_keeps_file(tmp_path: Path):
     store = Store.create(tmp_path / "idle.sqlite", authority="gf03-store")
+    register_authoring(store)
     lifecycle = AuthoringLifecycle(AuthoringSessionService(store), clock=lambda: 100.0)
     root = tmp_path / "idle-checkout"
     root.mkdir()
@@ -157,6 +159,7 @@ def test_exact_manifest_rejects_in_place_late_write_during_cleanup(tmp_path: Pat
         return cleanup_registered_files(root, entries, **kwargs)
 
     store = Store.create(tmp_path / "manifest.sqlite", authority="gf03-store")
+    register_authoring(store)
     lifecycle = AuthoringLifecycle(AuthoringSessionService(store), cleanup=cleanup)
     root = tmp_path / "manifest-checkout"
     root.mkdir()
@@ -242,6 +245,7 @@ def test_public_cleanup_deletes_only_exact_manifest_with_quiescent_writer(tmp_pa
 
 def test_unchanged_manual_and_idle_finish_still_persist_and_clean(tmp_path: Path):
     store = Store.create(tmp_path / "normal.sqlite", authority="gf03-store")
+    register_authoring(store)
     lifecycle = AuthoringLifecycle(AuthoringSessionService(store), clock=lambda: 100.0)
     try:
         for mode in ("manual", "idle"):

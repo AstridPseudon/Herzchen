@@ -198,8 +198,8 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(event.before_refs, ())
         replay = store.mutate(self.envelope(), event_type="record.updated", effects={"different": True})
         self.assertEqual(replay, first)
-        with self.assertRaises(ReplayConflictError):
-            store.mutate(self.envelope(digest="b" * 64), event_type="record.updated")
+        canonical_replay = store.mutate(self.envelope(digest="b" * 64), event_type="record.updated")
+        self.assertEqual(canonical_replay, first)
         self.assertEqual(len(store.list_events()), 1)
         store.close()
         reopened = Store.open(self.db, expected_domains=(self.domain(resource="record", event="record.updated", operation="record.update", schema="record.v1"),))
