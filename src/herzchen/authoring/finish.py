@@ -121,15 +121,16 @@ class SemanticFinishAdapter:
     ) -> SemanticFinishResult:
         """Durably retain the pre-late-write capture and release for retry."""
         session_snapshot = tree.as_session_snapshot(self.snapshots._ref(handle, "final", tree.tree_digest))
-        self.service._transition_recovery(
-            handle, request_id + ":late-write", session_snapshot, error,
+        self.service.record_finish_recovery(
+            handle, request_id=request_id + ":late-write", snapshot=session_snapshot, error=error,
             retirement_guard=retirement_guard,
         )
         record = self.service.reader.get_identity(handle.scope)
         checkout = None
         if record is not None:
             try:
-                checkout = self.service._payload_checkout(record.payload)
+                raw_checkout = record.payload.get("checkout")
+                checkout = None if raw_checkout is None else AuthoringCheckout.from_dict(raw_checkout)
             except (TypeError, ValueError, KeyError):
                 checkout = None
         finish = FinishResult(
@@ -340,13 +341,9 @@ class SemanticFinishAdapter:
             if not validation.valid:
                 # Use the session port's existing rejected-draft transition;
                 # no domain handler or second receipt/event engine is involved.
-                digest = self.service._request_digest(
-                    "finish", request_id,
-                    {"session": handle.session_id, "mode": mode, "expected_base_revision": expected_base_revision, "pending": pending},
-                    target=handle.scope, actor=handle.actor,
-                )
-                rejected = self.service._reject_finish(
-                    handle, request_id, digest, checkout, session_snapshot, _diagnostic_text(validation.diagnostics), ValueError,
+                rejected = self.service.reject_finish(
+                    handle, request_id=request_id, snapshot=session_snapshot,
+                    error=_diagnostic_text(validation.diagnostics),
                     retirement_guard=retirement_guard,
                 )
                 return SemanticFinishResult("rejected", rejected, tree, validation, error=_diagnostic_text(validation.diagnostics))
@@ -370,21 +367,16 @@ class SemanticFinishAdapter:
                 )
 
             try:
-                # Use the supplied common writer transaction around the
-                # session port.  Store implements nested transactions as
-                # savepoints, so this serializes separate services on the
-                # durable writer without an EDT lock or a second boundary.
-                with self.service._session_transaction():
-                    result = self.service.finish(
-                        handle,
-                        request_id=request_id,
-                        mode=mode,
-                        capture=session_snapshot,
-                        expected_base_revision=expected_base_revision,
-                        apply=apply,
-                        pending=pending,
-                        retirement_guard=retirement_guard,
-                    )
+                result = self.service.finish(
+                    handle,
+                    request_id=request_id,
+                    mode=mode,
+                    capture=session_snapshot,
+                    expected_base_revision=expected_base_revision,
+                    apply=apply,
+                    pending=pending,
+                    retirement_guard=retirement_guard,
+                )
             except BaseException as exc:
                 reconciled = self._reconcile_completed_finish(
                     handle,

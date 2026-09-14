@@ -354,7 +354,7 @@ class _AuthoringSessionServiceEngine:
 
     @staticmethod
     def _active(payload: Mapping[str, Any]) -> bool:
-        checkout = AuthoringSessionService._payload_checkout(payload)
+        checkout = _AuthoringSessionServiceEngine._payload_checkout(payload)
         return checkout is not None and checkout.state == AuthoringState.OPEN
 
     @staticmethod
@@ -363,9 +363,9 @@ class _AuthoringSessionServiceEngine:
 
     @staticmethod
     def _masked_read(scope: ResourceRef, payload: Optional[Mapping[str, Any]], *, holder: bool = False) -> ReadResult:
-        if not payload or not AuthoringSessionService._active(payload):
+        if not payload or not _AuthoringSessionServiceEngine._active(payload):
             return ReadResult("available", scope)
-        checkout = AuthoringSessionService._payload_checkout(payload)
+        checkout = _AuthoringSessionServiceEngine._payload_checkout(payload)
         assert checkout is not None
         if holder:
             return ReadResult("open", scope, checkout, payload.get("purpose"), payload.get("activity"))
@@ -714,6 +714,46 @@ class _AuthoringSessionServiceEngine:
             raise BaseRevisionMismatchError("expected base revision does not match checkout")
         return checkout
 
+    def validate_session(self, handle: SessionHandle, *, require_open: bool = True) -> AuthoringCheckout:
+        """Return the authenticated current checkout without exposing its owner."""
+        if not isinstance(handle, SessionHandle):
+            raise InvalidSessionError("session handle is not typed")
+        record = _as_record(self.__writer.get_identity(handle.scope))
+        if record is None:
+            raise InvalidSessionError("scope is not admitted")
+        return self._validate_record(handle, record, require_open=require_open)
+
+    def record_content_edit(
+        self, handle: SessionHandle, *, request_id: str, timestamp: float,
+    ) -> float:
+        """Persist the finite idle-policy metadata delta for one open session."""
+        if not isinstance(request_id, str) or not request_id:
+            raise ValueError("content-edit request_id must be non-blank")
+        if isinstance(timestamp, bool) or not isinstance(timestamp, (int, float)):
+            raise TypeError("content-edit timestamp must be numeric")
+        record = _as_record(self.__writer.get_identity(handle.scope))
+        if record is None:
+            raise InvalidSessionError("scope is not admitted")
+        self._validate_record(handle, record)
+        payload = dict(record.payload)
+        value = float(timestamp)
+        payload["last_content_edit_at"] = value
+        payload["last_content_edit"] = value
+        digest = self._request_digest(
+            "metadata", request_id, payload, target=handle.scope, actor=handle.actor
+        )
+        with self.__writer.transaction() as tx:
+            current = _as_record(self.__writer.get_identity(handle.scope))
+            if current is None:
+                raise InvalidSessionError("authoring scope disappeared")
+            self._validate_record(handle, current)
+            self._mutate(
+                tx, actor=handle.actor, operation="metadata", request_id=request_id,
+                target=handle.scope, digest=digest, record=current, payload=payload,
+                effects={"last_content_edit_at": value},
+            )
+        return value
+
     def wait(self, target: ResourceRef, *, timeout: float = 5.0, poll_interval: float = 0.05, actor: Optional[AuthenticatedActor] = None, parent_scope: Optional[ResourceRef] = None) -> WaitResult:
         scope = self.resolve_scope(target, parent_scope=parent_scope)
         started = time.monotonic()
@@ -779,6 +819,28 @@ class _AuthoringSessionServiceEngine:
         return data
 
     def finish(
+        self,
+        handle: SessionHandle,
+        *,
+        request_id: str,
+        mode: str,
+        capture: Any,
+        expected_base_revision: Optional[str] = None,
+        apply: Optional[Callable[..., Any]] = None,
+        pending: Optional[bool] = None,
+        retirement_manifest: Optional[Sequence[str]] = None,
+        retirement_guard: Optional[object] = None,
+    ) -> FinishResult:
+        """Serialize the complete typed finish operation on the common owner."""
+        with self.__writer.transaction():
+            return self._finish_locked(
+                handle, request_id=request_id, mode=mode, capture=capture,
+                expected_base_revision=expected_base_revision, apply=apply,
+                pending=pending, retirement_manifest=retirement_manifest,
+                retirement_guard=retirement_guard,
+            )
+
+    def _finish_locked(
         self,
         handle: SessionHandle,
         *,
@@ -892,6 +954,28 @@ class _AuthoringSessionServiceEngine:
         self._transition_recovery(handle, request_id + ":rejected", snap, error, rejected=True, retirement_guard=retirement_guard)
         return FinishResult("rejected", handle.scope, handle.session_id, final_snapshot=snap, recovery_pending=False, cleanup=CleanupStatus.PENDING, error=error)
 
+    def reject_finish(
+        self, handle: SessionHandle, *, request_id: str, snapshot: Snapshot,
+        error: str, retirement_guard: Optional[object] = None,
+    ) -> FinishResult:
+        """Persist the exact rejected-finish outcome for a validated snapshot."""
+        if not isinstance(request_id, str) or not request_id:
+            raise ValueError("rejected-finish request_id must be non-blank")
+        if not isinstance(snapshot, Snapshot):
+            raise TypeError("rejected finish requires a Snapshot")
+        if not isinstance(error, str) or not error:
+            raise ValueError("rejected finish requires a non-blank error")
+        checkout = self.validate_session(handle)
+        digest = self._request_digest(
+            "finish", request_id,
+            {"session": handle.session_id, "rejected": True, "error": error},
+            target=handle.scope, actor=handle.actor,
+        )
+        return self._reject_finish(
+            handle, request_id, digest, checkout, snapshot, error, ValueError,
+            retirement_guard=retirement_guard,
+        )
+
     def _transition_recovery(self, handle: SessionHandle, request_id: str, snap: Snapshot, error: str, *, rejected: bool = False, retirement_guard: Optional[object] = None) -> None:
         record = _as_record(self.__writer.get_identity(handle.scope))
         if record is None:
@@ -930,6 +1014,23 @@ class _AuthoringSessionServiceEngine:
                 self._mutate(tx, actor=handle.actor, operation="actor.release", request_id=request_id + ":actor", target=actor_ref, digest=digest, record=actor_record, payload={"type": "authoring_actor", "active": False, "scope": handle.scope.to_dict(), "session_id": handle.session_id}, effects={"session_id": handle.session_id})
             self._put_snapshot(tx, snap)
             self._put_refs(tx, snap.ref)
+
+    def record_finish_recovery(
+        self, handle: SessionHandle, *, request_id: str, snapshot: Snapshot,
+        error: str, retirement_guard: Optional[object] = None,
+    ) -> None:
+        """Persist the exact released recovery outcome for one failed finish."""
+        if not isinstance(request_id, str) or not request_id:
+            raise ValueError("finish-recovery request_id must be non-blank")
+        if not isinstance(snapshot, Snapshot):
+            raise TypeError("finish recovery requires a Snapshot")
+        if not isinstance(error, str) or not error:
+            raise ValueError("finish recovery requires a non-blank error")
+        self.validate_session(handle)
+        self._transition_recovery(
+            handle, request_id, snapshot, error,
+            retirement_guard=retirement_guard,
+        )
 
     def refresh_final_snapshot(self, handle: SessionHandle, *, request_id: str, snapshot: Snapshot, retirement_guard: object) -> Snapshot:
         """Durably replace a released finish with a fresh retry capture.

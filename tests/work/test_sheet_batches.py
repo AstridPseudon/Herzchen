@@ -6,7 +6,7 @@ import pytest
 
 from herzchen.contracts import AuthenticatedActor, ResourceRef
 from herzchen.domains.assessment import AssessmentModule
-from herzchen.domains.work import WorkGraph
+from herzchen.domains.work import WorkGraph, WorkNotFoundError
 from herzchen.domains.work.assignments import ResponsibilityAssignments
 from herzchen.domains.work.decisions import DecisionsModule
 from herzchen.domains.work.sheet import (
@@ -143,7 +143,8 @@ def test_stale_base_rejects_sheet_and_direct_surface_without_partial_mutation(en
         service.revise(project, approach="must not apply", base_revision=stale, logical_request_key="stale-direct")
     assert len(store.list_events()) == before[0]
     assert graph.get(project.ref).payload == before[1]
-    assert graph._resolve("new") is None
+    with pytest.raises(WorkNotFoundError):
+        graph.resolve("new")
 
 
 def test_withdraw_and_assignment_route_are_explicit_and_per_assignment(environment):

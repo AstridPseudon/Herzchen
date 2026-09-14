@@ -19,7 +19,7 @@ def command_facade(engine_type: type[Any], domain_id: str) -> type[Any]:
     endpoint_descriptors: Dict[str, Any] = {}
     for base in reversed(engine_type.__mro__[:-1]):
         for name, value in base.__dict__.items():
-            if name != "__init__" and (
+            if not name.startswith("_") and (
                 inspect.isfunction(value)
                 or isinstance(value, (staticmethod, classmethod, property))
             ):
@@ -59,23 +59,20 @@ def command_facade(engine_type: type[Any], domain_id: str) -> type[Any]:
         def __getattr__(self, name: str) -> Any:
             from herzchen.kernel.store import DomainCommandPort, DomainHandler, Store, Transaction
 
+            if name.startswith("_") or name in DomainCommandPort._FORBIDDEN:
+                raise AttributeError(name)
             port = object.__getattribute__(self, "_CommandFacade__port")
             engine = object.__getattribute__(port, "_DomainCommandPort__engine")
-            if name.startswith("_"):
-                if name not in endpoints:
-                    raise AttributeError(name)
-                return getattr(engine, name)
-            if name in DomainCommandPort._FORBIDDEN:
-                raise AttributeError(name)
             value = getattr(engine, name)
             if isinstance(value, (Store, DomainHandler, Transaction)):
                 raise AttributeError(name)
             return value
 
         def __setattr__(self, name: str, value: Any) -> None:
-            if name in {"reader", "_CommandFacade__port"}:
-                object.__setattr__(self, name, value)
-                return
+            from herzchen.kernel.store import DomainCommandPort
+
+            if name.startswith("_") or name in DomainCommandPort._FORBIDDEN:
+                raise AttributeError(name)
             port = object.__getattribute__(self, "_CommandFacade__port")
             engine = object.__getattribute__(port, "_DomainCommandPort__engine")
             facade_descriptor = getattr(type(self), name, None)
@@ -96,11 +93,6 @@ def command_facade(engine_type: type[Any], domain_id: str) -> type[Any]:
 
         def endpoint(self: Any, *args: Any, **kwargs: Any) -> Any:
             port = object.__getattribute__(self, "_CommandFacade__port")
-            if name.startswith("_"):
-                engine = object.__getattribute__(port, "_DomainCommandPort__engine")
-                value = getattr(engine, name)
-                inspect.signature(value).bind(*args, **kwargs)
-                return value(*args, **kwargs)
             return getattr(port, name)(*args, **kwargs)
 
         endpoint.__name__ = name
@@ -115,4 +107,3 @@ def command_facade(engine_type: type[Any], domain_id: str) -> type[Any]:
     CommandFacade.__module__ = engine_type.__module__
     CommandFacade.__doc__ = engine_type.__doc__
     return CommandFacade
-

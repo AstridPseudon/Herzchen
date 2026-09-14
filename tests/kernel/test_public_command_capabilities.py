@@ -56,6 +56,12 @@ FORBIDDEN = (
     "register_domain_handler",
 )
 
+PRIVATE_HELPERS = (
+    "_session_transaction", "_records", "_validate_record", "_request_digest",
+    "_transition_recovery", "_resolve", "_envelope", "_write_child_rows",
+    "_require_writer",
+)
+
 
 def _assert_ordinary(value):
     # The historical escape was conventionally reachable as ``command.store``
@@ -155,6 +161,40 @@ def test_every_ordinary_command_construction_has_no_public_store_writer_escape(t
         owner.close()
 
 
+def test_private_engine_helpers_are_not_forwarded_or_assignable_and_make_no_delta(tmp_path):
+    owner = Store.create(tmp_path / "private-helper.sqlite", authority="private-helper")
+    try:
+        register_work(owner)
+        owner.register_domain_handler((
+            assessment_contribution(), content_contribution(), packet_contribution(),
+            extension_contribution(), pack_contribution(), edt_contribution(),
+        ))
+        sessions = AuthoringSessionService(owner)
+        commands = (
+            WorkGraph(owner), ResponsibilityAssignments(owner), ProjectBatches(owner),
+            ProjectSheet(owner), DecisionsModule(owner), AssessmentModule(owner),
+            LimitService(owner), OperationManager(owner), ExtensionCommandService(owner, register=False),
+            ContentCommandHandler(owner), ContextPacketService(owner),
+            DocumentAuthoringHandler(owner, authoring=sessions),
+            ManagedPackAuthoringHandler(owner), TemplateEngine(owner), sessions,
+        )
+        before = dict(owner.consumer().snapshot_counts())
+        for command in commands:
+            port = command.command_port
+            assert not any(name.startswith("_") for name in port.endpoints)
+            for name in PRIVATE_HELPERS + FORBIDDEN:
+                with pytest.raises(AttributeError):
+                    getattr(command, name)
+                with pytest.raises(AttributeError):
+                    setattr(command, name, object())
+                assert not hasattr(type(command), name)
+                assert name not in port.endpoints
+                assert name not in dir(port)
+        assert owner.consumer().snapshot_counts() == before
+    finally:
+        owner.close()
+
+
 def test_ports_are_store_issued_finite_and_fail_closed_for_counterfeit_foreign_and_stale(tmp_path):
     owner = Store.create(tmp_path / "owner.sqlite", authority="owner")
     foreign = Store.create(tmp_path / "foreign.sqlite", authority="foreign")
@@ -165,6 +205,8 @@ def test_ports_are_store_issued_finite_and_fail_closed_for_counterfeit_foreign_a
 
         with pytest.raises(StoreAdmissionError, match="trusted Store composition"):
             DomainCommandPort(object(), "counterfeit", ("create",), None)
+        with pytest.raises(StoreAdmissionError, match="broad writer endpoint"):
+            owner.issue_command_port(object(), "counterfeit", ("_private_helper",))
         with pytest.raises((StoreAdmissionError, TypeError, AttributeError)):
             WorkGraph(graph.command_port)
         assessment_only = foreign.register_domain_handler((assessment_contribution(),))

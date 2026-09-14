@@ -17,7 +17,10 @@ from dataclasses import dataclass
 from typing import Any, Iterator, Mapping, Optional, Sequence, Tuple
 from herzchen.command_ports import command_facade
 
-from herzchen.contracts import AuthenticatedActor, DomainContribution, ReferenceBinding, ResourceRef, canonical_json
+from herzchen.contracts import (
+    AuthenticatedActor, CommandEnvelope, DomainContribution, ReferenceBinding,
+    ResourceRef, TransactionContext, canonical_json, canonical_request_digest,
+)
 from herzchen.kernel import VersionConflictError
 
 from .assignments import ASSIGNMENT_KIND, DISPATCH_KIND, RESULT_KIND, REPORT_KIND, ResponsibilityAssignments
@@ -387,9 +390,33 @@ class _ProjectSheetEngine:
         payload = dict(current.payload)
         payload["route_binding"] = _safe(route)
         key = logical_request_key or "assignment-route-" + current.id
-        envelope = self.batches._envelope(
-            "work.assignment.route-pin", current.ref, payload, key, actor or self.actor,
-            expected_version=current.version, expected_revision=current.revision,
+        selected_actor = actor or self.actor or AuthenticatedActor(
+            "herzchen.work", "work-sheet", "herzchen.work"
+        )
+        if not isinstance(selected_actor, AuthenticatedActor):
+            raise TypeError("actor must be an FND AuthenticatedActor")
+        context = TransactionContext(
+            selected_actor, key, "0" * 64,
+            expected_revision=current.revision,
+            expected_version=current.version,
+        )
+        digest = canonical_request_digest(
+            logical_request_key=key,
+            operation="work.assignment.route-pin",
+            schema_revision="work.batch.v1",
+            target=current.ref,
+            actor=selected_actor,
+            payload=payload,
+            context=context,
+        )
+        envelope = CommandEnvelope(
+            "work.assignment.route-pin", "work.batch.v1", current.ref,
+            TransactionContext(
+                selected_actor, key, digest,
+                expected_revision=current.revision,
+                expected_version=current.version,
+            ),
+            payload,
         )
         with self.__writer.transaction() as tx:
             receipt = self.__writer.mutate(

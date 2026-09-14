@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from herzchen.contracts import AuthenticatedActor, ReplayConflictError, ResourceRef
-from herzchen.domains.work import Lifecycle, WorkGraph
+from herzchen.domains.work import Lifecycle, WorkGraph, WorkNotFoundError
 from herzchen.domains.work.batches import ProjectBatches
 from herzchen.domains.work.assignments import ResponsibilityAssignments
 from herzchen.kernel import Store
@@ -75,7 +75,8 @@ def test_invalid_child_rolls_back_all_rows_events_and_receipt(environment):
     assert len(store.list_events()) == before[0]
     assert store.connection.execute("SELECT COUNT(*) FROM identities").fetchone()[0] == before[1]
     assert store.get_receipt("invalid-child") is None
-    assert graph._resolve("will-rollback") is None
+    with pytest.raises(WorkNotFoundError):
+        graph.resolve("will-rollback")
 
 
 def test_injected_child_failure_rolls_back_revisions_associations_and_parent_boundary(environment, monkeypatch):

@@ -133,7 +133,7 @@ class DomainCommandPort:
         exact = tuple(dict.fromkeys(endpoints))
         if not exact or any(not isinstance(name, str) or not name for name in exact):
             raise TypeError("command endpoints must be non-empty names")
-        if self._FORBIDDEN.intersection(exact):
+        if self._FORBIDDEN.intersection(exact) or any(name.startswith("_") for name in exact):
             raise StoreAdmissionError("a narrow command port cannot expose a broad writer endpoint")
         if reader is not None and not isinstance(reader, ConsumerStore):
             raise TypeError("command reader must be a ConsumerStore")

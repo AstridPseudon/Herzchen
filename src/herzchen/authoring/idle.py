@@ -16,7 +16,7 @@ import inspect
 import time
 from typing import Any, Callable, Iterable, Mapping, Optional, Union
 
-from herzchen.contracts import AuthoringState, CleanupStatus, canonical_json
+from herzchen.contracts import AuthoringCheckout, AuthoringState, CleanupStatus, canonical_json
 
 from .cleanup import CleanupObservation, cleanup_registered_files, registered_files_from_manifest
 from .finish import SemanticFinishAdapter, SemanticFinishResult, ValidationResult
@@ -131,35 +131,10 @@ class IdleCloseService:
         record = self._record(handle)
         if record is None:
             raise InvalidSessionError("scope is not admitted")
-        self.service._validate_record(handle, record)  # existing capability boundary; no second writer
         self._declared_edits[handle.session_id] = value
-        payload = dict(record.payload)
-        payload["last_content_edit_at"] = value
-        payload["last_content_edit"] = value
         request = request_id or "content-edit:" + handle.session_id + ":" + str(value)
-        # _update_open_metadata is the existing session-writer metadata port;
-        # no independent receipt/event or persistence engine is introduced.
-        self._persist_metadata(handle, request, payload)
+        self.service.record_content_edit(handle, request_id=request, timestamp=value)
         return value
-
-    def _persist_metadata(self, handle: SessionHandle, request_id: str, payload: Mapping[str, Any]) -> None:
-        """Persist additive idle metadata with the supplied FND/session writer."""
-        if self.service is None:
-            return
-        service = self.service
-        record = service._records(handle.target_scope, handle.actor)[0]
-        if record is None:
-            raise InvalidSessionError("authoring scope disappeared")
-        service._validate_record(handle, record)
-        digest = service._request_digest(
-            "metadata", request_id, payload, target=handle.scope, actor=handle.actor
-        )
-        with service._session_transaction() as tx:
-            current = service._records(handle.target_scope, handle.actor)[0]
-            if current is None:
-                raise InvalidSessionError("authoring scope disappeared")
-            service._validate_record(handle, current)
-            service._mutate(tx, actor=handle.actor, operation="metadata", request_id=request_id, target=handle.scope, digest=digest, record=current, payload=dict(payload), effects={"last_content_edit_at": payload["last_content_edit_at"]})
 
     def last_content_edit(self, handle: SessionHandle, declared: Optional[Any] = None) -> Optional[float]:
         if declared is not None:
@@ -246,7 +221,8 @@ class IdleCloseService:
             initial = b64decode(record.payload.get("draft_bytes_b64", ""))
             if len(tree.files) != 1 or tree.files[0].data != initial:
                 return None
-            checkout = self.service._payload_checkout(record.payload)
+            raw_checkout = record.payload.get("checkout")
+            checkout = None if raw_checkout is None else AuthoringCheckout.from_dict(raw_checkout)
             if checkout is None:
                 return None
             result = self.service.finish(

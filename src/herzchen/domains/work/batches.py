@@ -763,7 +763,10 @@ class _ProjectBatchesEngine:
             return ResourceRef(local_refs[value].authority, local_refs[value].kind, local_refs[value].id)
         ref = self._as_ref(value)
         if ref.kind == "work.external":
-            found = self.graph._resolve(ref.id)
+            try:
+                found = self.graph.resolve(ref.id)
+            except WorkNotFoundError:
+                found = None
             if found is None or found.project_ref is None or found.project_ref.id != project.id:
                 raise WorkNotFoundError(f"task dependency not found in project: {value!r}")
             return ResourceRef(found.ref.authority, found.ref.kind, found.ref.id)
