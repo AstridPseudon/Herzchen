@@ -1,0 +1,83 @@
+{
+  "task": "EDT-04",
+  "status": "implemented_with_explicit_cross_service_finish_gap",
+  "route": {"class": "normal", "model": "gpt-5.6-luna", "reasoning": "high"},
+  "roots": {
+    "invoking": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20",
+    "control": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery",
+    "package": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/package/otto_herzchen_delivery_v11_2",
+    "worker": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-edt04-worker"
+  },
+  "git": {
+    "branch": "edt-04-worker",
+    "accepted_commit": "5a28e1fee1811d77c0a6558311c77525c36ed069",
+    "accepted_tree": "640ac1a230d0535bde7ab23d172e2faf76b3f101",
+    "final_implementation_commit": "61bbedd1f682e2a7cd511b4081b1a89d4da16e6d",
+    "final_implementation_tree": "5c59ff7ece86b21a90c4e2bf274056b05479f09e",
+    "clean_worktree": true
+  },
+  "brief": {
+    "path": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/edt-04-worker-brief-20260914.md",
+    "sha256": "3d863519b5c458e0af7d959e27ea0372af5b56ecb71ee56cde6b4fc95c7e550e",
+    "launch_receipt": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/edt-04-worker-launch-receipt-20260914.json",
+    "launch_receipt_sha256": "94cebaefc135b518bcf19860d9ae9003a954591e7d780c21fef638e77754c33c",
+    "jsonl": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/edt-04-worker-jsonl-20260914.txt",
+    "jsonl_sha256_at_handoff": "acdca22d8ae98f64414806445d0e8a30a8eeb9bdd02f3889a50d2d5ff820da4c",
+    "launch_command": "/Users/hannahomalley/.local/bin/codex exec --skip-git-repo-check -m gpt-5.6-luna -c model_reasoning_effort=high -s danger-full-access --json -o /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/edt-04-worker-last.txt < /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/edt-04-worker-brief-20260914.md | tee /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/edt-04-worker-jsonl-20260914.txt",
+    "cli_thread_id": "01a09d39-19af-7721-9ebf-f234747e31ef",
+    "functions_exec_session_handle": 56088,
+    "observed_dispatch_status": "in_progress"
+  },
+  "source_manifest": {
+    "path": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/source-set-int01-refresh-20260913.json",
+    "sha256": "742fed428923c7702001865407d3d8897ba9685b5fcfd473076fc7edb3ee563a"
+  },
+  "lineage": {
+    "extraction_map": "plan/extraction-map.json:1293-1455, EX-EDIT",
+    "runtime_dirfd": {"blob": "4f936bebd4dae78c09c33603596431627e8409c6", "lines": "129-172;185-210;241-299;398-424;492-560"},
+    "runtime_cas": {"blob": "d0c3bf4b4d3d81176cfb87c10bf08133f9e2e12a", "lines": "11-79"},
+    "runtime_dirfd_tests": {"blob": "933d727cd496cd716d9c4db95d1a8c68bc615ed5", "lines": "45-176;178-297"},
+    "runtime_domain_tests": {"blob": "8b5529ddd4e1accc239aa6c23000af54ed846646", "lines": "42-77;221-300"},
+    "accepted_edt03": "work/edt-03-result.md:25-42; tests/authoring/test_finish.py:49-158",
+    "accepted_edt02": "tests/authoring/test_exclusivity.py:103-169;237-275"
+  },
+  "changed_paths": {
+    "src/herzchen/authoring/idle.py": "3aa87655cab06068c1724178834ffd3445be042ff68a08b38a893f3ebc305e60",
+    "src/herzchen/authoring/cleanup.py": "f3aed208d4b90c67d35a7e8cfbad81d3d561207002b5a716c74bcdfb5da98dae",
+    "src/herzchen/authoring/__init__.py": "5e9d4f85fc0b1f53ce4fc5390f4d271a80c547e592cc66c85abfc509dcf35988",
+    "tests/authoring/test_failure_matrix.py": "81b318a2cca230494ab5568e636b58714adb3186cce62333828c607a8c580f05"
+  },
+  "candidate": {
+    "python": "/opt/homebrew/bin/python3.11",
+    "version": "3.11.16",
+    "wheel": "/tmp/herzchen-edt04-candidate-final.XGAgDS/dist/herzchen_contracts-0.1.0-py3-none-any.whl",
+    "wheel_sha256": "78d1e6f5ef80f4b123cfb402466589616ecb314fc47438c53e82b610f9ba11ad",
+    "venv": "/tmp/herzchen-edt04-candidate-final.XGAgDS/venv",
+    "proof_environment": "PYTHONPATH and PYTHONHOME unset",
+    "installed_origins": "/private/tmp/herzchen-edt04-candidate-final.XGAgDS/venv/lib/python3.11/site-packages/herzchen"
+  },
+  "commands": [
+    {"name": "baseline_identity", "exit": 0, "result": "exact accepted commit/tree; clean"},
+    {"name": "compileall", "exit": 0},
+    {"name": "source_focused_and_regressions", "exit": 0, "result": "26 passed"},
+    {"name": "uninstalled_origin_control", "exit": 1, "result": "expected ModuleNotFoundError; source checkout is not installed proof"},
+    {"name": "candidate_wheel_build", "exit": 0, "result": "wheel built; SHA recorded above"},
+    {"name": "installed_origin", "exit": 0, "result": "site-packages origins recorded"},
+    {"name": "installed_failure_matrix", "exit": 0, "result": "7 passed"},
+    {"name": "installed_edt02_edt03_regressions", "exit": 0, "result": "19 passed"},
+    {"name": "fresh_persisted_state", "exit": 0, "result": "untouched pending_released; edited finished; cleanup complete; restart ok"},
+    {"name": "final_clean_audit", "exit": 0}
+  ],
+  "evidence": {
+    "idle_basis_and_blank": "tests/authoring/test_failure_matrix.py:59-108",
+    "edited_blank_and_stale_token": "tests/authoring/test_failure_matrix.py:110-134",
+    "rejected_exact_bytes": "tests/authoring/test_failure_matrix.py:136-159",
+    "writer_and_capture_recovery": "tests/authoring/test_failure_matrix.py:161-191",
+    "symlink_parent_unexpected_partial": "tests/authoring/test_failure_matrix.py:193-231",
+    "manual_idle_claim_replay": "tests/authoring/test_finish.py:49-111; tests/authoring/test_exclusivity.py:237-275",
+    "two_service_reservation": "tests/authoring/test_exclusivity.py:103-169",
+    "cross_service_finish_gap": "baseline EDT-03 finish port; sessions.py out of scope"
+  },
+  "gaps": ["EDT-05 target-handler unification", "EDT-06 consumer handoff", "no product/Astrid cutover verdict", "cross-service concurrent finish loser behavior remains baseline EDT-03 boundary"],
+  "upstream_push_merge_or_control_ledger_write": false
+}
