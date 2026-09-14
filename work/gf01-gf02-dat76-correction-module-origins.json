@@ -1,0 +1,72 @@
+{
+  "PYTHONHOME": null,
+  "PYTHONPATH": null,
+  "astrid_source": {
+    "commit": "96e5664237eb35adeb4cad08bddd8cd6df0a2ae1",
+    "origin": "https://github.com/peteromallet/Astrid.git",
+    "path": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/sources/Astrid-96e5664237eb",
+    "status_porcelain": "",
+    "tree": "19f7539a266618a797559eedbda48e2752b30fa3"
+  },
+  "distributions": {
+    "PyYAML": {
+      "direct_url": null,
+      "version": "6.0.3"
+    },
+    "astrid": {
+      "direct_url": {
+        "dir_info": {},
+        "url": "file:///Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/sources/Astrid-96e5664237eb"
+      },
+      "version": "0.1.0"
+    },
+    "herzchen-contracts": {
+      "direct_url": {
+        "archive_info": {
+          "hash": "sha256=4da6dd9f56f705831f0dc8a282526de0c28031fca2331074b359803195db4f9b",
+          "hashes": {
+            "sha256": "4da6dd9f56f705831f0dc8a282526de0c28031fca2331074b359803195db4f9b"
+          }
+        },
+        "url": "file:///private/tmp/herzchen-correction-delivery.gA7Nsm/dist/herzchen_contracts-0.1.0-py3-none-any.whl"
+      },
+      "version": "0.1.0"
+    },
+    "jsonschema": {
+      "direct_url": null,
+      "version": "4.25.1"
+    },
+    "pytest": {
+      "direct_url": null,
+      "version": "9.1.1"
+    }
+  },
+  "executable": "/private/tmp/herzchen-correction-delivery.gA7Nsm/venv/bin/python",
+  "modules": {
+    "astrid": "/private/tmp/herzchen-correction-delivery.gA7Nsm/venv/lib/python3.11/site-packages/astrid/__init__.py",
+    "astrid.core.pack.loader": "/private/tmp/herzchen-correction-delivery.gA7Nsm/venv/lib/python3.11/site-packages/astrid/core/pack/loader.py",
+    "astrid.core.pack.source_setup": "/private/tmp/herzchen-correction-delivery.gA7Nsm/venv/lib/python3.11/site-packages/astrid/core/pack/source_setup.py",
+    "herzchen": "/private/tmp/herzchen-correction-delivery.gA7Nsm/venv/lib/python3.11/site-packages/herzchen/__init__.py",
+    "herzchen.authoring.finish": "/private/tmp/herzchen-correction-delivery.gA7Nsm/venv/lib/python3.11/site-packages/herzchen/authoring/finish.py",
+    "herzchen.authoring.sessions": "/private/tmp/herzchen-correction-delivery.gA7Nsm/venv/lib/python3.11/site-packages/herzchen/authoring/sessions.py",
+    "herzchen.authoring.writer_lease": "/private/tmp/herzchen-correction-delivery.gA7Nsm/venv/lib/python3.11/site-packages/herzchen/authoring/writer_lease.py",
+    "herzchen.command_ports": "/private/tmp/herzchen-correction-delivery.gA7Nsm/venv/lib/python3.11/site-packages/herzchen/command_ports.py",
+    "herzchen.contracts": "/private/tmp/herzchen-correction-delivery.gA7Nsm/venv/lib/python3.11/site-packages/herzchen/contracts/__init__.py",
+    "herzchen.domains.assessment.module": "/private/tmp/herzchen-correction-delivery.gA7Nsm/venv/lib/python3.11/site-packages/herzchen/domains/assessment/module.py",
+    "herzchen.domains.work.assignments": "/private/tmp/herzchen-correction-delivery.gA7Nsm/venv/lib/python3.11/site-packages/herzchen/domains/work/assignments.py",
+    "herzchen.domains.work.batches": "/private/tmp/herzchen-correction-delivery.gA7Nsm/venv/lib/python3.11/site-packages/herzchen/domains/work/batches.py",
+    "herzchen.domains.work.module": "/private/tmp/herzchen-correction-delivery.gA7Nsm/venv/lib/python3.11/site-packages/herzchen/domains/work/module.py",
+    "herzchen.kernel.operations": "/private/tmp/herzchen-correction-delivery.gA7Nsm/venv/lib/python3.11/site-packages/herzchen/kernel/operations.py",
+    "herzchen.kernel.store": "/private/tmp/herzchen-correction-delivery.gA7Nsm/venv/lib/python3.11/site-packages/herzchen/kernel/store.py",
+    "herzchen.packs.authoring": "/private/tmp/herzchen-correction-delivery.gA7Nsm/venv/lib/python3.11/site-packages/herzchen/packs/authoring.py"
+  },
+  "python": "3.11.16 (main, Aug 12 2026, 23:03:19) [Clang 17.0.0 (clang-1700.6.4.2)]",
+  "source": {
+    "commit": "7c15ae26909cd8a0da52e4a3231468d7459146f5",
+    "tree": "3b27fa3319b57ada95b4aadc62445834bfb4e7d4"
+  },
+  "wheel": {
+    "path": "/private/tmp/herzchen-correction-delivery.gA7Nsm/dist/herzchen_contracts-0.1.0-py3-none-any.whl",
+    "sha256": "4da6dd9f56f705831f0dc8a282526de0c28031fca2331074b359803195db4f9b"
+  }
+}

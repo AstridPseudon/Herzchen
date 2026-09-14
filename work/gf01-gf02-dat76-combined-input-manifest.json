@@ -1,7 +1,7 @@
 {
   "schema": "gf01-gf02-dat76-combined-input-manifest.v1",
-  "generated_at": "2026-09-14T14:02:48+02:00",
-  "checkout": "Herzchen-int-final-combined-xhard-worker",
+  "generated_at": "2026-09-14T14:36:50+02:00",
+  "checkout": "Herzchen-int-final-correction-xhard-worker",
   "integration_base": {
     "commit": "8235d9aacbe7357e8f72cec8342eca77aab0cb58",
     "tree": "c69702a8b42420159dbcdb4b0d572c0e8f9dfffa",
@@ -16,6 +16,10 @@
     {"commit":"7298363f70aa4dc39cbe374083275ec377d9b2a5","tree":"23e35ba9cd2a618226ac79635b82614200203aff","role":"GF01 operation replay ancestry","mapping":"already reachable from integration_base"},
     {"commit":"7911f36edf38fecd80615dd4643379e37e26c760","tree":"914cfc1dfda244c8b4d3578729deaf53e5865532","role":"GF01 complete typed admission ancestry","mapping":"already reachable from integration_base"},
     {"commit":"f7d570cc35b183515098a4b2f707c3225d422797","tree":"a05abcf5e65d510a5da26faee4653bea438af74d","role":"GF01 manager custody ancestry","mapping":"already reachable from integration_base"},
+    {"commit":"e0b84e6490b86b3474d60e927b396b4774ab152c","tree":"9d99264520013a2003c4fdebec7540613ba4b222","role":"GF01 Review03 narrow issued command-port implementation","mapping":"already reachable from integration_base"},
+    {"commit":"4addb44942f8517650c252c26ca85da6d28328ef","tree":"a227edcc8646c7ee9876f58da3c39ca202673442","role":"GF01 Review03 correction evidence","mapping":"already reachable from integration_base"},
+    {"commit":"880e6d293bd7389c4992cb81bd503385bf654c33","tree":"6ac8cb09b2bc4359c9ab6e5b5c084c4ccf08367f","role":"GF01 Review03 private command-facade bypass closure","mapping":"already reachable from integration_base"},
+    {"commit":"d4f2c61ab441d36b56870d75e9329abf2449d06c","tree":"b9ccc0a7042e9be3952a73e681d03b0979b3673d","role":"GF01 Review03 consolidated correction evidence","mapping":"already reachable from integration_base"},
     {"commit":"8235d9aacbe7357e8f72cec8342eca77aab0cb58","tree":"c69702a8b42420159dbcdb4b0d572c0e8f9dfffa","role":"GF01/P01 removal of unsupported project-parent mutation port","mapping":"integration_base"},
     {"commit":"6c9bf746c5ef4509f0071603f7a3b59e908370a0","tree":"0e95a070db51eccb120d3797b56c837a9c93c4a1","role":"common GF01/GF02/DAT divergence base","mapping":"already reachable from integration_base"},
     {"commit":"ef13cfed36f8d43925a28e8312bf0235379b1488","tree":"ab3c8439cc0af8eb9f685caf921613a34424e9a2","role":"GF02 complete logical-context and caller reference-pin semantics","mapping":"squash-equivalent in 74c8cb56b0e530985384535ebeac7e8f1864427d"},
@@ -43,14 +47,15 @@
     "object_types": "all listed Git inputs resolved as commits",
     "trees": "all resolved trees matched the required or recorded exact tree",
     "ancestry": "GF01 accepted inputs and DAT lineage are ancestors of their stated tips; GF02 chain descends from the common base through the authoritative manager custody commit",
-    "pre_change_status": "clean at integration_base"
+    "gf01_review03_rows": "all five requested commits resolved to the recorded exact trees and are ancestors of integration_base",
+    "pre_change_status": "clean at replacement starting checkpoint 6019553fade710b3392437382916c1a716edf217 / 16e130334ca6313a6eb238f9084c332416879d2c"
   },
   "integration_source_checkpoint": {
     "commit": "74c8cb56b0e530985384535ebeac7e8f1864427d",
     "tree": "834dab82c220aaa4c9a3c11a851af8ec60c6cb0e",
     "parent": "8235d9aacbe7357e8f72cec8342eca77aab0cb58"
   },
-  "campaign_source_checkpoint": {
+  "historical_attempt_source_checkpoint": {
     "commit": "1fe71f8b115abd1b413690a6e954a7afe591f21c",
     "tree": "a2f500b0354339826b25f6cff220f68a40d91513",
     "decisions": [
@@ -58,5 +63,19 @@
       "the DAT finish.recovery row locates the actual request_id:capture-failure receipt; no caller-key success receipt or production bypass was created",
       "the first installed campaign artifacts are retained separately as attempt-01 evidence"
     ]
+  },
+  "historical_attempt_evidence_checkpoint": {
+    "commit": "6019553fade710b3392437382916c1a716edf217",
+    "tree": "16e130334ca6313a6eb238f9084c332416879d2c",
+    "current_c33_rows": 76,
+    "passed": 75,
+    "unresolved": 1,
+    "status": "preserved quarantined combined-worker evidence; not reused as corrected campaign evidence"
+  },
+  "campaign_source_checkpoint": {
+    "commit": "7c15ae26909cd8a0da52e4a3231468d7459146f5",
+    "tree": "3b27fa3319b57ada95b4aadc62445834bfb4e7d4",
+    "parent": "6019553fade710b3392437382916c1a716edf217",
+    "role": "bounded production capture-failure retry correction with focused authoring and current76 C33 regression"
   }
 }
