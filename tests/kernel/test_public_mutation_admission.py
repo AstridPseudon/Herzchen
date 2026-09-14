@@ -14,6 +14,8 @@ from herzchen.contracts import (
     ResourceRef,
     TransactionContext,
     canonical_json,
+    canonical_request_digest,
+    ReplayConflictError,
 )
 from herzchen.kernel import ConsumerStore, MutationAdmissionError, Store, StoreAdmissionError
 from herzchen.packs.authoring import (
@@ -49,7 +51,7 @@ def _contribution() -> DomainContribution:
         ("fixture.record",),
         (),
         (),
-        ("fixture.create",),
+        ("fixture.create", "fixture.revise"),
         ("fixture.created",),
         "fixture.v1",
         ("handler:tests.fixture-handler", "actor-authority:fixture-auth"),
@@ -140,6 +142,71 @@ def test_registered_combination_commits_identity_event_receipt_and_reference_tog
         assert after["events"] == before["events"] + 1
         assert after["command_receipts"] == before["command_receipts"] + 1
         assert after["event_sequences"] == before["event_sequences"] + 1
+    finally:
+        owner.close()
+
+
+def test_store_replaces_caller_digest_and_rejects_changed_replay_semantics_without_delta(tmp_path):
+    owner = Store.create(tmp_path / "canonical-replay.sqlite", authority="gf01-store")
+    try:
+        owner.register_domain(_contribution())
+        consumer = owner.consumer()
+        original = _envelope("fixture.create", "fixture.record", "canonical-replay")
+        receipt = owner.mutate(original, event_type="fixture.created")
+        assert receipt.request_digest == canonical_request_digest(
+            logical_request_key=original.context.logical_request_key,
+            operation=original.operation,
+            schema_revision=original.schema_revision,
+            target=original.target,
+            actor=original.context.actor,
+            payload=original.payload,
+        )
+        assert receipt.request_digest != original.context.request_digest
+
+        actor = original.context.actor
+        variants = (
+            CommandEnvelope(
+                original.operation,
+                original.schema_revision,
+                original.target,
+                TransactionContext(actor, "canonical-replay", original.context.request_digest, expected_version=0),
+                {"value": "changed"},
+            ),
+            CommandEnvelope(
+                original.operation,
+                original.schema_revision,
+                ResourceRef("gf01-store", "fixture.record", "record-2"),
+                TransactionContext(actor, "canonical-replay", original.context.request_digest, expected_version=0),
+                original.payload,
+            ),
+            CommandEnvelope(
+                "fixture.revise",
+                original.schema_revision,
+                original.target,
+                TransactionContext(actor, "canonical-replay", original.context.request_digest, expected_version=0),
+                original.payload,
+            ),
+            CommandEnvelope(
+                original.operation,
+                original.schema_revision,
+                original.target,
+                TransactionContext(
+                    AuthenticatedActor("fixture-auth", "other-fixture-handler", "other-credential"),
+                    "canonical-replay",
+                    original.context.request_digest,
+                    expected_version=0,
+                ),
+                original.payload,
+            ),
+        )
+        before = dict(consumer.snapshot_counts())
+        before_record = consumer.get_identity(original.target)
+        for changed in variants:
+            with pytest.raises(ReplayConflictError):
+                owner.mutate(changed, event_type="fixture.created")
+            assert consumer.snapshot_counts() == before
+            assert consumer.get_identity(original.target) == before_record
+            assert consumer.get_receipt("canonical-replay") == receipt
     finally:
         owner.close()
 

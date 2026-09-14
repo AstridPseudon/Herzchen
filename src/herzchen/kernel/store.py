@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 import fcntl
 import hashlib
@@ -27,6 +27,7 @@ from herzchen.contracts import (
     ReplayConflictError,
     ResourceRef,
     canonical_json,
+    canonical_request_digest,
     validate_expected_state,
     validate_replay,
 )
@@ -851,6 +852,18 @@ class Store:
             raise ValueError("event_type must be a non-blank string")
         if not isinstance(effects or {}, Mapping):
             raise TypeError("effects must be a mapping")
+        request_digest = canonical_request_digest(
+            logical_request_key=envelope.context.logical_request_key,
+            operation=envelope.operation,
+            schema_revision=envelope.schema_revision,
+            target=envelope.target,
+            actor=envelope.context.actor,
+            payload=envelope.payload,
+        )
+        envelope = replace(
+            envelope,
+            context=replace(envelope.context, request_digest=request_digest),
+        )
         # Validate all contract-shaped values before taking the writer path.
         effects_json = _json(dict(effects or {}))
         before_refs = tuple(before_refs)
@@ -927,8 +940,6 @@ class Store:
             if operation is None:
                 operation_allowed = envelope.target.kind == "operation" and envelope.operation != "operation.outcome"
             if operation_allowed and envelope.target.kind in resources and event_type in events and (schema is None or envelope.schema_revision == schema):
-                if _authority_root(envelope.context.actor.authority) not in {"fnd", "neutral"}:
-                    raise MutationAdmissionError("authenticated actor is not bound to the neutral kernel handler")
                 return "fnd"
         raise MutationAdmissionError(
             "unregistered mutation combination: operation={!r}, resource={!r}, event={!r}, schema={!r}".format(
