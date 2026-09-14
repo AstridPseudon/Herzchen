@@ -1,0 +1,699 @@
+{
+  "historical_row_count": 77,
+  "matrix_version": "c33-persisted-port-conformance/v2-current-76",
+  "removed_ports": [
+    {
+      "port": "work.v1|work.revise|work.project|work.parent-linked",
+      "reason": "P01/FND removed this unsupported descriptor port: WorkGraph rejects project parents and exposes no valid project-parent mutation path."
+    }
+  ],
+  "row_count": 76,
+  "rows": [
+    {
+      "domain_id": "herzchen.assessment",
+      "matrix_key": "mutation-port:assessment.v1|assessment.accept|assessment.decision|assessment.accepted",
+      "operation": "assessment.accept",
+      "owner": "wrk",
+      "port": "assessment.v1|assessment.accept|assessment.decision|assessment.accepted",
+      "public_handler": "herzchen.domains.assessment.AssessmentModule",
+      "scenario_id": "C33-5a2d158602d2"
+    },
+    {
+      "domain_id": "herzchen.assessment",
+      "matrix_key": "mutation-port:assessment.v1|assessment.candidate.select|assessment.selection|assessment.candidate.selected",
+      "operation": "assessment.candidate.select",
+      "owner": "wrk",
+      "port": "assessment.v1|assessment.candidate.select|assessment.selection|assessment.candidate.selected",
+      "public_handler": "herzchen.domains.assessment.AssessmentModule",
+      "scenario_id": "C33-18a5affbe93b"
+    },
+    {
+      "domain_id": "herzchen.assessment",
+      "matrix_key": "mutation-port:assessment.v1|assessment.correction.create|assessment.correction|assessment.correction.created",
+      "operation": "assessment.correction.create",
+      "owner": "wrk",
+      "port": "assessment.v1|assessment.correction.create|assessment.correction|assessment.correction.created",
+      "public_handler": "herzchen.domains.assessment.AssessmentModule",
+      "scenario_id": "C33-fe3bd728514b"
+    },
+    {
+      "domain_id": "herzchen.assessment",
+      "matrix_key": "mutation-port:assessment.v1|assessment.finding.close|assessment.finding|assessment.finding.closed",
+      "operation": "assessment.finding.close",
+      "owner": "wrk",
+      "port": "assessment.v1|assessment.finding.close|assessment.finding|assessment.finding.closed",
+      "public_handler": "herzchen.domains.assessment.AssessmentModule",
+      "scenario_id": "C33-f945fd859ae6"
+    },
+    {
+      "domain_id": "herzchen.assessment",
+      "matrix_key": "mutation-port:assessment.v1|assessment.input.freeze|assessment.input|assessment.input.frozen",
+      "operation": "assessment.input.freeze",
+      "owner": "wrk",
+      "port": "assessment.v1|assessment.input.freeze|assessment.input|assessment.input.frozen",
+      "public_handler": "herzchen.domains.assessment.AssessmentModule",
+      "scenario_id": "C33-08c1d1d7ea29"
+    },
+    {
+      "domain_id": "herzchen.assessment",
+      "matrix_key": "mutation-port:assessment.v1|assessment.loop-facts.record|assessment.loop-facts|assessment.loop-facts.recorded",
+      "operation": "assessment.loop-facts.record",
+      "owner": "wrk",
+      "port": "assessment.v1|assessment.loop-facts.record|assessment.loop-facts|assessment.loop-facts.recorded",
+      "public_handler": "herzchen.domains.assessment.AssessmentModule",
+      "scenario_id": "C33-56f0482b67ae"
+    },
+    {
+      "domain_id": "herzchen.assessment",
+      "matrix_key": "mutation-port:assessment.v1|assessment.result.link-correction|assessment.result|assessment.result.correction-linked",
+      "operation": "assessment.result.link-correction",
+      "owner": "wrk",
+      "port": "assessment.v1|assessment.result.link-correction|assessment.result|assessment.result.correction-linked",
+      "public_handler": "herzchen.domains.assessment.AssessmentModule",
+      "scenario_id": "C33-c8c7737b710d"
+    },
+    {
+      "domain_id": "herzchen.assessment",
+      "matrix_key": "mutation-port:assessment.v1|assessment.run|assessment.result|assessment.completed",
+      "operation": "assessment.run",
+      "owner": "wrk",
+      "port": "assessment.v1|assessment.run|assessment.result|assessment.completed",
+      "public_handler": "herzchen.domains.assessment.AssessmentModule",
+      "scenario_id": "C33-a804fcafe628"
+    },
+    {
+      "domain_id": "herzchen.assessment",
+      "matrix_key": "mutation-port:assessment.v1|assessment.scope.declare|assessment.scope|assessment.scope.declared",
+      "operation": "assessment.scope.declare",
+      "owner": "wrk",
+      "port": "assessment.v1|assessment.scope.declare|assessment.scope|assessment.scope.declared",
+      "public_handler": "herzchen.domains.assessment.AssessmentModule",
+      "scenario_id": "C33-8fa7f00729d7"
+    },
+    {
+      "domain_id": "herzchen.assessment",
+      "matrix_key": "mutation-port:assessment.v1|assessment.unknown.disposition|assessment.decision|assessment.unknown.disposed",
+      "operation": "assessment.unknown.disposition",
+      "owner": "wrk",
+      "port": "assessment.v1|assessment.unknown.disposition|assessment.decision|assessment.unknown.disposed",
+      "public_handler": "herzchen.domains.assessment.AssessmentModule",
+      "scenario_id": "C33-38c7cd2fe47b"
+    },
+    {
+      "domain_id": "dat.content",
+      "matrix_key": "mutation-port:dat-content.v1|dat.content.document.create|*|dat.content.document.created",
+      "operation": "dat.content.document.create",
+      "owner": "dat",
+      "port": "dat-content.v1|dat.content.document.create|*|dat.content.document.created",
+      "public_handler": "herzchen.content.commands.ContentCommandHandler",
+      "scenario_id": "C33-a31984ab1445"
+    },
+    {
+      "domain_id": "dat.content",
+      "matrix_key": "mutation-port:dat-content.v1|dat.content.link|*|dat.content.linked",
+      "operation": "dat.content.link",
+      "owner": "dat",
+      "port": "dat-content.v1|dat.content.link|*|dat.content.linked",
+      "public_handler": "herzchen.content.commands.ContentCommandHandler",
+      "scenario_id": "C33-ff2ad912a9ea"
+    },
+    {
+      "domain_id": "dat.content",
+      "matrix_key": "mutation-port:dat-content.v1|dat.content.revision.append|*|dat.content.revision.appended",
+      "operation": "dat.content.revision.append",
+      "owner": "dat",
+      "port": "dat-content.v1|dat.content.revision.append|*|dat.content.revision.appended",
+      "public_handler": "herzchen.content.commands.ContentCommandHandler",
+      "scenario_id": "C33-1cb18f497f39"
+    },
+    {
+      "domain_id": "dat.content",
+      "matrix_key": "mutation-port:dat-content.v1|dat.content.unlink|*|dat.content.unlinked",
+      "operation": "dat.content.unlink",
+      "owner": "dat",
+      "port": "dat-content.v1|dat.content.unlink|*|dat.content.unlinked",
+      "public_handler": "herzchen.content.commands.ContentCommandHandler",
+      "scenario_id": "C33-04f607c89ef5"
+    },
+    {
+      "domain_id": "herzchen.content.packets",
+      "matrix_key": "mutation-port:dat.context.packet.v1|dat.context.attention.create|dat.context.attention|dat.context.attention.created",
+      "operation": "dat.context.attention.create",
+      "owner": "dat",
+      "port": "dat.context.packet.v1|dat.context.attention.create|dat.context.attention|dat.context.attention.created",
+      "public_handler": "herzchen.content.packets.ContextPacketService",
+      "scenario_id": "C33-04828832ad06"
+    },
+    {
+      "domain_id": "dat.extensions",
+      "matrix_key": "mutation-port:dat.extensions.v1|dat.extensions.metadata.remove|*|dat.extensions.metadata.removed",
+      "operation": "dat.extensions.metadata.remove",
+      "owner": "dat",
+      "port": "dat.extensions.v1|dat.extensions.metadata.remove|*|dat.extensions.metadata.removed",
+      "public_handler": "herzchen.extensions.commands.ExtensionCommandService",
+      "scenario_id": "C33-c97d80c0fbfe"
+    },
+    {
+      "domain_id": "dat.extensions",
+      "matrix_key": "mutation-port:dat.extensions.v1|dat.extensions.metadata.set|*|dat.extensions.metadata.changed",
+      "operation": "dat.extensions.metadata.set",
+      "owner": "dat",
+      "port": "dat.extensions.v1|dat.extensions.metadata.set|*|dat.extensions.metadata.changed",
+      "public_handler": "herzchen.extensions.commands.ExtensionCommandService",
+      "scenario_id": "C33-e884f6cfe0e3"
+    },
+    {
+      "domain_id": "herzchen.authoring.sessions",
+      "matrix_key": "mutation-port:edt-02.authoring.v1|actor.open|authoring-actor|authoring.actor.open",
+      "operation": "actor.open",
+      "owner": "edt",
+      "port": "edt-02.authoring.v1|actor.open|authoring-actor|authoring.actor.open",
+      "public_handler": "herzchen.authoring.sessions.AuthoringSessionService",
+      "scenario_id": "C33-2429086b335f"
+    },
+    {
+      "domain_id": "herzchen.authoring.sessions",
+      "matrix_key": "mutation-port:edt-02.authoring.v1|actor.release|authoring-actor|authoring.actor.release",
+      "operation": "actor.release",
+      "owner": "edt",
+      "port": "edt-02.authoring.v1|actor.release|authoring-actor|authoring.actor.release",
+      "public_handler": "herzchen.authoring.sessions.AuthoringSessionService",
+      "scenario_id": "C33-dc2ced1157ed"
+    },
+    {
+      "domain_id": "herzchen.authoring.sessions",
+      "matrix_key": "mutation-port:edt-02.authoring.v1|autosave|authoring-scope|authoring.autosave",
+      "operation": "autosave",
+      "owner": "edt",
+      "port": "edt-02.authoring.v1|autosave|authoring-scope|authoring.autosave",
+      "public_handler": "herzchen.authoring.sessions.AuthoringSessionService",
+      "scenario_id": "C33-7520127c246b"
+    },
+    {
+      "domain_id": "herzchen.authoring.sessions",
+      "matrix_key": "mutation-port:edt-02.authoring.v1|cleanup.refresh|authoring-scope|authoring.cleanup.refresh",
+      "operation": "cleanup.refresh",
+      "owner": "edt",
+      "port": "edt-02.authoring.v1|cleanup.refresh|authoring-scope|authoring.cleanup.refresh",
+      "public_handler": "herzchen.authoring.sessions.AuthoringSessionService",
+      "scenario_id": "C33-d0a40bfa7b4c"
+    },
+    {
+      "domain_id": "herzchen.authoring.sessions",
+      "matrix_key": "mutation-port:edt-02.authoring.v1|cleanup|authoring-scope|authoring.cleanup",
+      "operation": "cleanup",
+      "owner": "edt",
+      "port": "edt-02.authoring.v1|cleanup|authoring-scope|authoring.cleanup",
+      "public_handler": "herzchen.authoring.sessions.AuthoringSessionService",
+      "scenario_id": "C33-817037cf2949"
+    },
+    {
+      "domain_id": "herzchen.authoring.sessions",
+      "matrix_key": "mutation-port:edt-02.authoring.v1|finish.claim|authoring-scope|authoring.finish.claim",
+      "operation": "finish.claim",
+      "owner": "edt",
+      "port": "edt-02.authoring.v1|finish.claim|authoring-scope|authoring.finish.claim",
+      "public_handler": "herzchen.authoring.sessions.AuthoringSessionService",
+      "scenario_id": "C33-857bfa7ba9e7"
+    },
+    {
+      "domain_id": "herzchen.authoring.sessions",
+      "matrix_key": "mutation-port:edt-02.authoring.v1|finish.recovery|authoring-scope|authoring.finish.recovery",
+      "operation": "finish.recovery",
+      "owner": "edt",
+      "port": "edt-02.authoring.v1|finish.recovery|authoring-scope|authoring.finish.recovery",
+      "public_handler": "herzchen.authoring.sessions.AuthoringSessionService",
+      "scenario_id": "C33-93c383e03e9e"
+    },
+    {
+      "domain_id": "herzchen.authoring.sessions",
+      "matrix_key": "mutation-port:edt-02.authoring.v1|finish|authoring-scope|authoring.finish",
+      "operation": "finish",
+      "owner": "edt",
+      "port": "edt-02.authoring.v1|finish|authoring-scope|authoring.finish",
+      "public_handler": "herzchen.authoring.sessions.AuthoringSessionService",
+      "scenario_id": "C33-2962a59f53a9"
+    },
+    {
+      "domain_id": "herzchen.authoring.sessions",
+      "matrix_key": "mutation-port:edt-02.authoring.v1|metadata|authoring-scope|authoring.metadata",
+      "operation": "metadata",
+      "owner": "edt",
+      "port": "edt-02.authoring.v1|metadata|authoring-scope|authoring.metadata",
+      "public_handler": "herzchen.authoring.sessions.AuthoringSessionService",
+      "scenario_id": "C33-7365d008c643"
+    },
+    {
+      "domain_id": "herzchen.authoring.sessions",
+      "matrix_key": "mutation-port:edt-02.authoring.v1|open|authoring-scope|authoring.open",
+      "operation": "open",
+      "owner": "edt",
+      "port": "edt-02.authoring.v1|open|authoring-scope|authoring.open",
+      "public_handler": "herzchen.authoring.sessions.AuthoringSessionService",
+      "scenario_id": "C33-21f2db8729f6"
+    },
+    {
+      "domain_id": "herzchen.authoring.sessions",
+      "matrix_key": "mutation-port:edt-02.authoring.v1|release|authoring-scope|authoring.release",
+      "operation": "release",
+      "owner": "edt",
+      "port": "edt-02.authoring.v1|release|authoring-scope|authoring.release",
+      "public_handler": "herzchen.authoring.sessions.AuthoringSessionService",
+      "scenario_id": "C33-be47b08ec0ae"
+    },
+    {
+      "domain_id": "herzchen.packs.authoring",
+      "matrix_key": "mutation-port:pkg-05.managed-pack.v1|pack.content.author|managed_pack|managed_pack.content_authored",
+      "operation": "pack.content.author",
+      "owner": "pkg",
+      "port": "pkg-05.managed-pack.v1|pack.content.author|managed_pack|managed_pack.content_authored",
+      "public_handler": "herzchen.packs.authoring.ManagedPackAuthoringHandler",
+      "scenario_id": "C33-bc584f4122ec"
+    },
+    {
+      "domain_id": "herzchen.work.assignments",
+      "matrix_key": "mutation-port:work.assignment.v1|work.assignment.create|wrk.assignment|work.assignment.created",
+      "operation": "work.assignment.create",
+      "owner": "wrk",
+      "port": "work.assignment.v1|work.assignment.create|wrk.assignment|work.assignment.created",
+      "public_handler": "herzchen.domains.work.assignments.ResponsibilityAssignments",
+      "scenario_id": "C33-ee3189564f92"
+    },
+    {
+      "domain_id": "herzchen.work.assignments",
+      "matrix_key": "mutation-port:work.assignment.v1|work.assignment.dispatch|wrk.dispatch|work.assignment.dispatched",
+      "operation": "work.assignment.dispatch",
+      "owner": "wrk",
+      "port": "work.assignment.v1|work.assignment.dispatch|wrk.dispatch|work.assignment.dispatched",
+      "public_handler": "herzchen.domains.work.assignments.ResponsibilityAssignments",
+      "scenario_id": "C33-a9a10b1b2c04"
+    },
+    {
+      "domain_id": "herzchen.work.assignments",
+      "matrix_key": "mutation-port:work.assignment.v1|work.assignment.reassign|wrk.assignment|work.assignment.reassigned",
+      "operation": "work.assignment.reassign",
+      "owner": "wrk",
+      "port": "work.assignment.v1|work.assignment.reassign|wrk.assignment|work.assignment.reassigned",
+      "public_handler": "herzchen.domains.work.assignments.ResponsibilityAssignments",
+      "scenario_id": "C33-9364752f5ad7"
+    },
+    {
+      "domain_id": "herzchen.work.assignments",
+      "matrix_key": "mutation-port:work.assignment.v1|work.report.append|wrk.report|work.report.appended",
+      "operation": "work.report.append",
+      "owner": "wrk",
+      "port": "work.assignment.v1|work.report.append|wrk.report|work.report.appended",
+      "public_handler": "herzchen.domains.work.assignments.ResponsibilityAssignments",
+      "scenario_id": "C33-0f1fb04eceee"
+    },
+    {
+      "domain_id": "herzchen.work.assignments",
+      "matrix_key": "mutation-port:work.assignment.v1|work.result.append|wrk.result|work.result.appended",
+      "operation": "work.result.append",
+      "owner": "wrk",
+      "port": "work.assignment.v1|work.result.append|wrk.result|work.result.appended",
+      "public_handler": "herzchen.domains.work.assignments.ResponsibilityAssignments",
+      "scenario_id": "C33-c800a967d593"
+    },
+    {
+      "domain_id": "herzchen.work.batches",
+      "matrix_key": "mutation-port:work.batch.v1|work.amendment.link|wrk.amendment|work.amendment.partially-linked",
+      "operation": "work.amendment.link",
+      "owner": "wrk",
+      "port": "work.batch.v1|work.amendment.link|wrk.amendment|work.amendment.partially-linked",
+      "public_handler": "herzchen.domains.work.batches.ProjectBatches",
+      "scenario_id": "C33-eaedca5df901"
+    },
+    {
+      "domain_id": "herzchen.work.sheet",
+      "matrix_key": "mutation-port:work.batch.v1|work.assignment.route-pin|wrk.assignment|work.assignment.route-pinned",
+      "operation": "work.assignment.route-pin",
+      "owner": "wrk",
+      "port": "work.batch.v1|work.assignment.route-pin|wrk.assignment|work.assignment.route-pinned",
+      "public_handler": "herzchen.domains.work.batches.ProjectBatches",
+      "scenario_id": "C33-ee20a0f06c44"
+    },
+    {
+      "domain_id": "herzchen.work.batches",
+      "matrix_key": "mutation-port:work.batch.v1|work.authoring.reconcile|wrk.authoring-reservation|work.authoring.reconciled",
+      "operation": "work.authoring.reconcile",
+      "owner": "wrk",
+      "port": "work.batch.v1|work.authoring.reconcile|wrk.authoring-reservation|work.authoring.reconciled",
+      "public_handler": "herzchen.domains.work.batches.ProjectBatches",
+      "scenario_id": "C33-98ca863ee628"
+    },
+    {
+      "domain_id": "herzchen.work.batches",
+      "matrix_key": "mutation-port:work.batch.v1|work.project-report.append|wrk.report|work.project-report.appended",
+      "operation": "work.project-report.append",
+      "owner": "wrk",
+      "port": "work.batch.v1|work.project-report.append|wrk.report|work.project-report.appended",
+      "public_handler": "herzchen.domains.work.batches.ProjectBatches",
+      "scenario_id": "C33-670d5eb6faaa"
+    },
+    {
+      "domain_id": "herzchen.work.batches",
+      "matrix_key": "mutation-port:work.batch.v1|work.project-sheet.apply|work.project|work.project-sheet.applied",
+      "operation": "work.project-sheet.apply",
+      "owner": "wrk",
+      "port": "work.batch.v1|work.project-sheet.apply|work.project|work.project-sheet.applied",
+      "public_handler": "herzchen.domains.work.batches.ProjectBatches",
+      "scenario_id": "C33-c9e1ae9afc33"
+    },
+    {
+      "domain_id": "herzchen.work.batches",
+      "matrix_key": "mutation-port:work.batch.v1|work.project.activate|work.project|work.project.activated",
+      "operation": "work.project.activate",
+      "owner": "wrk",
+      "port": "work.batch.v1|work.project.activate|work.project|work.project.activated",
+      "public_handler": "herzchen.domains.work.batches.ProjectBatches",
+      "scenario_id": "C33-1b03dca8423a"
+    },
+    {
+      "domain_id": "herzchen.work.batches",
+      "matrix_key": "mutation-port:work.batch.v1|work.project.create|work.project|work.project.created",
+      "operation": "work.project.create",
+      "owner": "wrk",
+      "port": "work.batch.v1|work.project.create|work.project|work.project.created",
+      "public_handler": "herzchen.domains.work.batches.ProjectBatches",
+      "scenario_id": "C33-ffd584a43620"
+    },
+    {
+      "domain_id": "herzchen.work.batches",
+      "matrix_key": "mutation-port:work.batch.v1|work.readiness.observe|wrk.readiness|work.readiness.observed",
+      "operation": "work.readiness.observe",
+      "owner": "wrk",
+      "port": "work.batch.v1|work.readiness.observe|wrk.readiness|work.readiness.observed",
+      "public_handler": "herzchen.domains.work.batches.ProjectBatches",
+      "scenario_id": "C33-6d8b1a54b0e9"
+    },
+    {
+      "domain_id": "herzchen.work.decisions",
+      "matrix_key": "mutation-port:work.decisions.v1|work.candidate.annotate|wrk.candidate.annotation|work.candidate.annotated",
+      "operation": "work.candidate.annotate",
+      "owner": "wrk",
+      "port": "work.decisions.v1|work.candidate.annotate|wrk.candidate.annotation|work.candidate.annotated",
+      "public_handler": "herzchen.domains.work.decisions.DecisionsModule",
+      "scenario_id": "C33-15c8229a01af"
+    },
+    {
+      "domain_id": "herzchen.work.decisions",
+      "matrix_key": "mutation-port:work.decisions.v1|work.candidate.create|wrk.candidate|work.candidate.created",
+      "operation": "work.candidate.create",
+      "owner": "wrk",
+      "port": "work.decisions.v1|work.candidate.create|wrk.candidate|work.candidate.created",
+      "public_handler": "herzchen.domains.work.decisions.DecisionsModule",
+      "scenario_id": "C33-acbb464100dd"
+    },
+    {
+      "domain_id": "herzchen.work.decisions",
+      "matrix_key": "mutation-port:work.decisions.v1|work.decision.record|wrk.decision|work.decision.recorded",
+      "operation": "work.decision.record",
+      "owner": "wrk",
+      "port": "work.decisions.v1|work.decision.record|wrk.decision|work.decision.recorded",
+      "public_handler": "herzchen.domains.work.decisions.DecisionsModule",
+      "scenario_id": "C33-3373b9d508b8"
+    },
+    {
+      "domain_id": "herzchen.work.decisions",
+      "matrix_key": "mutation-port:work.decisions.v1|work.manager-choice.record|wrk.manager-choice|work.manager-choice.recorded",
+      "operation": "work.manager-choice.record",
+      "owner": "wrk",
+      "port": "work.decisions.v1|work.manager-choice.record|wrk.manager-choice|work.manager-choice.recorded",
+      "public_handler": "herzchen.domains.work.decisions.DecisionsModule",
+      "scenario_id": "C33-38894f4ea32e"
+    },
+    {
+      "domain_id": "herzchen.work.decisions",
+      "matrix_key": "mutation-port:work.decisions.v1|work.wait.record|wrk.wait|work.wait.recorded",
+      "operation": "work.wait.record",
+      "owner": "wrk",
+      "port": "work.decisions.v1|work.wait.record|wrk.wait|work.wait.recorded",
+      "public_handler": "herzchen.domains.work.decisions.DecisionsModule",
+      "scenario_id": "C33-4e1358537718"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.create|work.criterion|work.created",
+      "operation": "work.create",
+      "owner": "wrk",
+      "port": "work.v1|work.create|work.criterion|work.created",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-416340a8bfdf"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.create|work.effort|work.created",
+      "operation": "work.create",
+      "owner": "wrk",
+      "port": "work.v1|work.create|work.effort|work.created",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-56d9acd440b3"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.create|work.gate|work.created",
+      "operation": "work.create",
+      "owner": "wrk",
+      "port": "work.v1|work.create|work.gate|work.created",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-f3be8d0426e2"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.create|work.project|work.created",
+      "operation": "work.create",
+      "owner": "wrk",
+      "port": "work.v1|work.create|work.project|work.created",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-b96a2018602a"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.create|work.scenario|work.created",
+      "operation": "work.create",
+      "owner": "wrk",
+      "port": "work.v1|work.create|work.scenario|work.created",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-dd0a71dce3c8"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.create|work.task|work.created",
+      "operation": "work.create",
+      "owner": "wrk",
+      "port": "work.v1|work.create|work.task|work.created",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-f67f5585b14b"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.criterion|work.dependency-linked",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.criterion|work.dependency-linked",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-6a157fd03348"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.criterion|work.parent-linked",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.criterion|work.parent-linked",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-220a80bc8a49"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.criterion|work.revised",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.criterion|work.revised",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-f7e14d3e5dbf"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.criterion|work.state-changed",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.criterion|work.state-changed",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-de432e1f4e69"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.effort|work.dependency-linked",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.effort|work.dependency-linked",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-0d4b73c85f13"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.effort|work.parent-linked",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.effort|work.parent-linked",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-abefb091fb7f"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.effort|work.revised",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.effort|work.revised",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-eccadb1aca8c"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.effort|work.state-changed",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.effort|work.state-changed",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-f0f3ce000f74"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.gate|work.dependency-linked",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.gate|work.dependency-linked",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-b7aac3afde56"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.gate|work.parent-linked",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.gate|work.parent-linked",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-72c411684026"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.gate|work.revised",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.gate|work.revised",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-72a421e801b7"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.gate|work.state-changed",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.gate|work.state-changed",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-72e5fe0d5a3f"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.project|work.dependency-linked",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.project|work.dependency-linked",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-f9d7425d4d8e"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.project|work.revised",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.project|work.revised",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-81d7495bc72c"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.project|work.state-changed",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.project|work.state-changed",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-e2e789712555"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.scenario|work.dependency-linked",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.scenario|work.dependency-linked",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-ac6cd8672399"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.scenario|work.parent-linked",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.scenario|work.parent-linked",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-17d163f22af8"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.scenario|work.revised",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.scenario|work.revised",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-ca8adffb0887"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.scenario|work.state-changed",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.scenario|work.state-changed",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-488a76d731d1"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.task|work.dependency-linked",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.task|work.dependency-linked",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-5a9b9acd322d"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.task|work.parent-linked",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.task|work.parent-linked",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-08c3061da37a"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.task|work.revised",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.task|work.revised",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-569e2711b2f1"
+    },
+    {
+      "domain_id": "herzchen.work",
+      "matrix_key": "mutation-port:work.v1|work.revise|work.task|work.state-changed",
+      "operation": "work.revise",
+      "owner": "wrk",
+      "port": "work.v1|work.revise|work.task|work.state-changed",
+      "public_handler": "herzchen.domains.work.WorkGraph",
+      "scenario_id": "C33-cfb52d9f1043"
+    }
+  ],
+  "source_commit": "98ff41e3cd662d96a0f71c8c64ddb61d44bda052",
+  "source_tree": "2ed55b5907c1d7e6870ec5f562a728b37e8e30ac"
+}

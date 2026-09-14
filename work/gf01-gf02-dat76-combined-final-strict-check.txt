@@ -1,0 +1,4 @@
+command: env -u PYTHONHOME -u PYTHONPATH /private/tmp/gf01-gf02-dat76-venv-final.UXOPMx/bin/python /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/c33-persisted-port-strict-acceptance.py --inventory work/gf01-gf02-dat76-combined-descriptor-inventory.json --matrix work/gf01-gf02-dat76-combined-final-c33-matrix.json --result work/gf01-gf02-dat76-combined-final-c33-result.json
+exit: 1
+FAIL: admitted row mutation-port:edt-02.authoring.v1|finish.recovery|authoring-scope|authoring.finish.recovery status is 'reproduced_owner_defect', expected 'passed'
+FAIL: admitted row mutation-port:edt-02.authoring.v1|finish.recovery|authoring-scope|authoring.finish.recovery lacks evidence sections: ['before', 'action', 'replay', 'reject', 'reopen']
