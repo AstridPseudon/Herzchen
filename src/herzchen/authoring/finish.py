@@ -221,9 +221,25 @@ class SemanticFinishAdapter:
             # Token, fence, and base admission are checked before the handler
             # is allowed to inspect/apply semantic changes.
             expected = expected_base_revision or handle.base_revision
-            checkout = self.service.authorize_mutation(
-                handle, handle.target_scope, token=handle.token, fence=handle.fence, expected_base_revision=expected
-            )
+            try:
+                checkout = self.service.authorize_mutation(
+                    handle, handle.target_scope, token=handle.token, fence=handle.fence, expected_base_revision=expected
+                )
+            except BaseException:
+                # A same-service contender can lose after the adapter's
+                # initial read but before authorization.  Reuse the existing
+                # durable-winner reconciliation; do not add an EDT lock or a
+                # second finish writer.
+                reconciled = self._reconcile_completed_finish(
+                    handle,
+                    mode=mode,
+                    expected_base_revision=expected_base_revision,
+                    pending=pending,
+                    final_digest=tree.digest,
+                )
+                if reconciled is not None:
+                    return SemanticFinishResult("already_finished", reconciled, tree)
+                raise
             validation = _validation(_call_hook(handler.validate, tree, checkout, str(checkout_root), checkout_root=str(checkout_root), **hook_kwargs))
             ref = self.snapshots._ref(handle, "final", tree.tree_digest)
             session_snapshot = tree.as_session_snapshot(ref)

@@ -230,6 +230,10 @@ class Store:
         self.path = path
         self.authority = authority
         self._closed = False
+        # ``check_same_thread=False`` permits service/adapter contenders to
+        # share this Store, but sqlite3 cursors still must not be used by
+        # multiple threads at once.  Transaction admission and Store-owned
+        # reads therefore use the same re-entrant boundary.
         self._transaction_lock = threading.RLock()
         self._local = threading.local()
         self._domain_descriptors: Dict[str, DomainContribution] = dict(domain_descriptors or {})
@@ -394,8 +398,9 @@ class Store:
         return self._connection
 
     def foreign_keys_enabled(self) -> bool:
-        self._require_open()
-        return self._connection.execute("PRAGMA foreign_keys").fetchone()[0] == 1
+        with self._transaction_lock:
+            self._require_open()
+            return self._connection.execute("PRAGMA foreign_keys").fetchone()[0] == 1
 
     @contextmanager
     def transaction(self) -> Iterator[Transaction]:
@@ -508,12 +513,13 @@ class Store:
         )
 
     def get_identity(self, ref: ResourceRef) -> Optional[IdentityRecord]:
-        self._require_open()
-        row = self._connection.execute(
-            "SELECT * FROM identities WHERE authority = ? AND kind = ? AND id = ?",
-            (ref.authority, ref.kind, ref.id),
-        ).fetchone()
-        return None if row is None else self._identity_from_row(row)
+        with self._transaction_lock:
+            self._require_open()
+            row = self._connection.execute(
+                "SELECT * FROM identities WHERE authority = ? AND kind = ? AND id = ?",
+                (ref.authority, ref.kind, ref.id),
+            ).fetchone()
+            return None if row is None else self._identity_from_row(row)
 
     def get_record(self, ref: ResourceRef) -> Optional[IdentityRecord]:
         return self.get_identity(ref)
@@ -733,18 +739,20 @@ class Store:
         )
 
     def get_reference(self, ref: ResourceRef) -> Optional[ResourceRef]:
-        self._require_open()
-        row = self._connection.execute(
-            "SELECT reference_json FROM record_references WHERE reference_key = ?", (_ref_key(ref),)
-        ).fetchone()
-        return None if row is None else ResourceRef.from_dict(json.loads(row[0]))
+        with self._transaction_lock:
+            self._require_open()
+            row = self._connection.execute(
+                "SELECT reference_json FROM record_references WHERE reference_key = ?", (_ref_key(ref),)
+            ).fetchone()
+            return None if row is None else ResourceRef.from_dict(json.loads(row[0]))
 
     def get_receipt(self, logical_request_key: str) -> Optional[CommandReceipt]:
-        self._require_open()
-        row = self._connection.execute(
-            "SELECT * FROM command_receipts WHERE logical_request_key = ?", (logical_request_key,)
-        ).fetchone()
-        return None if row is None else self._receipt_from_row(row)
+        with self._transaction_lock:
+            self._require_open()
+            row = self._connection.execute(
+                "SELECT * FROM command_receipts WHERE logical_request_key = ?", (logical_request_key,)
+            ).fetchone()
+            return None if row is None else self._receipt_from_row(row)
 
     def _receipt_from_row(self, row: sqlite3.Row) -> CommandReceipt:
         target = ResourceRef(row["target_authority"], row["target_kind"], row["target_id"], row["target_revision"])
@@ -978,12 +986,13 @@ class Store:
             return event
 
     def list_events(self, *, stream: Optional[str] = None) -> Tuple[EventEnvelope, ...]:
-        self._require_open()
-        if stream is None:
-            rows = self._connection.execute("SELECT * FROM events ORDER BY store_authority, stream, sequence").fetchall()
-        else:
-            rows = self._connection.execute("SELECT * FROM events WHERE store_authority = ? AND stream = ? ORDER BY sequence", (self.authority, stream)).fetchall()
-        return tuple(self._event_from_row(row) for row in rows)
+        with self._transaction_lock:
+            self._require_open()
+            if stream is None:
+                rows = self._connection.execute("SELECT * FROM events ORDER BY store_authority, stream, sequence").fetchall()
+            else:
+                rows = self._connection.execute("SELECT * FROM events WHERE store_authority = ? AND stream = ? ORDER BY sequence", (self.authority, stream)).fetchall()
+            return tuple(self._event_from_row(row) for row in rows)
 
     def _event_from_row(self, row: sqlite3.Row) -> EventEnvelope:
         subject = ResourceRef(row["subject_authority"], row["subject_kind"], row["subject_id"], row["subject_revision"])

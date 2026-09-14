@@ -140,6 +140,52 @@ class StoreTests(unittest.TestCase):
         self.assertIsNotNone(store.get_identity(ResourceRef("neutral-store", "record", "third")))
         store.close()
 
+    def test_concurrent_public_reads_serialize_with_store_transaction(self) -> None:
+        store = self.admitted()
+        receipt = store.mutate(self.envelope(), event_type="record.updated", effects={"changed": ["value"]})
+        ref = ResourceRef("neutral-store", "record", "record-1")
+        barrier = threading.Barrier(3)
+        errors = []
+
+        def reader() -> None:
+            try:
+                for _ in range(50):
+                    barrier.wait(timeout=5)
+                    identity = store.get_identity(ref)
+                    observed_receipt = store.get_receipt("request-1")
+                    events = store.list_events()
+                    self.assertIsNotNone(identity)
+                    self.assertEqual(identity.ref.authority, "neutral-store")
+                    self.assertEqual(identity.ref.kind, "record")
+                    self.assertEqual(observed_receipt, receipt)
+                    self.assertEqual(len(events), 1)
+                    barrier.wait(timeout=5)
+            except BaseException as exc:
+                errors.append(exc)
+
+        def writer() -> None:
+            try:
+                for _ in range(50):
+                    barrier.wait(timeout=5)
+                    with store.transaction() as transaction:
+                        transaction.execute(
+                            "UPDATE identities SET updated_at = updated_at WHERE authority = ? AND kind = ? AND id = ?",
+                            ("neutral-store", "record", "record-1"),
+                        )
+                    barrier.wait(timeout=5)
+            except BaseException as exc:
+                errors.append(exc)
+
+        readers = [threading.Thread(target=reader) for _ in range(2)]
+        writer = threading.Thread(target=writer)
+        for thread in readers + [writer]:
+            thread.start()
+        for thread in readers + [writer]:
+            thread.join(10)
+        self.assertTrue(all(not thread.is_alive() for thread in readers + [writer]))
+        self.assertEqual(errors, [])
+        store.close()
+
     def test_mutation_is_atomic_and_replay_is_exact(self) -> None:
         store = self.admitted()
         first = store.mutate(self.envelope(), event_type="record.updated", effects={"changed": ["value"]})
