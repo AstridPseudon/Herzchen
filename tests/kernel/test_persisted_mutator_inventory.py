@@ -11,7 +11,7 @@ from herzchen.packs.authoring import domain_contribution as pack_contribution
 
 
 EXPECTED_PORT_COUNTS = {
-    "herzchen.work": 30,
+    "herzchen.work": 29,
     "herzchen.work.assignments": 5,
     "herzchen.work.batches": 7,
     "herzchen.work.decisions": 5,
@@ -49,7 +49,10 @@ def test_persisted_descriptor_set_has_the_complete_exact_mutator_inventory(tmp_p
         owner.register_domain_handler(descriptors)
         persisted = {item.domain_id: item for item in owner.registered_domains()}
         assert set(persisted) == set(EXPECTED_PORT_COUNTS)
-        assert sum(EXPECTED_PORT_COUNTS.values()) == 77
+        assert sum(EXPECTED_PORT_COUNTS.values()) == 76
+        assert "work.v1|work.revise|work.project|work.parent-linked" not in _ports(
+            persisted["herzchen.work"]
+        )
         for domain_id, expected_count in EXPECTED_PORT_COUNTS.items():
             descriptor = persisted[domain_id]
             ports = _ports(descriptor)

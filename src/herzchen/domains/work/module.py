@@ -110,6 +110,7 @@ def contribution() -> Any:
                 ("work.revise", "work.dependency-linked"),
                 ("work.revise", "work.state-changed"),
             )
+            if not (kind == "work.project" and event == "work.parent-linked")
         ),
     )
 

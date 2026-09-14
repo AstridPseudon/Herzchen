@@ -10,6 +10,7 @@ from herzchen.contracts import AuthenticatedActor  # noqa: E402
 from herzchen.kernel import Store  # noqa: E402
 from herzchen.domains.work import (  # noqa: E402
     GraphCycleError,
+    InvalidParentError,
     Lifecycle,
     WorkGraph,
     WorkKind,
@@ -144,6 +145,24 @@ def test_parent_and_dependency_cycles_reject_atomically(work_store):
         graph.link_parent(effort, task, logical_request_key="bad-parent")
     assert len(work_store.list_events()) == before_events
     assert graph.get(effort).parent is project.ref or graph.get(effort).parent.id == project.ref.id
+
+
+def test_project_parent_link_is_rejected_and_has_no_descriptor_port(work_store):
+    graph = WorkGraph(work_store, actor=actor())
+    descriptor = graph.register()
+    project = graph.create_project(logical_request_key="root")
+    parent = graph.create_project(logical_request_key="other-root")
+    before_events = len(work_store.list_events())
+
+    assert "work.v1|work.revise|work.project|work.parent-linked" not in {
+        binding.split(":", 1)[1]
+        for binding in descriptor.composition_bindings
+        if binding.startswith("mutation-port:")
+    }
+    with pytest.raises(InvalidParentError, match="projects cannot have a parent"):
+        graph.link_parent(project, parent, logical_request_key="invalid-project-parent")
+    assert len(work_store.list_events()) == before_events
+    assert graph.get(project.ref).parent is None
 
 
 def test_valid_single_record_links_state_and_lifecycle_keep_boundaries(work_store):
