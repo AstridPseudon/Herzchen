@@ -21,6 +21,24 @@
       "commit": "0d07a5c",
       "note": "accepted fixture lineage; exact full pin retained in INT-02 receipt"
     },
+    "INT-C33-CHECKER": {
+      "commit": "ca05a6ef76cdcb24a9d8523d09906653f9bd5bff",
+      "handoff": "work/c33-persisted-port-strict-acceptance-corrected.py",
+      "role": "strict typed rejection checker",
+      "tree": "28c0251addaca79e05496995c381979c40e34b94"
+    },
+    "INT-C33-HARNESS": {
+      "commit": "0bfd152c5399cf7dd9c94560d3ae2ccac5890009",
+      "handoff": "work/gf01-gf02-dat76-correction-harness-repaired-result.json",
+      "role": "test-harness-only typed changed-request correction",
+      "tree": "3850370d055259bc302d7efd101696352fbe86eb"
+    },
+    "INT-FINAL-CORRECTION": {
+      "commit": "7c15ae26909cd8a0da52e4a3231468d7459146f5",
+      "handoff": "work/gf01-gf02-dat76-correction-result.md",
+      "role": "bounded capture-failure retry correction",
+      "tree": "3b27fa3319b57ada95b4aadc62445834bfb4e7d4"
+    },
     "PKG-05": {
       "handoff": "handoffs/PKG.json",
       "implementation_commit": "1735eadcbf0c5a447a7c74e9ab213b225e4e5ed8",
@@ -40,10 +58,21 @@
     }
   },
   "astrid_dependency": {
+    "built_wheel_sha256": "1303e51cb8364339413fe4727897c220cfd58ab14c9abf55a3fbb988acdfe5d0",
+    "historical_review03_wheel_sha256": "9196bc376ebd393b9942e61b994ab8a6356804b2845b13a353ea509a0a80d05a",
+    "install_mode": "pip install --no-deps exact local source",
     "role": "pinned adapter dependency for installed campaign; no consumer cutover claim",
     "source_commit": "96e5664237eb35adeb4cad08bddd8cd6df0a2ae1",
-    "source_tree": "19f7539a266618a797559eedbda48e2752b30fa3",
-    "temporary_wheel_sha256": "1da76f252f96e7db84c31a387704e8a6ecdf22333098528139b3db83c8fda67a"
+    "source_path": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/sources/Astrid-96e5664237eb",
+    "source_tree": "19f7539a266618a797559eedbda48e2752b30fa3"
+  },
+  "astrid_provenance": {
+    "built_wheel_sha256": "1303e51cb8364339413fe4727897c220cfd58ab14c9abf55a3fbb988acdfe5d0",
+    "commit": "96e5664237eb35adeb4cad08bddd8cd6df0a2ae1",
+    "consumer_cutover_claimed": false,
+    "install": "pip install --no-deps from exact local source",
+    "source_path": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/sources/Astrid-96e5664237eb",
+    "tree": "19f7539a266618a797559eedbda48e2752b30fa3"
   },
   "boundaries": [
     "No review/oracle call",
@@ -54,7 +83,474 @@
     "C39 real manager/host action remains later consumer journey; foundation packet claims only shared candidate/decision primitives"
   ],
   "candidate_head_frozen": true,
+  "checker_checkpoint": {
+    "commit": "ca05a6ef76cdcb24a9d8523d09906653f9bd5bff",
+    "role": "checker rejects synthetic RejectedWithoutException",
+    "tree": "28c0251addaca79e05496995c381979c40e34b94",
+    "script": "work/c33-persisted-port-strict-acceptance-corrected.py",
+    "script_sha256": "dd11693400fd97e809f7ab31ce438152dc2632d42d82c28b49c8293cbc0b8533",
+    "old_exit_code": 1,
+    "new_exit_code": 0
+  },
   "coverage_artifact": "evidence/foundation-coverage.json",
+  "criteria_applicability": [
+    {
+      "current_candidate_applicability": "current_installed_affected",
+      "current_evidence_refs": [
+        "work/gf01-gf02-dat76-correction-installed-run.txt"
+      ],
+      "foundation_scope_status": "supported",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C01",
+      "later_product_status": "later_consumer_authority_and_activation_qualification_pending",
+      "note": "Pinned ownership, import and authority boundaries are proven for the shared foundation. Consumer-side authority/activation remains a later product qualification.",
+      "original_criteria_status": "supported_foundation_slice",
+      "retained_evidence_refs": [
+        "source manifest",
+        "extraction map",
+        "handoffs/FND.json",
+        "tests/kernel/test_transactions.py::StoreTests::test_kernel_import_boundary_has_no_optional_domain_modules",
+        "tests/packs/test_protocol_resources.py::test_import_boundary_does_not_open_ddl_or_invoke_agents"
+      ]
+    },
+    {
+      "current_candidate_applicability": "current_installed_affected",
+      "current_evidence_refs": [
+        "work/gf01-gf02-dat76-correction-installed-run.txt"
+      ],
+      "foundation_scope_status": "supported",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C02",
+      "later_product_status": "later_cross_product_consumer_collision_qualification_pending",
+      "note": "One Store/transaction owner, optional-domain exclusion, duplicate collision rejection and omission rejection are installed foundation evidence. Full cross-product consumer qualification is later.",
+      "original_criteria_status": "supported_foundation_slice",
+      "retained_evidence_refs": [
+        "tests/kernel/test_transactions.py::StoreTests::test_create_open_fingerprint_composition_and_foreign_keys",
+        "tests/kernel/test_transactions.py::StoreTests::test_duplicate_domain_and_type_rejection_is_atomic",
+        "tests/packs/test_composition.py::test_duplicates_rejected_before_readiness",
+        "tests/packs/test_composition.py::test_omission_rejected_before_readiness",
+        "tests/packs/test_composition.py::test_neutral_import_without_optional_product_modules",
+        "INT03-FND-001",
+        "work/int-03-final-installed-run-20260914.txt"
+      ]
+    },
+    {
+      "current_candidate_applicability": "current_installed_affected",
+      "current_evidence_refs": [
+        "work/gf01-gf02-dat76-correction-installed-run.txt"
+      ],
+      "foundation_scope_status": "supported",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C03",
+      "later_product_status": "later_external_host_uncertain_outcome_journey_pending",
+      "note": "Atomic state/event/receipt commit, exact replay/conflict behavior, restart cursor recovery and retained unknown outcomes are covered by installed foundation tests. A real external host uncertain-outcome journey is later.",
+      "original_criteria_status": "supported_foundation_slice",
+      "retained_evidence_refs": [
+        "tests/kernel/test_transactions.py::StoreTests::test_mutation_is_atomic_and_replay_is_exact",
+        "tests/kernel/test_transactions.py::StoreTests::test_expected_target_mismatch_leaves_no_receipt_or_event",
+        "tests/kernel/test_recovery.py::RecoveryTests::test_epoch_retires_stale_token_before_external_or_durable_result_mutation",
+        "tests/kernel/test_recovery.py::RecoveryTests::test_restart_catchup_and_gap_are_explicit_and_do_not_scan_full_transcript",
+        "tests/kernel/test_receipts_limits.py::test_operation_identity_replay_conflict_and_explicit_unknown_resolution",
+        "INT03-FND-001",
+        "INT03-CURSOR-001",
+        "work/int-03-final-installed-run-20260914.txt"
+      ]
+    },
+    {
+      "current_candidate_applicability": "current_installed_affected",
+      "current_evidence_refs": [
+        "work/gf01-gf02-dat76-correction-installed-run.txt"
+      ],
+      "foundation_scope_status": "supported",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C04",
+      "later_product_status": "later_product_route_capacity_campaign_pending",
+      "note": "Last-unit admission, stable pool identity, held uncertainty, reusable capacity, cumulative use and truthful overrun are proven in the foundation limits tests. Product route qualification is later.",
+      "original_criteria_status": "supported_foundation_slice",
+      "retained_evidence_refs": [
+        "tests/kernel/test_receipts_limits.py::test_last_unit_race_allows_only_one_contender",
+        "tests/kernel/test_receipts_limits.py::test_limit_reusable_capacity_is_separate_from_cumulative_usage_and_overrun_is_truthful",
+        "tests/kernel/test_receipts_limits.py::test_uncertain_keeps_capacity_held_until_explicit_release_or_settlement",
+        "tests/kernel/test_receipts_limits.py::test_reopen_preserves_receipts_reservations_stable_pool_and_cumulative_usage",
+        "INT03-LIMIT-001",
+        "work/int-03-final-installed-run-20260914.txt"
+      ]
+    },
+    {
+      "current_candidate_applicability": "retained_prior_packet_only",
+      "current_evidence_refs": [],
+      "foundation_scope_status": "supported",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C05",
+      "later_product_status": "later_consumer_scope_and_detach_qualification_pending",
+      "note": "Generic document identity, multiple associations, fresh reads, pinned revisions and unlink/replay behavior are covered by installed foundation evidence. Product consumer scope/detach qualification is later.",
+      "original_criteria_status": "supported_foundation_slice",
+      "retained_evidence_refs": [
+        "tests/content/test_documents.py::FND03ContentIntegrationTests::test_create_links_unlink_and_fresh_reads_share_one_document",
+        "tests/content/test_documents.py::DocumentSchemaTests::test_cross_authority_document_ref_is_not_a_local_foreign_key",
+        "tests/content/test_documents.py::FND03ContentIntegrationTests::test_replay_conflict_and_stale_append_leave_no_partial_delta",
+        "tests/conformance/test_dat_handoff.py::test_dat06_public_api_conformance",
+        "INT03-DAT-001",
+        "work/int-03-final-installed-run-20260914.txt"
+      ]
+    },
+    {
+      "current_candidate_applicability": "current_installed_affected",
+      "current_evidence_refs": [
+        "work/gf01-gf02-dat76-correction-installed-run.txt"
+      ],
+      "foundation_scope_status": "supported",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C06",
+      "later_product_status": "later_product_pinned_definition_surface_pending",
+      "note": "Namespace preservation, managed-field protection, contextual validation, replay and restart reads are proven. A later product surface must qualify the full pinned-definition help/describe path.",
+      "original_criteria_status": "supported_foundation_slice",
+      "retained_evidence_refs": [
+        "tests/extensions/test_namespaces.py::test_open_set_read_query_and_sibling_preservation",
+        "tests/extensions/test_namespaces.py::test_managed_namespace_and_protected_annotation_fields_rejected",
+        "tests/extensions/test_namespaces.py::test_same_key_replay_changed_digest_and_stale_write_are_atomic",
+        "tests/extensions/test_namespaces.py::test_restart_fresh_read_and_pinned_reference_semantics",
+        "INT03-DAT-003",
+        "work/int-03-final-installed-run-20260914.txt"
+      ]
+    },
+    {
+      "current_candidate_applicability": "current_installed_affected",
+      "current_evidence_refs": [
+        "work/gf01-gf02-dat76-correction-installed-run.txt"
+      ],
+      "foundation_scope_status": "supported",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C07",
+      "later_product_status": "later_consumer_cross_scope_campaign_pending",
+      "note": "Single scope holder, one checkout per actor, direct-bypass rejection and continued read/result boundaries are covered in foundation authoring tests. A later consumer campaign remains.",
+      "original_criteria_status": "supported_foundation_slice",
+      "retained_evidence_refs": [
+        "tests/authoring/test_exclusivity.py::ExclusivityTests::test_two_services_race_same_scope_has_one_durable_reservation",
+        "tests/authoring/test_exclusivity.py::ExclusivityTests::test_nested_target_resolves_to_parent_and_direct_bypass_is_rejected",
+        "tests/authoring/test_three_targets.py::test_document_scope_rules_external_attachment_rejection_and_closed_fence",
+        "work/int-03-final-installed-run-20260914.txt"
+      ]
+    },
+    {
+      "current_candidate_applicability": "current_installed_affected_mixed_probe",
+      "current_evidence_refs": [
+        "work/gf01-gf02-dat76-correction-installed-run.txt"
+      ],
+      "foundation_scope_status": "supported",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C08",
+      "later_product_status": "later_otto_blank_lifecycle_consumer_pending",
+      "note": "Idle timing, one finish boundary, uncertainty, untouched blank retention and cleanup behavior are proven in the foundation authoring and S-NEW-01 evidence. An Otto consumer lifecycle remains later.",
+      "original_criteria_status": "supported_foundation_slice",
+      "retained_evidence_refs": [
+        "tests/authoring/test_finish.py::test_valid_handler_applies_once_and_manual_idle_share_finish_boundary",
+        "tests/authoring/test_failure_matrix.py::test_idle_uses_last_content_edit_not_polling_and_untouched_blank_is_retained",
+        "tests/authoring/test_failure_matrix.py::test_writer_uncertainty_and_capture_failure_preserve_files_and_slot_is_not_reacquired",
+        "tests/authoring/test_three_targets.py::test_project_creation_and_reopen_share_handler_and_untouched_pending_is_retained",
+        "work/int-03-c38-foundation-probe-20260914.json",
+        "work/int-03-snew01-installed-affected-run-20260914.txt"
+      ]
+    },
+    {
+      "current_candidate_applicability": "current_installed_affected",
+      "current_evidence_refs": [
+        "work/gf01-gf02-dat76-correction-installed-run.txt"
+      ],
+      "foundation_scope_status": "supported",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C09",
+      "later_product_status": "later_product_filesystem_writer_qualification_pending",
+      "note": "Registered-file cleanup, path/writer rejection, durable invalid drafts and retryable cleanup are foundation-covered. Full product writer qualification remains later.",
+      "original_criteria_status": "supported_foundation_slice",
+      "retained_evidence_refs": [
+        "tests/authoring/test_snapshots.py::test_invalid_paths_missing_and_unregistered_files_are_rejected",
+        "tests/authoring/test_snapshots.py::test_symlink_escape_and_unsettled_writer_are_rejected",
+        "tests/authoring/test_failure_matrix.py::test_invalid_idle_draft_is_durable_exact_and_cleanup_is_after_release",
+        "tests/authoring/test_failure_matrix.py::test_partial_cleanup_is_retryable_and_does_not_mark_complete",
+        "work/int-03-final-installed-run-20260914.txt"
+      ]
+    },
+    {
+      "current_candidate_applicability": "retained_prior_packet_only",
+      "current_evidence_refs": [],
+      "foundation_scope_status": "supported",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C10",
+      "later_product_status": "later_consumer_packet_reuse_pending",
+      "note": "Pinned context/history, bounded cursor reads, attention retention and fresh-process restart are foundation evidence. Later consumer packet reuse remains.",
+      "original_criteria_status": "supported_foundation_slice",
+      "retained_evidence_refs": [
+        "tests/content/test_context_visibility.py::test_current_binding_is_pinned_at_assignment_and_head_change_does_not_rewrite_packet",
+        "tests/content/test_context_visibility.py::test_amendment_notifies_without_hot_rewrite_and_attention_survives_replay",
+        "tests/content/test_context_visibility.py::test_responsibility_view_is_bounded_and_cursor_delta_is_useful",
+        "tests/kernel/test_recovery.py::RecoveryTests::test_restart_catchup_and_gap_are_explicit_and_do_not_scan_full_transcript",
+        "tests/authoring/test_handoff.py::test_fresh_consumer_process_and_restart_read_exact_durable_links",
+        "INT03-REOPEN-001",
+        "work/int-03-final-installed-run-20260914.txt"
+      ]
+    },
+    {
+      "current_candidate_applicability": "current_installed_affected",
+      "current_evidence_refs": [
+        "work/gf01-gf02-dat76-correction-installed-run.txt"
+      ],
+      "foundation_scope_status": "supported_minimal_composition_slice",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C11",
+      "later_product_status": "exhaustive_composition_and_independent_domain_author_qualification_pending",
+      "note": "The required minimal omission/reduced-composition and trusted-writer slice is installed and passes. Exhaustive composition and independent domain-author qualification are explicitly later scope, not an unlabelled partial foundation result.",
+      "original_criteria_status": "supported_foundation_slice",
+      "retained_evidence_refs": [
+        "tests/packs/test_composition.py::test_allowed_composition_delegates_to_one_fnd_writer",
+        "tests/packs/test_composition.py::test_omission_rejected_before_readiness",
+        "tests/packs/test_composition.py::test_neutral_import_without_optional_product_modules",
+        "tests/packs/test_protocol_resources.py::test_import_boundary_does_not_open_ddl_or_invoke_agents",
+        "INT03-PKG-001",
+        "work/int-03-final-installed-run-20260914.txt"
+      ]
+    },
+    {
+      "current_candidate_applicability": "current_installed_affected",
+      "current_evidence_refs": [
+        "work/gf01-gf02-dat76-correction-installed-run.txt"
+      ],
+      "foundation_scope_status": "supported",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C12",
+      "later_product_status": "later_product_template_consumer_pending",
+      "note": "Pinned resource expansion, stable replay/conflict, invalid no-write and sparse blank starter behavior are installed foundation evidence. Full product consumer use is later.",
+      "original_criteria_status": "supported_foundation_slice",
+      "retained_evidence_refs": [
+        "tests/packs/test_task_templates.py::test_shipped_delivery_seed_work_is_expanded_from_real_resource",
+        "tests/packs/test_task_templates.py::test_shipped_delivery_is_idempotent_and_conflicts_on_changed_parameters",
+        "tests/packs/test_task_templates.py::test_invalid_shipped_shape_writes_nothing",
+        "tests/packs/test_task_templates.py::test_blank_resource_persists_pending_project_initial_spec_and_association",
+        "tests/packs/test_protocol_resources.py::test_blank_starter_is_sparse_and_has_no_megado_dependency",
+        "INT03-PKG-002",
+        "work/int-03-snew01-installed-affected-run-20260914.txt"
+      ]
+    },
+    {
+      "current_candidate_applicability": "current_installed_affected",
+      "current_evidence_refs": [
+        "work/gf01-gf02-dat76-correction-installed-run.txt"
+      ],
+      "foundation_scope_status": "supported",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C13",
+      "later_product_status": "later_manager_route_pending",
+      "note": "Bounded assessment, UNKNOWN charging, route/resume accounting and atomic rollback are foundation mechanics. A real supported manager route is later.",
+      "original_criteria_status": "supported_foundation_slice",
+      "retained_evidence_refs": [
+        "tests/assessment/test_accounting.py::test_unknown_is_distinct_charged_and_explicitly_disposed",
+        "tests/assessment/test_accounting.py::test_route_change_resume_unknown_and_overrun_do_not_refill_allowance",
+        "tests/assessment/test_accounting.py::test_atomic_whole_assessment_rolls_back_children_operation_receipts_and_reservation",
+        "tests/work/test_candidates_decisions_waiting.py::test_explicit_manager_choice_is_receipted_but_not_auto_dispatched",
+        "work/int-03-final-installed-run-20260914.txt"
+      ]
+    },
+    {
+      "current_candidate_applicability": "current_installed_affected",
+      "current_evidence_refs": [
+        "work/gf01-gf02-dat76-correction-installed-run.txt"
+      ],
+      "foundation_scope_status": "supported",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C14",
+      "later_product_status": "later_manager_consumer_journey_pending",
+      "note": "Schema-free selectable protocol primitives, exact slots/routes and explicit choice/non-dispatch behavior are foundation-covered. The real manager/consumer journey is later.",
+      "original_criteria_status": "supported_foundation_slice",
+      "retained_evidence_refs": [
+        "tests/packs/test_protocol_resources.py::test_megado_exposes_exact_slots_finite_routes_and_pinned_bindings",
+        "tests/assessment/test_accounting.py::test_megado_and_creative_lenses_share_scope_input_invocation_result_primitives",
+        "tests/work/test_candidates_decisions_waiting.py::test_explicit_manager_choice_is_receipted_but_not_auto_dispatched",
+        "INT03-PKG-003",
+        "work/int-03-final-installed-run-20260914.txt"
+      ]
+    },
+    {
+      "current_candidate_applicability": "current_installed_affected",
+      "current_evidence_refs": [
+        "work/gf01-gf02-dat76-correction-installed-run.txt"
+      ],
+      "foundation_scope_status": "supported",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C15",
+      "later_product_status": "later_public_handoff_consumer_pending",
+      "note": "Stable identities, typed contributions, alias/revision retention and separated assignment roles are foundation-covered. A full public handoff remains later.",
+      "original_criteria_status": "supported_foundation_slice",
+      "retained_evidence_refs": [
+        "tests/work/test_identity_graph.py::test_contribution_is_typed_and_uses_only_fnd_composition",
+        "tests/work/test_identity_graph.py::test_aliases_and_revisions_preserve_identity_and_omission_does_not_delete",
+        "tests/work/test_assignments.py::test_one_generic_assignment_separates_reporter_launcher_and_fences_stale_writer",
+        "INT03-WRK-001",
+        "work/int-03-final-installed-run-20260914.txt"
+      ]
+    },
+    {
+      "current_candidate_applicability": "current_installed_affected",
+      "current_evidence_refs": [
+        "work/gf01-gf02-dat76-correction-installed-run.txt"
+      ],
+      "foundation_scope_status": "supported",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C16",
+      "later_product_status": "later_semantic_batch_consumer_pending",
+      "note": "Whole-project sheet/direct mutation atomicity, rollback, result retention and omission semantics are foundation-covered. Later semantic consumer binding remains.",
+      "original_criteria_status": "supported_foundation_slice",
+      "retained_evidence_refs": [
+        "tests/work/test_batches.py::test_parent_sheet_is_atomic_replay_safe_and_retains_observations",
+        "tests/work/test_batches.py::test_invalid_child_rolls_back_all_rows_events_and_receipt",
+        "tests/work/test_batches.py::test_injected_child_failure_rolls_back_revisions_associations_and_parent_boundary",
+        "tests/work/test_sheet_batches.py::test_aliases_dependencies_order_custom_values_and_documents_round_trip_atomically",
+        "tests/work/test_sheet_batches.py::test_omission_preserves_task_documents_namespace_result_and_inflight_assignment",
+        "INT03-WRK-001",
+        "work/int-03-final-installed-run-20260914.txt"
+      ]
+    },
+    {
+      "current_candidate_applicability": "current_artifact_proof",
+      "current_evidence_refs": [
+        "work/gf01-gf02-dat76-correction-result.md",
+        "work/gf01-gf02-dat76-correction-module-origins.json",
+        "work/gf01-gf02-dat76-correction-wheel-sha256.txt"
+      ],
+      "foundation_scope_status": "supported_artifact_proof",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C17",
+      "later_product_status": "later_release_publication_qualification_pending",
+      "note": "Built wheel, clean installed origins, pinned Astrid dependency and exact digests are recorded; this row is artifact proof, not product publication.",
+      "original_criteria_status": "supported_by_current_candidate",
+      "retained_evidence_refs": [
+        "work/int-03-final-installed-run-20260914.txt",
+        "work/int-03-snew01-installed-affected-run-20260914.txt",
+        "work/int-03-final-public-api-probe-run-20260914.txt"
+      ]
+    },
+    {
+      "current_candidate_applicability": "current_installed_affected",
+      "current_evidence_refs": [
+        "work/gf01-gf02-dat76-correction-installed-run.txt"
+      ],
+      "foundation_scope_status": "supported",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C31",
+      "later_product_status": "later_manager_consumer_reuse_pending",
+      "note": "Typed immutable candidates, exact decision bindings, consumed-input invalidation and historical readability are foundation-covered. Product reuse through a manager remains later.",
+      "original_criteria_status": "supported_foundation_slice",
+      "retained_evidence_refs": [
+        "tests/content/test_context_visibility.py::test_candidate_and_decision_are_typed_immutable_ordinary_documents",
+        "tests/content/test_context_visibility.py::test_consumed_input_comparison_ignores_unrelated_annotation",
+        "tests/assessment/test_accounting.py::test_selection_assessment_acceptance_are_separate_and_approval_binds_exact_refs",
+        "tests/work/test_candidates_decisions_waiting.py::test_candidates_are_distinct_immutable_pins_and_decisions_are_historical",
+        "work/int-03-final-installed-run-20260914.txt"
+      ]
+    },
+    {
+      "current_candidate_applicability": "current_installed_affected_harness_repaired",
+      "current_evidence_refs": [
+        "work/gf01-gf02-dat76-correction-harness-repaired-result.json",
+        "work/gf01-gf02-dat76-correction-harness-repaired-result.json",
+        "work/gf01-gf02-dat76-correction-harness-repair-strict-check-corrected.txt",
+        "work/gf01-gf02-dat76-correction-descriptor-inventory.json",
+        "work/gf01-gf02-dat76-correction-c33-matrix.json"
+      ],
+      "foundation_scope_status": "supported_bounded_installed_api",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C33",
+      "later_product_status": "later_full_consumer_command_mapping_pending",
+      "note": "The retained 11-observation probe and installed campaigns cover before/action/fresh-after, persisted deltas, receipts/events, replay and rejection for the current foundation API set. Full later consumer command mapping remains.",
+      "original_criteria_status": "supported_foundation_slice",
+      "retained_evidence_refs": [
+        "work/int-03-final-api-probe-evidence.json",
+        "work/int-03-final-public-api-probe-run-20260914.txt",
+        "tests/conformance/test_int03_public_api_probes.py::test_int03_installed_public_api_probes",
+        "work/int-03-final-installed-run-20260914.txt"
+      ]
+    },
+    {
+      "current_candidate_applicability": "current_installed_affected",
+      "current_evidence_refs": [
+        "work/gf01-gf02-dat76-correction-installed-run.txt"
+      ],
+      "foundation_scope_status": "supported",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C34",
+      "later_product_status": "later_otto_astrid_consumer_qualification_pending",
+      "note": "Shared artifact ownership, neutral imports and no private writer boundaries are foundation-proven. Otto/Astrid consumer qualification is later.",
+      "original_criteria_status": "supported_foundation_slice",
+      "retained_evidence_refs": [
+        "tests/kernel/test_reduced_composition.py::ReducedCompositionTests::test_fresh_kernel_and_adapter_import_excludes_optional_domains",
+        "tests/packs/test_composition.py::test_neutral_import_without_optional_product_modules",
+        "tests/authoring/test_exclusivity.py::ExclusivityTests::test_import_boundary_has_no_sqlite_or_private_schema_writer",
+        "source manifest",
+        "extraction map",
+        "work/int-03-final-installed-run-20260914.txt"
+      ]
+    },
+    {
+      "current_candidate_applicability": "mixed_current_and_retained",
+      "current_evidence_refs": [
+        "work/gf01-gf02-dat76-correction-installed-run.txt"
+      ],
+      "foundation_scope_status": "supported_current_herzchen_verticals",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C35",
+      "later_product_status": "later_full_graph_and_consumer_rehearsal_pending",
+      "note": "Current Herzchen foundation areas have installed command, outcome, persisted-state and failure/restart evidence. Full graph and later Otto/AST consumer rehearsal remain explicitly later.",
+      "original_criteria_status": "supported_foundation_slice",
+      "retained_evidence_refs": [
+        "work/int-03-final-installed-run-20260914.txt",
+        "work/int-03-snew01-installed-affected-run-20260914.txt",
+        "work/int-03-final-api-probe-evidence.json",
+        "tests/conformance/test_int03_public_api_probes.py::test_int03_installed_public_api_probes",
+        "INT03-FND-001",
+        "INT03-DAT-001",
+        "INT03-PKG-001",
+        "INT03-WRK-001"
+      ]
+    },
+    {
+      "current_candidate_applicability": "mixed_current_and_retained_probe_retained",
+      "current_evidence_refs": [
+        "work/gf01-gf02-dat76-correction-installed-run.txt"
+      ],
+      "foundation_scope_status": "supported",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C38",
+      "later_product_status": "later_consumer_manager_admission_journey_pending",
+      "note": "Pending creation, query/edit/attach, why/revisit/curator retention, attention-only revisit, explicit admission, replay/rejection and untouched close are directly proven. A later supported manager consumer remains.",
+      "original_criteria_status": "supported_by_current_candidate",
+      "retained_evidence_refs": [
+        "work/int-03-c38-foundation-probe-20260914.json",
+        "work/int-03-c38-foundation-probe-20260914.txt",
+        "work/int-03-snew01-installed-affected-run-20260914.txt",
+        "work/snew01-blank-project-worker-result.md",
+        "tests/work/test_identity_graph.py::test_pending_project_is_durable_sparse_and_replay_safe",
+        "tests/packs/test_task_templates.py::test_blank_creation_replays_conflicts_and_rejects_invalid_input_before_mutation"
+      ]
+    },
+    {
+      "current_candidate_applicability": "current_installed_affected_primitives",
+      "current_evidence_refs": [
+        "work/gf01-gf02-dat76-correction-installed-run.txt"
+      ],
+      "foundation_scope_status": "supported_primitives_only",
+      "historical_refs_are_not_current_claim": true,
+      "id": "C39",
+      "later_product_status": "later_supported_manager_host_action_pending",
+      "note": "REWORK/correction/approval, exact candidate/criterion, stale/unknown/allowance and explicit non-dispatch choice are foundation primitives. A real supported manager/host next action is later and not claimed.",
+      "original_criteria_status": "supported_foundation_slice",
+      "retained_evidence_refs": [
+        "tests/assessment/test_accounting.py::test_invocation_success_does_not_close_parent_and_rework_keeps_parent_lineage",
+        "tests/assessment/test_accounting.py::test_selection_assessment_acceptance_are_separate_and_approval_binds_exact_refs",
+        "tests/assessment/test_accounting.py::test_route_change_resume_unknown_and_overrun_do_not_refill_allowance",
+        "tests/work/test_candidates_decisions_waiting.py::test_explicit_manager_choice_is_receipted_but_not_auto_dispatched",
+        "work/int-03-final-installed-run-20260914.txt"
+      ]
+    }
+  ],
   "criteria_scope": [
     "C01",
     "C02",
@@ -172,9 +668,9 @@
       "status": "supported_foundation_slice"
     },
     "C33": {
-      "foundation_scope_status": "supported_bounded_installed_api",
+      "foundation_scope_status": "supported_installed_76_row_conformance_with_typed_rejection",
       "later_product_status": "later_full_consumer_command_mapping_pending",
-      "status": "supported_foundation_slice"
+      "status": "supported_foundation_slice_current_harness_repaired"
     },
     "C34": {
       "foundation_scope_status": "supported",
@@ -197,6 +693,18 @@
       "status": "supported_foundation_slice"
     }
   },
+  "current_vs_retained_statement": "Original criteria and 49 scenario records are preserved losslessly. Current applicability is explicitly separated from retained historical refs; no historical test is silently relabeled as rerun in the 248-test campaign.",
+  "evidence_checkpoint": {
+    "commit": "075d8c99a3102414e65d3013a533b1d48a6d075c",
+    "role": "248-test installed campaign and manifest",
+    "tree": "0360a491e861828f27e7cb268a6f61b404590331"
+  },
+  "exact_fixture_provenance": {
+    "commit": "62503c6bf1e08e6399ed97bc4ee5aab7d3f3d96e",
+    "name": "Herzchen-pkg04-worker",
+    "path": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-pkg04-worker",
+    "role": "test fixture sibling required by tests/packs/test_authoring.py"
+  },
   "follow_up_brief": "work/int-03-snew01-gap-brief.md (historical gap brief; closed by accepted SNEW01 correction)",
   "follow_up_brief_sha256": "d81ddfdbbdc6ccdaa2d36bf3655c0cab575524ef5a51e975b2afca8ffa95716d",
   "foundation_scope": {
@@ -218,7 +726,7 @@
     "C16": "supported",
     "C17": "supported_artifact_proof",
     "C31": "supported",
-    "C33": "supported_bounded_installed_api",
+    "C33": "supported_installed_76_row_conformance_with_typed_rejection",
     "C34": "supported",
     "C35": "supported_current_herzchen_verticals",
     "C38": "supported",
@@ -227,6 +735,157 @@
   },
   "gate_state": "pending",
   "gate_verdict_claimed": false,
+  "gf01": {
+    "finite_port_current_evidence": {
+      "boundary": "supported consumers receive finite typed domain command ports; raw Store/DomainHandler/connection/transaction/generic mutate/direct identity writers are not exposed",
+      "implementation_lineage": [
+        "e0b84e6490b86b3474d60e927b396b4774ab152c",
+        "4addb44942f8517650c252c26ca85da6d28328ef",
+        "880e6d293bd7389c4992cb81bd503385bf654c33",
+        "d4f2c61ab441d36b56870d75e9329abf2449d06c",
+        "8235d9aacbe7357e8f72cec8342eca77aab0cb58"
+      ],
+      "installed_campaign": "work/gf01-gf02-dat76-correction-installed-run.txt",
+      "source_commit": "7c15ae26909cd8a0da52e4a3231468d7459146f5",
+      "tests": [
+        "tests/kernel/test_public_command_capabilities.py",
+        "tests/kernel/test_public_mutation_admission.py",
+        "tests/kernel/test_context_digest_correction.py"
+      ]
+    },
+    "original_77_to_actual_76": {
+      "current_inventory_count": 76,
+      "current_proof": [
+        "work/gf01-gf02-dat76-correction-descriptor-inventory.json",
+        "work/gf01-gf02-dat76-correction-c33-matrix.json",
+        "work/gf01-gf02-dat76-correction-harness-repaired-result.json",
+        "work/gf01-gf02-dat76-correction-harness-repaired-result.json",
+        "work/gf01-gf02-dat76-correction-harness-repair-strict-check-corrected.txt"
+      ],
+      "historical_expected_count": 77,
+      "no_claim": "This packet does not claim 77/77; it records the semantic scope decision for root authority.",
+      "reason": "accepted public WorkGraph surface rejects project parents and has no valid public parent-clear path",
+      "removal_commit": "8235d9aacbe7357e8f72cec8342eca77aab0cb58",
+      "removed_descriptor": "work.v1|work.revise|work.project|work.parent-linked"
+    },
+    "review03_findings": [
+      "broad command-writer authority required finite trusted command ports",
+      "C33 evidence required per-mutator effect/receipt/replay/rejection/fresh-read proof rather than inventory-only evidence"
+    ],
+    "unresolved_judgment": {
+      "evidence_is_mechanical": true,
+      "owner": "root/foundation authority",
+      "question": "Whether removing the unsupported project-parent descriptor is the accepted interpretation of the original 77-port Review03 obligation, and whether the finite-port boundary satisfies the final authority judgment.",
+      "review_allowance_exhausted": true,
+      "status": "authority_decision_pending"
+    }
+  },
+  "gf02": {
+    "applicability": "GF02 source semantics are retained in the current candidate; the final campaign exercised kernel/work/assessment/authoring affected tests. Historical standalone GF02 receipts remain retained provenance, not a fresh independent review.",
+    "current_affected_evidence": [
+      "work/gf01-gf02-dat76-correction-installed-run.txt",
+      "work/gf01-gf02-dat76-correction-harness-repaired-result.json",
+      "work/gf01-gf02-dat76-correction-harness-repaired-result.json",
+      "tests/kernel/test_context_digest_correction.py",
+      "tests/work/test_gf02_c33_replay_closure.py"
+    ],
+    "current_source_inheritance": "Current source 7c15ae2 descends from the sealed combined candidate containing GF02 lineage; the bounded 7c correction changes only authoring capture recovery.",
+    "logical_fields": [
+      "expected_revision",
+      "expected_version",
+      "edit_token",
+      "correlation",
+      "causation"
+    ],
+    "retained_full_lineage": [
+      {
+        "commit": "ef13cfed36f8d43925a28e8312bf0235379b1488",
+        "role": "complete logical-context and caller reference-pin semantics",
+        "tree": "ab3c8439cc0af8eb9f685caf921613a34424e9a2"
+      },
+      {
+        "commit": "ff5d85cc09ace8731845e8c7fb54d63bfd07e081",
+        "role": "custody and historical evidence",
+        "tree": "a6f030b399a747524dc356e632e90b02a1647083"
+      },
+      {
+        "commit": "f620cd36d8f9267935e7b4ae7aa1f950a4b1db2d",
+        "role": "C33 replay closures",
+        "tree": "bb6c3077fa0fc9537fc712db80dc23cdbbdf5c07"
+      },
+      {
+        "commit": "3582d9d129369c14be17ccc7e822001719ecfe6c",
+        "role": "assessment and cleanup replay closures",
+        "tree": "e959a37b689805ad40b4ac234030535ccb5f7507"
+      },
+      {
+        "commit": "768b765abeb3b53eeb67c8a124f48ad121bdcc76",
+        "role": "sealed manager custody",
+        "tree": "33ad8844fd54a7a6898d1b12780c887034906297"
+      },
+      {
+        "commit": "74c8cb56b0e530985384535ebeac7e8f1864427d",
+        "role": "GF02/GF01 integrated source checkpoint",
+        "tree": "834dab82c220aaa4c9a3c11a851af8ec60c6cb0e"
+      }
+    ],
+    "review03_findings": [
+      "all five TransactionContext fields must remain bound through transitions/reopen",
+      "exact retry must compare original caller context before current projection; changed same-key fields must conflict with no delta"
+    ]
+  },
+  "gf03": {
+    "current_regression_applicability": {
+      "campaign": "work/gf01-gf02-dat76-correction-installed-run.txt",
+      "result": "248 passed, 0 skipped",
+      "scope": "regression applicability only; no new GF03 host qualification claim",
+      "selection": "tests/authoring plus kernel/work/assessment/pack/conformance affected campaign; GF03 named retirement behavior remains inherited and regression-covered by current authoring package"
+    },
+    "host_obligations": [
+      "stable secret >=32 bytes",
+      "owner-only lock directory",
+      "exhaustive managed-writer identities",
+      "guarded descriptor for every managed writer",
+      "unmanaged_writers=True keeps cleanup UNSAFE",
+      "POSIX flock coordination"
+    ],
+    "implementation_lineage": [
+      {
+        "commit": "faf13ba4d5fe54aa7f0347fed74e5789570ee321",
+        "role": "GF03 initial correction"
+      },
+      {
+        "commit": "e0ae45bd65401c129c06e1085343033efce9bab1",
+        "role": "GF03 follow-up"
+      },
+      {
+        "commit": "fcb4805636d6a8cb93fd8fd818579809c0a9675f",
+        "role": "GF03 cleanup correction"
+      },
+      {
+        "commit": "d714e754b0c6899e40b1a199356b0790626ae859",
+        "role": "GF03 accepted fail-closed cleanup"
+      },
+      {
+        "commit": "7358569d4be8beed8d91cb72b63f5ef65786065e",
+        "role": "GF03 named retirement implementation handoff",
+        "tree": "0ca9b3ebe9244014dbbc6cdb9140e5765e579256"
+      }
+    ],
+    "named_acceptance": [
+      "real exclusive cross-process flock",
+      "generation-checked shared leases",
+      "authenticated fence bound to root/session/token/generation/manifest/snapshot",
+      "held guard across capture/finish/cleanup",
+      "mandatory guard and manifest checks through unlink",
+      "restart reacquisition and fail-closed unmanaged-writer behavior"
+    ],
+    "retained_evidence": [
+      "work/gf03-residual-xhard-result-20260914.md",
+      "work/gf-correction-integration-correction-result-20260914.md"
+    ],
+    "review03_status": "PASS for the named foundation retirement residual"
+  },
   "git_pin_verification": {
     "all_verified": true,
     "command": "git rev-parse <commit> and git rev-parse <commit>^{tree}; git cat-file -t <object>",
@@ -321,8 +980,35 @@
       }
     ]
   },
+  "git_pin_verification_current": {
+    "all_verified": true,
+    "astrid_commit": "96e5664237eb35adeb4cad08bddd8cd6df0a2ae1",
+    "astrid_tree": "19f7539a266618a797559eedbda48e2752b30fa3",
+    "checker_commit": "ca05a6ef76cdcb24a9d8523d09906653f9bd5bff",
+    "checker_tree": "28c0251addaca79e05496995c381979c40e34b94",
+    "harness_commit": "0bfd152c5399cf7dd9c94560d3ae2ccac5890009",
+    "harness_tree": "3850370d055259bc302d7efd101696352fbe86eb",
+    "source_commit": "7c15ae26909cd8a0da52e4a3231468d7459146f5",
+    "source_tree": "3b27fa3319b57ada95b4aadc62445834bfb4e7d4",
+    "wheel_sha256": "4da6dd9f56f705831f0dc8a282526de0c28031fca2331074b359803195db4f9b"
+  },
+  "harness_checkpoint": {
+    "commit": "0bfd152c5399cf7dd9c94560d3ae2ccac5890009",
+    "role": "five-row typed changed-request harness evidence",
+    "tree": "3850370d055259bc302d7efd101696352fbe86eb",
+    "installed_result": "work/gf01-gf02-dat76-correction-harness-repair-installed-result.json",
+    "installed_result_sha256": "940e3460e3d785b65fcc98ba5c2240f5b9bda9ae06a247139eb7529e2f679ec1",
+    "source_result": "work/gf01-gf02-dat76-correction-harness-repair-source-result.json",
+    "source_result_sha256": "6c59e486d90c828d43a0b17c2e726a3c808589d5bc56516315b46aa53e62053b"
+  },
   "inputs": {
     "area_contracts_sha256": "0fdbd9ed47f16da3b11f0750503e7f5dfbd58f41ef18368e9fb27553096e4e04",
+    "combined_input_manifest_sha256": "927b02bc8459b83202cdffb765dc66c42100ffa0aef8fc6d88f056b42b5361b6",
+    "current_astrid_commit": "96e5664237eb35adeb4cad08bddd8cd6df0a2ae1",
+    "current_astrid_tree": "19f7539a266618a797559eedbda48e2752b30fa3",
+    "current_source_commit": "7c15ae26909cd8a0da52e4a3231468d7459146f5",
+    "current_source_tree": "3b27fa3319b57ada95b4aadc62445834bfb4e7d4",
+    "current_wheel_sha256": "4da6dd9f56f705831f0dc8a282526de0c28031fca2331074b359803195db4f9b",
     "extraction_map_sha256": "e273cb7b7e9c26f83a8e1002753c835863333b77e9bfce5b5a3909b1801dbbd5",
     "scenario_count": 49,
     "scenario_seed_sha256": "99ece17752f2b67cc5658ae344067dc7bcb4089608e27b1e426b291b177624f9",
@@ -332,11 +1018,159 @@
     "shipped_delivery_seed_sha256": "fcf99881754a155da027b2b1e775260a349376e6ccc9e5edc94ee1cecfa087f8",
     "source_manifest_sha256": "742fed428923c7702001865407d3d8897ba9685b5fcfd473076fc7edb3ee563a"
   },
+  "lineage": {
+    "current_correction": [
+      {
+        "commit": "7c15ae26909cd8a0da52e4a3231468d7459146f5",
+        "role": "bounded production capture-failure retry correction",
+        "tree": "3b27fa3319b57ada95b4aadc62445834bfb4e7d4"
+      },
+      {
+        "commit": "075d8c99a3102414e65d3013a533b1d48a6d075c",
+        "role": "current installed 248-pass evidence and manifest",
+        "tree": "0360a491e861828f27e7cb268a6f61b404590331"
+      },
+      {
+        "commit": "0bfd152c5399cf7dd9c94560d3ae2ccac5890009",
+        "role": "test-harness-only five-row changed-request correction",
+        "tree": "3850370d055259bc302d7efd101696352fbe86eb"
+      },
+      {
+        "commit": "ca05a6ef76cdcb24a9d8523d09906653f9bd5bff",
+        "role": "strict checker requiring typed rejection evidence",
+        "tree": "28c0251addaca79e05496995c381979c40e34b94"
+      }
+    ],
+    "gf01_review03_chain": [
+      {
+        "commit": "e0b84e6490b86b3474d60e927b396b4774ab152c",
+        "role": "narrow issued command-port implementation",
+        "tree": "9d99264520013a2003c4fdebec7540613ba4b222"
+      },
+      {
+        "commit": "4addb44942f8517650c252c26ca85da6d28328ef",
+        "role": "correction evidence",
+        "tree": "a227edcc8646c7ee9876f58da3c39ca202673442"
+      },
+      {
+        "commit": "880e6d293bd7389c4992cb81bd503385bf654c33",
+        "role": "private command-facade bypass closure",
+        "tree": "6ac8cb09b2bc4359c9ab6e5b5c084c4ccf08367f"
+      },
+      {
+        "commit": "d4f2c61ab441d36b56870d75e9329abf2449d06c",
+        "role": "consolidated correction evidence",
+        "tree": "b9ccc0a7042e9be3952a73e681d03b0979b3673d"
+      },
+      {
+        "commit": "8235d9aacbe7357e8f72cec8342eca77aab0cb58",
+        "role": "unsupported project-parent mutation removal; actual 76-port inventory boundary",
+        "tree": "c69702a8b42420159dbcdb4b0d572c0e8f9dfffa"
+      }
+    ],
+    "gf02_chain": [
+      {
+        "commit": "ef13cfed36f8d43925a28e8312bf0235379b1488",
+        "role": "complete logical-context and caller reference-pin semantics",
+        "tree": "ab3c8439cc0af8eb9f685caf921613a34424e9a2"
+      },
+      {
+        "commit": "ff5d85cc09ace8731845e8c7fb54d63bfd07e081",
+        "role": "custody and historical evidence",
+        "tree": "a6f030b399a747524dc356e632e90b02a1647083"
+      },
+      {
+        "commit": "f620cd36d8f9267935e7b4ae7aa1f950a4b1db2d",
+        "role": "C33 replay closures",
+        "tree": "bb6c3077fa0fc9537fc712db80dc23cdbbdf5c07"
+      },
+      {
+        "commit": "3582d9d129369c14be17ccc7e822001719ecfe6c",
+        "role": "assessment and cleanup replay closures",
+        "tree": "e959a37b689805ad40b4ac234030535ccb5f7507"
+      },
+      {
+        "commit": "768b765abeb3b53eeb67c8a124f48ad121bdcc76",
+        "role": "sealed manager custody",
+        "tree": "33ad8844fd54a7a6898d1b12780c887034906297"
+      },
+      {
+        "commit": "74c8cb56b0e530985384535ebeac7e8f1864427d",
+        "role": "GF02/GF01 integrated source checkpoint",
+        "tree": "834dab82c220aaa4c9a3c11a851af8ec60c6cb0e"
+      }
+    ],
+    "gf03_named_retirement_chain": [
+      {
+        "commit": "faf13ba4d5fe54aa7f0347fed74e5789570ee321",
+        "role": "GF03 initial correction"
+      },
+      {
+        "commit": "e0ae45bd65401c129c06e1085343033efce9bab1",
+        "role": "GF03 follow-up"
+      },
+      {
+        "commit": "fcb4805636d6a8cb93fd8fd818579809c0a9675f",
+        "role": "GF03 cleanup correction"
+      },
+      {
+        "commit": "d714e754b0c6899e40b1a199356b0790626ae859",
+        "role": "GF03 accepted fail-closed cleanup"
+      },
+      {
+        "commit": "7358569d4be8beed8d91cb72b63f5ef65786065e",
+        "role": "GF03 named retirement implementation handoff",
+        "tree": "0ca9b3ebe9244014dbbc6cdb9140e5765e579256"
+      }
+    ],
+    "historical_quarantined": {
+      "old_review_attempt_source": {
+        "commit": "1fe71f8b115abd1b413690a6e954a7afe591f21c",
+        "tree": "a2f500b0354339826b25f6cff220f68a40d91513"
+      },
+      "result": "75 of 76 rows; preserved and excluded from current acceptance",
+      "source": {
+        "commit": "6019553fade710b3392437382916c1a716edf217",
+        "tree": "16e130334ca6313a6eb238f9084c332416879d2c"
+      }
+    },
+    "integration_base": {
+      "commit": "8235d9aacbe7357e8f72cec8342eca77aab0cb58",
+      "role": "GF01/P01 baseline with unsupported project-parent descriptor removed",
+      "tree": "c69702a8b42420159dbcdb4b0d572c0e8f9dfffa"
+    },
+    "manifest": {
+      "path": "work/gf01-gf02-dat76-combined-input-manifest.json",
+      "schema": "gf01-gf02-dat76-combined-input-manifest.v1",
+      "sha256": "927b02bc8459b83202cdffb765dc66c42100ffa0aef8fc6d88f056b42b5361b6"
+    }
+  },
+  "no_new_review_or_gate": true,
+  "packet_revision": "foundation-correction-handoff/v2",
+  "packet_state": "prepared_for_authority_decision",
+  "review_budget": {
+    "call_ids": [
+      "call-7c10e35b0b2648779ced07f05ff100b7",
+      "call-e07c463c653c46af80488f19c319281a",
+      "call-1b0dcc88310d402ca2bf94c8680ee459"
+    ],
+    "calls_authorized": 3,
+    "calls_remaining": 0,
+    "calls_used": 3,
+    "disposition": "No further review/gate call is claimed or available in this packet.",
+    "final_review_result": "REWORK on GF01 authority, original GF02 context composition, and C33 evidence; GF03 named retirement residual PASS",
+    "review_family": "G-FOUNDATION / original Review03 findings"
+  },
   "review_requested": false,
-  "schema": "foundation-candidate/v2",
-  "source_commit": "046b9acfdc9ba541faff65ff3713961890684303",
-  "source_tree": "047a43ba687f45c298139b595756dac84ab729da",
-  "state": "worker-candidate",
+  "schema": "foundation-candidate/v3-correction-handoff",
+  "source": {
+    "commit": "7c15ae26909cd8a0da52e4a3231468d7459146f5",
+    "role": "current bounded correction source; a9d9727 final report remains frozen",
+    "tree": "3b27fa3319b57ada95b4aadc62445834bfb4e7d4"
+  },
+  "source_commit": "7c15ae26909cd8a0da52e4a3231468d7459146f5",
+  "source_tree": "3b27fa3319b57ada95b4aadc62445834bfb4e7d4",
+  "state": "prepared-correction-handoff",
   "tests": {
     "c38_foundation_probe": "work/int-03-c38-foundation-probe-20260914.json",
     "c38_foundation_probe_result": "overall_ok=true; 6 checks passed",
@@ -344,27 +1178,126 @@
     "c38_foundation_probe_sha256": "847aacd0355cb892d93bf25d8aa0c6175ccb81a93895516a6907c49c19b9b9a9",
     "c38_foundation_probe_transcript": "work/int-03-c38-foundation-probe-20260914.txt",
     "c38_foundation_probe_transcript_sha256": "20fcde34aece812f72a095cfb86b902bb225d57984db19f6bcd808125e053ef0",
-    "combined_installed_result": "249 passed, 80 subtests passed in 3.70s",
-    "combined_transcript": "work/int-03-final-installed-run-20260914.txt",
-    "combined_transcript_sha256": "5b4b47bb010d0694da7c249864f20f3731a11314ff37a0d23294f59c32d67892",
+    "combined_installed_result": "248 passed, 0 skipped",
+    "combined_transcript": "work/gf01-gf02-dat76-correction-installed-run.txt",
+    "combined_transcript_sha256": "344a1339d7532877b9ff8aa9538b7ab1ebaee8b5e73e83c99208f1268de04357",
+    "current_c33_harness_repair": "work/gf01-gf02-dat76-correction-harness-repaired-result.json",
+    "current_c33_harness_repair_sha256": "356c444612b74b4c3bf0ee8ac9706fc970abbd7511f2d398c47b833d9923ce5a",
+    "current_c33_independent_descriptor_count": 76,
+    "current_c33_inventory": "work/gf01-gf02-dat76-correction-descriptor-inventory.json",
+    "current_c33_matrix": "work/gf01-gf02-dat76-correction-c33-matrix.json",
+    "current_c33_result": "work/gf01-gf02-dat76-correction-harness-repaired-result.json",
+    "current_c33_result_sha256": "356c444612b74b4c3bf0ee8ac9706fc970abbd7511f2d398c47b833d9923ce5a",
+    "current_c33_strict_checker": "work/c33-persisted-port-strict-acceptance-corrected.py",
+    "current_c33_strict_checker_sha256": "dd11693400fd97e809f7ab31ce438152dc2632d42d82c28b49c8293cbc0b8533",
+    "current_c33_strict_result": "76/76 passed; typed changed-request rejection for five affected rows",
+    "current_module_origins": "work/gf01-gf02-dat76-correction-module-origins.json",
+    "current_module_origins_sha256": "8b0b59544fbec07749c72edffe7a96f65c95c7e3d360ce854e121947ae93dd7f",
     "installed_origins_verified": true,
     "public_api_probe_result": "1 passed in 0.17s",
     "public_api_probe_transcript": "work/int-03-final-public-api-probe-run-20260914.txt",
     "public_api_probe_transcript_sha256": "d2f31c46add23a7712adc7adfd29bbcf276b8e1f0c9aece1fdbef9bdd8ace104",
+    "retained_prior_packet_result": "historical 249/80 evidence is retained provenance; not substituted for current 248 campaign",
     "snew01_affected_installed_result": "154 passed, 0 skipped",
     "snew01_affected_installed_transcript": "work/int-03-snew01-installed-affected-run-20260914.txt",
     "snew01_affected_installed_transcript_sha256": "5fdf6e0dee5b340f5e76718c5798958153af362be54fb4bccab3a81a74b457ca",
-    "snew01_wheel_sha256": "4a6dc658fd3b71e9d9d64323bd6539a2feef2521cc5e2e9b472daf2bf3dfbb2f"
+    "snew01_wheel_sha256": "4a6dc658fd3b71e9d9d64323bd6539a2feef2521cc5e2e9b472daf2bf3dfbb2f",
+    "c33_harness_repair_runs": {
+      "source": {
+        "result": "work/gf01-gf02-dat76-correction-harness-repair-source-result.json",
+        "result_sha256": "6c59e486d90c828d43a0b17c2e726a3c808589d5bc56516315b46aa53e62053b",
+        "transcript": "work/gf01-gf02-dat76-correction-harness-repair-source.txt",
+        "transcript_sha256": "e7f9342ec5b026e182045de3df14e92c494c297bab484fecfcfd862cf05ba272",
+        "command": "env -u PYTHONHOME PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 C33_RUN_ID=harness-repair-source C33_RESULT_PATH=/private/tmp/c33-harness-repair.h21CeZ/result.json C33_MATRIX_PATH=/private/tmp/c33-harness-repair.h21CeZ/matrix.json /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/.venvs/int-02/bin/python -m pytest -q tests/conformance/test_c33_persisted_port_conformance.py",
+        "exit_code": 0,
+        "observed_output": "77 passed in 4.07s",
+        "python": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/.venvs/int-02/bin/python (Python 3.12)",
+        "environment": {
+          "PYTHONHOME": "unset",
+          "PYTHONPATH": "src",
+          "PYTHONDONTWRITEBYTECODE": "1"
+        },
+        "scope": "source checkout harness validation; 76 descriptors plus one harness/setup test"
+      },
+      "installed": {
+        "result": "work/gf01-gf02-dat76-correction-harness-repair-installed-result.json",
+        "result_sha256": "940e3460e3d785b65fcc98ba5c2240f5b9bda9ae06a247139eb7529e2f679ec1",
+        "transcript": "work/gf01-gf02-dat76-correction-harness-repair-installed.txt",
+        "transcript_sha256": "ae0f0fa0c72a74b3507128a9def99d944c7eb80a39185559575d7353d03e420e",
+        "command": "env -u PYTHONHOME -u PYTHONPATH PYTHONDONTWRITEBYTECODE=1 C33_RUN_ID=harness-repair-installed-20260914 C33_RESULT_PATH=/private/tmp/c33-harness-repair-installed.eyIxXY/result.json C33_MATRIX_PATH=/private/tmp/c33-harness-repair-installed.eyIxXY/matrix.json /private/tmp/herzchen-correction-delivery.gA7Nsm/venv/bin/python -m pytest -q -ra tests/conformance/test_c33_persisted_port_conformance.py -k 'dc2ced1157ed or 857bfa7ba9e7 or 93c383e03e9e or 2962a59f53a9 or be47b08ec0ae'",
+        "exit_code": 0,
+        "observed_output": "5 passed, 72 deselected in 0.28s",
+        "python": "/private/tmp/herzchen-correction-delivery.gA7Nsm/venv/bin/python (Python 3.11.16)",
+        "environment": {
+          "PYTHONHOME": "unset",
+          "PYTHONPATH": "unset",
+          "PYTHONDONTWRITEBYTECODE": "1"
+        },
+        "wheel_sha256": "4da6dd9f56f705831f0dc8a282526de0c28031fca2331074b359803195db4f9b",
+        "installed_module_origins": "raw result JSON module_origins; herzchen resolved from disposable venv site-packages",
+        "scope": "installed five-row replacement run only; the remaining 72 descriptors are intentionally deselected"
+      }
+    },
+    "c33_strict_checker_verification": {
+      "script": "work/c33-persisted-port-strict-acceptance-corrected.py",
+      "script_sha256": "dd11693400fd97e809f7ab31ce438152dc2632d42d82c28b49c8293cbc0b8533",
+      "commit": "ca05a6ef76cdcb24a9d8523d09906653f9bd5bff",
+      "tree": "28c0251addaca79e05496995c381979c40e34b94",
+      "old_result": "work/gf01-gf02-dat76-correction-c33-result.json",
+      "old_result_sha256": "6a0059ea424a849b0e62cf4fd9c00c461f9e47670e0602717f4f7f932dda09cc",
+      "old_check_command": "/usr/bin/python3 work/c33-persisted-port-strict-acceptance-corrected.py --inventory work/gf01-gf02-dat76-correction-descriptor-inventory.json --matrix work/gf01-gf02-dat76-correction-c33-matrix.json --result work/gf01-gf02-dat76-correction-c33-result.json >work/gf01-gf02-dat76-correction-harness-repair-strict-check-corrected-old.txt 2>&1",
+      "old_exit_code": 1,
+      "old_output": "work/gf01-gf02-dat76-correction-harness-repair-strict-check-corrected-old.txt",
+      "old_output_sha256": "511d60603771f72055aad93c5572e7941cecf0a3a93202da26241c0852641cbe",
+      "old_output_summary": "five named synthetic RejectedWithoutException rows rejected",
+      "new_result": "work/gf01-gf02-dat76-correction-harness-repaired-result.json",
+      "new_result_sha256": "356c444612b74b4c3bf0ee8ac9706fc970abbd7511f2d398c47b833d9923ce5a",
+      "new_check_command": "/usr/bin/python3 work/c33-persisted-port-strict-acceptance-corrected.py --inventory work/gf01-gf02-dat76-correction-descriptor-inventory.json --matrix work/gf01-gf02-dat76-correction-c33-matrix.json --result work/gf01-gf02-dat76-correction-harness-repaired-result.json >work/gf01-gf02-dat76-correction-harness-repair-strict-check-corrected-new.txt 2>&1",
+      "new_exit_code": 0,
+      "new_output": "work/gf01-gf02-dat76-correction-harness-repair-strict-check-corrected-new.txt",
+      "new_output_sha256": "e5c6f2c26d9cf92e1977f6d47e2704497c490ed4bd604178bc05d733ef35fb0c",
+      "new_output_summary": "C33 strict acceptance: 76 admitted descriptors, all passed",
+      "rule": "requires typed changed-request rejection plus counts_unchanged=true and events_unchanged=true; synthetic RejectedWithoutException is rejected"
+    },
+    "current_c33_harness_installed_result": "work/gf01-gf02-dat76-correction-harness-repair-installed-result.json",
+    "current_c33_harness_installed_result_sha256": "940e3460e3d785b65fcc98ba5c2240f5b9bda9ae06a247139eb7529e2f679ec1",
+    "current_c33_harness_source_result": "work/gf01-gf02-dat76-correction-harness-repair-source-result.json",
+    "current_c33_harness_source_result_sha256": "6c59e486d90c828d43a0b17c2e726a3c808589d5bc56516315b46aa53e62053b",
+    "current_c33_strict_checker_script": "work/c33-persisted-port-strict-acceptance-corrected.py",
+    "current_c33_strict_checker_script_sha256": "dd11693400fd97e809f7ab31ce438152dc2632d42d82c28b49c8293cbc0b8533",
+    "current_c33_strict_checker_output": "work/gf01-gf02-dat76-correction-harness-repair-strict-check-corrected-new.txt",
+    "current_c33_strict_checker_output_sha256": "e5c6f2c26d9cf92e1977f6d47e2704497c490ed4bd604178bc05d733ef35fb0c"
   },
+  "unresolved_judgments": [
+    {
+      "evidence_is_mechanical": true,
+      "owner": "root/foundation authority",
+      "question": "Whether removing the unsupported project-parent descriptor is the accepted interpretation of the original 77-port Review03 obligation, and whether the finite-port boundary satisfies the final authority judgment.",
+      "review_allowance_exhausted": true,
+      "status": "authority_decision_pending"
+    }
+  ],
   "wheel": {
     "distribution": "herzchen-contracts==0.1.0",
     "environment_unset": [
       "PYTHONPATH",
       "PYTHONHOME"
     ],
-    "path": "/tmp/herzchen-int03-snew01-final-wheel/herzchen_contracts-0.1.0-py3-none-any.whl",
+    "installed_campaign": "248 passed, 0 skipped",
+    "path": "/private/tmp/herzchen-correction-delivery.gA7Nsm/dist/herzchen_contracts-0.1.0-py3-none-any.whl",
     "pytest": "9.1.1",
     "python": "3.11.16",
-    "sha256": "4a6dc658fd3b71e9d9d64323bd6539a2feef2521cc5e2e9b472daf2bf3dfbb2f"
+    "sha256": "4da6dd9f56f705831f0dc8a282526de0c28031fca2331074b359803195db4f9b"
+  },
+  "wheel_provenance": {
+    "campaign": "248 passed, 0 skipped",
+    "distribution": "herzchen-contracts==0.1.0",
+    "environment_unset": [
+      "PYTHONPATH",
+      "PYTHONHOME"
+    ],
+    "pytest": "9.1.1",
+    "python": "3.11.16",
+    "sha256": "4da6dd9f56f705831f0dc8a282526de0c28031fca2331074b359803195db4f9b"
   }
 }

@@ -1,0 +1,5 @@
+FAIL: admitted row mutation-port:edt-02.authoring.v1|actor.release|authoring-actor|authoring.actor.release uses synthetic RejectedWithoutException; changed request was not rejected
+FAIL: admitted row mutation-port:edt-02.authoring.v1|finish.claim|authoring-scope|authoring.finish.claim uses synthetic RejectedWithoutException; changed request was not rejected
+FAIL: admitted row mutation-port:edt-02.authoring.v1|finish.recovery|authoring-scope|authoring.finish.recovery uses synthetic RejectedWithoutException; changed request was not rejected
+FAIL: admitted row mutation-port:edt-02.authoring.v1|finish|authoring-scope|authoring.finish uses synthetic RejectedWithoutException; changed request was not rejected
+FAIL: admitted row mutation-port:edt-02.authoring.v1|release|authoring-scope|authoring.release uses synthetic RejectedWithoutException; changed request was not rejected

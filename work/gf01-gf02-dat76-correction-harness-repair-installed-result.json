@@ -1,0 +1,3332 @@
+{
+  "evidence_version": "c33-persisted-port-conformance/v1",
+  "module_origins": {},
+  "rows": {
+    "mutation-port:edt-02.authoring.v1|actor.release|authoring-actor|authoring.actor.release": {
+      "action": {
+        "delta": {
+          "command_receipts": 2,
+          "event_sequences": 0,
+          "events": 2,
+          "identities": 0,
+          "record_references": 2
+        },
+        "metadata": {},
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-7905a303652b0dccda57ee9992e3bb53"
+          ],
+          "logical_request_key": "c33:C33-dc2ced1157ed:actor",
+          "observed_revision": "rev-2",
+          "operation": "actor.release",
+          "replayed": false,
+          "request_digest": "823743fe57b44472591ea9f6823fec0905a6086b20ef98eb1180465119b723fa",
+          "result_ref": {
+            "authority": "c33-store",
+            "id": "c6256d5ff7f1101820e09335a0cef18c",
+            "kind": "authoring-actor",
+            "revision": "rev-2"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "c33-store",
+            "id": "c6256d5ff7f1101820e09335a0cef18c",
+            "kind": "authoring-actor",
+            "revision": null
+          },
+          "transaction_id": "2324eb4649853d9b4059a264b8482e4b",
+          "unknown_reason": null
+        },
+        "result": {
+          "checkout": {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "allowed_fields": [],
+            "base_revision": "base-1",
+            "cleanup": "pending",
+            "draft_snapshot_ref": {
+              "authority": "c33-store",
+              "id": "draft-session-afce3e56c16bf4bfef0acad2",
+              "kind": "authoring-snapshot",
+              "revision": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149"
+            },
+            "fence": "fence-ba2e8bce3c78343f8340aacb",
+            "final_snapshot_ref": null,
+            "finish_claim": null,
+            "session_id": "session-afce3e56c16bf4bfef0acad2",
+            "state": "released",
+            "target_kind": "project",
+            "target_scope": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "project",
+              "revision": "base-1"
+            },
+            "token": "token-9e79dc677f42220f496996c9",
+            "unmanaged_writers": false
+          },
+          "cleanup": "pending",
+          "error": null,
+          "final_snapshot": null,
+          "receipt": {
+            "error_code": null,
+            "event_ids": [
+              "event-848a5a6078885457a8a632755b750498"
+            ],
+            "logical_request_key": "c33:C33-dc2ced1157ed",
+            "observed_revision": "rev-2",
+            "operation": "release",
+            "replayed": false,
+            "request_digest": "90d80fdb7ac4192abe4411a580373055293d081ee9fab3381e69fb5727b895bc",
+            "result_ref": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-2"
+            },
+            "status": "committed",
+            "target": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": null
+            },
+            "transaction_id": "566a15cdd57e290ba80cd930a315d3bc",
+            "unknown_reason": null
+          },
+          "recovery_pending": false,
+          "scope": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "session_id": "session-afce3e56c16bf4bfef0acad2",
+          "status": "released"
+        },
+        "stable_after": {
+          "{\"authority\":\"c33-store\",\"id\":\"authoring-target\",\"kind\":\"project\",\"revision\":\"base-1\"}": null
+        }
+      },
+      "before": {
+        "counts": {
+          "command_receipts": 2,
+          "event_sequences": 2,
+          "events": 2,
+          "identities": 14,
+          "record_references": 16
+        },
+        "events": [
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "scope": "authoring-target",
+              "session_id": "session-afce3e56c16bf4bfef0acad2"
+            },
+            "event_id": "event-b6b4ca5b88fc34e739df5edfacff4034",
+            "event_type": "authoring.open",
+            "occurred_at": null,
+            "operation": "open",
+            "recorded_at": "2026-09-14T12:54:59.300793Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "c33-store",
+            "stream": "authoring:authoring-target",
+            "subject": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-1"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "c6256d5ff7f1101820e09335a0cef18c",
+                "kind": "authoring-actor",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "scope": "authoring-target",
+              "session_id": "session-afce3e56c16bf4bfef0acad2"
+            },
+            "event_id": "event-b6821ca6d1d604660b5f0fa5bce259f4",
+            "event_type": "authoring.actor.open",
+            "occurred_at": null,
+            "operation": "actor.open",
+            "recorded_at": "2026-09-14T12:54:59.300253Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "c33-store",
+            "stream": "authoring:c6256d5ff7f1101820e09335a0cef18c",
+            "subject": {
+              "authority": "c33-store",
+              "id": "c6256d5ff7f1101820e09335a0cef18c",
+              "kind": "authoring-actor",
+              "revision": "rev-1"
+            }
+          }
+        ],
+        "stable_refs": {
+          "{\"authority\":\"c33-store\",\"id\":\"authoring-target\",\"kind\":\"project\",\"revision\":\"base-1\"}": null
+        }
+      },
+      "first_action_valid": true,
+      "fixture_setup": {
+        "after_counts": {
+          "command_receipts": 2,
+          "event_sequences": 2,
+          "events": 2,
+          "identities": 14,
+          "record_references": 16
+        },
+        "after_event_count": 2,
+        "before_counts": {
+          "command_receipts": 0,
+          "event_sequences": 0,
+          "events": 0,
+          "identities": 11,
+          "record_references": 11
+        },
+        "before_event_count": 0,
+        "delta": {
+          "command_receipts": 2,
+          "event_sequences": 2,
+          "events": 2,
+          "identities": 3,
+          "record_references": 5
+        }
+      },
+      "matrix_key": "mutation-port:edt-02.authoring.v1|actor.release|authoring-actor|authoring.actor.release",
+      "phase_exception": null,
+      "public_handler": "herzchen.authoring.sessions.AuthoringSessionService",
+      "reject": {
+        "counts_unchanged": true,
+        "error": {
+          "message": "stale authoring token or fence",
+          "type": "InvalidSessionError"
+        },
+        "events_unchanged": true,
+        "request": {},
+        "result": null
+      },
+      "reopen": {
+        "counts": {
+          "command_receipts": 4,
+          "event_sequences": 2,
+          "events": 4,
+          "identities": 14,
+          "record_references": 18
+        },
+        "events": [
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "scope": "authoring-target",
+              "session_id": "session-afce3e56c16bf4bfef0acad2"
+            },
+            "event_id": "event-b6b4ca5b88fc34e739df5edfacff4034",
+            "event_type": "authoring.open",
+            "occurred_at": null,
+            "operation": "open",
+            "recorded_at": "2026-09-14T12:54:59.300793Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "c33-store",
+            "stream": "authoring:authoring-target",
+            "subject": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-1"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-2"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-1"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "status": "released"
+            },
+            "event_id": "event-848a5a6078885457a8a632755b750498",
+            "event_type": "authoring.release",
+            "occurred_at": null,
+            "operation": "release",
+            "recorded_at": "2026-09-14T12:54:59.302143Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 2,
+            "store_authority": "c33-store",
+            "stream": "authoring:authoring-target",
+            "subject": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-2"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "c6256d5ff7f1101820e09335a0cef18c",
+                "kind": "authoring-actor",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "scope": "authoring-target",
+              "session_id": "session-afce3e56c16bf4bfef0acad2"
+            },
+            "event_id": "event-b6821ca6d1d604660b5f0fa5bce259f4",
+            "event_type": "authoring.actor.open",
+            "occurred_at": null,
+            "operation": "actor.open",
+            "recorded_at": "2026-09-14T12:54:59.300253Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "c33-store",
+            "stream": "authoring:c6256d5ff7f1101820e09335a0cef18c",
+            "subject": {
+              "authority": "c33-store",
+              "id": "c6256d5ff7f1101820e09335a0cef18c",
+              "kind": "authoring-actor",
+              "revision": "rev-1"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "c6256d5ff7f1101820e09335a0cef18c",
+                "kind": "authoring-actor",
+                "revision": "rev-2"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "c33-store",
+                "id": "c6256d5ff7f1101820e09335a0cef18c",
+                "kind": "authoring-actor",
+                "revision": "rev-1"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "session_id": "session-afce3e56c16bf4bfef0acad2"
+            },
+            "event_id": "event-7905a303652b0dccda57ee9992e3bb53",
+            "event_type": "authoring.actor.release",
+            "occurred_at": null,
+            "operation": "actor.release",
+            "recorded_at": "2026-09-14T12:54:59.302624Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 2,
+            "store_authority": "c33-store",
+            "stream": "authoring:c6256d5ff7f1101820e09335a0cef18c",
+            "subject": {
+              "authority": "c33-store",
+              "id": "c6256d5ff7f1101820e09335a0cef18c",
+              "kind": "authoring-actor",
+              "revision": "rev-2"
+            }
+          }
+        ],
+        "identity": {
+          "created_at": "2026-09-14T12:54:59.299957Z",
+          "edit_token": null,
+          "payload": {
+            "active": false,
+            "scope": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": null
+            },
+            "session_id": "session-afce3e56c16bf4bfef0acad2",
+            "type": "authoring_actor"
+          },
+          "ref": {
+            "authority": "c33-store",
+            "id": "c6256d5ff7f1101820e09335a0cef18c",
+            "kind": "authoring-actor",
+            "revision": "rev-2"
+          },
+          "updated_at": "2026-09-14T12:54:59.302547Z",
+          "version": 2
+        },
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-7905a303652b0dccda57ee9992e3bb53"
+          ],
+          "logical_request_key": "c33:C33-dc2ced1157ed:actor",
+          "observed_revision": "rev-2",
+          "operation": "actor.release",
+          "replayed": false,
+          "request_digest": "823743fe57b44472591ea9f6823fec0905a6086b20ef98eb1180465119b723fa",
+          "result_ref": {
+            "authority": "c33-store",
+            "id": "c6256d5ff7f1101820e09335a0cef18c",
+            "kind": "authoring-actor",
+            "revision": "rev-2"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "c33-store",
+            "id": "c6256d5ff7f1101820e09335a0cef18c",
+            "kind": "authoring-actor",
+            "revision": null
+          },
+          "transaction_id": "2324eb4649853d9b4059a264b8482e4b",
+          "unknown_reason": null
+        }
+      },
+      "replay": {
+        "counts_unchanged": true,
+        "events_unchanged": true,
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-7905a303652b0dccda57ee9992e3bb53"
+          ],
+          "logical_request_key": "c33:C33-dc2ced1157ed:actor",
+          "observed_revision": "rev-2",
+          "operation": "actor.release",
+          "replayed": false,
+          "request_digest": "823743fe57b44472591ea9f6823fec0905a6086b20ef98eb1180465119b723fa",
+          "result_ref": {
+            "authority": "c33-store",
+            "id": "c6256d5ff7f1101820e09335a0cef18c",
+            "kind": "authoring-actor",
+            "revision": "rev-2"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "c33-store",
+            "id": "c6256d5ff7f1101820e09335a0cef18c",
+            "kind": "authoring-actor",
+            "revision": null
+          },
+          "transaction_id": "2324eb4649853d9b4059a264b8482e4b",
+          "unknown_reason": null
+        },
+        "result": {
+          "checkout": {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "allowed_fields": [],
+            "base_revision": "base-1",
+            "cleanup": "pending",
+            "draft_snapshot_ref": {
+              "authority": "c33-store",
+              "id": "draft-session-afce3e56c16bf4bfef0acad2",
+              "kind": "authoring-snapshot",
+              "revision": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149"
+            },
+            "fence": "fence-ba2e8bce3c78343f8340aacb",
+            "final_snapshot_ref": null,
+            "finish_claim": null,
+            "session_id": "session-afce3e56c16bf4bfef0acad2",
+            "state": "released",
+            "target_kind": "project",
+            "target_scope": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "project",
+              "revision": "base-1"
+            },
+            "token": "token-9e79dc677f42220f496996c9",
+            "unmanaged_writers": false
+          },
+          "cleanup": "pending",
+          "error": null,
+          "final_snapshot": null,
+          "receipt": {
+            "error_code": null,
+            "event_ids": [
+              "event-848a5a6078885457a8a632755b750498"
+            ],
+            "logical_request_key": "c33:C33-dc2ced1157ed",
+            "observed_revision": "rev-2",
+            "operation": "release",
+            "replayed": false,
+            "request_digest": "90d80fdb7ac4192abe4411a580373055293d081ee9fab3381e69fb5727b895bc",
+            "result_ref": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-2"
+            },
+            "status": "committed",
+            "target": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": null
+            },
+            "transaction_id": "566a15cdd57e290ba80cd930a315d3bc",
+            "unknown_reason": null
+          },
+          "recovery_pending": false,
+          "scope": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "session_id": "session-afce3e56c16bf4bfef0acad2",
+          "status": "released"
+        }
+      },
+      "status": "passed"
+    },
+    "mutation-port:edt-02.authoring.v1|finish.claim|authoring-scope|authoring.finish.claim": {
+      "action": {
+        "delta": {
+          "command_receipts": 3,
+          "event_sequences": 0,
+          "events": 3,
+          "identities": 1,
+          "record_references": 4
+        },
+        "metadata": {},
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-931b6ab5306e90b44583d816b38c5092"
+          ],
+          "logical_request_key": "c33:C33-857bfa7ba9e7",
+          "observed_revision": "rev-3",
+          "operation": "finish",
+          "replayed": false,
+          "request_digest": "f812f11d7fa7a02d1cb474bd6790ec62437e1a017de9a523b0a4c5c6f2640df5",
+          "result_ref": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": "rev-3"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "transaction_id": "3105b06cdea6d2b23eb1cf9d0d522cf2",
+          "unknown_reason": null
+        },
+        "result": {
+          "checkout": {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "allowed_fields": [],
+            "base_revision": "base-1",
+            "cleanup": "pending",
+            "draft_snapshot_ref": {
+              "authority": "c33-store",
+              "id": "draft-session-6b747d7f040ac2556d9423a0",
+              "kind": "authoring-snapshot",
+              "revision": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149"
+            },
+            "fence": "fence-034af58cd7bc3ef025432f05",
+            "final_snapshot_ref": {
+              "authority": "c33-store",
+              "id": "final-session-6b747d7f040ac2556d9423a0-2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007",
+              "kind": "authoring-snapshot",
+              "revision": "2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007"
+            },
+            "finish_claim": {
+              "claim_id": "claim-0ca759339e78624de911d0bb",
+              "finalization_identity": "finish-session-6b747d7f040ac2556d9423a0",
+              "mode": "manual"
+            },
+            "session_id": "session-6b747d7f040ac2556d9423a0",
+            "state": "finished",
+            "target_kind": "project",
+            "target_scope": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "project",
+              "revision": "base-1"
+            },
+            "token": "token-2a3a6f68dc62f727bd537d6e",
+            "unmanaged_writers": false
+          },
+          "cleanup": "pending",
+          "error": null,
+          "final_snapshot": {
+            "data": {
+              "bytes_sha256": "2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007",
+              "length": 5
+            },
+            "manifest": [],
+            "ref": {
+              "authority": "c33-store",
+              "id": "final-session-6b747d7f040ac2556d9423a0-2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007",
+              "kind": "authoring-snapshot",
+              "revision": "2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007"
+            }
+          },
+          "receipt": {
+            "error_code": null,
+            "event_ids": [
+              "event-931b6ab5306e90b44583d816b38c5092"
+            ],
+            "logical_request_key": "c33:C33-857bfa7ba9e7",
+            "observed_revision": "rev-3",
+            "operation": "finish",
+            "replayed": false,
+            "request_digest": "f812f11d7fa7a02d1cb474bd6790ec62437e1a017de9a523b0a4c5c6f2640df5",
+            "result_ref": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-3"
+            },
+            "status": "committed",
+            "target": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": null
+            },
+            "transaction_id": "3105b06cdea6d2b23eb1cf9d0d522cf2",
+            "unknown_reason": null
+          },
+          "recovery_pending": false,
+          "scope": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "session_id": "session-6b747d7f040ac2556d9423a0",
+          "status": "finished"
+        },
+        "stable_after": {
+          "{\"authority\":\"c33-store\",\"id\":\"authoring-target\",\"kind\":\"project\",\"revision\":\"base-1\"}": null
+        }
+      },
+      "before": {
+        "counts": {
+          "command_receipts": 2,
+          "event_sequences": 2,
+          "events": 2,
+          "identities": 14,
+          "record_references": 16
+        },
+        "events": [
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "scope": "authoring-target",
+              "session_id": "session-6b747d7f040ac2556d9423a0"
+            },
+            "event_id": "event-8d441c11978aec090abfffc330f1f28c",
+            "event_type": "authoring.open",
+            "occurred_at": null,
+            "operation": "open",
+            "recorded_at": "2026-09-14T12:54:59.321350Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "c33-store",
+            "stream": "authoring:authoring-target",
+            "subject": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-1"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "c6256d5ff7f1101820e09335a0cef18c",
+                "kind": "authoring-actor",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "scope": "authoring-target",
+              "session_id": "session-6b747d7f040ac2556d9423a0"
+            },
+            "event_id": "event-b95daa98c1a9ad56899e7450b0771656",
+            "event_type": "authoring.actor.open",
+            "occurred_at": null,
+            "operation": "actor.open",
+            "recorded_at": "2026-09-14T12:54:59.320674Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "c33-store",
+            "stream": "authoring:c6256d5ff7f1101820e09335a0cef18c",
+            "subject": {
+              "authority": "c33-store",
+              "id": "c6256d5ff7f1101820e09335a0cef18c",
+              "kind": "authoring-actor",
+              "revision": "rev-1"
+            }
+          }
+        ],
+        "stable_refs": {
+          "{\"authority\":\"c33-store\",\"id\":\"authoring-target\",\"kind\":\"project\",\"revision\":\"base-1\"}": null
+        }
+      },
+      "first_action_valid": true,
+      "fixture_setup": {
+        "after_counts": {
+          "command_receipts": 2,
+          "event_sequences": 2,
+          "events": 2,
+          "identities": 14,
+          "record_references": 16
+        },
+        "after_event_count": 2,
+        "before_counts": {
+          "command_receipts": 0,
+          "event_sequences": 0,
+          "events": 0,
+          "identities": 11,
+          "record_references": 11
+        },
+        "before_event_count": 0,
+        "delta": {
+          "command_receipts": 2,
+          "event_sequences": 2,
+          "events": 2,
+          "identities": 3,
+          "record_references": 5
+        }
+      },
+      "matrix_key": "mutation-port:edt-02.authoring.v1|finish.claim|authoring-scope|authoring.finish.claim",
+      "phase_exception": null,
+      "public_handler": "herzchen.authoring.sessions.AuthoringSessionService",
+      "reject": {
+        "counts_unchanged": true,
+        "error": {
+          "message": "logical request key was reused with a changed request digest",
+          "type": "ReplayConflictError"
+        },
+        "events_unchanged": true,
+        "request": {},
+        "result": null
+      },
+      "reopen": {
+        "counts": {
+          "command_receipts": 5,
+          "event_sequences": 2,
+          "events": 5,
+          "identities": 15,
+          "record_references": 20
+        },
+        "events": [
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "scope": "authoring-target",
+              "session_id": "session-6b747d7f040ac2556d9423a0"
+            },
+            "event_id": "event-8d441c11978aec090abfffc330f1f28c",
+            "event_type": "authoring.open",
+            "occurred_at": null,
+            "operation": "open",
+            "recorded_at": "2026-09-14T12:54:59.321350Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "c33-store",
+            "stream": "authoring:authoring-target",
+            "subject": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-1"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-2"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-1"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "claim": {
+                "claim_id": "claim-0ca759339e78624de911d0bb",
+                "finalization_identity": "finish-session-6b747d7f040ac2556d9423a0",
+                "mode": "manual"
+              }
+            },
+            "event_id": "event-b6b6e295b0bccd0a4787adaa08b47bb3",
+            "event_type": "authoring.finish.claim",
+            "occurred_at": null,
+            "operation": "finish.claim",
+            "recorded_at": "2026-09-14T12:54:59.323661Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 2,
+            "store_authority": "c33-store",
+            "stream": "authoring:authoring-target",
+            "subject": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-2"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-3"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-2"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "final_digest": "2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007",
+              "mode": "manual",
+              "pending": false
+            },
+            "event_id": "event-931b6ab5306e90b44583d816b38c5092",
+            "event_type": "authoring.finish",
+            "occurred_at": null,
+            "operation": "finish",
+            "recorded_at": "2026-09-14T12:54:59.324488Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 3,
+            "store_authority": "c33-store",
+            "stream": "authoring:authoring-target",
+            "subject": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-3"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "c6256d5ff7f1101820e09335a0cef18c",
+                "kind": "authoring-actor",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "scope": "authoring-target",
+              "session_id": "session-6b747d7f040ac2556d9423a0"
+            },
+            "event_id": "event-b95daa98c1a9ad56899e7450b0771656",
+            "event_type": "authoring.actor.open",
+            "occurred_at": null,
+            "operation": "actor.open",
+            "recorded_at": "2026-09-14T12:54:59.320674Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "c33-store",
+            "stream": "authoring:c6256d5ff7f1101820e09335a0cef18c",
+            "subject": {
+              "authority": "c33-store",
+              "id": "c6256d5ff7f1101820e09335a0cef18c",
+              "kind": "authoring-actor",
+              "revision": "rev-1"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "c6256d5ff7f1101820e09335a0cef18c",
+                "kind": "authoring-actor",
+                "revision": "rev-2"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "c33-store",
+                "id": "c6256d5ff7f1101820e09335a0cef18c",
+                "kind": "authoring-actor",
+                "revision": "rev-1"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "session_id": "session-6b747d7f040ac2556d9423a0"
+            },
+            "event_id": "event-ea0739617160e39e588edb60bb6757fb",
+            "event_type": "authoring.actor.release",
+            "occurred_at": null,
+            "operation": "actor.release",
+            "recorded_at": "2026-09-14T12:54:59.324842Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 2,
+            "store_authority": "c33-store",
+            "stream": "authoring:c6256d5ff7f1101820e09335a0cef18c",
+            "subject": {
+              "authority": "c33-store",
+              "id": "c6256d5ff7f1101820e09335a0cef18c",
+              "kind": "authoring-actor",
+              "revision": "rev-2"
+            }
+          }
+        ],
+        "identity": {
+          "created_at": "2026-09-14T12:54:59.321197Z",
+          "edit_token": null,
+          "payload": {
+            "activity": "editing",
+            "checkout": {
+              "actor": {
+                "actor": "author",
+                "authenticated": true,
+                "authority": "c33-store",
+                "credential_ref": "credential"
+              },
+              "allowed_fields": [],
+              "base_revision": "base-1",
+              "cleanup": "pending",
+              "draft_snapshot_ref": {
+                "authority": "c33-store",
+                "id": "draft-session-6b747d7f040ac2556d9423a0",
+                "kind": "authoring-snapshot",
+                "revision": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149"
+              },
+              "fence": "fence-034af58cd7bc3ef025432f05",
+              "final_snapshot_ref": {
+                "authority": "c33-store",
+                "id": "final-session-6b747d7f040ac2556d9423a0-2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007",
+                "kind": "authoring-snapshot",
+                "revision": "2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007"
+              },
+              "finish_claim": {
+                "claim_id": "claim-0ca759339e78624de911d0bb",
+                "finalization_identity": "finish-session-6b747d7f040ac2556d9423a0",
+                "mode": "manual"
+              },
+              "session_id": "session-6b747d7f040ac2556d9423a0",
+              "state": "finished",
+              "target_kind": "project",
+              "target_scope": {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "project",
+                "revision": "base-1"
+              },
+              "token": "token-2a3a6f68dc62f727bd537d6e",
+              "unmanaged_writers": false
+            },
+            "checkout_path": null,
+            "draft_bytes_b64": "aW5pdGlhbA==",
+            "draft_digest": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149",
+            "final_bytes_b64": "ZmluYWw=",
+            "final_digest": "2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007",
+            "final_snapshot_ref": {
+              "authority": "c33-store",
+              "id": "final-session-6b747d7f040ac2556d9423a0-2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007",
+              "kind": "authoring-snapshot",
+              "revision": "2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007"
+            },
+            "finish_claim": {
+              "claim_id": "claim-0ca759339e78624de911d0bb",
+              "finalization_identity": "finish-session-6b747d7f040ac2556d9423a0",
+              "mode": "manual"
+            },
+            "finish_mode": "manual",
+            "finish_request_id": "c33:C33-857bfa7ba9e7",
+            "fnd_contract_digest": "28ee051bef55163e79be8acf17513eccd258769f9cebcb5a2608bdb8bd300264",
+            "fnd_contract_revision": "fnd-02.v1.1",
+            "pending": false,
+            "project": null,
+            "purpose": "authoring",
+            "recovery_pending": false,
+            "registered_files": [],
+            "retirement_manifest": [],
+            "scope": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "project",
+              "revision": "base-1"
+            },
+            "type": "authoring_scope"
+          },
+          "ref": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": "rev-3"
+          },
+          "updated_at": "2026-09-14T12:54:59.324435Z",
+          "version": 3
+        },
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-931b6ab5306e90b44583d816b38c5092"
+          ],
+          "logical_request_key": "c33:C33-857bfa7ba9e7",
+          "observed_revision": "rev-3",
+          "operation": "finish",
+          "replayed": false,
+          "request_digest": "f812f11d7fa7a02d1cb474bd6790ec62437e1a017de9a523b0a4c5c6f2640df5",
+          "result_ref": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": "rev-3"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "transaction_id": "3105b06cdea6d2b23eb1cf9d0d522cf2",
+          "unknown_reason": null
+        }
+      },
+      "replay": {
+        "counts_unchanged": true,
+        "events_unchanged": true,
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-931b6ab5306e90b44583d816b38c5092"
+          ],
+          "logical_request_key": "c33:C33-857bfa7ba9e7",
+          "observed_revision": "rev-3",
+          "operation": "finish",
+          "replayed": false,
+          "request_digest": "f812f11d7fa7a02d1cb474bd6790ec62437e1a017de9a523b0a4c5c6f2640df5",
+          "result_ref": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": "rev-3"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "transaction_id": "3105b06cdea6d2b23eb1cf9d0d522cf2",
+          "unknown_reason": null
+        },
+        "result": {
+          "checkout": {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "allowed_fields": [],
+            "base_revision": "base-1",
+            "cleanup": "pending",
+            "draft_snapshot_ref": {
+              "authority": "c33-store",
+              "id": "draft-session-6b747d7f040ac2556d9423a0",
+              "kind": "authoring-snapshot",
+              "revision": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149"
+            },
+            "fence": "fence-034af58cd7bc3ef025432f05",
+            "final_snapshot_ref": {
+              "authority": "c33-store",
+              "id": "final-session-6b747d7f040ac2556d9423a0-2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007",
+              "kind": "authoring-snapshot",
+              "revision": "2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007"
+            },
+            "finish_claim": {
+              "claim_id": "claim-0ca759339e78624de911d0bb",
+              "finalization_identity": "finish-session-6b747d7f040ac2556d9423a0",
+              "mode": "manual"
+            },
+            "session_id": "session-6b747d7f040ac2556d9423a0",
+            "state": "finished",
+            "target_kind": "project",
+            "target_scope": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "project",
+              "revision": "base-1"
+            },
+            "token": "token-2a3a6f68dc62f727bd537d6e",
+            "unmanaged_writers": false
+          },
+          "cleanup": "pending",
+          "error": null,
+          "final_snapshot": null,
+          "receipt": {
+            "error_code": null,
+            "event_ids": [
+              "event-931b6ab5306e90b44583d816b38c5092"
+            ],
+            "logical_request_key": "c33:C33-857bfa7ba9e7",
+            "observed_revision": "rev-3",
+            "operation": "finish",
+            "replayed": false,
+            "request_digest": "f812f11d7fa7a02d1cb474bd6790ec62437e1a017de9a523b0a4c5c6f2640df5",
+            "result_ref": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-3"
+            },
+            "status": "committed",
+            "target": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": null
+            },
+            "transaction_id": "3105b06cdea6d2b23eb1cf9d0d522cf2",
+            "unknown_reason": null
+          },
+          "recovery_pending": false,
+          "scope": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "session_id": "session-6b747d7f040ac2556d9423a0",
+          "status": "replayed"
+        }
+      },
+      "status": "passed"
+    },
+    "mutation-port:edt-02.authoring.v1|finish.recovery|authoring-scope|authoring.finish.recovery": {
+      "action": {
+        "delta": {
+          "command_receipts": 2,
+          "event_sequences": 0,
+          "events": 2,
+          "identities": 0,
+          "record_references": 2
+        },
+        "metadata": {
+          "capture_calls": {
+            "count": 1
+          },
+          "expected_recovery_receipt_key": "c33:C33-93c383e03e9e:capture-failure",
+          "public_retry": "AuthoringSessionService.finish"
+        },
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-6269a516fe535bf721b847f3590b5261"
+          ],
+          "logical_request_key": "c33:C33-93c383e03e9e:capture-failure",
+          "observed_revision": "rev-2",
+          "operation": "finish.recovery",
+          "replayed": false,
+          "request_digest": "79216a0ce915a40a5e0fbc4ff7510930aaeee7678aacaaad44179a5a23856d93",
+          "result_ref": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": "rev-2"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "transaction_id": "ad1fdf3792392b18988de34ae90230cc",
+          "unknown_reason": null
+        },
+        "result": {
+          "checkout": {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "allowed_fields": [],
+            "base_revision": "base-1",
+            "cleanup": "pending",
+            "draft_snapshot_ref": {
+              "authority": "c33-store",
+              "id": "draft-session-e9c77f0f54f922096dff6211",
+              "kind": "authoring-snapshot",
+              "revision": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149"
+            },
+            "fence": "fence-6979f6382ecd43ac543de72a",
+            "final_snapshot_ref": null,
+            "finish_claim": null,
+            "session_id": "session-e9c77f0f54f922096dff6211",
+            "state": "released",
+            "target_kind": "project",
+            "target_scope": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "project",
+              "revision": "base-1"
+            },
+            "token": "token-47424d77639159ded0ed7c84",
+            "unmanaged_writers": false
+          },
+          "cleanup": "pending",
+          "error": "c33 capture failure",
+          "final_snapshot": {
+            "data": {
+              "bytes_sha256": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149",
+              "length": 7
+            },
+            "manifest": [],
+            "ref": {
+              "authority": "c33-store",
+              "id": "draft-session-e9c77f0f54f922096dff6211",
+              "kind": "authoring-snapshot",
+              "revision": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149"
+            }
+          },
+          "receipt": {
+            "error_code": null,
+            "event_ids": [
+              "event-6269a516fe535bf721b847f3590b5261"
+            ],
+            "logical_request_key": "c33:C33-93c383e03e9e:capture-failure",
+            "observed_revision": "rev-2",
+            "operation": "finish.recovery",
+            "replayed": false,
+            "request_digest": "79216a0ce915a40a5e0fbc4ff7510930aaeee7678aacaaad44179a5a23856d93",
+            "result_ref": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-2"
+            },
+            "status": "committed",
+            "target": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": null
+            },
+            "transaction_id": "ad1fdf3792392b18988de34ae90230cc",
+            "unknown_reason": null
+          },
+          "recovery_pending": true,
+          "scope": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "session_id": "session-e9c77f0f54f922096dff6211",
+          "status": "recovery_pending"
+        },
+        "stable_after": {
+          "{\"authority\":\"c33-store\",\"id\":\"authoring-target\",\"kind\":\"project\",\"revision\":\"base-1\"}": null
+        }
+      },
+      "before": {
+        "counts": {
+          "command_receipts": 2,
+          "event_sequences": 2,
+          "events": 2,
+          "identities": 14,
+          "record_references": 16
+        },
+        "events": [
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "scope": "authoring-target",
+              "session_id": "session-e9c77f0f54f922096dff6211"
+            },
+            "event_id": "event-a9d777e4a442c1e859a1f3bfeafb317c",
+            "event_type": "authoring.open",
+            "occurred_at": null,
+            "operation": "open",
+            "recorded_at": "2026-09-14T12:54:59.345285Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "c33-store",
+            "stream": "authoring:authoring-target",
+            "subject": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-1"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "c6256d5ff7f1101820e09335a0cef18c",
+                "kind": "authoring-actor",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "scope": "authoring-target",
+              "session_id": "session-e9c77f0f54f922096dff6211"
+            },
+            "event_id": "event-bf4d6a095a9c5d40c82396a5ca956195",
+            "event_type": "authoring.actor.open",
+            "occurred_at": null,
+            "operation": "actor.open",
+            "recorded_at": "2026-09-14T12:54:59.344732Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "c33-store",
+            "stream": "authoring:c6256d5ff7f1101820e09335a0cef18c",
+            "subject": {
+              "authority": "c33-store",
+              "id": "c6256d5ff7f1101820e09335a0cef18c",
+              "kind": "authoring-actor",
+              "revision": "rev-1"
+            }
+          }
+        ],
+        "stable_refs": {
+          "{\"authority\":\"c33-store\",\"id\":\"authoring-target\",\"kind\":\"project\",\"revision\":\"base-1\"}": null
+        }
+      },
+      "first_action_valid": true,
+      "fixture_setup": {
+        "after_counts": {
+          "command_receipts": 2,
+          "event_sequences": 2,
+          "events": 2,
+          "identities": 14,
+          "record_references": 16
+        },
+        "after_event_count": 2,
+        "before_counts": {
+          "command_receipts": 0,
+          "event_sequences": 0,
+          "events": 0,
+          "identities": 11,
+          "record_references": 11
+        },
+        "before_event_count": 0,
+        "delta": {
+          "command_receipts": 2,
+          "event_sequences": 2,
+          "events": 2,
+          "identities": 3,
+          "record_references": 5
+        }
+      },
+      "matrix_key": "mutation-port:edt-02.authoring.v1|finish.recovery|authoring-scope|authoring.finish.recovery",
+      "phase_exception": null,
+      "public_handler": "herzchen.authoring.sessions.AuthoringSessionService",
+      "reject": {
+        "counts_unchanged": true,
+        "error": {
+          "message": "logical request key was reused with a changed finish request",
+          "type": "ReplayConflictError"
+        },
+        "events_unchanged": true,
+        "request": {},
+        "result": null
+      },
+      "reopen": {
+        "counts": {
+          "command_receipts": 4,
+          "event_sequences": 2,
+          "events": 4,
+          "identities": 14,
+          "record_references": 18
+        },
+        "events": [
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "scope": "authoring-target",
+              "session_id": "session-e9c77f0f54f922096dff6211"
+            },
+            "event_id": "event-a9d777e4a442c1e859a1f3bfeafb317c",
+            "event_type": "authoring.open",
+            "occurred_at": null,
+            "operation": "open",
+            "recorded_at": "2026-09-14T12:54:59.345285Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "c33-store",
+            "stream": "authoring:authoring-target",
+            "subject": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-1"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-2"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-1"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "error": "c33 capture failure",
+              "owner": "edt",
+              "recovery_pending": true,
+              "snapshot_digest": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149",
+              "source_request": {
+                "actor": {
+                  "actor": "author",
+                  "authenticated": true,
+                  "authority": "c33-store",
+                  "credential_ref": "credential"
+                },
+                "logical_request_key": "c33:C33-93c383e03e9e",
+                "operation": "finish",
+                "owner": "edt",
+                "request_digest": "fd1d62f148b7a9e311730b292c1d6e6ad40a8bf0e05101f3f19cc7d14a702b20",
+                "session_id": "session-e9c77f0f54f922096dff6211",
+                "target": {
+                  "authority": "c33-store",
+                  "id": "authoring-target",
+                  "kind": "authoring-scope",
+                  "revision": null
+                },
+                "target_scope": {
+                  "authority": "c33-store",
+                  "id": "authoring-target",
+                  "kind": "project",
+                  "revision": "base-1"
+                }
+              }
+            },
+            "event_id": "event-6269a516fe535bf721b847f3590b5261",
+            "event_type": "authoring.finish.recovery",
+            "occurred_at": null,
+            "operation": "finish.recovery",
+            "recorded_at": "2026-09-14T12:54:59.346936Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 2,
+            "store_authority": "c33-store",
+            "stream": "authoring:authoring-target",
+            "subject": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-2"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "c6256d5ff7f1101820e09335a0cef18c",
+                "kind": "authoring-actor",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "scope": "authoring-target",
+              "session_id": "session-e9c77f0f54f922096dff6211"
+            },
+            "event_id": "event-bf4d6a095a9c5d40c82396a5ca956195",
+            "event_type": "authoring.actor.open",
+            "occurred_at": null,
+            "operation": "actor.open",
+            "recorded_at": "2026-09-14T12:54:59.344732Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "c33-store",
+            "stream": "authoring:c6256d5ff7f1101820e09335a0cef18c",
+            "subject": {
+              "authority": "c33-store",
+              "id": "c6256d5ff7f1101820e09335a0cef18c",
+              "kind": "authoring-actor",
+              "revision": "rev-1"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "c6256d5ff7f1101820e09335a0cef18c",
+                "kind": "authoring-actor",
+                "revision": "rev-2"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "c33-store",
+                "id": "c6256d5ff7f1101820e09335a0cef18c",
+                "kind": "authoring-actor",
+                "revision": "rev-1"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "session_id": "session-e9c77f0f54f922096dff6211"
+            },
+            "event_id": "event-c473baafae6375091115be50da77bfc7",
+            "event_type": "authoring.actor.release",
+            "occurred_at": null,
+            "operation": "actor.release",
+            "recorded_at": "2026-09-14T12:54:59.347464Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 2,
+            "store_authority": "c33-store",
+            "stream": "authoring:c6256d5ff7f1101820e09335a0cef18c",
+            "subject": {
+              "authority": "c33-store",
+              "id": "c6256d5ff7f1101820e09335a0cef18c",
+              "kind": "authoring-actor",
+              "revision": "rev-2"
+            }
+          }
+        ],
+        "identity": {
+          "created_at": "2026-09-14T12:54:59.345155Z",
+          "edit_token": null,
+          "payload": {
+            "activity": "editing",
+            "checkout": {
+              "actor": {
+                "actor": "author",
+                "authenticated": true,
+                "authority": "c33-store",
+                "credential_ref": "credential"
+              },
+              "allowed_fields": [],
+              "base_revision": "base-1",
+              "cleanup": "pending",
+              "draft_snapshot_ref": {
+                "authority": "c33-store",
+                "id": "draft-session-e9c77f0f54f922096dff6211",
+                "kind": "authoring-snapshot",
+                "revision": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149"
+              },
+              "fence": "fence-6979f6382ecd43ac543de72a",
+              "final_snapshot_ref": null,
+              "finish_claim": null,
+              "session_id": "session-e9c77f0f54f922096dff6211",
+              "state": "released",
+              "target_kind": "project",
+              "target_scope": {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "project",
+                "revision": "base-1"
+              },
+              "token": "token-47424d77639159ded0ed7c84",
+              "unmanaged_writers": false
+            },
+            "checkout_path": null,
+            "draft_bytes_b64": "aW5pdGlhbA==",
+            "draft_digest": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149",
+            "error": "c33 capture failure",
+            "final_bytes_b64": "aW5pdGlhbA==",
+            "final_digest": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149",
+            "final_snapshot_ref": {
+              "authority": "c33-store",
+              "id": "draft-session-e9c77f0f54f922096dff6211",
+              "kind": "authoring-snapshot",
+              "revision": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149"
+            },
+            "finish_recovery": {
+              "error": "c33 capture failure",
+              "manifest": [],
+              "recovery_request_key": "c33:C33-93c383e03e9e:capture-failure",
+              "rejected": false,
+              "snapshot_digest": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149",
+              "snapshot_ref": {
+                "authority": "c33-store",
+                "id": "draft-session-e9c77f0f54f922096dff6211",
+                "kind": "authoring-snapshot",
+                "revision": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149"
+              },
+              "source_request": {
+                "actor": {
+                  "actor": "author",
+                  "authenticated": true,
+                  "authority": "c33-store",
+                  "credential_ref": "credential"
+                },
+                "logical_request_key": "c33:C33-93c383e03e9e",
+                "operation": "finish",
+                "owner": "edt",
+                "request_digest": "fd1d62f148b7a9e311730b292c1d6e6ad40a8bf0e05101f3f19cc7d14a702b20",
+                "session_id": "session-e9c77f0f54f922096dff6211",
+                "target": {
+                  "authority": "c33-store",
+                  "id": "authoring-target",
+                  "kind": "authoring-scope",
+                  "revision": null
+                },
+                "target_scope": {
+                  "authority": "c33-store",
+                  "id": "authoring-target",
+                  "kind": "project",
+                  "revision": "base-1"
+                }
+              }
+            },
+            "fnd_contract_digest": "28ee051bef55163e79be8acf17513eccd258769f9cebcb5a2608bdb8bd300264",
+            "fnd_contract_revision": "fnd-02.v1.1",
+            "pending": false,
+            "project": null,
+            "purpose": "authoring",
+            "recovery_pending": true,
+            "registered_files": [],
+            "retirement_manifest": [],
+            "scope": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "project",
+              "revision": "base-1"
+            },
+            "type": "authoring_scope"
+          },
+          "ref": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": "rev-2"
+          },
+          "updated_at": "2026-09-14T12:54:59.346637Z",
+          "version": 2
+        },
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-6269a516fe535bf721b847f3590b5261"
+          ],
+          "logical_request_key": "c33:C33-93c383e03e9e:capture-failure",
+          "observed_revision": "rev-2",
+          "operation": "finish.recovery",
+          "replayed": false,
+          "request_digest": "79216a0ce915a40a5e0fbc4ff7510930aaeee7678aacaaad44179a5a23856d93",
+          "result_ref": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": "rev-2"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "transaction_id": "ad1fdf3792392b18988de34ae90230cc",
+          "unknown_reason": null
+        }
+      },
+      "replay": {
+        "counts_unchanged": true,
+        "events_unchanged": true,
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-6269a516fe535bf721b847f3590b5261"
+          ],
+          "logical_request_key": "c33:C33-93c383e03e9e:capture-failure",
+          "observed_revision": "rev-2",
+          "operation": "finish.recovery",
+          "replayed": false,
+          "request_digest": "79216a0ce915a40a5e0fbc4ff7510930aaeee7678aacaaad44179a5a23856d93",
+          "result_ref": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": "rev-2"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "transaction_id": "ad1fdf3792392b18988de34ae90230cc",
+          "unknown_reason": null
+        },
+        "result": {
+          "checkout": {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "allowed_fields": [],
+            "base_revision": "base-1",
+            "cleanup": "pending",
+            "draft_snapshot_ref": {
+              "authority": "c33-store",
+              "id": "draft-session-e9c77f0f54f922096dff6211",
+              "kind": "authoring-snapshot",
+              "revision": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149"
+            },
+            "fence": "fence-6979f6382ecd43ac543de72a",
+            "final_snapshot_ref": null,
+            "finish_claim": null,
+            "session_id": "session-e9c77f0f54f922096dff6211",
+            "state": "released",
+            "target_kind": "project",
+            "target_scope": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "project",
+              "revision": "base-1"
+            },
+            "token": "token-47424d77639159ded0ed7c84",
+            "unmanaged_writers": false
+          },
+          "cleanup": "pending",
+          "error": "c33 capture failure",
+          "final_snapshot": {
+            "data": {
+              "bytes_sha256": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149",
+              "length": 7
+            },
+            "manifest": [],
+            "ref": {
+              "authority": "c33-store",
+              "id": "draft-session-e9c77f0f54f922096dff6211",
+              "kind": "authoring-snapshot",
+              "revision": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149"
+            }
+          },
+          "receipt": {
+            "error_code": null,
+            "event_ids": [
+              "event-6269a516fe535bf721b847f3590b5261"
+            ],
+            "logical_request_key": "c33:C33-93c383e03e9e:capture-failure",
+            "observed_revision": "rev-2",
+            "operation": "finish.recovery",
+            "replayed": false,
+            "request_digest": "79216a0ce915a40a5e0fbc4ff7510930aaeee7678aacaaad44179a5a23856d93",
+            "result_ref": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-2"
+            },
+            "status": "committed",
+            "target": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": null
+            },
+            "transaction_id": "ad1fdf3792392b18988de34ae90230cc",
+            "unknown_reason": null
+          },
+          "recovery_pending": true,
+          "scope": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "session_id": "session-e9c77f0f54f922096dff6211",
+          "status": "recovery_pending"
+        }
+      },
+      "status": "passed"
+    },
+    "mutation-port:edt-02.authoring.v1|finish|authoring-scope|authoring.finish": {
+      "action": {
+        "delta": {
+          "command_receipts": 3,
+          "event_sequences": 0,
+          "events": 3,
+          "identities": 1,
+          "record_references": 4
+        },
+        "metadata": {},
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-ef50be6f2713ceb7eb781187afcef239"
+          ],
+          "logical_request_key": "c33:C33-2962a59f53a9",
+          "observed_revision": "rev-3",
+          "operation": "finish",
+          "replayed": false,
+          "request_digest": "bd33650996086f79218f022719369c2a73c5e9963f391dbba63b02c677537995",
+          "result_ref": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": "rev-3"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "transaction_id": "91d448691f4b1f4316f571c1699a061a",
+          "unknown_reason": null
+        },
+        "result": {
+          "checkout": {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "allowed_fields": [],
+            "base_revision": "base-1",
+            "cleanup": "pending",
+            "draft_snapshot_ref": {
+              "authority": "c33-store",
+              "id": "draft-session-b4f953b4649035528d2934b6",
+              "kind": "authoring-snapshot",
+              "revision": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149"
+            },
+            "fence": "fence-23a41a85d7e121b307d4350b",
+            "final_snapshot_ref": {
+              "authority": "c33-store",
+              "id": "final-session-b4f953b4649035528d2934b6-2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007",
+              "kind": "authoring-snapshot",
+              "revision": "2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007"
+            },
+            "finish_claim": {
+              "claim_id": "claim-a40c3f192b0aed62a6717a17",
+              "finalization_identity": "finish-session-b4f953b4649035528d2934b6",
+              "mode": "manual"
+            },
+            "session_id": "session-b4f953b4649035528d2934b6",
+            "state": "finished",
+            "target_kind": "project",
+            "target_scope": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "project",
+              "revision": "base-1"
+            },
+            "token": "token-188c5e41fbd1eb27726c1ccf",
+            "unmanaged_writers": false
+          },
+          "cleanup": "pending",
+          "error": null,
+          "final_snapshot": {
+            "data": {
+              "bytes_sha256": "2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007",
+              "length": 5
+            },
+            "manifest": [],
+            "ref": {
+              "authority": "c33-store",
+              "id": "final-session-b4f953b4649035528d2934b6-2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007",
+              "kind": "authoring-snapshot",
+              "revision": "2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007"
+            }
+          },
+          "receipt": {
+            "error_code": null,
+            "event_ids": [
+              "event-ef50be6f2713ceb7eb781187afcef239"
+            ],
+            "logical_request_key": "c33:C33-2962a59f53a9",
+            "observed_revision": "rev-3",
+            "operation": "finish",
+            "replayed": false,
+            "request_digest": "bd33650996086f79218f022719369c2a73c5e9963f391dbba63b02c677537995",
+            "result_ref": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-3"
+            },
+            "status": "committed",
+            "target": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": null
+            },
+            "transaction_id": "91d448691f4b1f4316f571c1699a061a",
+            "unknown_reason": null
+          },
+          "recovery_pending": false,
+          "scope": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "session_id": "session-b4f953b4649035528d2934b6",
+          "status": "finished"
+        },
+        "stable_after": {
+          "{\"authority\":\"c33-store\",\"id\":\"authoring-target\",\"kind\":\"project\",\"revision\":\"base-1\"}": null
+        }
+      },
+      "before": {
+        "counts": {
+          "command_receipts": 2,
+          "event_sequences": 2,
+          "events": 2,
+          "identities": 14,
+          "record_references": 16
+        },
+        "events": [
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "scope": "authoring-target",
+              "session_id": "session-b4f953b4649035528d2934b6"
+            },
+            "event_id": "event-8b4a9b25b1850c1589e865ebf37d3fed",
+            "event_type": "authoring.open",
+            "occurred_at": null,
+            "operation": "open",
+            "recorded_at": "2026-09-14T12:54:59.367081Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "c33-store",
+            "stream": "authoring:authoring-target",
+            "subject": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-1"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "c6256d5ff7f1101820e09335a0cef18c",
+                "kind": "authoring-actor",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "scope": "authoring-target",
+              "session_id": "session-b4f953b4649035528d2934b6"
+            },
+            "event_id": "event-421e30b847f514ab1969fd5fb15e363f",
+            "event_type": "authoring.actor.open",
+            "occurred_at": null,
+            "operation": "actor.open",
+            "recorded_at": "2026-09-14T12:54:59.366571Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "c33-store",
+            "stream": "authoring:c6256d5ff7f1101820e09335a0cef18c",
+            "subject": {
+              "authority": "c33-store",
+              "id": "c6256d5ff7f1101820e09335a0cef18c",
+              "kind": "authoring-actor",
+              "revision": "rev-1"
+            }
+          }
+        ],
+        "stable_refs": {
+          "{\"authority\":\"c33-store\",\"id\":\"authoring-target\",\"kind\":\"project\",\"revision\":\"base-1\"}": null
+        }
+      },
+      "first_action_valid": true,
+      "fixture_setup": {
+        "after_counts": {
+          "command_receipts": 2,
+          "event_sequences": 2,
+          "events": 2,
+          "identities": 14,
+          "record_references": 16
+        },
+        "after_event_count": 2,
+        "before_counts": {
+          "command_receipts": 0,
+          "event_sequences": 0,
+          "events": 0,
+          "identities": 11,
+          "record_references": 11
+        },
+        "before_event_count": 0,
+        "delta": {
+          "command_receipts": 2,
+          "event_sequences": 2,
+          "events": 2,
+          "identities": 3,
+          "record_references": 5
+        }
+      },
+      "matrix_key": "mutation-port:edt-02.authoring.v1|finish|authoring-scope|authoring.finish",
+      "phase_exception": null,
+      "public_handler": "herzchen.authoring.sessions.AuthoringSessionService",
+      "reject": {
+        "counts_unchanged": true,
+        "error": {
+          "message": "logical request key was reused with a changed request digest",
+          "type": "ReplayConflictError"
+        },
+        "events_unchanged": true,
+        "request": {},
+        "result": null
+      },
+      "reopen": {
+        "counts": {
+          "command_receipts": 5,
+          "event_sequences": 2,
+          "events": 5,
+          "identities": 15,
+          "record_references": 20
+        },
+        "events": [
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "scope": "authoring-target",
+              "session_id": "session-b4f953b4649035528d2934b6"
+            },
+            "event_id": "event-8b4a9b25b1850c1589e865ebf37d3fed",
+            "event_type": "authoring.open",
+            "occurred_at": null,
+            "operation": "open",
+            "recorded_at": "2026-09-14T12:54:59.367081Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "c33-store",
+            "stream": "authoring:authoring-target",
+            "subject": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-1"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-2"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-1"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "claim": {
+                "claim_id": "claim-a40c3f192b0aed62a6717a17",
+                "finalization_identity": "finish-session-b4f953b4649035528d2934b6",
+                "mode": "manual"
+              }
+            },
+            "event_id": "event-aca50a35d58c440e893a4cc219301ead",
+            "event_type": "authoring.finish.claim",
+            "occurred_at": null,
+            "operation": "finish.claim",
+            "recorded_at": "2026-09-14T12:54:59.368506Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 2,
+            "store_authority": "c33-store",
+            "stream": "authoring:authoring-target",
+            "subject": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-2"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-3"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-2"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "final_digest": "2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007",
+              "mode": "manual",
+              "pending": false
+            },
+            "event_id": "event-ef50be6f2713ceb7eb781187afcef239",
+            "event_type": "authoring.finish",
+            "occurred_at": null,
+            "operation": "finish",
+            "recorded_at": "2026-09-14T12:54:59.368968Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 3,
+            "store_authority": "c33-store",
+            "stream": "authoring:authoring-target",
+            "subject": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-3"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "c6256d5ff7f1101820e09335a0cef18c",
+                "kind": "authoring-actor",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "scope": "authoring-target",
+              "session_id": "session-b4f953b4649035528d2934b6"
+            },
+            "event_id": "event-421e30b847f514ab1969fd5fb15e363f",
+            "event_type": "authoring.actor.open",
+            "occurred_at": null,
+            "operation": "actor.open",
+            "recorded_at": "2026-09-14T12:54:59.366571Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "c33-store",
+            "stream": "authoring:c6256d5ff7f1101820e09335a0cef18c",
+            "subject": {
+              "authority": "c33-store",
+              "id": "c6256d5ff7f1101820e09335a0cef18c",
+              "kind": "authoring-actor",
+              "revision": "rev-1"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "c6256d5ff7f1101820e09335a0cef18c",
+                "kind": "authoring-actor",
+                "revision": "rev-2"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "c33-store",
+                "id": "c6256d5ff7f1101820e09335a0cef18c",
+                "kind": "authoring-actor",
+                "revision": "rev-1"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "session_id": "session-b4f953b4649035528d2934b6"
+            },
+            "event_id": "event-3ac125a4f830258bb70fb62c600f1f3d",
+            "event_type": "authoring.actor.release",
+            "occurred_at": null,
+            "operation": "actor.release",
+            "recorded_at": "2026-09-14T12:54:59.369262Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 2,
+            "store_authority": "c33-store",
+            "stream": "authoring:c6256d5ff7f1101820e09335a0cef18c",
+            "subject": {
+              "authority": "c33-store",
+              "id": "c6256d5ff7f1101820e09335a0cef18c",
+              "kind": "authoring-actor",
+              "revision": "rev-2"
+            }
+          }
+        ],
+        "identity": {
+          "created_at": "2026-09-14T12:54:59.366962Z",
+          "edit_token": null,
+          "payload": {
+            "activity": "editing",
+            "checkout": {
+              "actor": {
+                "actor": "author",
+                "authenticated": true,
+                "authority": "c33-store",
+                "credential_ref": "credential"
+              },
+              "allowed_fields": [],
+              "base_revision": "base-1",
+              "cleanup": "pending",
+              "draft_snapshot_ref": {
+                "authority": "c33-store",
+                "id": "draft-session-b4f953b4649035528d2934b6",
+                "kind": "authoring-snapshot",
+                "revision": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149"
+              },
+              "fence": "fence-23a41a85d7e121b307d4350b",
+              "final_snapshot_ref": {
+                "authority": "c33-store",
+                "id": "final-session-b4f953b4649035528d2934b6-2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007",
+                "kind": "authoring-snapshot",
+                "revision": "2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007"
+              },
+              "finish_claim": {
+                "claim_id": "claim-a40c3f192b0aed62a6717a17",
+                "finalization_identity": "finish-session-b4f953b4649035528d2934b6",
+                "mode": "manual"
+              },
+              "session_id": "session-b4f953b4649035528d2934b6",
+              "state": "finished",
+              "target_kind": "project",
+              "target_scope": {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "project",
+                "revision": "base-1"
+              },
+              "token": "token-188c5e41fbd1eb27726c1ccf",
+              "unmanaged_writers": false
+            },
+            "checkout_path": null,
+            "draft_bytes_b64": "aW5pdGlhbA==",
+            "draft_digest": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149",
+            "final_bytes_b64": "ZmluYWw=",
+            "final_digest": "2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007",
+            "final_snapshot_ref": {
+              "authority": "c33-store",
+              "id": "final-session-b4f953b4649035528d2934b6-2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007",
+              "kind": "authoring-snapshot",
+              "revision": "2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007"
+            },
+            "finish_claim": {
+              "claim_id": "claim-a40c3f192b0aed62a6717a17",
+              "finalization_identity": "finish-session-b4f953b4649035528d2934b6",
+              "mode": "manual"
+            },
+            "finish_mode": "manual",
+            "finish_request_id": "c33:C33-2962a59f53a9",
+            "fnd_contract_digest": "28ee051bef55163e79be8acf17513eccd258769f9cebcb5a2608bdb8bd300264",
+            "fnd_contract_revision": "fnd-02.v1.1",
+            "pending": false,
+            "project": null,
+            "purpose": "authoring",
+            "recovery_pending": false,
+            "registered_files": [],
+            "retirement_manifest": [],
+            "scope": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "project",
+              "revision": "base-1"
+            },
+            "type": "authoring_scope"
+          },
+          "ref": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": "rev-3"
+          },
+          "updated_at": "2026-09-14T12:54:59.368929Z",
+          "version": 3
+        },
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-ef50be6f2713ceb7eb781187afcef239"
+          ],
+          "logical_request_key": "c33:C33-2962a59f53a9",
+          "observed_revision": "rev-3",
+          "operation": "finish",
+          "replayed": false,
+          "request_digest": "bd33650996086f79218f022719369c2a73c5e9963f391dbba63b02c677537995",
+          "result_ref": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": "rev-3"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "transaction_id": "91d448691f4b1f4316f571c1699a061a",
+          "unknown_reason": null
+        }
+      },
+      "replay": {
+        "counts_unchanged": true,
+        "events_unchanged": true,
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-ef50be6f2713ceb7eb781187afcef239"
+          ],
+          "logical_request_key": "c33:C33-2962a59f53a9",
+          "observed_revision": "rev-3",
+          "operation": "finish",
+          "replayed": false,
+          "request_digest": "bd33650996086f79218f022719369c2a73c5e9963f391dbba63b02c677537995",
+          "result_ref": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": "rev-3"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "transaction_id": "91d448691f4b1f4316f571c1699a061a",
+          "unknown_reason": null
+        },
+        "result": {
+          "checkout": {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "allowed_fields": [],
+            "base_revision": "base-1",
+            "cleanup": "pending",
+            "draft_snapshot_ref": {
+              "authority": "c33-store",
+              "id": "draft-session-b4f953b4649035528d2934b6",
+              "kind": "authoring-snapshot",
+              "revision": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149"
+            },
+            "fence": "fence-23a41a85d7e121b307d4350b",
+            "final_snapshot_ref": {
+              "authority": "c33-store",
+              "id": "final-session-b4f953b4649035528d2934b6-2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007",
+              "kind": "authoring-snapshot",
+              "revision": "2443630b4620165c8b173e7265e17526fe2787ae594364dd6d839ad58f2fc007"
+            },
+            "finish_claim": {
+              "claim_id": "claim-a40c3f192b0aed62a6717a17",
+              "finalization_identity": "finish-session-b4f953b4649035528d2934b6",
+              "mode": "manual"
+            },
+            "session_id": "session-b4f953b4649035528d2934b6",
+            "state": "finished",
+            "target_kind": "project",
+            "target_scope": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "project",
+              "revision": "base-1"
+            },
+            "token": "token-188c5e41fbd1eb27726c1ccf",
+            "unmanaged_writers": false
+          },
+          "cleanup": "pending",
+          "error": null,
+          "final_snapshot": null,
+          "receipt": {
+            "error_code": null,
+            "event_ids": [
+              "event-ef50be6f2713ceb7eb781187afcef239"
+            ],
+            "logical_request_key": "c33:C33-2962a59f53a9",
+            "observed_revision": "rev-3",
+            "operation": "finish",
+            "replayed": false,
+            "request_digest": "bd33650996086f79218f022719369c2a73c5e9963f391dbba63b02c677537995",
+            "result_ref": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-3"
+            },
+            "status": "committed",
+            "target": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": null
+            },
+            "transaction_id": "91d448691f4b1f4316f571c1699a061a",
+            "unknown_reason": null
+          },
+          "recovery_pending": false,
+          "scope": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "session_id": "session-b4f953b4649035528d2934b6",
+          "status": "replayed"
+        }
+      },
+      "status": "passed"
+    },
+    "mutation-port:edt-02.authoring.v1|release|authoring-scope|authoring.release": {
+      "action": {
+        "delta": {
+          "command_receipts": 2,
+          "event_sequences": 0,
+          "events": 2,
+          "identities": 0,
+          "record_references": 2
+        },
+        "metadata": {},
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-87dea2320b71b42705f78710b3418973"
+          ],
+          "logical_request_key": "c33:C33-be47b08ec0ae",
+          "observed_revision": "rev-2",
+          "operation": "release",
+          "replayed": false,
+          "request_digest": "d8a114ac07f1a6d99fec8867e3f1943c6de61c2521965daefcff6df7597def5f",
+          "result_ref": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": "rev-2"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "transaction_id": "c0aabe99816c90d8d14470b69699c79d",
+          "unknown_reason": null
+        },
+        "result": {
+          "checkout": {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "allowed_fields": [],
+            "base_revision": "base-1",
+            "cleanup": "pending",
+            "draft_snapshot_ref": {
+              "authority": "c33-store",
+              "id": "draft-session-d993358f6722592c4d179a3f",
+              "kind": "authoring-snapshot",
+              "revision": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149"
+            },
+            "fence": "fence-1f4f4aa1a8f5966193a17ab9",
+            "final_snapshot_ref": null,
+            "finish_claim": null,
+            "session_id": "session-d993358f6722592c4d179a3f",
+            "state": "released",
+            "target_kind": "project",
+            "target_scope": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "project",
+              "revision": "base-1"
+            },
+            "token": "token-857f740a6152f222a7451669",
+            "unmanaged_writers": false
+          },
+          "cleanup": "pending",
+          "error": null,
+          "final_snapshot": null,
+          "receipt": {
+            "error_code": null,
+            "event_ids": [
+              "event-87dea2320b71b42705f78710b3418973"
+            ],
+            "logical_request_key": "c33:C33-be47b08ec0ae",
+            "observed_revision": "rev-2",
+            "operation": "release",
+            "replayed": false,
+            "request_digest": "d8a114ac07f1a6d99fec8867e3f1943c6de61c2521965daefcff6df7597def5f",
+            "result_ref": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-2"
+            },
+            "status": "committed",
+            "target": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": null
+            },
+            "transaction_id": "c0aabe99816c90d8d14470b69699c79d",
+            "unknown_reason": null
+          },
+          "recovery_pending": false,
+          "scope": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "session_id": "session-d993358f6722592c4d179a3f",
+          "status": "released"
+        },
+        "stable_after": {
+          "{\"authority\":\"c33-store\",\"id\":\"authoring-target\",\"kind\":\"project\",\"revision\":\"base-1\"}": null
+        }
+      },
+      "before": {
+        "counts": {
+          "command_receipts": 2,
+          "event_sequences": 2,
+          "events": 2,
+          "identities": 14,
+          "record_references": 16
+        },
+        "events": [
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "scope": "authoring-target",
+              "session_id": "session-d993358f6722592c4d179a3f"
+            },
+            "event_id": "event-1e32fdcf1d8ead81612f3f5a6f69f4a2",
+            "event_type": "authoring.open",
+            "occurred_at": null,
+            "operation": "open",
+            "recorded_at": "2026-09-14T12:54:59.389183Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "c33-store",
+            "stream": "authoring:authoring-target",
+            "subject": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-1"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "c6256d5ff7f1101820e09335a0cef18c",
+                "kind": "authoring-actor",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "scope": "authoring-target",
+              "session_id": "session-d993358f6722592c4d179a3f"
+            },
+            "event_id": "event-f8865408c23a22b3569627ab010be9c1",
+            "event_type": "authoring.actor.open",
+            "occurred_at": null,
+            "operation": "actor.open",
+            "recorded_at": "2026-09-14T12:54:59.388655Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "c33-store",
+            "stream": "authoring:c6256d5ff7f1101820e09335a0cef18c",
+            "subject": {
+              "authority": "c33-store",
+              "id": "c6256d5ff7f1101820e09335a0cef18c",
+              "kind": "authoring-actor",
+              "revision": "rev-1"
+            }
+          }
+        ],
+        "stable_refs": {
+          "{\"authority\":\"c33-store\",\"id\":\"authoring-target\",\"kind\":\"project\",\"revision\":\"base-1\"}": null
+        }
+      },
+      "first_action_valid": true,
+      "fixture_setup": {
+        "after_counts": {
+          "command_receipts": 2,
+          "event_sequences": 2,
+          "events": 2,
+          "identities": 14,
+          "record_references": 16
+        },
+        "after_event_count": 2,
+        "before_counts": {
+          "command_receipts": 0,
+          "event_sequences": 0,
+          "events": 0,
+          "identities": 11,
+          "record_references": 11
+        },
+        "before_event_count": 0,
+        "delta": {
+          "command_receipts": 2,
+          "event_sequences": 2,
+          "events": 2,
+          "identities": 3,
+          "record_references": 5
+        }
+      },
+      "matrix_key": "mutation-port:edt-02.authoring.v1|release|authoring-scope|authoring.release",
+      "phase_exception": null,
+      "public_handler": "herzchen.authoring.sessions.AuthoringSessionService",
+      "reject": {
+        "counts_unchanged": true,
+        "error": {
+          "message": "stale authoring token or fence",
+          "type": "InvalidSessionError"
+        },
+        "events_unchanged": true,
+        "request": {},
+        "result": null
+      },
+      "reopen": {
+        "counts": {
+          "command_receipts": 4,
+          "event_sequences": 2,
+          "events": 4,
+          "identities": 14,
+          "record_references": 18
+        },
+        "events": [
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "scope": "authoring-target",
+              "session_id": "session-d993358f6722592c4d179a3f"
+            },
+            "event_id": "event-1e32fdcf1d8ead81612f3f5a6f69f4a2",
+            "event_type": "authoring.open",
+            "occurred_at": null,
+            "operation": "open",
+            "recorded_at": "2026-09-14T12:54:59.389183Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "c33-store",
+            "stream": "authoring:authoring-target",
+            "subject": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-1"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-2"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "authoring-scope",
+                "revision": "rev-1"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "status": "released"
+            },
+            "event_id": "event-87dea2320b71b42705f78710b3418973",
+            "event_type": "authoring.release",
+            "occurred_at": null,
+            "operation": "release",
+            "recorded_at": "2026-09-14T12:54:59.390360Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 2,
+            "store_authority": "c33-store",
+            "stream": "authoring:authoring-target",
+            "subject": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-2"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "c6256d5ff7f1101820e09335a0cef18c",
+                "kind": "authoring-actor",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "scope": "authoring-target",
+              "session_id": "session-d993358f6722592c4d179a3f"
+            },
+            "event_id": "event-f8865408c23a22b3569627ab010be9c1",
+            "event_type": "authoring.actor.open",
+            "occurred_at": null,
+            "operation": "actor.open",
+            "recorded_at": "2026-09-14T12:54:59.388655Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "c33-store",
+            "stream": "authoring:c6256d5ff7f1101820e09335a0cef18c",
+            "subject": {
+              "authority": "c33-store",
+              "id": "c6256d5ff7f1101820e09335a0cef18c",
+              "kind": "authoring-actor",
+              "revision": "rev-1"
+            }
+          },
+          {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "c33-store",
+                "id": "c6256d5ff7f1101820e09335a0cef18c",
+                "kind": "authoring-actor",
+                "revision": "rev-2"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "c33-store",
+                "id": "c6256d5ff7f1101820e09335a0cef18c",
+                "kind": "authoring-actor",
+                "revision": "rev-1"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "session_id": "session-d993358f6722592c4d179a3f"
+            },
+            "event_id": "event-c7bc2a5e45cd647f8372b811c6f66e95",
+            "event_type": "authoring.actor.release",
+            "occurred_at": null,
+            "operation": "actor.release",
+            "recorded_at": "2026-09-14T12:54:59.390924Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 2,
+            "store_authority": "c33-store",
+            "stream": "authoring:c6256d5ff7f1101820e09335a0cef18c",
+            "subject": {
+              "authority": "c33-store",
+              "id": "c6256d5ff7f1101820e09335a0cef18c",
+              "kind": "authoring-actor",
+              "revision": "rev-2"
+            }
+          }
+        ],
+        "identity": {
+          "created_at": "2026-09-14T12:54:59.389057Z",
+          "edit_token": null,
+          "payload": {
+            "activity": "editing",
+            "checkout": {
+              "actor": {
+                "actor": "author",
+                "authenticated": true,
+                "authority": "c33-store",
+                "credential_ref": "credential"
+              },
+              "allowed_fields": [],
+              "base_revision": "base-1",
+              "cleanup": "pending",
+              "draft_snapshot_ref": {
+                "authority": "c33-store",
+                "id": "draft-session-d993358f6722592c4d179a3f",
+                "kind": "authoring-snapshot",
+                "revision": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149"
+              },
+              "fence": "fence-1f4f4aa1a8f5966193a17ab9",
+              "final_snapshot_ref": null,
+              "finish_claim": null,
+              "session_id": "session-d993358f6722592c4d179a3f",
+              "state": "released",
+              "target_kind": "project",
+              "target_scope": {
+                "authority": "c33-store",
+                "id": "authoring-target",
+                "kind": "project",
+                "revision": "base-1"
+              },
+              "token": "token-857f740a6152f222a7451669",
+              "unmanaged_writers": false
+            },
+            "checkout_path": null,
+            "draft_bytes_b64": "aW5pdGlhbA==",
+            "draft_digest": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149",
+            "final_bytes_b64": null,
+            "fnd_contract_digest": "28ee051bef55163e79be8acf17513eccd258769f9cebcb5a2608bdb8bd300264",
+            "fnd_contract_revision": "fnd-02.v1.1",
+            "pending": false,
+            "project": null,
+            "purpose": "authoring",
+            "registered_files": [],
+            "scope": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "project",
+              "revision": "base-1"
+            },
+            "status": "released",
+            "type": "authoring_scope"
+          },
+          "ref": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": "rev-2"
+          },
+          "updated_at": "2026-09-14T12:54:59.390109Z",
+          "version": 2
+        },
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-87dea2320b71b42705f78710b3418973"
+          ],
+          "logical_request_key": "c33:C33-be47b08ec0ae",
+          "observed_revision": "rev-2",
+          "operation": "release",
+          "replayed": false,
+          "request_digest": "d8a114ac07f1a6d99fec8867e3f1943c6de61c2521965daefcff6df7597def5f",
+          "result_ref": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": "rev-2"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "transaction_id": "c0aabe99816c90d8d14470b69699c79d",
+          "unknown_reason": null
+        }
+      },
+      "replay": {
+        "counts_unchanged": true,
+        "events_unchanged": true,
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-87dea2320b71b42705f78710b3418973"
+          ],
+          "logical_request_key": "c33:C33-be47b08ec0ae",
+          "observed_revision": "rev-2",
+          "operation": "release",
+          "replayed": false,
+          "request_digest": "d8a114ac07f1a6d99fec8867e3f1943c6de61c2521965daefcff6df7597def5f",
+          "result_ref": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": "rev-2"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "transaction_id": "c0aabe99816c90d8d14470b69699c79d",
+          "unknown_reason": null
+        },
+        "result": {
+          "checkout": {
+            "actor": {
+              "actor": "author",
+              "authenticated": true,
+              "authority": "c33-store",
+              "credential_ref": "credential"
+            },
+            "allowed_fields": [],
+            "base_revision": "base-1",
+            "cleanup": "pending",
+            "draft_snapshot_ref": {
+              "authority": "c33-store",
+              "id": "draft-session-d993358f6722592c4d179a3f",
+              "kind": "authoring-snapshot",
+              "revision": "ac1b5c0961a7269b6a053ee64276ed0e20a7f48aefb9f67519539d23aaf10149"
+            },
+            "fence": "fence-1f4f4aa1a8f5966193a17ab9",
+            "final_snapshot_ref": null,
+            "finish_claim": null,
+            "session_id": "session-d993358f6722592c4d179a3f",
+            "state": "released",
+            "target_kind": "project",
+            "target_scope": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "project",
+              "revision": "base-1"
+            },
+            "token": "token-857f740a6152f222a7451669",
+            "unmanaged_writers": false
+          },
+          "cleanup": "pending",
+          "error": null,
+          "final_snapshot": null,
+          "receipt": {
+            "error_code": null,
+            "event_ids": [
+              "event-87dea2320b71b42705f78710b3418973"
+            ],
+            "logical_request_key": "c33:C33-be47b08ec0ae",
+            "observed_revision": "rev-2",
+            "operation": "release",
+            "replayed": false,
+            "request_digest": "d8a114ac07f1a6d99fec8867e3f1943c6de61c2521965daefcff6df7597def5f",
+            "result_ref": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": "rev-2"
+            },
+            "status": "committed",
+            "target": {
+              "authority": "c33-store",
+              "id": "authoring-target",
+              "kind": "authoring-scope",
+              "revision": null
+            },
+            "transaction_id": "c0aabe99816c90d8d14470b69699c79d",
+            "unknown_reason": null
+          },
+          "recovery_pending": false,
+          "scope": {
+            "authority": "c33-store",
+            "id": "authoring-target",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "session_id": "session-d993358f6722592c4d179a3f",
+          "status": "released"
+        }
+      },
+      "status": "passed"
+    }
+  },
+  "run_id": "harness-repair-installed-20260914",
+  "runtime": {
+    "pytest": "9.1.1",
+    "python": "3.11.16 (main, Aug 12 2026, 23:03:19) [Clang 17.0.0 (clang-1700.6.4.2)]"
+  },
+  "source": {
+    "commit": null,
+    "tree": null
+  },
+  "tooling_correction": "pytest/build commands use TMPDIR=/private/tmp because the prior macOS TMPDIR pointed to a deleted /var/folders/.../T path",
+  "wheel": {
+    "path": null,
+    "sha256": null
+  }
+}
