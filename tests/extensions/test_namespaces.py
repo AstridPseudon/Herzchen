@@ -34,12 +34,12 @@ def subject(revision: str = "seed-1") -> ResourceRef:
 
 
 def actor() -> AuthenticatedActor:
-    return AuthenticatedActor("test-auth", "tester", "credential")
+    return AuthenticatedActor("dat-auth", "tester", "credential")
 
 
-def context(key: str, value: object, *, version: int, revision: str) -> TransactionContext:
+def context(key: str, value: object, *, version: int, revision: str, authenticated_actor=None) -> TransactionContext:
     digest = hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()
-    return TransactionContext(actor(), key, digest, expected_version=version, expected_revision=revision)
+    return TransactionContext(authenticated_actor or actor(), key, digest, expected_version=version, expected_revision=revision)
 
 
 @pytest.fixture()
@@ -69,7 +69,9 @@ def test_typed_contribution_and_definition_discovery_source_boundary(environment
     assert contribution.domain_id == "dat.extensions"
     assert set(contribution.namespace_types) == {OPEN_NAMESPACE, PROTOCOL_NAMESPACE, MANAGED_NAMESPACE}
     assert contribution.operation_types[-2:] == ("dat.extensions.metadata.set", "dat.extensions.metadata.remove")
-    assert contribution.composition_bindings == ("fnd-03.six-table-composition", "dat.content.document-roles")
+    assert contribution.composition_bindings[:2] == ("fnd-03.six-table-composition", "dat.content.document-roles")
+    assert "handler:herzchen.extensions.ExtensionCommandService" in contribution.composition_bindings
+    assert any(item.startswith("definition-catalog-sha256:") for item in contribution.composition_bindings)
     assert store.registered_domains() == (contribution,)
     catalog = service.describe()
     assert {item["namespace"] for item in catalog["definitions"]} == {OPEN_NAMESPACE, PROTOCOL_NAMESPACE, MANAGED_NAMESPACE}
@@ -121,7 +123,7 @@ def test_strict_misspelling_schema_rejection_has_no_delta(environment):
             stored,
             PROTOCOL_NAMESPACE,
             {"choic": "accept"},
-            context("bad-schema", {"choic": "accept"}, version=1, revision="seed-1"),
+            context("bad-schema", {"choic": "accept"}, version=1, revision="seed-1", authenticated_actor=AuthenticatedActor("dat-auth", "dat-worker", "credential")),
             owner="dat.protocol-owner",
         )
     after = store.get_identity(stored)
@@ -154,7 +156,7 @@ def test_protocol_requires_registered_owner_and_validates_choice(environment):
         stored,
         PROTOCOL_NAMESPACE,
         {"choice": "hold", "reason": "awaiting evidence"},
-        context("protocol-ok", {"choice": "hold", "reason": "awaiting evidence"}, version=1, revision="seed-1"),
+        context("protocol-ok", {"choice": "hold", "reason": "awaiting evidence"}, version=1, revision="seed-1", authenticated_actor=AuthenticatedActor("dat-auth", "dat-worker", "credential")),
         owner="dat.protocol-owner",
     )
     assert result["value"] == {"choice": "hold", "reason": "awaiting evidence"}

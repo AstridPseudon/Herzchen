@@ -55,19 +55,20 @@ class StoreTests(unittest.TestCase):
     def admitted(self) -> Store:
         store = Store.create(self.db)
         store.put_identity(ResourceRef("neutral-store", "record", "record-1"), {"value": "initial"}, version=0, edit_token="edit-1")
+        store.register_domain(self.domain(resource="record", event="record.updated", operation="record.update", schema="record.v1"))
         return store
 
-    def domain(self, domain_id: str = "example.domain", *, resource: str = "example.resource", document: str = "example.document", event: str = "example.updated", namespace: str = "example.namespace", operation: str = "example.update") -> DomainContribution:
+    def domain(self, domain_id: str = "example.domain", *, resource: str = "example.resource", document: str = "example.document", event: str = "example.updated", namespace: str = "example.namespace", operation: str = "example.update", schema: str = "example.v1") -> DomainContribution:
         return DomainContribution(
             domain_id,
             "1",
-            "example-owner",
+            "neutral-owner",
             (resource,),
             (document,),
             (namespace,),
             (operation,),
             (event,),
-            "example.v1",
+            schema,
         )
 
     def test_create_open_fingerprint_composition_and_foreign_keys(self) -> None:
@@ -201,7 +202,7 @@ class StoreTests(unittest.TestCase):
             store.mutate(self.envelope(digest="b" * 64), event_type="record.updated")
         self.assertEqual(len(store.list_events()), 1)
         store.close()
-        reopened = Store.open(self.db)
+        reopened = Store.open(self.db, expected_domains=(self.domain(resource="record", event="record.updated", operation="record.update", schema="record.v1"),))
         self.assertEqual(reopened.get_receipt("request-1"), first)
         self.assertEqual(reopened.list_events()[0].event_id, first.event_ids[0])
         reopened.close()

@@ -13,7 +13,7 @@ import re
 import secrets
 import sqlite3
 import threading
-from typing import Any, Dict, Iterator, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Iterable, Iterator, Mapping, Optional, Sequence, Tuple, Union
 
 from herzchen.contracts import (
     AuthenticatedActor,
@@ -82,9 +82,38 @@ class DescriptorExpectationMismatchError(StoreAdmissionError):
     """Caller-supplied descriptor composition is not exactly admitted."""
 
 
+class MutationAdmissionError(StoreError):
+    """A command/resource/event combination has no admitted owner handler."""
+
+
 DOMAIN_KIND = "domain"
 DOMAIN_DESCRIPTOR_DIGEST_KEY = "domain_descriptor_digest"
 EMPTY_DOMAIN_DESCRIPTOR_DIGEST = hashlib.sha256(b"[]").hexdigest()
+_OWNER_CONSTRUCTION_TOKEN = object()
+
+
+def _authority_root(value: str) -> str:
+    """Return the stable authority namespace used by admission bindings."""
+    return re.split(r"[.:-]", value, maxsplit=1)[0]
+
+
+# These are the finite mutation ports owned by the neutral kernel itself.  An
+# optional domain must instead declare its operation/event/resource surface in
+# its persisted DomainContribution.  The operation manager intentionally
+# accepts a caller's typed external operation name, but only for the kernel's
+# ``operation`` identity and its two fixed lifecycle events.
+_CORE_MUTATION_PORTS = (
+    (None, ("operation",), ("operation.prepared",), None),
+    ("operation.outcome", ("operation",), ("operation.outcome",), None),
+    ("limit.create", ("limit",), ("limit.created",), "fnd-04.limit.v1"),
+    ("limit.reserve", ("reservation",), ("reservation.held",), "fnd-04.limit.v1"),
+    ("limit.uncertain", ("reservation",), ("reservation.uncertain",), "fnd-04.limit.v1"),
+    ("limit.consumed", ("reservation",), ("reservation.consumed",), "fnd-04.limit.v1"),
+    ("limit.released", ("reservation",), ("reservation.released",), "fnd-04.limit.v1"),
+    ("recovery.state", ("runtime-epoch",), ("recovery.state.changed",), "fnd-05.recovery.v1"),
+    ("recovery.retain_unknown", ("operation",), ("recovery.operation.unknown",), "fnd-05.recovery.v1"),
+    ("attention.interval", ("attention-interval",), ("attention.interval.changed",), "fnd-05.interval.v1"),
+)
 
 
 @dataclass(frozen=True)
@@ -221,9 +250,17 @@ class Transaction:
 
 
 class Store:
-    """An admitted FND-03 database and its one durable writer."""
+    """The sealed owner capability for one admitted FND-03 writer.
 
-    def __init__(self, connection: sqlite3.Connection, lock_fd: Optional[int], path: str, authority: str, domain_descriptors: Optional[Mapping[str, DomainContribution]] = None) -> None:
+    Host composition code acquires this capability only through ``create`` or
+    ``open``.  It supplies the object to trusted domain handlers.  Ordinary
+    consumers receive :meth:`consumer`, whose concrete type contains read
+    operations and deliberately has no writable connection or mutation API.
+    """
+
+    def __init__(self, connection: sqlite3.Connection, lock_fd: Optional[int], path: str, authority: str, domain_descriptors: Optional[Mapping[str, DomainContribution]] = None, *, _owner_token: object = None) -> None:
+        if _owner_token is not _OWNER_CONSTRUCTION_TOKEN:
+            raise StoreAdmissionError("Store owner capabilities are acquired through Store.create or Store.open")
         self._connection = connection
         self._connection.row_factory = sqlite3.Row
         self._lock_fd = lock_fd
@@ -263,7 +300,7 @@ class Store:
             }
             connection.executemany("INSERT INTO store_metadata(key, value) VALUES (?, ?)", metadata.items())
             connection.execute("COMMIT")
-            return cls(connection, lock_fd, path_text, authority, {})
+            return cls(connection, lock_fd, path_text, authority, {}, _owner_token=_OWNER_CONSTRUCTION_TOKEN)
         except BaseException:
             if connection is not None:
                 try:
@@ -293,7 +330,7 @@ class Store:
         try:
             connection = cls._connect(path_text)
             domains = cls._verify(connection, authority, expected_domains, expected_domain_digest)
-            return cls(connection, lock_fd, path_text, authority, domains)
+            return cls(connection, lock_fd, path_text, authority, domains, _owner_token=_OWNER_CONSTRUCTION_TOKEN)
         except BaseException:
             if connection is not None:
                 connection.close()
@@ -394,8 +431,14 @@ class Store:
 
     @property
     def connection(self) -> sqlite3.Connection:
+        """Return the raw connection held by this explicit owner capability."""
         self._require_open()
         return self._connection
+
+    def consumer(self) -> "ConsumerStore":
+        """Return the supported read-only surface for ordinary consumers."""
+        self._require_open()
+        return ConsumerStore(self)
 
     def foreign_keys_enabled(self) -> bool:
         with self._transaction_lock:
@@ -814,11 +857,84 @@ class Store:
         after_refs = tuple(after_refs)
         if any(not isinstance(ref, ResourceRef) for ref in before_refs + after_refs):
             raise TypeError("before_refs and after_refs must contain ResourceRef values")
+        # Resolve the trusted owner before transaction admission.  A rejected
+        # combination therefore cannot allocate an identity, sequence,
+        # reference, event, or receipt.
+        self._admit_mutation(envelope, event_type)
         tx, own = self._active_or_transaction(transaction)
         if own:
             with self.transaction() as owned:
                 return self._mutate(owned, envelope, event_type, result_ref, before_refs, after_refs, effects_json, stream, event_schema_revision, occurred_at, no_op)
         return self._mutate(tx, envelope, event_type, result_ref, before_refs, after_refs, effects_json, stream, event_schema_revision, occurred_at, no_op)
+
+    @staticmethod
+    def _actor_bound_to_owner(envelope: CommandEnvelope, owner: str, bindings: Iterable[str] = ()) -> bool:
+        actor = envelope.context.actor
+        exact_authorities = {
+            binding.split(":", 1)[1]
+            for binding in bindings
+            if binding.startswith("actor-authority:")
+        }
+        exact_actors = {
+            binding.split(":", 1)[1]
+            for binding in bindings
+            if binding.startswith("actor-id:")
+        }
+        if exact_authorities or exact_actors:
+            return actor.authority in exact_authorities or actor.actor in exact_actors
+        owner_root = _authority_root(owner)
+        return (
+            actor.authority == owner
+            or actor.actor == owner
+            or _authority_root(actor.authority) == owner_root
+            or _authority_root(actor.actor) == owner_root
+        )
+
+    def _admit_mutation(self, envelope: CommandEnvelope, event_type: str) -> str:
+        """Resolve one command to its persisted domain owner or neutral port."""
+        matches = []
+        for descriptor in self._domain_descriptors.values():
+            if envelope.operation not in descriptor.operation_types or event_type not in descriptor.event_types:
+                continue
+            resources = set(descriptor.resource_types)
+            bindings = set(descriptor.composition_bindings)
+            resource_allowed = envelope.target.kind in resources
+            resource_allowed = resource_allowed or "mutation-resource:{}".format(envelope.target.kind) in bindings
+            if "mutation-resource:registered:*" in bindings:
+                resource_allowed = resource_allowed or any(
+                    envelope.target.kind in candidate.resource_types
+                    for candidate in self._domain_descriptors.values()
+                )
+            if not resource_allowed:
+                continue
+            if envelope.schema_revision != descriptor.schema_revision:
+                continue
+            matches.append(descriptor)
+        if len(matches) == 1:
+            admitted = matches[0]
+            if not self._actor_bound_to_owner(envelope, admitted.owner, admitted.composition_bindings):
+                raise MutationAdmissionError(
+                    "authenticated actor {!r} is not bound to admitted owner {!r}".format(
+                        envelope.context.actor.actor, admitted.owner
+                    )
+                )
+            return admitted.owner
+        if len(matches) > 1:
+            raise MutationAdmissionError("mutation combination resolves to more than one domain owner")
+
+        for operation, resources, events, schema in _CORE_MUTATION_PORTS:
+            operation_allowed = envelope.operation == operation
+            if operation is None:
+                operation_allowed = envelope.target.kind == "operation" and envelope.operation != "operation.outcome"
+            if operation_allowed and envelope.target.kind in resources and event_type in events and (schema is None or envelope.schema_revision == schema):
+                if _authority_root(envelope.context.actor.authority) not in {"fnd", "neutral"}:
+                    raise MutationAdmissionError("authenticated actor is not bound to the neutral kernel handler")
+                return "fnd"
+        raise MutationAdmissionError(
+            "unregistered mutation combination: operation={!r}, resource={!r}, event={!r}, schema={!r}".format(
+                envelope.operation, envelope.target.kind, event_type, envelope.schema_revision
+            )
+        )
 
     def _mutate(
         self, tx: Transaction, envelope: CommandEnvelope, event_type: str,
@@ -1005,16 +1121,73 @@ class Store:
         )
 
 
+class ConsumerStore:
+    """Concrete read-only Store view safe to give to an ordinary consumer.
+
+    The wrapper intentionally does not proxy unknown attributes.  In
+    particular it has no ``connection``, ``transaction``, ``put_identity``,
+    ``revise_identity``, ``append_event``, ``mutate``, or domain-registration
+    surface.
+    """
+
+    __slots__ = ("__owner",)
+
+    def __init__(self, owner: Store) -> None:
+        if not isinstance(owner, Store):
+            raise TypeError("ConsumerStore requires the sealed Store owner capability")
+        self.__owner = owner
+
+    @property
+    def authority(self) -> str:
+        return self.__owner.authority
+
+    @property
+    def domain_descriptor_digest(self) -> str:
+        return self.__owner.domain_descriptor_digest
+
+    def foreign_keys_enabled(self) -> bool:
+        return self.__owner.foreign_keys_enabled()
+
+    def get_identity(self, ref: ResourceRef) -> Optional[IdentityRecord]:
+        return self.__owner.get_identity(ref)
+
+    def get_record(self, ref: ResourceRef) -> Optional[IdentityRecord]:
+        return self.__owner.get_record(ref)
+
+    def registered_domains(self) -> Tuple[DomainContribution, ...]:
+        return self.__owner.registered_domains()
+
+    def get_reference(self, ref: ResourceRef) -> Optional[ResourceRef]:
+        return self.__owner.get_reference(ref)
+
+    def get_receipt(self, logical_request_key: str) -> Optional[CommandReceipt]:
+        return self.__owner.get_receipt(logical_request_key)
+
+    def list_events(self, *, stream: Optional[str] = None) -> Tuple[EventEnvelope, ...]:
+        return self.__owner.list_events(stream=stream)
+
+    def snapshot_counts(self) -> Mapping[str, int]:
+        """Return fresh durable counts without exposing a SQL execution port."""
+        owner = self.__owner
+        with owner._transaction_lock:
+            owner._require_open()
+            tables = ("identities", "record_references", "events", "command_receipts", "event_sequences")
+            return {
+                table: int(owner._connection.execute("SELECT COUNT(*) FROM " + table).fetchone()[0])
+                for table in tables
+            }
+
+
 SQLiteStore = Store
 RealmStore = Store
 
 
 __all__ = [
-    "Store", "SQLiteStore", "RealmStore", "Transaction", "IdentityRecord",
+    "Store", "SQLiteStore", "RealmStore", "ConsumerStore", "Transaction", "IdentityRecord",
     "StoreError", "StoreAdmissionError", "StoreExistsError", "SchemaMismatchError",
     "CompositionMismatchError", "WriterBusyError", "ClosedStoreError",
     "TargetMismatchError", "VersionConflictError", "DescriptorDigestMismatchError",
-    "DescriptorExpectationMismatchError",
+    "DescriptorExpectationMismatchError", "MutationAdmissionError",
     "FND02_CONTRACT_REVISION", "FND02_CONTRACT_DIGEST", "DOMAIN_KIND",
     "DOMAIN_DESCRIPTOR_DIGEST_KEY", "EMPTY_DOMAIN_DESCRIPTOR_DIGEST",
 ]

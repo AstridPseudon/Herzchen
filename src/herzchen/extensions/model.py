@@ -8,6 +8,7 @@ definitions that tell the command service what a namespace means.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 from typing import Any, Iterable, Mapping, Optional, Tuple
 
 from herzchen.contracts import (
@@ -21,6 +22,7 @@ from herzchen.contracts import (
 EXTENSION_SCHEMA_REVISION = "dat.extensions.v1"
 EXTENSION_DOMAIN_ID = "dat.extensions"
 EXTENSION_OWNER = "dat"
+CATALOG_DIGEST_BINDING_PREFIX = "definition-catalog-sha256:"
 
 OPEN_NAMESPACE = "annotation.open"
 PROTOCOL_NAMESPACE = "protocol.choice"
@@ -314,6 +316,19 @@ class DefinitionCatalog:
     def roles(self) -> Tuple[DocumentRoleDefinition, ...]:
         return tuple(self._roles[key] for key in sorted(self._roles))
 
+    def to_dict(self) -> Mapping[str, Any]:
+        """Return the complete typed definition set used at admission."""
+        return {
+            "definitions": [definition.to_dict() for definition in self.definitions],
+            "document_roles": [role.to_dict() for role in self.roles],
+            "schema_revision": EXTENSION_SCHEMA_REVISION,
+        }
+
+    @property
+    def digest(self) -> str:
+        """Bind schema, owner, policy, help, validation, query, and version."""
+        return hashlib.sha256(canonical_json(self.to_dict()).encode("utf-8")).hexdigest()
+
     def get(self, namespace: str, resource_kind: Optional[str] = None) -> ExtensionDefinition:
         try:
             definition = self._definitions[namespace]
@@ -341,11 +356,9 @@ class DefinitionCatalog:
     def describe(self, namespace: Optional[str] = None, resource_kind: Optional[str] = None) -> Mapping[str, Any]:
         if namespace is not None:
             return self.get(namespace, resource_kind).to_dict()
-        return {
-            "definitions": [definition.to_dict() for definition in self.definitions if resource_kind is None or definition.supports(resource_kind)],
-            "document_roles": [role.to_dict() for role in self.roles],
-            "schema_revision": EXTENSION_SCHEMA_REVISION,
-        }
+        value = dict(self.to_dict())
+        value["definitions"] = [definition.to_dict() for definition in self.definitions if resource_kind is None or definition.supports(resource_kind)]
+        return value
 
 
 OPEN_DEFINITION = ExtensionDefinition(
@@ -447,6 +460,7 @@ DEFAULT_CATALOG = DefinitionCatalog(
     (OPEN_DEFINITION, PROTOCOL_DEFINITION, MANAGED_DEFINITION),
     (CANDIDATE_ROLE, DECISION_ROLE),
 )
+DEFAULT_CATALOG_DIGEST = DEFAULT_CATALOG.digest
 
 
 def domain_contribution() -> DomainContribution:
@@ -467,12 +481,22 @@ def domain_contribution() -> DomainContribution:
         ),
         ("dat.extensions.metadata.changed", "dat.extensions.metadata.removed"),
         EXTENSION_SCHEMA_REVISION,
-        ("fnd-03.six-table-composition", "dat.content.document-roles"),
+        (
+            "fnd-03.six-table-composition",
+            "dat.content.document-roles",
+            "handler:herzchen.extensions.ExtensionCommandService",
+            "actor-authority:dat-auth",
+            "mutation-resource:work.task",
+            "mutation-resource:work.project",
+            "mutation-resource:dat.content.document",
+            "mutation-resource:registered:*",
+            CATALOG_DIGEST_BINDING_PREFIX + DEFAULT_CATALOG_DIGEST,
+        ),
     )
 
 
 __all__ = [
-    "CANDIDATE_ROLE", "DECISION_ROLE", "DEFAULT_CATALOG", "DefinitionCatalog",
+    "CANDIDATE_ROLE", "CATALOG_DIGEST_BINDING_PREFIX", "DECISION_ROLE", "DEFAULT_CATALOG", "DEFAULT_CATALOG_DIGEST", "DefinitionCatalog",
     "DefinitionNotFoundError", "DocumentRoleDefinition", "EXTENSION_DOMAIN_ID",
     "EXTENSION_OWNER", "EXTENSION_SCHEMA_REVISION", "ExtensionDefinition",
     "ExtensionError", "MANAGED_DEFINITION", "MANAGED_NAMESPACE", "ManagedFieldError",

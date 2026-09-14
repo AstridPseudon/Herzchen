@@ -1,0 +1,60 @@
+{
+  "task": "GF01_PUBLIC_MUTATION_AND_ADMISSION",
+  "status": "candidate_correction_not_gate_acceptance",
+  "preserved_review_verdict": "REWORK",
+  "baseline": {
+    "commit": "046b9acfdc9ba541faff65ff3713961890684303",
+    "tree": "047a43ba687f45c298139b595756dac84ab729da",
+    "raw_failure_sha256": "77a1d929aa3fa0b293ffcd7db94be81dd8acd3e138fb6b7ee10ab572208e7ab4",
+    "report_sha256": "10403df1841719be50e290dffa1e40097a6c3edc030fd5f442a29a81313917dc"
+  },
+  "route": {
+    "class": "xhard",
+    "requested_model": "gpt-5.6-sol",
+    "requested_reasoning": "high",
+    "cli": "/Users/hannahomalley/.local/bin/codex",
+    "cli_version": "codex-cli 0.150.1",
+    "thread_id": "01a09e0f-7301-75a0-b364-5520738e28f8",
+    "functions_exec_session_handle": 41381,
+    "observed_backend_attestation": null
+  },
+  "candidate_commit": "reported_after_enclosing_commit",
+  "candidate_tree": "reported_after_enclosing_commit",
+  "wheel": {
+    "distribution": "herzchen-contracts==0.1.0",
+    "path": "/tmp/gf01-wheel-sealed.scc0lu/herzchen_contracts-0.1.0-py3-none-any.whl",
+    "sha256": "cd6985113d3b24c4af23617a847a9d08d295fe65913d4d0a3513a7dbc6efd431",
+    "bytes": 191831,
+    "python": "3.11.16",
+    "environment": {"PYTHONPATH": null, "PYTHONHOME": null},
+    "origins": {
+      "kernel_store": "/private/tmp/gf01-venv-sealed.Msdm5z/lib/python3.11/site-packages/herzchen/kernel/store.py",
+      "extension_model": "/private/tmp/gf01-venv-sealed.Msdm5z/lib/python3.11/site-packages/herzchen/extensions/model.py",
+      "extension_commands": "/private/tmp/gf01-venv-sealed.Msdm5z/lib/python3.11/site-packages/herzchen/extensions/commands.py"
+    }
+  },
+  "proof": {
+    "source_kernel_extensions": "exit 0; 71 passed, 10 subtests passed",
+    "source_unaffected_conformance": "exit 0; 17 passed, 2 deselected, 70 subtests passed",
+    "installed_kernel_extensions": "exit 0; 71 passed, 10 subtests passed",
+    "installed_unaffected_conformance": "exit 0; 17 passed, 2 deselected, 70 subtests passed",
+    "installed_probe": "exit 0; ordinary writer paths absent, non-owner and unregistered no-delta, four altered catalogs rejected, valid receipt/event/fresh read coherent",
+    "full_conformance": "exit 1; 2 failed, 17 passed, 70 subtests passed",
+    "full_repository": "exit 1; 83 failed, 164 passed, 12 skipped, 27 errors, 80 subtests passed"
+  },
+  "lineage": {
+    "canonical_map_sha256": "e273cb7b7e9c26f83a8e1002753c835863333b77e9bfce5b5a3909b1801dbbd5",
+    "entries": ["EX-STORE", "EX-EVENTS", "EX-METADATA"],
+    "runtime_commit": "afccb430e2a983c968b6a8a96fd630ba3a6262fc",
+    "runtime_tree": "be89db2f02231aeef212bdb266d12c51778f32ae",
+    "dat03_commit": "b7cf631949bda1bcb9927984a3a750ebc470348d",
+    "dat03_tree": "10e1ace0592180c11616c8945ffd4ceace589fac",
+    "dat02_commit": "a8611a9b9b8cd9ad36c2816c4d1cb2e24e8ded97"
+  },
+  "limits": [
+    "DAT-06 must separate WRK- and DAT-bound actors and replace raw fixture identity seeding with admitted commands.",
+    "INT-03 must register its probe resource/operation/event/schema and replace direct extension seed writes.",
+    "Other owner suites must publish complete contribution and actor bindings; this candidate does not weaken admission or edit their modules.",
+    "No consumer cutover, Runtime/Astrid origin, G-FOUNDATION acceptance, G-OTTO, or product behavior is claimed."
+  ]
+}

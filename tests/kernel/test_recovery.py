@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from herzchen.contracts import AuthenticatedActor, CommandEnvelope, ResourceRef, TransactionContext
+from herzchen.contracts import AuthenticatedActor, CommandEnvelope, DomainContribution, ResourceRef, TransactionContext
 from herzchen.kernel import (
     COMPOSITION,
     SCHEMA_FINGERPRINT,
@@ -36,6 +36,12 @@ class RecoveryTests(unittest.TestCase):
         self.root = Path(self.tempdir.name)
         self.db = self.root / "state.sqlite3"
         self.store = Store.create(self.db)
+        self.fixture_domain = DomainContribution(
+            "recovery-cursor-fixture", "1", "neutral-owner", ("item",), (), (),
+            ("item.update",), ("item.updated",), "item.v1",
+            ("handler:tests.kernel.recovery-cursor",),
+        )
+        self.store.register_domain(self.fixture_domain)
         self.actor = AuthenticatedActor("neutral-auth", "agent-1", "credential-1")
         self.source = ResourceRef("source-authority", "source", "checkout", "source-v1")
         self.realm = ResourceRef("neutral-store", "realm", "realm-1", "realm-v1")
@@ -121,7 +127,7 @@ class RecoveryTests(unittest.TestCase):
         create_snapshot(self.store, self.root / "snapshot", source_identity=self.source, realm_identity=self.realm)
         candidate = verify_restore_candidate(self.root / "snapshot", self.root / "candidate", **self.snapshot_kwargs())
         self.assertEqual(candidate.database_path, self.root / "candidate" / "database.sqlite3")
-        restored = Store.open(candidate.database_path)
+        restored = Store.open(candidate.database_path, expected_domains=(self.fixture_domain,))
         try:
             self.assertEqual([event.event_id for event in restored.list_events(stream="items")], [event.event_id for event in self.store.list_events(stream="items")])
         finally:
@@ -297,7 +303,7 @@ class RecoveryTests(unittest.TestCase):
         first = reader.page("items", limit=1)
         cursor = first.cursor
         self.store.close()
-        self.store = Store.open(self.db)
+        self.store = Store.open(self.db, expected_domains=(self.fixture_domain,))
         restarted = EventCursorReader(self.store)
         after_restart = restarted.catch_up("items", cursor=cursor, limit=10)
         self.assertEqual([event.sequence for event in after_restart.events], [2, 3])

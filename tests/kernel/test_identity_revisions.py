@@ -9,6 +9,7 @@ from herzchen.contracts import (
     AuthenticatedActor,
     CommandEnvelope,
     ContractError,
+    DomainContribution,
     ResourceRef,
     TransactionContext,
 )
@@ -185,6 +186,11 @@ class IdentityRevisionTests(unittest.TestCase):
 
     def test_revision_composes_with_one_mutation_receipt_and_event_boundary(self) -> None:
         store = self.admitted()
+        store.register_domain(DomainContribution(
+            "parent-fixture", "1", "neutral-owner", ("record",), (), (),
+            ("parent.update",), ("parent.updated",), "parent.v1",
+            ("handler:tests.kernel.identity-revision",),
+        ))
         child = self.ref("child")
         store.put_identity(child, {"value": "child"}, version=1, edit_token="edit-1")
         store.put_reference(child)

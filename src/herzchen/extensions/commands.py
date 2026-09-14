@@ -18,6 +18,8 @@ from herzchen.contracts import (
 
 from .model import (
     DEFAULT_CATALOG,
+    DEFAULT_CATALOG_DIGEST,
+    CATALOG_DIGEST_BINDING_PREFIX,
     EXTENSION_SCHEMA_REVISION,
     MANAGED_NAMESPACE,
     DefinitionCatalog,
@@ -65,19 +67,42 @@ class ExtensionCommandService:
     def __init__(self, writer: Optional[FNDExtensionWriter], catalog: DefinitionCatalog = DEFAULT_CATALOG, *, register: bool = True) -> None:
         self._writer = writer
         self.catalog = catalog
+        self._catalog_digest = catalog.digest
+        if self._catalog_digest != DEFAULT_CATALOG_DIGEST:
+            raise ExtensionError("extension catalog does not match the installed typed definition admission")
         if writer is not None and register:
             self._ensure_registered()
+        elif writer is not None:
+            self._verify_registered()
 
     def _require_writer(self) -> FNDExtensionWriter:
         if self._writer is None:
             raise ExtensionError("FND-03 writer is required for extension commands")
         return self._writer
 
+    def _require_catalog_admitted(self) -> None:
+        if self.catalog.digest != self._catalog_digest or self._catalog_digest != DEFAULT_CATALOG_DIGEST:
+            raise ExtensionError("extension catalog changed after typed definition admission")
+
+    def _verify_registered(self) -> None:
+        self._require_catalog_admitted()
+        contribution = domain_contribution()
+        binding = CATALOG_DIGEST_BINDING_PREFIX + self._catalog_digest
+        if binding not in contribution.composition_bindings:
+            raise ExtensionError("DAT extension contribution does not bind the complete definition catalog")
+        existing = tuple(self._require_writer().registered_domains())
+        persisted = next((item for item in existing if item.domain_id == contribution.domain_id), None)
+        if persisted != contribution:
+            raise ExtensionError("persisted DAT extension contribution differs from the installed typed catalog")
+
     def _ensure_registered(self) -> None:
         writer = self._require_writer()
+        self._require_catalog_admitted()
         contribution = domain_contribution()
-        if set(self.catalog.namespaces) != set(contribution.namespace_types):
+        if tuple(self.catalog.namespaces) != tuple(sorted(contribution.namespace_types)):
             raise ExtensionError("extension catalog namespaces must match the registered DAT contribution")
+        if CATALOG_DIGEST_BINDING_PREFIX + self._catalog_digest not in contribution.composition_bindings:
+            raise ExtensionError("DAT extension contribution does not bind the complete definition catalog")
         existing = tuple(writer.registered_domains())
         for item in existing:
             if item.domain_id == contribution.domain_id:
@@ -94,6 +119,7 @@ class ExtensionCommandService:
         return metadata
 
     def _fresh(self, subject: ResourceRef, *, allow_stale_pin: bool = False) -> tuple[Any, dict[str, Any], dict[str, Any]]:
+        self._require_catalog_admitted()
         writer = self._require_writer()
         if not isinstance(subject, ResourceRef):
             raise TypeError("subject must be a ResourceRef")
@@ -130,10 +156,12 @@ class ExtensionCommandService:
 
     def describe(self, namespace: Optional[str] = None, *, resource_kind: Optional[str] = None) -> Mapping[str, Any]:
         """Read the catalog used by validation, editing, and querying."""
+        self._require_catalog_admitted()
         return self.catalog.describe(namespace, resource_kind)
 
     def describe_role(self, role_id: str) -> Mapping[str, Any]:
         """Read one typed candidate/decision document-role definition."""
+        self._require_catalog_admitted()
         return self.catalog.describe_role(role_id)
 
     help = describe
@@ -198,13 +226,19 @@ class ExtensionCommandService:
             "payload": payload,
         }
 
-    def _validate_mutation(self, definition: ExtensionDefinition, fields: Mapping[str, Any], owner: Optional[str]) -> None:
+    def _validate_mutation(self, definition: ExtensionDefinition, fields: Mapping[str, Any], context: TransactionContext, owner: Optional[str]) -> None:
         if definition.classification == "managed" or definition.namespace == MANAGED_NAMESPACE:
             raise ManagedFieldError(f"managed namespace is not writable: {definition.namespace}")
         if not definition.writable:
             raise ManagedFieldError(f"namespace is not writable: {definition.namespace}")
-        if definition.classification == "protocol" and owner != definition.owner:
-            raise OwnerRequiredError(f"protocol namespace requires owner {definition.owner!r}")
+        if definition.classification == "protocol":
+            actor = context.actor
+            owner_root = definition.owner.split(".", 1)[0]
+            actor_root = actor.authority.replace(":", ".").replace("-", ".").split(".", 1)[0]
+            if actor.authority != definition.owner and actor.actor != definition.owner and actor_root != owner_root:
+                raise OwnerRequiredError(f"protocol namespace requires authenticated actor bound to {definition.owner!r}")
+            if owner != definition.owner:
+                raise OwnerRequiredError(f"protocol command must name its admitted owner {definition.owner!r}")
         if not isinstance(fields, Mapping):
             raise TypeError("fields must be a JSON object")
         if any(not isinstance(key, str) for key in fields):
@@ -262,7 +296,7 @@ class ExtensionCommandService:
         """Merge one owned namespace and preserve all sibling payload data."""
         record, payload, metadata = self._fresh(subject, allow_stale_pin=True)
         definition = self._definition(namespace, subject)
-        self._validate_mutation(definition, fields, owner)
+        self._validate_mutation(definition, fields, context, owner)
         self._context_with_current(context, record)
         current_namespace = metadata.get(namespace, {})
         if not isinstance(current_namespace, Mapping):
@@ -286,7 +320,7 @@ class ExtensionCommandService:
         definition = self._definition(namespace, subject)
         if definition.classification != "open_annotation":
             raise ManagedFieldError("remove is limited to open annotation namespaces")
-        self._validate_mutation(definition, {}, owner)
+        self._validate_mutation(definition, {}, context, owner)
         self._context_with_current(context, record)
         current_namespace = metadata.get(namespace, {})
         if not isinstance(current_namespace, Mapping):

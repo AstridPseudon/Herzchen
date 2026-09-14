@@ -4,8 +4,10 @@ from .commands import ExtensionCommandService, FNDExtensionWriter, SubjectNotFou
 from herzchen.contracts import ReplayConflictError
 from .model import (
     CANDIDATE_ROLE,
+    CATALOG_DIGEST_BINDING_PREFIX,
     DECISION_ROLE,
     DEFAULT_CATALOG,
+    DEFAULT_CATALOG_DIGEST,
     DefinitionCatalog,
     DefinitionNotFoundError,
     DocumentRoleDefinition,
@@ -33,7 +35,7 @@ from .model import (
 )
 
 __all__ = [
-    "CANDIDATE_ROLE", "DECISION_ROLE", "DEFAULT_CATALOG", "DefinitionCatalog",
+    "CANDIDATE_ROLE", "CATALOG_DIGEST_BINDING_PREFIX", "DECISION_ROLE", "DEFAULT_CATALOG", "DEFAULT_CATALOG_DIGEST", "DefinitionCatalog",
     "DefinitionNotFoundError", "DocumentRoleDefinition", "EXTENSION_DOMAIN_ID",
     "EXTENSION_OWNER", "EXTENSION_SCHEMA_REVISION", "ExtensionCommandService",
     "ExtensionDefinition", "ExtensionError", "FNDExtensionWriter",
