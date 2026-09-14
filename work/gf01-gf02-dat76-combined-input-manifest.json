@@ -49,5 +49,14 @@
     "commit": "74c8cb56b0e530985384535ebeac7e8f1864427d",
     "tree": "834dab82c220aaa4c9a3c11a851af8ec60c6cb0e",
     "parent": "8235d9aacbe7357e8f72cec8342eca77aab0cb58"
+  },
+  "campaign_source_checkpoint": {
+    "commit": "1fe71f8b115abd1b413690a6e954a7afe591f21c",
+    "tree": "a2f500b0354339826b25f6cff220f68a40d91513",
+    "decisions": [
+      "derived AssessmentResult and Finding projections remain unpinned for exact replay after projection advance; an explicit caller ResourceRef retains its revision pin and conflicts when changed",
+      "the DAT finish.recovery row locates the actual request_id:capture-failure receipt; no caller-key success receipt or production bypass was created",
+      "the first installed campaign artifacts are retained separately as attempt-01 evidence"
+    ]
   }
 }
