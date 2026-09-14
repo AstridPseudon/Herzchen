@@ -35,6 +35,7 @@ from .store import Store, StoreError, TargetMismatchError, Transaction
 OPERATION_SCHEMA_REVISION = "fnd-04.operation.v1"
 OPERATION_KIND = "operation"
 OPERATION_STREAM = "operations"
+_UNSET = object()
 
 
 class OperationError(StoreError):
@@ -72,6 +73,11 @@ class OperationRequest:
     payload: Mapping[str, Any]
     physical_invocation_ref: Optional[ResourceRef] = None
     external_owner_ref: Optional[ResourceRef] = None
+    expected_revision: Optional[str] = None
+    expected_version: Optional[int] = None
+    edit_token: Optional[str] = None
+    correlation_id: Optional[str] = None
+    causation_id: Optional[str] = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.operation, str) or not self.operation.strip():
@@ -90,7 +96,16 @@ class OperationRequest:
             raise OperationError("external_owner_ref must be a ResourceRef")
         # Constructing the neutral FND context performs the canonical key and
         # digest validation before a writer transaction is admitted.
-        TransactionContext(self.actor, self.logical_request_key, self.request_digest)
+        TransactionContext(
+            self.actor,
+            self.logical_request_key,
+            self.request_digest,
+            expected_revision=self.expected_revision,
+            expected_version=self.expected_version,
+            edit_token=self.edit_token,
+            correlation_id=self.correlation_id,
+            causation_id=self.causation_id,
+        )
         canonical_json(dict(self.payload))
 
     def semantic_payload(self) -> dict[str, Any]:
@@ -102,39 +117,106 @@ class OperationRequest:
             "external_owner_ref": _ref_dict(self.external_owner_ref),
         }
 
-    def canonical_digest(self, target: ResourceRef) -> str:
+    def _context(
+        self,
+        *,
+        expected_revision: Any = _UNSET,
+        expected_version: Any = _UNSET,
+        edit_token: Any = _UNSET,
+        correlation_id: Any = _UNSET,
+        causation_id: Any = _UNSET,
+    ) -> TransactionContext:
+        return TransactionContext(
+            self.actor,
+            self.logical_request_key,
+            self.request_digest,
+            expected_revision=self.expected_revision if expected_revision is _UNSET else expected_revision,
+            expected_version=self.expected_version if expected_version is _UNSET else expected_version,
+            edit_token=self.edit_token if edit_token is _UNSET else edit_token,
+            correlation_id=self.correlation_id if correlation_id is _UNSET else correlation_id,
+            causation_id=self.causation_id if causation_id is _UNSET else causation_id,
+        )
+
+    def canonical_digest(
+        self,
+        target: ResourceRef,
+        *,
+        expected_revision: Any = _UNSET,
+        expected_version: Any = _UNSET,
+        edit_token: Any = _UNSET,
+        correlation_id: Any = _UNSET,
+        causation_id: Any = _UNSET,
+    ) -> str:
+        context = self._context(
+            expected_revision=expected_revision,
+            expected_version=expected_version,
+            edit_token=edit_token,
+            correlation_id=correlation_id,
+            causation_id=causation_id,
+        )
         return canonical_request_digest(
-            logical_request_key=self.logical_request_key,
+            logical_request_key=context.logical_request_key,
             operation=self.operation,
             schema_revision=self.schema_revision,
             target=target,
-            actor=self.actor,
+            actor=context.actor,
             payload=self.semantic_payload(),
+            context=context,
         )
 
-    def canonicalized(self, target: ResourceRef) -> "OperationRequest":
+    def canonicalized(self, target: ResourceRef, **context_fields: Any) -> "OperationRequest":
         """Return the request with its digest bound to admitted semantics."""
-        return replace(self, request_digest=self.canonical_digest(target))
+        context = self._context(**context_fields)
+        return replace(
+            self,
+            request_digest=self.canonical_digest(target, **context_fields),
+            expected_revision=context.expected_revision,
+            expected_version=context.expected_version,
+            edit_token=context.edit_token,
+            correlation_id=context.correlation_id,
+            causation_id=context.causation_id,
+        )
 
-    def envelope(self, target: ResourceRef, *, expected_revision: Optional[str] = None, expected_version: Optional[int] = None, payload: Optional[Mapping[str, Any]] = None) -> CommandEnvelope:
+    def envelope(
+        self,
+        target: ResourceRef,
+        *,
+        expected_revision: Any = _UNSET,
+        expected_version: Any = _UNSET,
+        edit_token: Any = _UNSET,
+        correlation_id: Any = _UNSET,
+        causation_id: Any = _UNSET,
+        payload: Optional[Mapping[str, Any]] = None,
+    ) -> CommandEnvelope:
         envelope_payload = dict(self.payload if payload is None else payload)
+        context = self._context(
+            expected_revision=expected_revision,
+            expected_version=expected_version,
+            edit_token=edit_token,
+            correlation_id=correlation_id,
+            causation_id=causation_id,
+        )
         return CommandEnvelope(
             self.operation,
             self.schema_revision,
             target,
             TransactionContext(
-                self.actor,
+                context.actor,
                 self.logical_request_key,
                 canonical_request_digest(
-                    logical_request_key=self.logical_request_key,
+                    logical_request_key=context.logical_request_key,
                     operation=self.operation,
                     schema_revision=self.schema_revision,
                     target=target,
-                    actor=self.actor,
+                    actor=context.actor,
                     payload=envelope_payload,
+                    context=context,
                 ),
-                expected_revision=expected_revision,
-                expected_version=expected_version,
+                expected_revision=context.expected_revision,
+                expected_version=context.expected_version,
+                edit_token=context.edit_token,
+                correlation_id=context.correlation_id,
+                causation_id=context.causation_id,
             ),
             envelope_payload,
         )
@@ -204,6 +286,11 @@ class OperationManager:
             "request_payload": dict(request.payload),
             "physical_invocation_ref": _ref_dict(request.physical_invocation_ref),
             "external_owner_ref": _ref_dict(request.external_owner_ref),
+            "expected_revision": request.expected_revision,
+            "expected_version": request.expected_version,
+            "edit_token": request.edit_token,
+            "correlation_id": request.correlation_id,
+            "causation_id": request.causation_id,
             "state": state.value,
             "result": dict(result),
         }
@@ -221,6 +308,11 @@ class OperationManager:
             event_effects.get("request_payload", request.payload),
             _ref(event_effects.get("physical_invocation_ref")),
             _ref(event_effects.get("external_owner_ref")),
+            event_effects.get("expected_revision", request.expected_revision),
+            event_effects.get("expected_version", request.expected_version),
+            event_effects.get("edit_token", request.edit_token),
+            event_effects.get("correlation_id", request.correlation_id),
+            event_effects.get("causation_id", request.causation_id),
         )
         return OperationRecord(operation_ref, recorded_request, state, result, receipt, version)
 
@@ -249,13 +341,18 @@ class OperationManager:
             payload.get("request_payload", {}),
             _ref(payload.get("physical_invocation_ref")),
             _ref(payload.get("external_owner_ref")),
+            payload.get("expected_revision"),
+            payload.get("expected_version"),
+            payload.get("edit_token"),
+            payload.get("correlation_id"),
+            payload.get("causation_id"),
         )
 
     def prepare(self, request: OperationRequest, *, transaction: Optional[Transaction] = None) -> OperationRecord:
         if not isinstance(request, OperationRequest):
             raise TypeError("request must be an OperationRequest")
         target = self._target(request.logical_request_key)
-        request = request.canonicalized(target)
+        request = request.canonicalized(target, expected_version=0)
         payload = self._payload(request, OperationState.PREPARED, {})
         envelope = request.envelope(target, expected_version=0, payload=payload)
         effects = {

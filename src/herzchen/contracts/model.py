@@ -46,14 +46,39 @@ def canonical_request_digest(
     target: "ResourceRef",
     actor: "AuthenticatedActor",
     payload: Mapping[str, Any],
+    context: Optional["TransactionContext"] = None,
+    expected_revision: Optional[str] = None,
+    expected_version: Optional[int] = None,
+    edit_token: Optional[str] = None,
+    correlation_id: Optional[str] = None,
+    causation_id: Optional[str] = None,
 ) -> str:
     """Hash the complete admitted command semantics used for replay identity.
 
-    Callers may supply a digest-shaped value for compatibility, but the kernel
-    never trusts it as request identity.  The digest is derived from the
-    logical key, command contract, target, authenticated actor, and JSON-safe
-    payload at the public command boundary.
+    The preferred call-site contract passes the immutable ``TransactionContext``
+    as ``context``.  That single input carries the logical request key, actor,
+    and all five request-context inputs: expected revision, expected version,
+    edit token, correlation id, and causation id.  The scalar keyword form is
+    retained for compatibility with existing adopters and must pass the same
+    five names explicitly.  ``request_digest`` is intentionally absent from
+    this material: a caller-supplied digest is only a compatibility input to
+    the surrounding envelope and can never select replay identity.
+
+    Only the supplied request context is hashed.  The helper does not inspect
+    or derive current identity, version, or revision state from a store.
     """
+    if context is not None:
+        if not isinstance(context, TransactionContext):
+            raise ContractError("context must be a TransactionContext")
+        if logical_request_key != context.logical_request_key:
+            raise ContractError("logical_request_key does not match context")
+        if actor != context.actor:
+            raise ContractError("actor does not match context")
+        expected_revision = context.expected_revision
+        expected_version = context.expected_version
+        edit_token = context.edit_token
+        correlation_id = context.correlation_id
+        causation_id = context.causation_id
     if not isinstance(target, ResourceRef):
         raise ContractError("target must be a ResourceRef")
     if not isinstance(actor, AuthenticatedActor):
@@ -69,6 +94,13 @@ def canonical_request_digest(
         "schema_revision": schema_revision,
         "target": target.to_dict(),
         "actor": actor.to_dict(),
+        "transaction_context": {
+            "expected_revision": expected_revision,
+            "expected_version": expected_version,
+            "edit_token": edit_token,
+            "correlation_id": correlation_id,
+            "causation_id": causation_id,
+        },
         "payload": dict(payload),
     }
     return hashlib.sha256(canonical_json(material).encode("utf-8")).hexdigest()

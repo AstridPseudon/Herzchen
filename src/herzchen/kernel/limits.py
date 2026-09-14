@@ -33,6 +33,7 @@ from .store import Store, StoreError, TargetMismatchError, Transaction
 LIMIT_SCHEMA_REVISION = "fnd-04.limit.v1"
 LIMIT_KIND = "limit"
 RESERVATION_KIND = "reservation"
+_UNSET = object()
 LIMIT_STREAM = "limits"
 
 
@@ -144,18 +145,84 @@ class LimitService:
         _COMMAND_PORTS[self] = store
         self.reader = store.consumer()
 
-    def _envelope(self, operation: str, target: ResourceRef, actor: AuthenticatedActor, logical_request_key: str, request_digest: str, payload: Mapping[str, Any], *, expected_revision: Optional[str] = None, expected_version: Optional[int] = None) -> CommandEnvelope:
+    def _envelope(
+        self,
+        operation: str,
+        target: ResourceRef,
+        actor: AuthenticatedActor,
+        logical_request_key: str,
+        request_digest: str,
+        payload: Mapping[str, Any],
+        *,
+        expected_revision: Optional[str] = None,
+        expected_version: Optional[int] = None,
+        edit_token: Optional[str] = None,
+        correlation_id: Optional[str] = None,
+        causation_id: Optional[str] = None,
+    ) -> CommandEnvelope:
+        context = TransactionContext(
+            actor,
+            logical_request_key,
+            request_digest,
+            expected_revision=expected_revision,
+            expected_version=expected_version,
+            edit_token=edit_token,
+            correlation_id=correlation_id,
+            causation_id=causation_id,
+        )
+        canonical = canonical_request_digest(
+            logical_request_key=logical_request_key,
+            operation=operation,
+            schema_revision=LIMIT_SCHEMA_REVISION,
+            target=target,
+            actor=actor,
+            payload=payload,
+            context=context,
+        )
         return CommandEnvelope(
             operation,
             LIMIT_SCHEMA_REVISION,
             target,
-            TransactionContext(actor, logical_request_key, request_digest, expected_revision=expected_revision, expected_version=expected_version),
+            TransactionContext(
+                actor,
+                logical_request_key,
+                canonical,
+                expected_revision=expected_revision,
+                expected_version=expected_version,
+                edit_token=edit_token,
+                correlation_id=correlation_id,
+                causation_id=causation_id,
+            ),
             dict(payload),
         )
 
-    def _digest(self, operation: str, target: ResourceRef, actor: AuthenticatedActor, key: str, value: Mapping[str, Any], supplied: Optional[str]) -> str:
+    def _digest(
+        self,
+        operation: str,
+        target: ResourceRef,
+        actor: AuthenticatedActor,
+        key: str,
+        value: Mapping[str, Any],
+        supplied: Optional[str],
+        *,
+        expected_revision: Optional[str] = None,
+        expected_version: Optional[int] = None,
+        edit_token: Optional[str] = None,
+        correlation_id: Optional[str] = None,
+        causation_id: Optional[str] = None,
+    ) -> str:
         # ``supplied`` remains accepted for API compatibility, but a caller
         # cannot select replay identity with an unrelated digest-shaped value.
+        context = TransactionContext(
+            actor,
+            key,
+            "0" * 64,
+            expected_revision=expected_revision,
+            expected_version=expected_version,
+            edit_token=edit_token,
+            correlation_id=correlation_id,
+            causation_id=causation_id,
+        )
         return canonical_request_digest(
             logical_request_key=key,
             operation=operation,
@@ -163,6 +230,7 @@ class LimitService:
             target=target,
             actor=actor,
             payload=value,
+            context=context,
         )
 
     def _event_effects(self, receipt: CommandReceipt) -> Mapping[str, Any]:
@@ -226,14 +294,14 @@ class LimitService:
             raise LimitError("replayed reservation receipt has no current identity")
         return self._reservation_from_payload(identity, receipt, effects)
 
-    def create_pool(self, pool_ref: ResourceRef, capacity_units: int, cumulative_allowance_units: int, *, logical_request_key: str, request_digest: Optional[str] = None, actor: Optional[AuthenticatedActor] = None, transaction: Optional[Transaction] = None) -> LimitPool:
+    def create_pool(self, pool_ref: ResourceRef, capacity_units: int, cumulative_allowance_units: int, *, logical_request_key: str, request_digest: Optional[str] = None, actor: Optional[AuthenticatedActor] = None, expected_revision: Optional[str] = None, expected_version: Optional[int] = 0, edit_token: Optional[str] = None, correlation_id: Optional[str] = None, causation_id: Optional[str] = None, transaction: Optional[Transaction] = None) -> LimitPool:
         pool_ref = _stable(pool_ref, LIMIT_KIND, _COMMAND_PORTS[self].authority)
         capacity_units = _units(capacity_units, "capacity_units")
         cumulative_allowance_units = _units(cumulative_allowance_units, "cumulative_allowance_units")
         body = {"record_type": LIMIT_KIND, "capacity_units": capacity_units, "cumulative_allowance_units": cumulative_allowance_units}
         selected_actor = _actor(actor)
-        digest = self._digest("limit.create", pool_ref, selected_actor, logical_request_key, body, request_digest)
-        envelope = self._envelope("limit.create", pool_ref, selected_actor, logical_request_key, digest, body, expected_version=0)
+        digest = self._digest("limit.create", pool_ref, selected_actor, logical_request_key, body, request_digest, expected_revision=expected_revision, expected_version=expected_version, edit_token=edit_token, correlation_id=correlation_id, causation_id=causation_id)
+        envelope = self._envelope("limit.create", pool_ref, selected_actor, logical_request_key, digest, body, expected_revision=expected_revision, expected_version=expected_version, edit_token=edit_token, correlation_id=correlation_id, causation_id=causation_id)
         replay = self._replayed(envelope, LIMIT_KIND, pool_ref=pool_ref)
         if replay is not None:
             return replay
@@ -262,14 +330,14 @@ class LimitService:
             return ResourceRef(_COMMAND_PORTS[self].authority, RESERVATION_KIND, value)
         raise TypeError("reservation_ref must be a ResourceRef or opaque id")
 
-    def reserve(self, pool_ref: ResourceRef, reservation_ref: Any, declared_units: int, *, logical_request_key: str, request_digest: Optional[str] = None, actor: Optional[AuthenticatedActor] = None, transaction: Optional[Transaction] = None) -> ReservationRecord:
+    def reserve(self, pool_ref: ResourceRef, reservation_ref: Any, declared_units: int, *, logical_request_key: str, request_digest: Optional[str] = None, actor: Optional[AuthenticatedActor] = None, expected_revision: Optional[str] = None, expected_version: Optional[int] = 0, edit_token: Optional[str] = None, correlation_id: Optional[str] = None, causation_id: Optional[str] = None, transaction: Optional[Transaction] = None) -> ReservationRecord:
         pool_ref = _stable(pool_ref, LIMIT_KIND, _COMMAND_PORTS[self].authority)
         reservation_ref = self._reservation_ref(reservation_ref)
         declared_units = _positive_units(declared_units, "declared_units")
         body = {"record_type": RESERVATION_KIND, "pool_ref": _ref_dict(pool_ref), "declared_units": declared_units, "status": ReservationStatus.HELD.value, "actual_units": 0, "charged_units": 0}
         selected_actor = _actor(actor)
-        digest = self._digest("limit.reserve", reservation_ref, selected_actor, logical_request_key, body, request_digest)
-        envelope = self._envelope("limit.reserve", reservation_ref, selected_actor, logical_request_key, digest, body, expected_version=0)
+        digest = self._digest("limit.reserve", reservation_ref, selected_actor, logical_request_key, body, request_digest, expected_revision=expected_revision, expected_version=expected_version, edit_token=edit_token, correlation_id=correlation_id, causation_id=causation_id)
+        envelope = self._envelope("limit.reserve", reservation_ref, selected_actor, logical_request_key, digest, body, expected_revision=expected_revision, expected_version=expected_version, edit_token=edit_token, correlation_id=correlation_id, causation_id=causation_id)
         if transaction is None:
             with _COMMAND_PORTS[self].transaction() as owned:
                 return self._reserve_with_transaction(pool_ref, reservation_ref, declared_units, envelope, body, owned)
@@ -318,11 +386,13 @@ class LimitService:
         identity = _COMMAND_PORTS[self].get_identity(stable)
         return None if identity is None else self._reservation_from_payload(identity)
 
-    def _transition(self, reservation: ReservationRecord, target_state: ReservationStatus, actual_units: int, *, logical_request_key: str, request_digest: Optional[str], actor: Optional[AuthenticatedActor], transaction: Optional[Transaction]) -> ReservationRecord:
+    def _transition(self, reservation: ReservationRecord, target_state: ReservationStatus, actual_units: int, *, logical_request_key: str, request_digest: Optional[str], actor: Optional[AuthenticatedActor], expected_revision: Any = _UNSET, expected_version: Any = _UNSET, edit_token: Optional[str] = None, correlation_id: Optional[str] = None, causation_id: Optional[str] = None, transaction: Optional[Transaction]) -> ReservationRecord:
         body = {"record_type": RESERVATION_KIND, "pool_ref": _ref_dict(reservation.pool_ref), "declared_units": reservation.declared_units, "status": target_state.value, "actual_units": actual_units, "charged_units": actual_units if target_state in (ReservationStatus.CONSUMED, ReservationStatus.RELEASED) else reservation.charged_units}
         selected_actor = _actor(actor)
-        digest = self._digest("limit." + target_state.value, reservation.ref, selected_actor, logical_request_key, body, request_digest)
-        envelope = self._envelope("limit." + target_state.value, reservation.ref, selected_actor, logical_request_key, digest, body, expected_revision=reservation.ref.revision, expected_version=reservation.version)
+        selected_revision = reservation.ref.revision if expected_revision is _UNSET else expected_revision
+        selected_version = reservation.version if expected_version is _UNSET else expected_version
+        digest = self._digest("limit." + target_state.value, reservation.ref, selected_actor, logical_request_key, body, request_digest, expected_revision=selected_revision, expected_version=selected_version, edit_token=edit_token, correlation_id=correlation_id, causation_id=causation_id)
+        envelope = self._envelope("limit." + target_state.value, reservation.ref, selected_actor, logical_request_key, digest, body, expected_revision=selected_revision, expected_version=selected_version, edit_token=edit_token, correlation_id=correlation_id, causation_id=causation_id)
         replay = self._replayed(envelope, RESERVATION_KIND)
         if replay is not None:
             return replay
@@ -346,14 +416,14 @@ class LimitService:
             raise LimitError("reservation transition did not produce an identity")
         return self._reservation_from_payload(identity, receipt, self._event_effects(receipt))
 
-    def mark_uncertain(self, reservation: ReservationRecord, actual_units: int = 0, *, logical_request_key: str, request_digest: Optional[str] = None, actor: Optional[AuthenticatedActor] = None, transaction: Optional[Transaction] = None) -> ReservationRecord:
-        return self._transition(reservation, ReservationStatus.UNCERTAIN, _units(actual_units, "actual_units"), logical_request_key=logical_request_key, request_digest=request_digest, actor=actor, transaction=transaction)
+    def mark_uncertain(self, reservation: ReservationRecord, actual_units: int = 0, *, logical_request_key: str, request_digest: Optional[str] = None, actor: Optional[AuthenticatedActor] = None, expected_revision: Any = _UNSET, expected_version: Any = _UNSET, edit_token: Optional[str] = None, correlation_id: Optional[str] = None, causation_id: Optional[str] = None, transaction: Optional[Transaction] = None) -> ReservationRecord:
+        return self._transition(reservation, ReservationStatus.UNCERTAIN, _units(actual_units, "actual_units"), logical_request_key=logical_request_key, request_digest=request_digest, actor=actor, expected_revision=expected_revision, expected_version=expected_version, edit_token=edit_token, correlation_id=correlation_id, causation_id=causation_id, transaction=transaction)
 
-    def settle(self, reservation: ReservationRecord, actual_units: int, *, logical_request_key: str, request_digest: Optional[str] = None, actor: Optional[AuthenticatedActor] = None, transaction: Optional[Transaction] = None) -> ReservationRecord:
-        return self._transition(reservation, ReservationStatus.CONSUMED, _units(actual_units, "actual_units"), logical_request_key=logical_request_key, request_digest=request_digest, actor=actor, transaction=transaction)
+    def settle(self, reservation: ReservationRecord, actual_units: int, *, logical_request_key: str, request_digest: Optional[str] = None, actor: Optional[AuthenticatedActor] = None, expected_revision: Any = _UNSET, expected_version: Any = _UNSET, edit_token: Optional[str] = None, correlation_id: Optional[str] = None, causation_id: Optional[str] = None, transaction: Optional[Transaction] = None) -> ReservationRecord:
+        return self._transition(reservation, ReservationStatus.CONSUMED, _units(actual_units, "actual_units"), logical_request_key=logical_request_key, request_digest=request_digest, actor=actor, expected_revision=expected_revision, expected_version=expected_version, edit_token=edit_token, correlation_id=correlation_id, causation_id=causation_id, transaction=transaction)
 
-    def release(self, reservation: ReservationRecord, *, actual_units: int = 0, logical_request_key: str, request_digest: Optional[str] = None, actor: Optional[AuthenticatedActor] = None, transaction: Optional[Transaction] = None) -> ReservationRecord:
-        return self._transition(reservation, ReservationStatus.RELEASED, _units(actual_units, "actual_units"), logical_request_key=logical_request_key, request_digest=request_digest, actor=actor, transaction=transaction)
+    def release(self, reservation: ReservationRecord, *, actual_units: int = 0, logical_request_key: str, request_digest: Optional[str] = None, actor: Optional[AuthenticatedActor] = None, expected_revision: Any = _UNSET, expected_version: Any = _UNSET, edit_token: Optional[str] = None, correlation_id: Optional[str] = None, causation_id: Optional[str] = None, transaction: Optional[Transaction] = None) -> ReservationRecord:
+        return self._transition(reservation, ReservationStatus.RELEASED, _units(actual_units, "actual_units"), logical_request_key=logical_request_key, request_digest=request_digest, actor=actor, expected_revision=expected_revision, expected_version=expected_version, edit_token=edit_token, correlation_id=correlation_id, causation_id=causation_id, transaction=transaction)
 
 
 ReservationLedger = LimitService
