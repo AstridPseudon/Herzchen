@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import weakref
+
+_COMMAND_PORTS = weakref.WeakKeyDictionary()
+
 from copy import deepcopy
 from typing import Any, ContextManager, Iterable, Mapping, Optional, Protocol, Sequence
 
@@ -65,7 +69,8 @@ class ExtensionCommandService:
     """
 
     def __init__(self, writer: Optional[FNDExtensionWriter], catalog: DefinitionCatalog = DEFAULT_CATALOG, *, register: bool = True) -> None:
-        self._writer = writer
+        _COMMAND_PORTS[self] = writer
+        self.reader = None if writer is None else writer.consumer()
         self.catalog = catalog
         self._catalog_digest = catalog.digest
         if self._catalog_digest != DEFAULT_CATALOG_DIGEST:
@@ -75,12 +80,12 @@ class ExtensionCommandService:
         elif writer is not None:
             self._verify_registered()
         if writer is not None and hasattr(writer, "domain_handler"):
-            self._writer = writer.domain_handler((domain_contribution(),))
+            _COMMAND_PORTS[self] = writer.domain_handler((domain_contribution(),))
 
     def _require_writer(self) -> FNDExtensionWriter:
-        if self._writer is None:
+        if _COMMAND_PORTS[self] is None:
             raise ExtensionError("FND-03 writer is required for extension commands")
-        return self._writer
+        return _COMMAND_PORTS[self]
 
     def _require_catalog_admitted(self) -> None:
         if self.catalog.digest != self._catalog_digest or self._catalog_digest != DEFAULT_CATALOG_DIGEST:
@@ -235,9 +240,12 @@ class ExtensionCommandService:
             raise ManagedFieldError(f"namespace is not writable: {definition.namespace}")
         if definition.classification == "protocol":
             actor = context.actor
-            owner_root = definition.owner.split(".", 1)[0]
-            actor_root = actor.authority.replace(":", ".").replace("-", ".").split(".", 1)[0]
-            if actor.authority != definition.owner and actor.actor != definition.owner and actor_root != owner_root:
+            authority_bindings = {
+                binding.split(":", 1)[1]
+                for binding in domain_contribution().composition_bindings
+                if binding.startswith("actor-authority:")
+            }
+            if actor.authority not in authority_bindings:
                 raise OwnerRequiredError(f"protocol namespace requires authenticated actor bound to {definition.owner!r}")
             if owner != definition.owner:
                 raise OwnerRequiredError(f"protocol command must name its admitted owner {definition.owner!r}")

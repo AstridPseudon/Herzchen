@@ -924,7 +924,14 @@ class Store:
             if binding.startswith("actor-id:")
         }
         if exact_authorities or exact_actors:
-            return actor.authority in exact_authorities or actor.actor in exact_actors
+            # Explicit descriptor bindings are exact authority constraints,
+            # not namespace/root hints.  When both forms are declared both
+            # constraints apply; an actor id can never stand in for a
+            # declared authority (or vice versa).
+            return (
+                (not exact_authorities or actor.authority in exact_authorities)
+                and (not exact_actors or actor.actor in exact_actors)
+            )
         owner_root = _authority_root(owner)
         return (
             actor.authority == owner
@@ -963,7 +970,14 @@ class Store:
                 envelope.target.kind,
                 event_type,
             )) not in declared_ports:
-                continue
+                wildcard_resource_port = "|".join((
+                    envelope.schema_revision,
+                    envelope.operation,
+                    "*",
+                    event_type,
+                ))
+                if wildcard_resource_port not in declared_ports:
+                    continue
             matches.append(descriptor)
         if len(matches) == 1:
             admitted = matches[0]

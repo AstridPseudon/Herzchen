@@ -14,6 +14,10 @@ digests are only evidence attached to those references.
 
 from __future__ import annotations
 
+import weakref
+
+_COMMAND_PORTS = weakref.WeakKeyDictionary()
+
 from dataclasses import dataclass
 from hashlib import sha256
 from typing import Any, Iterable, Mapping, Optional, Protocol, Sequence, Tuple, Union
@@ -270,13 +274,14 @@ class ContextPacketService:
     def __init__(self, writer: Optional[FNDPacketWriter]) -> None:
         if writer is not None and hasattr(writer, "domain_handler"):
             writer = writer.domain_handler((content_domain_contribution(), domain_contribution()))
-        self._writer = writer
+        _COMMAND_PORTS[self] = writer
+        self.reader = None if writer is None else writer.consumer()
         self._content = ContentCommandHandler(writer)
 
     def _require_writer(self) -> FNDPacketWriter:
-        if self._writer is None:
+        if _COMMAND_PORTS[self] is None:
             raise PacketError("FND-03 Store is required")
-        return self._writer
+        return _COMMAND_PORTS[self]
 
     @staticmethod
     def _context(context: Optional[VisibilityContext], actor: Any = None, roles: Iterable[str] = (), scopes: Iterable[ResourceRef] = ()) -> VisibilityContext:

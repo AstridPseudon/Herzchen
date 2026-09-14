@@ -491,6 +491,8 @@ def domain_contribution() -> DomainContribution:
             "mutation-resource:work.project",
             "mutation-resource:dat.content.document",
             "mutation-resource:registered:*",
+            "mutation-port:" + EXTENSION_SCHEMA_REVISION + "|dat.extensions.metadata.set|*|dat.extensions.metadata.changed",
+            "mutation-port:" + EXTENSION_SCHEMA_REVISION + "|dat.extensions.metadata.remove|*|dat.extensions.metadata.removed",
             CATALOG_DIGEST_BINDING_PREFIX + DEFAULT_CATALOG_DIGEST,
         ),
     )

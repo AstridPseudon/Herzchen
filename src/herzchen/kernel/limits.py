@@ -8,6 +8,10 @@ private writer is introduced here.
 
 from __future__ import annotations
 
+import weakref
+
+_COMMAND_PORTS = weakref.WeakKeyDictionary()
+
 from dataclasses import dataclass
 from enum import Enum
 import json
@@ -137,7 +141,8 @@ class LimitService:
     def __init__(self, store: Store) -> None:
         if not isinstance(store, Store):
             raise TypeError("store must be a Store")
-        self.store = store
+        _COMMAND_PORTS[self] = store
+        self.reader = store.consumer()
 
     def _envelope(self, operation: str, target: ResourceRef, actor: AuthenticatedActor, logical_request_key: str, request_digest: str, payload: Mapping[str, Any], *, expected_revision: Optional[str] = None, expected_version: Optional[int] = None) -> CommandEnvelope:
         return CommandEnvelope(
@@ -164,7 +169,7 @@ class LimitService:
         if not receipt.event_ids:
             return {}
         wanted = set(receipt.event_ids)
-        for event in self.store.list_events(stream=LIMIT_STREAM):
+        for event in _COMMAND_PORTS[self].list_events(stream=LIMIT_STREAM):
             if event.event_id in wanted:
                 return event.effects
         raise LimitError("receipt event is not visible in the admitted store")
@@ -174,13 +179,13 @@ class LimitService:
         if payload.get("record_type") != LIMIT_KIND:
             raise LimitError("identity is not a neutral limit pool")
         pool_ref = ResourceRef(identity.ref.authority, LIMIT_KIND, identity.ref.id)
-        held, used = self._pool_totals(self.store.connection, pool_ref)
+        held, used = self._pool_totals(_COMMAND_PORTS[self].connection, pool_ref)
         return LimitPool(pool_ref, int(payload["capacity_units"]), int(payload["cumulative_allowance_units"]), identity.version, identity.ref.revision, held, used, receipt)
 
     def _pool_totals(self, tx: Transaction, pool_ref: ResourceRef) -> Tuple[int, int]:
         held = 0
         used = 0
-        rows = tx.execute("SELECT payload_json FROM identities WHERE authority = ? AND kind = ?", (self.store.authority, RESERVATION_KIND)).fetchall()
+        rows = tx.execute("SELECT payload_json FROM identities WHERE authority = ? AND kind = ?", (_COMMAND_PORTS[self].authority, RESERVATION_KIND)).fetchall()
         for row in rows:
             payload = json.loads(row[0])
             if payload.get("record_type") != RESERVATION_KIND or payload.get("pool_ref") != pool_ref.to_dict():
@@ -206,23 +211,23 @@ class LimitService:
         )
 
     def _replayed(self, envelope: CommandEnvelope, kind: str, *, pool_ref: Optional[ResourceRef] = None) -> Optional[Any]:
-        receipt = self.store.get_receipt(envelope.context.logical_request_key)
+        receipt = _COMMAND_PORTS[self].get_receipt(envelope.context.logical_request_key)
         if receipt is None:
             return None
         validate_replay(receipt, envelope)
         effects = self._event_effects(receipt)
         if kind == LIMIT_KIND:
-            identity = self.store.get_identity(pool_ref or receipt.target)
+            identity = _COMMAND_PORTS[self].get_identity(pool_ref or receipt.target)
             if identity is None:
                 raise LimitError("replayed limit receipt has no current identity")
             return self._pool_from_identity(identity, receipt)
-        identity = self.store.get_identity(receipt.target)
+        identity = _COMMAND_PORTS[self].get_identity(receipt.target)
         if identity is None:
             raise LimitError("replayed reservation receipt has no current identity")
         return self._reservation_from_payload(identity, receipt, effects)
 
     def create_pool(self, pool_ref: ResourceRef, capacity_units: int, cumulative_allowance_units: int, *, logical_request_key: str, request_digest: Optional[str] = None, actor: Optional[AuthenticatedActor] = None, transaction: Optional[Transaction] = None) -> LimitPool:
-        pool_ref = _stable(pool_ref, LIMIT_KIND, self.store.authority)
+        pool_ref = _stable(pool_ref, LIMIT_KIND, _COMMAND_PORTS[self].authority)
         capacity_units = _units(capacity_units, "capacity_units")
         cumulative_allowance_units = _units(cumulative_allowance_units, "cumulative_allowance_units")
         body = {"record_type": LIMIT_KIND, "capacity_units": capacity_units, "cumulative_allowance_units": cumulative_allowance_units}
@@ -232,33 +237,33 @@ class LimitService:
         replay = self._replayed(envelope, LIMIT_KIND, pool_ref=pool_ref)
         if replay is not None:
             return replay
-        receipt = self.store.mutate(
+        receipt = _COMMAND_PORTS[self].mutate(
             envelope,
             event_type="limit.created",
-            result_ref=ResourceRef(self.store.authority, LIMIT_KIND, pool_ref.id, "rev-1"),
+            result_ref=ResourceRef(_COMMAND_PORTS[self].authority, LIMIT_KIND, pool_ref.id, "rev-1"),
             effects={"record_type": LIMIT_KIND, **body, "version": 1},
             stream=LIMIT_STREAM,
             transaction=transaction,
         )
-        identity = self.store.get_identity(pool_ref)
+        identity = _COMMAND_PORTS[self].get_identity(pool_ref)
         if identity is None:
             raise LimitError("limit creation did not produce an identity")
         return self._pool_from_identity(identity, receipt)
 
     def get_pool(self, pool_ref: ResourceRef) -> Optional[LimitPool]:
-        pool_ref = _stable(pool_ref, LIMIT_KIND, self.store.authority)
-        identity = self.store.get_identity(pool_ref)
+        pool_ref = _stable(pool_ref, LIMIT_KIND, _COMMAND_PORTS[self].authority)
+        identity = _COMMAND_PORTS[self].get_identity(pool_ref)
         return None if identity is None else self._pool_from_identity(identity)
 
     def _reservation_ref(self, value: Any) -> ResourceRef:
         if isinstance(value, ResourceRef):
-            return _stable(value, RESERVATION_KIND, self.store.authority)
+            return _stable(value, RESERVATION_KIND, _COMMAND_PORTS[self].authority)
         if isinstance(value, str):
-            return ResourceRef(self.store.authority, RESERVATION_KIND, value)
+            return ResourceRef(_COMMAND_PORTS[self].authority, RESERVATION_KIND, value)
         raise TypeError("reservation_ref must be a ResourceRef or opaque id")
 
     def reserve(self, pool_ref: ResourceRef, reservation_ref: Any, declared_units: int, *, logical_request_key: str, request_digest: Optional[str] = None, actor: Optional[AuthenticatedActor] = None, transaction: Optional[Transaction] = None) -> ReservationRecord:
-        pool_ref = _stable(pool_ref, LIMIT_KIND, self.store.authority)
+        pool_ref = _stable(pool_ref, LIMIT_KIND, _COMMAND_PORTS[self].authority)
         reservation_ref = self._reservation_ref(reservation_ref)
         declared_units = _positive_units(declared_units, "declared_units")
         body = {"record_type": RESERVATION_KIND, "pool_ref": _ref_dict(pool_ref), "declared_units": declared_units, "status": ReservationStatus.HELD.value, "actual_units": 0, "charged_units": 0}
@@ -266,7 +271,7 @@ class LimitService:
         digest = self._digest("limit.reserve", reservation_ref, selected_actor, logical_request_key, body, request_digest)
         envelope = self._envelope("limit.reserve", reservation_ref, selected_actor, logical_request_key, digest, body, expected_version=0)
         if transaction is None:
-            with self.store.transaction() as owned:
+            with _COMMAND_PORTS[self].transaction() as owned:
                 return self._reserve_with_transaction(pool_ref, reservation_ref, declared_units, envelope, body, owned)
         return self._reserve_with_transaction(pool_ref, reservation_ref, declared_units, envelope, body, transaction)
 
@@ -274,7 +279,7 @@ class LimitService:
         replay = self._replayed(envelope, RESERVATION_KIND)
         if replay is not None:
             return replay
-        pool_identity = self.store.get_identity(pool_ref)
+        pool_identity = _COMMAND_PORTS[self].get_identity(pool_ref)
         if pool_identity is None:
             raise TargetMismatchError("limit pool identity is not admitted")
         pool = self._pool_from_identity(pool_identity)
@@ -286,7 +291,7 @@ class LimitService:
             raise ReservationExistsError("reservation identity already exists")
         held, used = self._pool_totals(tx, pool.ref)
         open_projected = 0
-        rows = tx.execute("SELECT payload_json FROM identities WHERE authority = ? AND kind = ?", (self.store.authority, RESERVATION_KIND)).fetchall()
+        rows = tx.execute("SELECT payload_json FROM identities WHERE authority = ? AND kind = ?", (_COMMAND_PORTS[self].authority, RESERVATION_KIND)).fetchall()
         for row in rows:
             payload = json.loads(row[0])
             if payload.get("record_type") == RESERVATION_KIND and payload.get("pool_ref") == pool.ref.to_dict() and payload.get("status") in (ReservationStatus.HELD.value, ReservationStatus.UNCERTAIN.value):
@@ -295,22 +300,22 @@ class LimitService:
             raise CapacityExhaustedError("reusable capacity is exhausted")
         if used + open_projected + declared_units > pool.cumulative_allowance_units:
             raise AllowanceExhaustedError("cumulative allowance is exhausted")
-        receipt = self.store.mutate(
+        receipt = _COMMAND_PORTS[self].mutate(
             envelope,
             event_type="reservation.held",
-            result_ref=ResourceRef(self.store.authority, RESERVATION_KIND, reservation_ref.id, "rev-1"),
+            result_ref=ResourceRef(_COMMAND_PORTS[self].authority, RESERVATION_KIND, reservation_ref.id, "rev-1"),
             effects={**body, "version": 1, "overrun_units": 0},
             stream=LIMIT_STREAM,
             transaction=tx,
         )
-        identity = self.store.get_identity(reservation_ref)
+        identity = _COMMAND_PORTS[self].get_identity(reservation_ref)
         if identity is None:
             raise LimitError("reservation admission did not produce an identity")
         return self._reservation_from_payload(identity, receipt, self._event_effects(receipt))
 
     def get_reservation(self, reservation_ref: ResourceRef) -> Optional[ReservationRecord]:
         stable = self._reservation_ref(reservation_ref)
-        identity = self.store.get_identity(stable)
+        identity = _COMMAND_PORTS[self].get_identity(stable)
         return None if identity is None else self._reservation_from_payload(identity)
 
     def _transition(self, reservation: ReservationRecord, target_state: ReservationStatus, actual_units: int, *, logical_request_key: str, request_digest: Optional[str], actor: Optional[AuthenticatedActor], transaction: Optional[Transaction]) -> ReservationRecord:
@@ -328,15 +333,15 @@ class LimitService:
         if target_state == ReservationStatus.RELEASED and reservation.status not in (ReservationStatus.HELD, ReservationStatus.UNCERTAIN):
             raise ReservationStateError("only held or uncertain reservations can be released")
         effect = {**body, "version": reservation.version + 1, "overrun_units": max(0, actual_units - reservation.declared_units)}
-        receipt = self.store.mutate(
+        receipt = _COMMAND_PORTS[self].mutate(
             envelope,
             event_type="reservation." + target_state.value,
-            result_ref=ResourceRef(self.store.authority, RESERVATION_KIND, reservation.ref.id, "rev-{}".format(reservation.version + 1)),
+            result_ref=ResourceRef(_COMMAND_PORTS[self].authority, RESERVATION_KIND, reservation.ref.id, "rev-{}".format(reservation.version + 1)),
             effects=effect,
             stream=LIMIT_STREAM,
             transaction=transaction,
         )
-        identity = self.store.get_identity(reservation.ref)
+        identity = _COMMAND_PORTS[self].get_identity(reservation.ref)
         if identity is None:
             raise LimitError("reservation transition did not produce an identity")
         return self._reservation_from_payload(identity, receipt, self._event_effects(receipt))

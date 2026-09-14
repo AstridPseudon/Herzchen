@@ -110,17 +110,12 @@ class IdleCloseService:
         self._cleanup = cleanup
         self._clock = clock
         self._declared_edits: dict[str, float] = {}
-
-    @property
-    def writer(self) -> Any:
-        if self.service is None:
-            return None
-        return self.service.writer
+        self.reader = None if self.service is None else self.service.reader
 
     def _record(self, handle: SessionHandle) -> Any:
         if self.service is None:
             return None
-        return self.service.writer.get_identity(handle.scope)
+        return self.service.reader.get_identity(handle.scope)
 
     def declare_content_edit(self, handle: SessionHandle, *, timestamp: Optional[Any] = None, request_id: Optional[str] = None) -> float:
         """Persist the host's last content-edit timestamp for idle policy.
@@ -159,7 +154,7 @@ class IdleCloseService:
         digest = service._request_digest(
             "metadata", request_id, payload, target=handle.scope, actor=handle.actor
         )
-        with service.writer.transaction() as tx:
+        with service._session_transaction() as tx:
             current = service._records(handle.target_scope, handle.actor)[0]
             if current is None:
                 raise InvalidSessionError("authoring scope disappeared")

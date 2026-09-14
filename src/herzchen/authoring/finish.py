@@ -85,6 +85,7 @@ class SemanticFinishAdapter:
 
     def __init__(self, service: AuthoringSessionService, snapshot_adapter: Optional[DurableSnapshotAdapter] = None) -> None:
         self.service = service
+        self.reader = service.reader
         self.snapshots = snapshot_adapter or DurableSnapshotAdapter(service)
 
     @staticmethod
@@ -120,7 +121,7 @@ class SemanticFinishAdapter:
         """Durably retain the pre-late-write capture and release for retry."""
         session_snapshot = tree.as_session_snapshot(self.snapshots._ref(handle, "final", tree.tree_digest))
         self.service._transition_recovery(handle, request_id + ":late-write", session_snapshot, error)
-        record = self.service.writer.get_identity(handle.scope)
+        record = self.service.reader.get_identity(handle.scope)
         checkout = None
         if record is not None:
             try:
@@ -153,7 +154,7 @@ class SemanticFinishAdapter:
         digest and capability check keeps that reconciliation from turning a
         changed or foreign attempt into a success response.
         """
-        record = self.service.writer.get_identity(handle.scope)
+        record = self.service.reader.get_identity(handle.scope)
         if record is None:
             return None
         payload = getattr(record, "payload", None)
@@ -188,7 +189,7 @@ class SemanticFinishAdapter:
         finish_request_id = payload.get("finish_request_id")
         if not isinstance(finish_request_id, str):
             return None
-        receipt = self.service.writer.get_receipt(finish_request_id)
+        receipt = self.service.reader.get_receipt(finish_request_id)
         if receipt is None or getattr(receipt, "operation", None) != "finish":
             return None
         status = getattr(getattr(receipt, "status", None), "value", getattr(receipt, "status", None))
@@ -228,7 +229,7 @@ class SemanticFinishAdapter:
         # Exact request replay is deliberately delegated unchanged.  The
         # session service checks the request receipt before invoking capture,
         # so a lost response cannot cause a second handler application.
-        prior = self.service.writer.get_receipt(request_id)
+        prior = self.service.reader.get_receipt(request_id)
         if prior is not None:
             try:
                 result = self.service.finish(
@@ -247,7 +248,7 @@ class SemanticFinishAdapter:
         # finish-claim/release decision.  Do not pre-authorize a closed
         # checkout, because that would turn a valid already-finished response
         # into an adapter-only failure.
-        current = self.service.writer.get_identity(handle.scope)
+        current = self.service.reader.get_identity(handle.scope)
         current_checkout = None if current is None else current.payload.get("checkout")
         if isinstance(current_checkout, Mapping) and current_checkout.get("session_id") == handle.session_id and current_checkout.get("state") != "open":
             try:
@@ -353,7 +354,7 @@ class SemanticFinishAdapter:
                 # session port.  Store implements nested transactions as
                 # savepoints, so this serializes separate services on the
                 # durable writer without an EDT lock or a second boundary.
-                with self.service.writer.transaction():
+                with self.service._session_transaction():
                     result = self.service.finish(
                         handle,
                         request_id=request_id,

@@ -8,6 +8,10 @@ finish both enter :meth:`DocumentAuthoringHandler._apply_parsed`.
 
 from __future__ import annotations
 
+import weakref
+
+_COMMAND_PORTS = weakref.WeakKeyDictionary()
+
 from dataclasses import dataclass
 import hashlib
 import json
@@ -162,7 +166,8 @@ class DocumentAuthoringHandler:
         scope_resolver: Optional[Callable[..., ResourceRef]] = None,
         temporary_cleanup: Optional[Callable[..., Any]] = None,
     ) -> None:
-        self.writer = writer
+        _COMMAND_PORTS[self] = writer
+        self.reader = writer.consumer()
         self.content = ContentCommandHandler(writer)
         self.scope_resolver = scope_resolver
         self.temporary_cleanup = temporary_cleanup
@@ -498,11 +503,11 @@ class DocumentAuthoringHandler:
             schema_revision="dat-content.v1", target=document.ref, actor=actor,
             payload={"document": document, "revision": replay_revision},
         )
-        prior = self.writer.get_receipt(request_id + ":document")
+        prior = _COMMAND_PORTS[self].get_receipt(request_id + ":document")
         if prior is not None:
             if prior.request_digest != request_digest:
                 raise ReplayConflictError("logical request key was reused with a changed request digest")
-            link_receipts = tuple(self.writer.get_receipt(request_id + ":link:" + str(index)) for index in range(len(all_links)))
+            link_receipts = tuple(_COMMAND_PORTS[self].get_receipt(request_id + ":link:" + str(index)) for index in range(len(all_links)))
             if all(receipt is not None for receipt in link_receipts):
                 stored = self.content.read(prior.result_ref) if prior.result_ref is not None else {}
                 payload = stored
@@ -531,7 +536,7 @@ class DocumentAuthoringHandler:
                 receipts.append(self.content.execute(self.content.build_link(link_context, link)))
 
         if transaction is None:
-            with self.writer.transaction() as tx:
+            with _COMMAND_PORTS[self].transaction() as tx:
                 run(tx)
         else:
             run(transaction)
@@ -639,7 +644,7 @@ class DocumentAuthoringHandler:
         association_ref = ResourceRef(association.subject.authority, "document-association", association.identity)
         association_read = self.content.read(association_ref)
         context = self._context(actor, request_id, association, expected_revision=None, expected_version=association_read.get("version", 0))
-        with self.writer.transaction():
+        with _COMMAND_PORTS[self].transaction():
             return self.content.execute(self.content.build_unlink(context, association))
 
 

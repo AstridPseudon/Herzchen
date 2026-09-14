@@ -251,7 +251,7 @@ class AuthoringLifecycle:
         capture_barrier: Optional[Callable[..., Any]] = None,
     ) -> CleanupObservation:
         handle = target.handle if isinstance(target, AuthoringTarget) else target
-        record = self.service.writer.get_identity(handle.scope)
+        record = self.service.reader.get_identity(handle.scope)
         payload = {} if record is None else record.payload
         manifest = payload.get("retirement_manifest")
         exact_files = registered_files
@@ -300,7 +300,7 @@ class AuthoringLifecycle:
     def _retirement_files(self, result: SemanticFinishResult, fallback: Any) -> Any:
         if result.snapshot is not None:
             return registered_files_from_manifest(result.snapshot.manifest)
-        record = self.service.writer.get_identity(result.finish.scope) if result.finish is not None else None
+        record = self.service.reader.get_identity(result.finish.scope) if result.finish is not None else None
         manifest = None if record is None else record.payload.get("retirement_manifest")
         return registered_files_from_manifest(manifest) if manifest else fallback
 

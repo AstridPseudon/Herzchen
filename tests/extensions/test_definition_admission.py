@@ -137,3 +137,25 @@ def test_valid_bound_protocol_actor_and_open_extension_share_receipt_event_bound
         assert consumer.get_receipt(receipt.logical_request_key) == receipt
         assert len(receipt.event_ids) == 1
         assert any(event.event_id == receipt.event_ids[0] for event in consumer.list_events())
+
+
+def test_same_root_protocol_actor_spoof_is_rejected_without_delta(admitted):
+    _owner, consumer, service, subject = admitted
+    fields = {"choice": "hold", "reason": "same-root spoof"}
+    before = dict(consumer.snapshot_counts())
+    before_record = consumer.get_identity(subject)
+    with pytest.raises(OwnerRequiredError):
+        service.set(
+            subject,
+            PROTOCOL_NAMESPACE,
+            fields,
+            _context(
+                AuthenticatedActor("dat.attacker", "dat-worker", "credential"),
+                "same-root-spoof",
+                fields,
+            ),
+            owner="dat.protocol-owner",
+        )
+    assert consumer.get_identity(subject) == before_record
+    assert consumer.get_receipt("same-root-spoof") is None
+    assert consumer.snapshot_counts() == before

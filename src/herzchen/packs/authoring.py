@@ -8,6 +8,10 @@ code, creates a database, or owns a second writer.
 
 from __future__ import annotations
 
+import weakref
+
+_COMMAND_PORTS = weakref.WeakKeyDictionary()
+
 import base64
 import hashlib
 import json
@@ -40,7 +44,10 @@ def domain_contribution() -> DomainContribution:
         "herzchen.packs.authoring", "1", "pkg", (MANAGED_PACK_KIND,), (),
         ("pack.authoring",), ("pack.content.author",),
         ("managed_pack.content_authored",), PACK_SCHEMA_REVISION,
-        ("fnd-03.identities", "fnd-03.record_references", "fnd-03.transaction", "handler-required"),
+        (
+            "fnd-03.identities", "fnd-03.record_references", "fnd-03.transaction", "handler-required",
+            "mutation-port:" + PACK_SCHEMA_REVISION + "|pack.content.author|" + MANAGED_PACK_KIND + "|managed_pack.content_authored",
+        ),
     )
 
 
@@ -502,7 +509,8 @@ class ManagedPackAuthoringHandler:
             raise TypeError("store must be the supplied FND writer")
         if hasattr(store, "domain_handler"):
             store = store.domain_handler((domain_contribution(),))
-        self.store = store
+        _COMMAND_PORTS[self] = store
+        self.reader = store.consumer()
 
     def author(
         self,
@@ -523,8 +531,8 @@ class ManagedPackAuthoringHandler:
             _validate_relative_path(path)
             if path not in declared:
                 raise PackPathError(f"authoring update is not an admitted resource: {path!r}")
-        current_ref = ResourceRef(self.store.authority, MANAGED_PACK_KIND, pack.pack_id)
-        current = self.store.get_identity(current_ref)
+        current_ref = ResourceRef(_COMMAND_PORTS[self].authority, MANAGED_PACK_KIND, pack.pack_id)
+        current = _COMMAND_PORTS[self].get_identity(current_ref)
         if current is not None:
             current_ref = current.ref
             current_payload = dict(current.payload)
@@ -571,10 +579,10 @@ class ManagedPackAuthoringHandler:
             expected_revision=current_ref.revision if current is not None else None,
             expected_version=current.version if current is not None else 0,
         )
-        target = current_ref if current is not None else ResourceRef(self.store.authority, MANAGED_PACK_KIND, pack.pack_id)
+        target = current_ref if current is not None else ResourceRef(_COMMAND_PORTS[self].authority, MANAGED_PACK_KIND, pack.pack_id)
         envelope = CommandEnvelope("pack.content.author", PACK_SCHEMA_REVISION, target, context, payload)
-        result_ref = ResourceRef(self.store.authority, MANAGED_PACK_KIND, pack.pack_id, next_revision)
-        receipt = self.store.mutate(
+        result_ref = ResourceRef(_COMMAND_PORTS[self].authority, MANAGED_PACK_KIND, pack.pack_id, next_revision)
+        receipt = _COMMAND_PORTS[self].mutate(
             envelope,
             event_type="managed_pack.content_authored",
             result_ref=result_ref,
@@ -595,13 +603,13 @@ class ManagedPackAuthoringHandler:
 
     def read(self, pack_id: str, *, revision: str | None = None) -> Mapping[str, Any]:
         """Read the fresh adopted record or a retained pinned event snapshot."""
-        current = self.store.get_identity(ResourceRef(self.store.authority, MANAGED_PACK_KIND, pack_id))
+        current = _COMMAND_PORTS[self].get_identity(ResourceRef(_COMMAND_PORTS[self].authority, MANAGED_PACK_KIND, pack_id))
         if current is None:
             raise PackAuthoringError(f"managed pack is not adopted: {pack_id!r}")
         wanted = revision or current.ref.revision
         if wanted == current.ref.revision:
             return current.payload
-        for event in self.store.list_events(stream=f"{MANAGED_PACK_STREAM}:{pack_id}"):
+        for event in _COMMAND_PORTS[self].list_events(stream=f"{MANAGED_PACK_STREAM}:{pack_id}"):
             if any(ref.revision == wanted for ref in event.after_refs):
                 return {
                     "record_type": MANAGED_PACK_KIND,

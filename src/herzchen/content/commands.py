@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import weakref
+
+_COMMAND_PORTS = weakref.WeakKeyDictionary()
+
 from typing import Any, ContextManager, Mapping, Optional, Protocol
 
 from herzchen.contracts import CommandEnvelope, CommandReceipt, ResourceRef, TransactionContext
@@ -51,7 +55,8 @@ class ContentCommandHandler:
                 writer = writer.domain_handler((domain_contribution(),))
             except Exception:
                 pass
-        self._writer = writer
+        _COMMAND_PORTS[self] = writer
+        self.reader = None if writer is None else writer.consumer()
 
     @staticmethod
     def _envelope(operation: str, target: ResourceRef, context: TransactionContext, payload: Mapping[str, Any]) -> CommandEnvelope:
@@ -102,7 +107,7 @@ class ContentCommandHandler:
 
     def execute(self, envelope: CommandEnvelope) -> CommandReceipt:
         """Execute through the supplied FND-03 Store transaction."""
-        if self._writer is None:
+        if _COMMAND_PORTS[self] is None:
             raise PersistenceUnavailableError("FND-03 writer/schema/transaction is not available")
         if not isinstance(envelope, CommandEnvelope):
             raise TypeError("envelope must be a CommandEnvelope")
@@ -120,12 +125,12 @@ class ContentCommandHandler:
 
     def read(self, reference: ResourceRef) -> Mapping[str, Any]:
         """Return a fresh read from FND-03; no local shadow is maintained."""
-        if self._writer is None:
+        if _COMMAND_PORTS[self] is None:
             raise PersistenceUnavailableError("FND-03 fresh-read API is not available")
         if not isinstance(reference, ResourceRef):
             raise TypeError("reference must be a ResourceRef")
         if reference.revision is not None:
-            record = self._writer.get_identity(revision_identity(ResourceRef(reference.authority, reference.kind, reference.id), reference.revision))
+            record = _COMMAND_PORTS[self].get_identity(revision_identity(ResourceRef(reference.authority, reference.kind, reference.id), reference.revision))
             if record is None:
                 return {}
             return {
@@ -137,7 +142,7 @@ class ContentCommandHandler:
                 "content": record.payload.get("content"),
             }
 
-        record = self._writer.get_identity(reference)
+        record = _COMMAND_PORTS[self].get_identity(reference)
         if record is None:
             return {}
         payload = dict(record.payload)
@@ -148,7 +153,7 @@ class ContentCommandHandler:
             result["current_revision"] = current
             if isinstance(current, Mapping):
                 current_ref = ResourceRef.from_dict(current)
-                revision_record = self._writer.get_identity(revision_identity(ResourceRef(current_ref.authority, current_ref.kind, current_ref.id), current_ref.revision))
+                revision_record = _COMMAND_PORTS[self].get_identity(revision_identity(ResourceRef(current_ref.authority, current_ref.kind, current_ref.id), current_ref.revision))
                 if revision_record is not None:
                     result["revision"] = revision_record.payload
         return result
@@ -183,11 +188,11 @@ class ContentCommandHandler:
         }
 
     def _mutate_with_revision(self, envelope: CommandEnvelope, document: ContentDocument, revision: ContentRevision, payload: Mapping[str, Any], *, event_type: str) -> CommandReceipt:
-        assert self._writer is not None
-        with self._writer.transaction() as transaction:
+        assert _COMMAND_PORTS[self] is not None
+        with _COMMAND_PORTS[self].transaction() as transaction:
             # Mutate the document head first so replay/conflict is decided by
             # FND before the auxiliary immutable revision row is considered.
-            receipt = self._writer.mutate(
+            receipt = _COMMAND_PORTS[self].mutate(
                 envelope,
                 event_type=event_type,
                 result_ref=revision.ref,
@@ -196,7 +201,7 @@ class ContentCommandHandler:
                 transaction=transaction,
                 identity_payload=payload,
             )
-            self._writer.put_identity(
+            _COMMAND_PORTS[self].put_identity(
                 revision_identity(revision.document, revision.revision),
                 self._revision_payload(document, revision),
                 version=0,
@@ -233,9 +238,9 @@ class ContentCommandHandler:
         target = ResourceRef(association.subject.authority, "document-association", association.identity)
         if envelope.target != target:
             raise ContentError("link target does not match association identity")
-        assert self._writer is not None
-        with self._writer.transaction() as transaction:
-            return self._writer.mutate(
+        assert _COMMAND_PORTS[self] is not None
+        with _COMMAND_PORTS[self].transaction() as transaction:
+            return _COMMAND_PORTS[self].mutate(
                 CommandEnvelope(envelope.operation, envelope.schema_revision, envelope.target, envelope.context, self._association_payload(association, active=True)),
                 event_type="dat.content.linked",
                 effects={"association": association.identity, "active": True},
@@ -249,9 +254,9 @@ class ContentCommandHandler:
         target = ResourceRef(association.subject.authority, "document-association", association.identity)
         if envelope.target != target:
             raise ContentError("unlink target does not match association identity")
-        assert self._writer is not None
-        with self._writer.transaction() as transaction:
-            return self._writer.mutate(
+        assert _COMMAND_PORTS[self] is not None
+        with _COMMAND_PORTS[self].transaction() as transaction:
+            return _COMMAND_PORTS[self].mutate(
                 CommandEnvelope(envelope.operation, envelope.schema_revision, envelope.target, envelope.context, self._association_payload(association, active=False)),
                 event_type="dat.content.unlinked",
                 effects={"association": association.identity, "active": False, "preserved": ["document", "revisions", "other_links"]},

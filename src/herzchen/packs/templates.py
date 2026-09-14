@@ -16,6 +16,10 @@ shell fragment, import, or network lookup is evaluated.
 
 from __future__ import annotations
 
+import weakref
+
+_COMMAND_PORTS = weakref.WeakKeyDictionary()
+
 from dataclasses import dataclass, field
 from copy import deepcopy
 import hashlib
@@ -713,7 +717,8 @@ class TemplateEngine:
     def __init__(self, store: Any, *, graph: Any = None, actor: Any = None, resources: Iterable[Union[WorkTemplate, WorkProtocol]] = ()) -> None:
         if not hasattr(store, "get_identity") or not hasattr(store, "transaction"):
             raise TypeError("store must be the supplied FND Store")
-        self.store = store
+        _COMMAND_PORTS[self] = store
+        self.reader = store.consumer()
         if graph is None:
             from herzchen.domains.work import WorkGraph
             graph = WorkGraph(store, actor=actor)
@@ -788,7 +793,7 @@ class TemplateEngine:
         receipts: list[Any] = []
         local_refs: dict[str, ResourceRef] = {}
         records: list[WorkRecord] = []
-        with self.store.transaction():
+        with _COMMAND_PORTS[self].transaction():
             if owner_record is None:
                 title = project_seed.get("title") if project_seed else None
                 outcome = project_seed.get("outcome", "") if project_seed else ""
@@ -796,7 +801,7 @@ class TemplateEngine:
                 metadata["template_origin"] = _origin(resource)
                 owner_record = self.graph.create_project(title=title, outcome=outcome, metadata=metadata,
                                                          logical_request_key=request + ":project", actor=actor)
-                receipts.append(self.store.get_receipt(request + ":project"))
+                receipts.append(_COMMAND_PORTS[self].get_receipt(request + ":project"))
             if project_local_name is not None:
                 local_refs[project_local_name] = owner_record.ref
 
@@ -840,12 +845,12 @@ class TemplateEngine:
                 record = self.graph.create(work_kind, project=owner_record, **kwargs)
                 local_refs[name] = record.ref
                 records.append(record)
-                receipts.append(self.store.get_receipt(request + ":" + name))
+                receipts.append(_COMMAND_PORTS[self].get_receipt(request + ":" + name))
 
             # DAT's command handler uses nested FND savepoints here.  The
             # outer TemplateEngine transaction remains the single durable
             # boundary for work, document, and association mutations.
-            content = ContentCommandHandler(self.store)
+            content = ContentCommandHandler(_COMMAND_PORTS[self])
             content_actor = self._content_actor(actor)
             document_refs: dict[str, ResourceRef] = {}
             association_refs: dict[str, ResourceRef] = {}
@@ -854,7 +859,7 @@ class TemplateEngine:
                     continue
                 local_id = document["local_id"]
                 document_ref = ResourceRef(
-                    self.store.authority,
+                    _COMMAND_PORTS[self].authority,
                     "dat.content.document",
                     self._document_identity(request, resource, rendered, document),
                 )
@@ -1102,7 +1107,7 @@ class TemplateEngine:
     def _content_actor(self, actor: Any) -> AuthenticatedActor:
         selected = actor or self.actor or getattr(self.graph, "default_actor", None)
         if selected is None:
-            return AuthenticatedActor(self.store.authority, "pkg-template-engine", "pkg-template-engine")
+            return AuthenticatedActor(_COMMAND_PORTS[self].authority, "pkg-template-engine", "pkg-template-engine")
         if not isinstance(selected, AuthenticatedActor):
             raise TemplateValidationError("template DAT writes require an authenticated actor")
         return selected
@@ -1191,15 +1196,15 @@ class TemplateEngine:
             raise TemplateReferenceError(f"{field} is not a supported work reference")
 
     def _resolve_external(self, reference: ResourceRef, field: str) -> ResourceRef:
-        if reference.authority != self.store.authority:
+        if reference.authority != _COMMAND_PORTS[self].authority:
             raise TemplateReferenceError(f"{field} crosses store authority")
-        if self.store.get_identity(reference) is None:
+        if _COMMAND_PORTS[self].get_identity(reference) is None:
             raise TemplateReferenceError(f"missing {field}: {reference.to_json()}")
         return reference
 
     def _resolve_document_external(self, reference: ResourceRef, field: str) -> ResourceRef:
         self._resolve_external(reference, field)
-        if not ContentCommandHandler(self.store).read(reference):
+        if not ContentCommandHandler(_COMMAND_PORTS[self]).read(reference):
             raise TemplateReferenceError(f"missing DAT document: {reference.to_json()}")
         return reference
 

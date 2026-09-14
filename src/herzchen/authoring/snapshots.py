@@ -317,7 +317,7 @@ class DurableSnapshotAdapter:
         self.service = service
 
     def _ref(self, handle: SessionHandle, kind: str, digest: str) -> ResourceRef:
-        authority = getattr(self.service.writer, "authority", handle.scope.authority)
+        authority = getattr(self.service.reader, "authority", handle.scope.authority)
         return ResourceRef(authority, "authoring-snapshot", kind + "-" + handle.session_id + "-" + digest, digest)
 
     def capture(self, checkout_root: Union[str, os.PathLike[str]], registered_files: Iterable[Union[str, os.PathLike[str]]], *, settled: Union[bool, Callable[[], bool]] = True) -> DurableSnapshot:
@@ -357,7 +357,7 @@ class DurableSnapshotAdapter:
             tree = self.capture(checkout_root, registered_files, settled=settled)
             ref = self._ref(handle, "draft", tree.tree_digest)
             session_snapshot = tree.as_session_snapshot(ref)
-            current = self.service.writer.get_identity(handle.scope)
+            current = self.service.reader.get_identity(handle.scope)
             if current is not None and current.payload.get("draft_digest") == session_snapshot.digest:
                 return SnapshotSaveResult("no_op", tree, session_snapshot)
             self.service.autosave(handle, request_id=request_id, snapshot=session_snapshot, activity=activity)
@@ -366,7 +366,7 @@ class DurableSnapshotAdapter:
             return SnapshotSaveResult("failed", tree, session_snapshot, recovery_pending=True, error=str(exc))
 
     def read(self, ref: ResourceRef) -> DurableSnapshot:
-        record = self.service.writer.get_identity(ref)
+        record = self.service.reader.get_identity(ref)
         if record is None or record.payload.get("type") != "authoring_snapshot":
             raise SnapshotError("snapshot is not durably admitted")
         data = self.service.read_snapshot(ref)

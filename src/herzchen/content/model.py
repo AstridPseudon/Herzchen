@@ -300,6 +300,10 @@ def domain_contribution() -> DomainContribution:
             "handler-required", "mutation-resource:document-association",
             "mutation-resource:dat.context.packet", "mutation-resource:project.specification",
             "mutation-resource:document",
+            "mutation-port:" + CONTENT_SCHEMA_REVISION + "|dat.content.document.create|*|dat.content.document.created",
+            "mutation-port:" + CONTENT_SCHEMA_REVISION + "|dat.content.revision.append|*|dat.content.revision.appended",
+            "mutation-port:" + CONTENT_SCHEMA_REVISION + "|dat.content.link|*|dat.content.linked",
+            "mutation-port:" + CONTENT_SCHEMA_REVISION + "|dat.content.unlink|*|dat.content.unlinked",
         ),
     )
 

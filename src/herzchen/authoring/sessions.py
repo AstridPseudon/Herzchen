@@ -12,6 +12,10 @@ deletes a checkout and never claims EDT-04's descriptor-relative race proof.
 
 from __future__ import annotations
 
+import weakref
+
+_COMMAND_PORTS = weakref.WeakKeyDictionary()
+
 from base64 import b64decode, b64encode
 from dataclasses import dataclass, field
 from hashlib import sha256
@@ -310,12 +314,17 @@ class AuthoringSessionService:
     ) -> None:
         if hasattr(writer, "domain_handler"):
             writer = writer.domain_handler((domain_contribution(),))
-        self.writer = writer
+        _COMMAND_PORTS[self] = writer
+        self.reader = writer.consumer()
         self.scope_resolver = scope_resolver
         self.event_waiter = event_waiter
         self.materializer = materializer
         self.snapshot_store = snapshot_store
         self._finish_lock = threading.RLock()
+
+    def _session_transaction(self) -> Any:
+        """Composition-only transaction boundary used by EDT adapters."""
+        return _COMMAND_PORTS[self].transaction()
 
     def resolve_scope(self, target: ResourceRef, *, parent_scope: Optional[ResourceRef] = None) -> ResourceRef:
         if not isinstance(target, ResourceRef):
@@ -332,9 +341,9 @@ class AuthoringSessionService:
         return target
 
     def _records(self, scope: ResourceRef, actor: AuthenticatedActor) -> Tuple[Optional[_Record], Optional[_Record]]:
-        authority = getattr(self.writer, "authority", scope.authority)
-        scope_record = _as_record(self.writer.get_identity(_scope_key(scope)))
-        actor_record = _as_record(self.writer.get_identity(_actor_key(actor, authority)))
+        authority = getattr(_COMMAND_PORTS[self], "authority", scope.authority)
+        scope_record = _as_record(_COMMAND_PORTS[self].get_identity(_scope_key(scope)))
+        actor_record = _as_record(_COMMAND_PORTS[self].get_identity(_actor_key(actor, authority)))
         return scope_record, actor_record
 
     @staticmethod
@@ -363,7 +372,7 @@ class AuthoringSessionService:
 
     def read(self, target: ResourceRef, actor: Optional[AuthenticatedActor] = None, *, parent_scope: Optional[ResourceRef] = None) -> ReadResult:
         scope = self.resolve_scope(target, parent_scope=parent_scope)
-        record = _as_record(self.writer.get_identity(_scope_key(scope)))
+        record = _as_record(_COMMAND_PORTS[self].get_identity(_scope_key(scope)))
         payload = {} if record is None else record.payload
         holder = bool(actor and self._active(payload) and self._payload_checkout(payload).actor == actor)  # type: ignore[union-attr]
         return self._masked_read(scope, payload, holder=holder)
@@ -421,7 +430,7 @@ class AuthoringSessionService:
             edit_token=None if record is None else record.edit_token,
             payload=payload if request_payload is None else request_payload,
         )
-        return self.writer.mutate(
+        return _COMMAND_PORTS[self].mutate(
             envelope,
             event_type="authoring." + operation,
             effects=dict(effects),
@@ -434,10 +443,10 @@ class AuthoringSessionService:
     def _put_refs(self, tx: Any, *refs: Optional[ResourceRef]) -> None:
         for ref in refs:
             if ref is not None:
-                self.writer.put_reference(ref, transaction=tx)
+                _COMMAND_PORTS[self].put_reference(ref, transaction=tx)
 
     def _put_snapshot(self, tx: Any, snapshot: Snapshot) -> None:
-        self.writer.put_identity(
+        _COMMAND_PORTS[self].put_identity(
             snapshot.ref,
             {
                 "type": "authoring_snapshot",
@@ -464,7 +473,7 @@ class AuthoringSessionService:
         session_id = _opaque_id("session")
         token = _opaque_id("token")
         fence = _opaque_id("fence")
-        draft = Snapshot(ResourceRef(getattr(self.writer, "authority", scope.authority), "authoring-snapshot", "draft-" + session_id, sha256(initial_bytes).hexdigest()), initial_bytes)
+        draft = Snapshot(ResourceRef(getattr(_COMMAND_PORTS[self], "authority", scope.authority), "authoring-snapshot", "draft-" + session_id, sha256(initial_bytes).hexdigest()), initial_bytes)
         checkout = AuthoringCheckout(scope, target_kind, actor, session_id, token, fence, base_revision, draft.ref, None, tuple(allowed_fields))
         handle = SessionHandle(_scope_key(scope), scope, target_kind, actor, session_id, token, fence, base_revision)
         payload = {
@@ -486,7 +495,7 @@ class AuthoringSessionService:
         return checkout, draft, handle, payload
 
     def _prior_receipt(self, request_id: str, digest: str) -> Optional[CommandReceipt]:
-        prior = self.writer.get_receipt(request_id)
+        prior = _COMMAND_PORTS[self].get_receipt(request_id)
         if prior is not None and prior.request_digest != digest:
             raise ReplayConflictError("logical request key was reused with a changed request digest")
         return prior
@@ -517,23 +526,23 @@ class AuthoringSessionService:
         scope_ref = _scope_key(scope)
         digest = self._request_digest("open", request_id, values, target=scope_ref, actor=actor)
 
-        authority = getattr(self.writer, "authority", scope.authority)
+        authority = getattr(_COMMAND_PORTS[self], "authority", scope.authority)
         actor_ref = _actor_key(actor, authority)
         materializer = materialize or self.materializer
         try:
             # The supplied FND transaction/Store owner serializes the complete
             # check-and-reserve unit across all service instances.
-            with self.writer.transaction() as tx:
+            with _COMMAND_PORTS[self].transaction() as tx:
                 prior = self._prior_receipt(request_id, digest)
                 if prior is not None:
-                    record = _as_record(self.writer.get_identity(scope_ref))
+                    record = _as_record(_COMMAND_PORTS[self].get_identity(scope_ref))
                     if record is not None and self._active(record.payload):
                         return self._open_result("replayed", scope, record.payload, prior=prior)
                     if record is not None and record.payload.get("status") == "saved_project_edit_not_opened":
                         return self._open_result("saved_project_edit_not_opened", scope, record.payload, prior=prior)
                     return OpenResult("replayed", scope, error=prior.error_code)
-                scope_record = _as_record(self.writer.get_identity(scope_ref))
-                actor_record = _as_record(self.writer.get_identity(actor_ref))
+                scope_record = _as_record(_COMMAND_PORTS[self].get_identity(scope_ref))
+                actor_record = _as_record(_COMMAND_PORTS[self].get_identity(actor_ref))
                 if scope_record is not None and self._active(scope_record.payload):
                     return OpenResult("occupied", scope, purpose=scope_record.payload.get("purpose"), activity=scope_record.payload.get("activity"), error="scope is occupied")
                 if actor_record is not None and self._actor_active(actor_record.payload):
@@ -622,7 +631,7 @@ class AuthoringSessionService:
         return OpenResult(status, scope, handle, checkout, payload.get("purpose"), payload.get("activity"), project_ref=self._project_ref(payload.get("project")), error=prior.error_code if prior else None)
 
     def _update_open_metadata(self, handle: SessionHandle, request_id: str, *, project: Any = None, checkout_path: Any = None, registered_files: Sequence[str] = ()) -> None:
-        scope_record = _as_record(self.writer.get_identity(handle.scope))
+        scope_record = _as_record(_COMMAND_PORTS[self].get_identity(handle.scope))
         if scope_record is None:
             raise InvalidSessionError("authoring scope disappeared")
         self._validate_record(handle, scope_record)
@@ -634,8 +643,8 @@ class AuthoringSessionService:
         if registered_files:
             payload["registered_files"] = list(registered_files)
         digest = self._request_digest("metadata", request_id, payload, target=handle.scope, actor=handle.actor)
-        with self.writer.transaction() as tx:
-            current = _as_record(self.writer.get_identity(handle.scope))
+        with _COMMAND_PORTS[self].transaction() as tx:
+            current = _as_record(_COMMAND_PORTS[self].get_identity(handle.scope))
             assert current is not None
             self._validate_record(handle, current)
             self._mutate(tx, actor=handle.actor, operation="metadata", request_id=request_id, target=handle.scope, digest=digest, record=current, payload=payload, effects={"metadata": True})
@@ -657,7 +666,7 @@ class AuthoringSessionService:
 
     def authorize_mutation(self, handle: SessionHandle, target: ResourceRef, *, token: str, fence: str, expected_base_revision: str) -> AuthoringCheckout:
         """Reject direct child/bypass mutation unless the current capability matches."""
-        record = _as_record(self.writer.get_identity(handle.scope))
+        record = _as_record(_COMMAND_PORTS[self].get_identity(handle.scope))
         if record is None:
             raise InvalidSessionError("scope is not admitted")
         checkout = self._validate_record(handle, record)
@@ -683,13 +692,13 @@ class AuthoringSessionService:
         return WaitResult("available" if read.status == "available" else read.status, scope, time.monotonic() - started, read)
 
     def autosave(self, handle: SessionHandle, *, request_id: str, snapshot: Any, activity: str = "editing") -> Snapshot:
-        record = _as_record(self.writer.get_identity(handle.scope))
+        record = _as_record(_COMMAND_PORTS[self].get_identity(handle.scope))
         if record is None:
             raise InvalidSessionError("scope is not admitted")
         checkout = self._validate_record(handle, record)
         snap = _snapshot(snapshot, checkout.draft_snapshot_ref)
         if not isinstance(snapshot, Snapshot) and not isinstance(snapshot, Mapping):
-            snap = Snapshot(ResourceRef(getattr(self.writer, "authority", handle.scope.authority), "authoring-snapshot", "draft-" + handle.session_id + "-" + snap.digest, snap.digest), snap.data)
+            snap = Snapshot(ResourceRef(getattr(_COMMAND_PORTS[self], "authority", handle.scope.authority), "authoring-snapshot", "draft-" + handle.session_id + "-" + snap.digest, snap.digest), snap.data)
         payload = dict(record.payload)
         payload["draft_bytes_b64"] = b64encode(snap.data).decode("ascii")
         payload["draft_digest"] = snap.digest
@@ -699,8 +708,8 @@ class AuthoringSessionService:
         payload["checkout"] = updated_checkout.to_dict()
         request_payload = {"session": handle.session_id, "snapshot": snap.digest, "bytes": len(snap.data), "activity": activity}
         digest = self._request_digest("autosave", request_id, request_payload, target=handle.scope, actor=handle.actor)
-        with self.writer.transaction() as tx:
-            current = _as_record(self.writer.get_identity(handle.scope))
+        with _COMMAND_PORTS[self].transaction() as tx:
+            current = _as_record(_COMMAND_PORTS[self].get_identity(handle.scope))
             assert current is not None
             self._validate_record(handle, current)
             self._mutate(tx, actor=handle.actor, operation="autosave", request_id=request_id, target=handle.scope, digest=digest, record=current, payload=payload, effects={"draft_digest": snap.digest, "draft_bytes": len(snap.data)}, request_payload=request_payload)
@@ -709,14 +718,14 @@ class AuthoringSessionService:
         return snap
 
     def _capture(self, checkout: AuthoringCheckout, capture: Any) -> Snapshot:
-        default = ResourceRef(getattr(self.writer, "authority", checkout.target_scope.authority), "authoring-snapshot", "final-" + checkout.session_id, sha256(b"").hexdigest())
+        default = ResourceRef(getattr(_COMMAND_PORTS[self], "authority", checkout.target_scope.authority), "authoring-snapshot", "final-" + checkout.session_id, sha256(b"").hexdigest())
         if callable(capture):
             capture = _call_flexible(capture, checkout, checkout=checkout)
         snap = _snapshot(capture, default)
         if not isinstance(capture, Snapshot) and not isinstance(capture, Mapping):
-            snap = Snapshot(ResourceRef(getattr(self.writer, "authority", checkout.target_scope.authority), "authoring-snapshot", "final-" + checkout.session_id + "-" + snap.digest, snap.digest), snap.data)
+            snap = Snapshot(ResourceRef(getattr(_COMMAND_PORTS[self], "authority", checkout.target_scope.authority), "authoring-snapshot", "final-" + checkout.session_id + "-" + snap.digest, snap.digest), snap.data)
         elif isinstance(capture, Mapping) and "ref" not in capture:
-            snap = Snapshot(ResourceRef(getattr(self.writer, "authority", checkout.target_scope.authority), "authoring-snapshot", "final-" + checkout.session_id + "-" + snap.digest, snap.digest), snap.data, snap.manifest)
+            snap = Snapshot(ResourceRef(getattr(_COMMAND_PORTS[self], "authority", checkout.target_scope.authority), "authoring-snapshot", "final-" + checkout.session_id + "-" + snap.digest, snap.digest), snap.data, snap.manifest)
         if not isinstance(snap.ref, ResourceRef):
             raise CaptureError("capture did not provide a ResourceRef")
         if self.snapshot_store is not None:
@@ -725,7 +734,7 @@ class AuthoringSessionService:
 
     def read_snapshot(self, ref: ResourceRef) -> bytes:
         """Read exact snapshot bytes through the supplied FND identity port."""
-        record = _as_record(self.writer.get_identity(ref))
+        record = _as_record(_COMMAND_PORTS[self].get_identity(ref))
         if record is None or record.payload.get("type") != "authoring_snapshot":
             raise CaptureError("snapshot is not durably admitted")
         data = b64decode(record.payload.get("bytes_b64", ""))
@@ -748,20 +757,20 @@ class AuthoringSessionService:
         if mode not in {"manual", "idle"}:
             raise ValueError("finish mode must be manual or idle")
         with self._finish_lock:
-            record = _as_record(self.writer.get_identity(handle.scope))
+            record = _as_record(_COMMAND_PORTS[self].get_identity(handle.scope))
             if record is None:
                 raise InvalidSessionError("scope is not admitted")
             request_payload = {"session": handle.session_id, "mode": mode, "expected_base_revision": expected_base_revision, "pending": pending}
             digest = self._request_digest("finish", request_id, request_payload, target=handle.scope, actor=handle.actor)
             prior = self._prior_receipt(request_id, digest)
             if prior is not None:
-                current = _as_record(self.writer.get_identity(handle.scope))
+                current = _as_record(_COMMAND_PORTS[self].get_identity(handle.scope))
                 current_checkout = None if current is None else self._payload_checkout(current.payload)
                 return FinishResult("replayed", handle.scope, handle.session_id, prior, current_checkout, recovery_pending=bool(current and current.payload.get("recovery_pending")), cleanup=current_checkout.cleanup if current_checkout else CleanupStatus.NOT_REQUESTED)
             closed_checkout = self._payload_checkout(record.payload)
             if closed_checkout is not None and closed_checkout.session_id == handle.session_id and closed_checkout.token == handle.token and closed_checkout.fence == handle.fence and closed_checkout.state != AuthoringState.OPEN and closed_checkout.finish_claim is not None and closed_checkout.finish_claim.finalization_identity == "finish-" + closed_checkout.session_id:
                 last_request = record.payload.get("finish_request_id")
-                receipt = self.writer.get_receipt(last_request) if isinstance(last_request, str) else None
+                receipt = _COMMAND_PORTS[self].get_receipt(last_request) if isinstance(last_request, str) else None
                 return FinishResult("already_finished", handle.scope, handle.session_id, receipt, closed_checkout, recovery_pending=bool(record.payload.get("recovery_pending")), cleanup=closed_checkout.cleanup)
             checkout = self._validate_record(handle, record)
             try:
@@ -776,10 +785,10 @@ class AuthoringSessionService:
             is_pending = checkout.target_kind in {"project", "project-sheet", "pending-project"} and (pending if pending is not None else bool(record.payload.get("pending"))) and snap.data == b64decode(record.payload.get("draft_bytes_b64", ""))
             claim = FinishClaim("finish-" + checkout.session_id, mode, _opaque_id("claim"))
             scope_ref = handle.scope
-            actor_ref = _actor_key(handle.actor, getattr(self.writer, "authority", scope_ref.authority))
+            actor_ref = _actor_key(handle.actor, getattr(_COMMAND_PORTS[self], "authority", scope_ref.authority))
             try:
-                with self.writer.transaction() as tx:
-                    current = _as_record(self.writer.get_identity(scope_ref))
+                with _COMMAND_PORTS[self].transaction() as tx:
+                    current = _as_record(_COMMAND_PORTS[self].get_identity(scope_ref))
                     if current is None:
                         raise InvalidSessionError("scope is not admitted")
                     current_checkout = self._validate_record(handle, current)
@@ -797,7 +806,7 @@ class AuthoringSessionService:
                     payload["final_snapshot_ref"] = snap.ref.to_dict()
                     self._mutate(tx, actor=handle.actor, operation="finish.claim", request_id="claim:" + claim.finalization_identity, target=scope_ref, digest=_digest({"claim": claim.to_dict(), "session": handle.session_id}), record=current, payload=payload, effects={"claim": claim.to_dict()})
                     if apply is not None and not is_pending:
-                        _call_flexible(apply, snap, claimed, tx=tx, writer=self.writer, checkout=claimed, snapshot=snap)
+                        _call_flexible(apply, snap, claimed, tx=tx, writer=_COMMAND_PORTS[self], checkout=claimed, snapshot=snap)
                     if is_pending:
                         final_checkout = AuthoringCheckout(claimed.target_scope, claimed.target_kind, claimed.actor, claimed.session_id, claimed.token, claimed.fence, claimed.base_revision, claimed.draft_snapshot_ref, None, claimed.allowed_fields, AuthoringState.RELEASED, CleanupStatus.PENDING, claim, claimed.unmanaged_writers)
                         result_status = "pending_released"
@@ -819,8 +828,8 @@ class AuthoringSessionService:
                         "fence": claimed.fence,
                         "manifest_digest": _digest(list(retirement_manifest if retirement_manifest is not None else snap.manifest)),
                     }
-                    receipt = self._mutate(tx, actor=handle.actor, operation="finish", request_id=request_id, target=scope_ref, digest=digest, record=_as_record(self.writer.get_identity(scope_ref)), payload=final_payload, effects={"mode": mode, "final_digest": snap.digest, "pending": is_pending}, request_payload=request_payload)
-                    actor_record = _as_record(self.writer.get_identity(actor_ref))
+                    receipt = self._mutate(tx, actor=handle.actor, operation="finish", request_id=request_id, target=scope_ref, digest=digest, record=_as_record(_COMMAND_PORTS[self].get_identity(scope_ref)), payload=final_payload, effects={"mode": mode, "final_digest": snap.digest, "pending": is_pending}, request_payload=request_payload)
+                    actor_record = _as_record(_COMMAND_PORTS[self].get_identity(actor_ref))
                     if actor_record is not None:
                         self._mutate(tx, actor=handle.actor, operation="actor.release", request_id=request_id + ":actor-release", target=actor_ref, digest=digest, record=actor_record, payload={"type": "authoring_actor", "active": False, "scope": scope_ref.to_dict(), "session_id": handle.session_id}, effects={"session_id": handle.session_id})
                     self._put_snapshot(tx, snap)
@@ -837,7 +846,7 @@ class AuthoringSessionService:
         return FinishResult("rejected", handle.scope, handle.session_id, final_snapshot=snap, recovery_pending=False, cleanup=CleanupStatus.PENDING, error=error)
 
     def _transition_recovery(self, handle: SessionHandle, request_id: str, snap: Snapshot, error: str, *, rejected: bool = False) -> None:
-        record = _as_record(self.writer.get_identity(handle.scope))
+        record = _as_record(_COMMAND_PORTS[self].get_identity(handle.scope))
         if record is None:
             return
         checkout = self._payload_checkout(record.payload)
@@ -858,14 +867,14 @@ class AuthoringSessionService:
         }
         payload["recovery_pending"] = not rejected
         payload["error"] = error
-        actor_ref = _actor_key(handle.actor, getattr(self.writer, "authority", handle.scope.authority))
+        actor_ref = _actor_key(handle.actor, getattr(_COMMAND_PORTS[self], "authority", handle.scope.authority))
         digest = _digest({"session": handle.session_id, "error": error, "snapshot": snap.digest, "rejected": rejected})
-        with self.writer.transaction() as tx:
-            current = _as_record(self.writer.get_identity(handle.scope))
+        with _COMMAND_PORTS[self].transaction() as tx:
+            current = _as_record(_COMMAND_PORTS[self].get_identity(handle.scope))
             if current is None:
                 return
             self._mutate(tx, actor=handle.actor, operation="finish.recovery", request_id=request_id, target=handle.scope, digest=digest, record=current, payload=payload, effects={"recovery_pending": not rejected, "error": error})
-            actor_record = _as_record(self.writer.get_identity(actor_ref))
+            actor_record = _as_record(_COMMAND_PORTS[self].get_identity(actor_ref))
             if actor_record is not None:
                 self._mutate(tx, actor=handle.actor, operation="actor.release", request_id=request_id + ":actor", target=actor_ref, digest=digest, record=actor_record, payload={"type": "authoring_actor", "active": False, "scope": handle.scope.to_dict(), "session_id": handle.session_id}, effects={"session_id": handle.session_id})
             self._put_snapshot(tx, snap)
@@ -878,7 +887,7 @@ class AuthoringSessionService:
         new stable capture/fence first; the resulting exact manifest is then
         persisted before physical deletion is attempted.
         """
-        record = _as_record(self.writer.get_identity(handle.scope))
+        record = _as_record(_COMMAND_PORTS[self].get_identity(handle.scope))
         if record is None:
             raise InvalidSessionError("scope is not admitted")
         checkout = self._validate_record(handle, record, require_open=False)
@@ -910,8 +919,8 @@ class AuthoringSessionService:
             {"session": handle.session_id, "snapshot": snapshot.digest},
             target=handle.scope, actor=handle.actor,
         )
-        with self.writer.transaction() as tx:
-            current = _as_record(self.writer.get_identity(handle.scope))
+        with _COMMAND_PORTS[self].transaction() as tx:
+            current = _as_record(_COMMAND_PORTS[self].get_identity(handle.scope))
             if current is None:
                 raise InvalidSessionError("scope is not admitted")
             self._validate_record(handle, current, require_open=False)
@@ -925,7 +934,7 @@ class AuthoringSessionService:
         return snapshot
 
     def _transition_release(self, handle: SessionHandle, request_id: str, *, status: str, project: Any = None, error: Optional[str] = None) -> None:
-        record = _as_record(self.writer.get_identity(handle.scope))
+        record = _as_record(_COMMAND_PORTS[self].get_identity(handle.scope))
         if record is None:
             raise InvalidSessionError("scope is not admitted")
         checkout = self._validate_record(handle, record)
@@ -937,25 +946,25 @@ class AuthoringSessionService:
             payload["project"] = project.to_dict() if isinstance(project, ResourceRef) else project
         if error:
             payload["error"] = error
-        actor_ref = _actor_key(handle.actor, getattr(self.writer, "authority", handle.scope.authority))
+        actor_ref = _actor_key(handle.actor, getattr(_COMMAND_PORTS[self], "authority", handle.scope.authority))
         digest = _digest({"status": status, "session": handle.session_id, "error": error})
-        with self.writer.transaction() as tx:
-            current = _as_record(self.writer.get_identity(handle.scope))
+        with _COMMAND_PORTS[self].transaction() as tx:
+            current = _as_record(_COMMAND_PORTS[self].get_identity(handle.scope))
             assert current is not None
             self._validate_record(handle, current)
             self._mutate(tx, actor=handle.actor, operation="release", request_id=request_id, target=handle.scope, digest=digest, record=current, payload=payload, effects={"status": status})
-            actor_record = _as_record(self.writer.get_identity(actor_ref))
+            actor_record = _as_record(_COMMAND_PORTS[self].get_identity(actor_ref))
             if actor_record is not None:
                 self._mutate(tx, actor=handle.actor, operation="actor.release", request_id=request_id + ":actor", target=actor_ref, digest=digest, record=actor_record, payload={"type": "authoring_actor", "active": False, "scope": handle.scope.to_dict(), "session_id": handle.session_id}, effects={"session_id": handle.session_id})
 
     def release(self, handle: SessionHandle, *, request_id: str) -> FinishResult:
         self._transition_release(handle, request_id, status="released")
-        record = _as_record(self.writer.get_identity(handle.scope))
+        record = _as_record(_COMMAND_PORTS[self].get_identity(handle.scope))
         checkout = None if record is None else self._payload_checkout(record.payload)
         return FinishResult("released", handle.scope, handle.session_id, checkout=checkout, cleanup=CleanupStatus.PENDING)
 
     def cleanup(self, handle: SessionHandle, *, request_id: str, status: CleanupStatus = CleanupStatus.PENDING) -> CleanupResult:
-        record = _as_record(self.writer.get_identity(handle.scope))
+        record = _as_record(_COMMAND_PORTS[self].get_identity(handle.scope))
         if record is None:
             raise InvalidSessionError("scope is not admitted")
         checkout = self._payload_checkout(record.payload)
@@ -983,8 +992,8 @@ class AuthoringSessionService:
         payload["cleanup_outcome"] = status.value
         request_payload = {"session": handle.session_id, "status": status.value}
         digest = self._request_digest("cleanup", request_id, request_payload, target=handle.scope, actor=handle.actor)
-        with self.writer.transaction() as tx:
-            current = _as_record(self.writer.get_identity(handle.scope))
+        with _COMMAND_PORTS[self].transaction() as tx:
+            current = _as_record(_COMMAND_PORTS[self].get_identity(handle.scope))
             assert current is not None
             self._mutate(tx, actor=handle.actor, operation="cleanup", request_id=request_id, target=handle.scope, digest=digest, record=current, payload=payload, effects={"cleanup": status.value}, request_payload=request_payload)
         return CleanupResult(status.value, handle.scope, handle.session_id, status)
