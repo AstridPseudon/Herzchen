@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import base64
+import builtins
 import hashlib
 import json
 import os
 import re
 import shutil
+from types import SimpleNamespace
 from pathlib import Path
 
 import pytest
@@ -17,6 +19,7 @@ from herzchen.kernel import Store
 from herzchen.packs.authoring import (
     ManagedPackAuthoringHandler,
     PackPathError,
+    PackAuthoringError,
     PackProvenanceError,
     describe_compatibility,
     read_managed_pack,
@@ -81,6 +84,75 @@ def test_public_managed_reader_uses_real_discovery_and_loader(managed_state: Pat
     assert packs["scene_production"].pack_id == "scene_production"
 
 
+def test_neutral_admission_adapter_avoids_astrid_imports_and_preserves_identity(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    pack_root = ROOT / "packs/megado"
+    manifest_path = pack_root / "pack.yaml"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    resource_paths = ("skill/SKILL.md", "skill/references/improvement-loop.md")
+    handles = tuple(
+        SimpleNamespace(
+            path=path,
+            resolved=pack_root / path,
+            sha256=hashlib.sha256((pack_root / path).read_bytes()).hexdigest(),
+            kind="resource:skill",
+        )
+        for path in resource_paths
+    )
+    entry = SimpleNamespace(
+        id="megado",
+        manifest=SimpleNamespace(sha256=hashlib.sha256(manifest_path.read_bytes()).hexdigest()),
+        definition=SimpleNamespace(id="megado", version=manifest["version"], to_dict=lambda: manifest),
+        resource_handles=handles,
+    )
+    discovered = SimpleNamespace(
+        id="megado",
+        entry=entry,
+        source_kind="managed",
+        source_revision="62503c6bf1e08e6399ed97bc4ee5aab7d3f3d96e",
+        source_tree_sha256="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        source_manifest_sha256=entry.manifest.sha256,
+        source_inventory_identity="21f6272fb3b4303c51d386f0e726c7c605841549b8750367376a0d6088973cbf",
+        pack_dir=pack_root,
+    )
+
+    def fake_discoverer(*, project_root):
+        assert project_root == ROOT
+        return (discovered,)
+
+    def fake_loader(path, *, expected_pack_id=None):
+        assert Path(path) == manifest_path
+        assert expected_pack_id == "megado"
+        return SimpleNamespace(id="megado", schema_version="2")
+
+    real_import = builtins.__import__
+
+    def block_product_imports(name, *args, **kwargs):
+        if name == "astrid" or name.startswith(("astrid.", "otto", "runtime")):
+            raise AssertionError(f"neutral adapter imported forbidden product module: {name}")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", block_product_imports)
+    pack = read_managed_pack(
+        "megado",
+        project_root=ROOT,
+        discoverer=fake_discoverer,
+        loader=fake_loader,
+    )
+    assert pack.pack_id == "megado"
+    assert pack.source.source_kind == "managed"
+    assert pack.source.source_revision == discovered.source_revision
+    assert pack.source.source_manifest_sha256 == discovered.source_manifest_sha256
+    assert pack.resource("skill/SKILL.md").source_digest == handles[0].sha256
+    assert pack.resource("skill/references/improvement-loop.md").source_ref.revision == discovered.source_revision
+
+
+def test_partial_admission_adapter_is_rejected_before_default_import():
+    with pytest.raises(PackAuthoringError, match="supplied together"):
+        read_managed_pack("megado", project_root=ROOT, discoverer=lambda **_: (), loader=None)
+
+
 def test_blank_starter_is_sparse_pack_v2_and_independent_of_megado():
     manifest = json.loads((ROOT / "packs/work-starters/pack.yaml").read_text(encoding="utf-8"))
     template = json.loads((ROOT / "packs/work-starters/templates/blank-project.json").read_text(encoding="utf-8"))
@@ -141,7 +213,12 @@ def test_invalid_managed_provenance_fails_closed(managed_state: Path):
         return (type(item)(item.entry, "managed", item.priority_index, item.source_revision, None, item.source_tree_sha256, item.source_inventory_identity),)
 
     with pytest.raises(PackProvenanceError):
-        read_managed_pack("megado", project_root=managed_state, discoverer=bad_discovery)
+        read_managed_pack(
+            "megado",
+            project_root=managed_state,
+            discoverer=bad_discovery,
+            loader=_astrid().load_pack_manifest,
+        )
 
 
 def test_content_only_authoring_preserves_unknown_siblings_and_old_pins(managed_pack, tmp_path: Path):

@@ -288,9 +288,14 @@ def read_managed_pack(
     """Read one pack through the real Astrid managed-source discovery route."""
     if not isinstance(pack_id, str) or not pack_id.strip():
         raise PackAuthoringError("pack_id must be non-blank")
-    default_discoverer, default_loader = _public_apis()
-    discover = discoverer or default_discoverer
-    load = loader or default_loader
+    if (discoverer is None) != (loader is None):
+        raise PackAuthoringError(
+            "discoverer and loader must be supplied together; do not mix an admission adapter with the Astrid default"
+        )
+    if discoverer is None:
+        discover, load = _public_apis()
+    else:
+        discover, load = discoverer, loader
     try:
         discovered = tuple(discover(project_root=project_root))
     except Exception as exc:  # normalize public-loader failures at this boundary
