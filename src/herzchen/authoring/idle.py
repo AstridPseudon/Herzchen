@@ -17,6 +17,7 @@ import time
 from typing import Any, Callable, Iterable, Mapping, Optional, Union
 
 from herzchen.contracts import AuthoringCheckout, AuthoringState, CleanupStatus, canonical_json
+from herzchen.command_ports import owner_local_command_port
 
 from .cleanup import CleanupObservation, cleanup_registered_files, registered_files_from_manifest
 from .finish import SemanticFinishAdapter, SemanticFinishResult, ValidationResult
@@ -112,6 +113,9 @@ class IdleCloseService:
         self._declared_edits: dict[str, float] = {}
         self.reader = None if self.service is None else self.service.reader
 
+    def _owner_service(self) -> Any:
+        return None if self.service is None else owner_local_command_port(self.service)
+
     def _record(self, handle: SessionHandle) -> Any:
         if self.service is None:
             return None
@@ -181,7 +185,7 @@ class IdleCloseService:
             snapshot_adapter = DurableSnapshotAdapter(self.service)
             tree = snapshot_adapter.capture(checkout_root, registered_files)
             snap = tree.as_session_snapshot(snapshot_adapter._ref(handle, "final", tree.tree_digest))
-            result = self.service.finish(handle, capture=snap, **kwargs)
+            result = self._owner_service().finish(handle, capture=snap, **kwargs)
             return SemanticFinishResult(result.status, result, recovery_pending=result.recovery_pending, error=result.error)
         value = _call(self._finish, handle, **kwargs)
         return value
@@ -225,7 +229,7 @@ class IdleCloseService:
             checkout = None if raw_checkout is None else AuthoringCheckout.from_dict(raw_checkout)
             if checkout is None:
                 return None
-            result = self.service.finish(
+            result = self._owner_service().finish(
                 handle,
                 request_id=request_id,
                 mode="idle",
@@ -278,31 +282,31 @@ class IdleCloseService:
                     _call(capture_barrier, tree, snapshot=tree, checkout_root=str(checkout_root), registered_files=paths)
                 self._quiesce(quiesce, writer_check)
                 adapter.verify_manifest(tree, checkout_root, paths)
-                self.service.refresh_final_snapshot(
+                self._owner_service().refresh_final_snapshot(
                     handle, request_id=request_id + ":refresh",
                     snapshot=tree.as_session_snapshot(adapter._ref(handle, "final", tree.tree_digest)),
                     retirement_guard=retirement_guard,
                 )
-                self.service.validate_retirement_handoff(handle, retirement_guard)
+                self._owner_service().validate_retirement_handoff(handle, retirement_guard)
                 exact_files = registered_files_from_manifest(tree.manifest)
             except BaseException as exc:
                 observation = CleanupObservation(CleanupStatus.UNSAFE, str(checkout_root), error=str(exc) or "fresh cleanup capture was unsafe")
                 if self.service is not None:
-                    self.service.cleanup(handle, request_id=request_id + ":cleanup", status=observation.status, retirement_guard=retirement_guard)
+                    self._owner_service().cleanup(handle, request_id=request_id + ":cleanup", status=observation.status, retirement_guard=retirement_guard)
                 return IdleCloseResult("cleanup_pending", handle.scope, handle.session_id, cleanup=observation, recovery_pending=True, error=observation.error)
         elif self.service is not None:
             try:
-                self.service.validate_retirement_handoff(handle, retirement_guard)
+                self._owner_service().validate_retirement_handoff(handle, retirement_guard)
             except BaseException:
                 try:
-                    self.service.reestablish_retirement_fence(
+                    self._owner_service().reestablish_retirement_fence(
                         handle, request_id=request_id + ":fence-reacquire",
                         retirement_guard=retirement_guard,
                     )
-                    self.service.validate_retirement_handoff(handle, retirement_guard)
+                    self._owner_service().validate_retirement_handoff(handle, retirement_guard)
                 except BaseException as exc:
                     observation = CleanupObservation(CleanupStatus.UNSAFE, str(checkout_root), error=str(exc))
-                    self.service.cleanup(handle, request_id=request_id + ":cleanup", status=observation.status, retirement_guard=retirement_guard)
+                    self._owner_service().cleanup(handle, request_id=request_id + ":cleanup", status=observation.status, retirement_guard=retirement_guard)
                     return IdleCloseResult("cleanup_pending", handle.scope, handle.session_id, cleanup=observation, recovery_pending=True, error=observation.error)
         def cleanup_check() -> Any:
             if quiesce is not None:
@@ -320,7 +324,7 @@ class IdleCloseService:
             observation = CleanupObservation(CleanupStatus.PENDING, str(checkout_root), error=str(exc))
         if self.service is not None:
             try:
-                durable = self.service.cleanup(handle, request_id=request_id + ":cleanup", status=observation.status, retirement_guard=retirement_guard)
+                durable = self._owner_service().cleanup(handle, request_id=request_id + ":cleanup", status=observation.status, retirement_guard=retirement_guard)
                 if observation.status == CleanupStatus.COMPLETE and durable.cleanup == CleanupStatus.COMPLETE:
                     marker = getattr(retirement_guard, "mark_complete", None)
                     if callable(marker):
@@ -430,10 +434,10 @@ class IdleCloseService:
             return result
         if self.service is not None:
             try:
-                self.service.validate_retirement_handoff(handle, retirement_guard)
+                self._owner_service().validate_retirement_handoff(handle, retirement_guard)
             except BaseException as exc:
                 observation = CleanupObservation(CleanupStatus.UNSAFE, str(checkout_root), error=str(exc))
-                self.service.cleanup(
+                self._owner_service().cleanup(
                     handle, request_id=request_id + ":cleanup", status=observation.status,
                     retirement_guard=retirement_guard,
                 )
@@ -465,7 +469,7 @@ class IdleCloseService:
             observation = CleanupObservation(CleanupStatus.PENDING, str(checkout_root), error=str(exc))
         if self.service is not None:
             try:
-                durable = self.service.cleanup(handle, request_id=request_id + ":cleanup", status=observation.status, retirement_guard=retirement_guard)
+                durable = self._owner_service().cleanup(handle, request_id=request_id + ":cleanup", status=observation.status, retirement_guard=retirement_guard)
                 if observation.status == CleanupStatus.COMPLETE and durable.cleanup == CleanupStatus.COMPLETE:
                     marker = getattr(retirement_guard, "mark_complete", None)
                     if callable(marker):

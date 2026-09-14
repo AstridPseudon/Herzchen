@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, Optional, Protocol, Union
 
 from herzchen.contracts import AuthoringCheckout, AuthoringState, CleanupStatus, ResourceRef
+from herzchen.command_ports import owner_local_command_port
 
 from .sessions import AuthoringSessionService, FinishResult, SessionHandle
 from .snapshots import DurableSnapshot, DurableSnapshotAdapter, SnapshotError
@@ -88,6 +89,9 @@ class SemanticFinishAdapter:
         self.reader = service.reader
         self.snapshots = snapshot_adapter or DurableSnapshotAdapter(service)
 
+    def _owner_service(self) -> Any:
+        return owner_local_command_port(self.service)
+
     @staticmethod
     def _writer_is_quiescent(
         quiesce: Optional[Callable[..., Any]],
@@ -121,7 +125,7 @@ class SemanticFinishAdapter:
     ) -> SemanticFinishResult:
         """Durably retain the pre-late-write capture and release for retry."""
         session_snapshot = tree.as_session_snapshot(self.snapshots._ref(handle, "final", tree.tree_digest))
-        self.service.record_finish_recovery(
+        self._owner_service().record_finish_recovery(
             handle, request_id=request_id + ":late-write", snapshot=session_snapshot, error=error,
             retirement_guard=retirement_guard,
         )
@@ -251,7 +255,7 @@ class SemanticFinishAdapter:
         prior = self.service.reader.get_receipt(request_id)
         if prior is not None:
             try:
-                result = self.service.finish(
+                result = self._owner_service().finish(
                     handle,
                     request_id=request_id,
                     mode=mode,
@@ -341,7 +345,7 @@ class SemanticFinishAdapter:
             if not validation.valid:
                 # Use the session port's existing rejected-draft transition;
                 # no domain handler or second receipt/event engine is involved.
-                rejected = self.service.reject_finish(
+                rejected = self._owner_service().reject_finish(
                     handle, request_id=request_id, snapshot=session_snapshot,
                     error=_diagnostic_text(validation.diagnostics),
                     retirement_guard=retirement_guard,
@@ -367,7 +371,7 @@ class SemanticFinishAdapter:
                 )
 
             try:
-                result = self.service.finish(
+                result = self._owner_service().finish(
                     handle,
                     request_id=request_id,
                     mode=mode,

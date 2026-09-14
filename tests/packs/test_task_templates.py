@@ -399,6 +399,7 @@ def test_bundle_is_literal_idempotent_and_retains_origin_namespaces_and_review(h
 
 
 def test_bundle_rolls_back_later_node_failure_and_replays_once(harness, monkeypatch):
+    from herzchen.command_ports import owner_local_engine
     store, graph, engine, _ = harness
     template = work_template(
         "atomic-bundle",
@@ -422,7 +423,17 @@ def test_bundle_rolls_back_later_node_failure_and_replays_once(harness, monkeypa
             raise RuntimeError("injected later-node failure")
         return original_create(kind, **kwargs)
 
-    monkeypatch.setattr(graph, "create", fail_on_second_node)
+    owner_template = owner_local_engine(engine)
+    original_graph = owner_template.graph
+
+    class FailingGraph:
+        def create(self, kind, **kwargs):
+            return fail_on_second_node(kind, **kwargs)
+
+        def __getattr__(self, name):
+            return getattr(original_graph, name)
+
+    monkeypatch.setattr(owner_template, "graph", FailingGraph())
     with pytest.raises(RuntimeError, match="injected later-node failure"):
         engine.instantiate(template, logical_request_key="atomic-request")
 
@@ -432,7 +443,7 @@ def test_bundle_rolls_back_later_node_failure_and_replays_once(harness, monkeypa
     assert store.get_receipt("atomic-request:first") is None
     assert store.get_receipt("atomic-request:second") is None
 
-    monkeypatch.setattr(graph, "create", original_create)
+    monkeypatch.setattr(owner_template, "graph", original_graph)
     result = engine.instantiate(template, logical_request_key="atomic-request")
     assert [record.title for record in result.records] == ["First task", "Second task"]
     assert len(graph.list()) == 3

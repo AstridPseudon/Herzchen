@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, Optional, Protocol, Union
 
 from herzchen.contracts import AuthoringState, AuthenticatedActor, CleanupStatus, ResourceRef
+from herzchen.command_ports import owner_local_command_port, owner_local_engine
 
 from .cleanup import CleanupObservation, cleanup_registered_files, registered_files_from_manifest
 from .finish import SemanticFinishAdapter, SemanticFinishResult
@@ -116,6 +117,12 @@ class AuthoringLifecycle:
         self.writer_leases = writer_leases
         self.writer_identity = writer_identity
 
+    def _owner_service(self) -> Any:
+        return owner_local_command_port(self.service)
+
+    def _owner_engine(self) -> Any:
+        return owner_local_engine(self.service)
+
     def _lease_context(self, checkout_root: Union[str, Path], writer_identity: Optional[str]) -> Any:
         if self.writer_leases is None:
             raise WriterLeaseError("authenticated writer lease authority is unavailable")
@@ -126,12 +133,12 @@ class AuthoringLifecycle:
 
     def _current_handoff(self, handle: SessionHandle, guard: object, request_id: str) -> Any:
         try:
-            return self.service.validate_retirement_handoff(handle, guard)
+            return self._owner_service().validate_retirement_handoff(handle, guard)
         except BaseException:
-            self.service.reestablish_retirement_fence(
+            self._owner_service().reestablish_retirement_fence(
                 handle, request_id=request_id + ":fence-reacquire", retirement_guard=guard,
             )
-            return self.service.validate_retirement_handoff(handle, guard)
+            return self._owner_service().validate_retirement_handoff(handle, guard)
 
     @property
     def idle(self) -> IdleCloseService:
@@ -158,9 +165,10 @@ class AuthoringLifecycle:
         # A product boundary may install a resolver on the supplied session
         # service.  Resolve before passing a parent hint so a forged parent is
         # rejected instead of becoming an EDT-only override.
-        if scope is not None and self.service.scope_resolver is not None:
+        owner_engine = self._owner_engine()
+        if scope is not None and owner_engine.scope_resolver is not None:
             canonical_scope = _call(
-                self.service.scope_resolver, target,
+                owner_engine.scope_resolver, target,
                 target=target, parent_scope=scope,
             )
             if not isinstance(canonical_scope, ResourceRef):
@@ -190,7 +198,7 @@ class AuthoringLifecycle:
         materialize: Optional[Callable[..., Any]] = None,
         **kwargs: Any,
     ) -> AuthoringTarget:
-        opened = self.service.create_and_open(
+        opened = self._owner_service().create_and_open(
             target, actor, request_id=request_id, create_project=create_project,
             target_kind=target_kind, base_revision=base_revision,
             initial_content=initial_content, pending=pending, materialize=materialize,
@@ -237,7 +245,7 @@ class AuthoringLifecycle:
                     exact_files = registered_files_from_manifest(manifest)
                 except BaseException as exc:
                     observation = CleanupObservation(CleanupStatus.UNSAFE, str(checkout_root), error=str(exc))
-                    durable = self.service.cleanup(
+                    durable = self._owner_service().cleanup(
                         handle, request_id=request_id + ":cleanup", status=CleanupStatus.UNSAFE,
                         retirement_guard=guard,
                     )
@@ -250,7 +258,7 @@ class AuthoringLifecycle:
                 observation = self.cleanup(
                     checkout_root, exact_files, retirement_guard=guard, writer_check=cleanup_check,
                 )
-                durable = self.service.cleanup(
+                durable = self._owner_service().cleanup(
                     handle, request_id=request_id + ":cleanup", status=observation.status,
                     retirement_guard=guard,
                 )
@@ -335,12 +343,12 @@ class AuthoringLifecycle:
                         _call(capture_barrier, tree, snapshot=tree, checkout_root=str(checkout_root), registered_files=paths)
                     SemanticFinishAdapter._writer_is_quiescent(quiesce, writer_check)
                     adapter.verify_manifest(tree, checkout_root, paths)
-                    self.service.refresh_final_snapshot(
+                    self._owner_service().refresh_final_snapshot(
                         handle, request_id=request_id + ":refresh",
                         snapshot=tree.as_session_snapshot(adapter._ref(handle, "final", tree.tree_digest)),
                         retirement_guard=guard,
                     )
-                    self.service.validate_retirement_handoff(handle, guard)
+                    self._owner_service().validate_retirement_handoff(handle, guard)
                     exact_files = registered_files_from_manifest(tree.manifest)
                 else:
                     manifest = self._current_handoff(handle, guard, request_id)
@@ -355,7 +363,7 @@ class AuthoringLifecycle:
                 observation = self.cleanup(
                     checkout_root, exact_files, retirement_guard=guard, writer_check=fenced_check,
                 )
-                durable = self.service.cleanup(
+                durable = self._owner_service().cleanup(
                     handle, request_id=request_id, status=observation.status, retirement_guard=guard,
                 )
                 if observation.status == CleanupStatus.COMPLETE and durable.cleanup == CleanupStatus.COMPLETE:

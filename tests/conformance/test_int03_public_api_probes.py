@@ -462,13 +462,14 @@ def test_int03_installed_public_api_probes(tmp_path: Path) -> None:
     pack_handler = ManagedPackAuthoringHandler(reopened)
     pack_result = pack_handler.author(managed_pack, {"skill/SKILL.md": b"# INT03 fixture adoption\n"}, logical_request_key="pack-author", actor=ACTOR)
     pack_fresh = pack_handler.read("megado")
-    pack_replay_reject = _error(lambda: pack_handler.author(managed_pack, {"skill/SKILL.md": b"# INT03 fixture adoption\n"}, logical_request_key="pack-author", actor=ACTOR))
+    pack_replay = pack_handler.author(managed_pack, {"skill/SKILL.md": b"# INT03 fixture adoption\n"}, logical_request_key="pack-author", actor=ACTOR)
+    assert pack_replay.snapshot_ref == pack_result.snapshot_ref and pack_replay.receipt == pack_result.receipt
     bad_handles = tuple(SimpleNamespace(path=item.path, resolved=item.resolved, sha256=("0" * 64 if item.path.endswith("improvement-loop.md") else item.sha256), kind=item.kind) for item in handles)
     bad_discovered = SimpleNamespace(
         id="megado", entry=SimpleNamespace(id="megado", manifest=SimpleNamespace(sha256=hashlib.sha256(manifest_path.read_bytes()).hexdigest()), definition=SimpleNamespace(id="megado", version="1.0", to_dict=lambda: json.loads(manifest_path.read_text())), resource_handles=bad_handles), source_kind=managed_pack.source.source_kind, source_revision=managed_pack.source.source_revision, source_tree_sha256=managed_pack.source.source_tree_sha256, source_manifest_sha256=managed_pack.source.source_manifest_sha256, source_inventory_identity=managed_pack.source.source_inventory_identity, pack_dir=pack_root,
     )
     bad_reject = _error(lambda: read_managed_pack("megado", project_root=ROOT, discoverer=lambda **_: (bad_discovered,), loader=loader))
-    observations.append(_observation("INT03-PKG-003", "public pack loader/read_managed_pack + ManagedPackAuthoringHandler.author/read", {"manifest": manifest_path, "resource_digests": managed_pack.resource_digests}, {"pack": managed_pack.pack_id, "changed": ["skill/SKILL.md"]}, pack_result.receipt if hasattr(pack_result, "receipt") else pack_result, pack_fresh, replay={"unsupported": "authoring recomputes a new snapshot revision on repeated same-key input; exact replay is rejected rather than treated as idempotent"}, reject={"same_key_replay": pack_replay_reject, "digest": bad_reject}, reopen={"fresh": pack_handler.read("megado")}, evidence_class="candidate_installed_api_with_harness_fixture"))
+    observations.append(_observation("INT03-PKG-003", "public pack loader/read_managed_pack + ManagedPackAuthoringHandler.author/read", {"manifest": manifest_path, "resource_digests": managed_pack.resource_digests}, {"pack": managed_pack.pack_id, "changed": ["skill/SKILL.md"]}, pack_result.receipt if hasattr(pack_result, "receipt") else pack_result, pack_fresh, replay=pack_replay, reject={"digest": bad_reject}, reopen={"fresh": pack_handler.read("megado")}, evidence_class="candidate_installed_api_with_harness_fixture"))
 
     # WRK graph, batch, pending project, assignment, readiness and stale fencing.
     wrk_before = graph.list()

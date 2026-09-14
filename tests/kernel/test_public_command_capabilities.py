@@ -1,9 +1,12 @@
 """GF01 ordinary command objects/modules expose finite ports, never owners."""
 
 import inspect
+import sqlite3
 from types import ModuleType
 
 import pytest
+
+from herzchen.command_ports import SerializedCommandClient, SerializedReaderClient
 
 from herzchen.authoring.finish import SemanticFinishAdapter
 from herzchen.authoring.idle import IdleCloseService
@@ -29,6 +32,7 @@ from herzchen.kernel.store import (
     DomainHandler,
     Store,
     StoreAdmissionError,
+    Transaction,
 )
 
 import herzchen.authoring.sessions as sessions_module
@@ -71,7 +75,7 @@ def _assert_ordinary(value):
         assert not hasattr(value, name), (type(value).__name__, name)
     reader = getattr(value, "reader", None)
     if reader is not None:
-        assert isinstance(reader, ConsumerStore)
+        assert isinstance(reader, SerializedReaderClient)
         for name in FORBIDDEN:
             assert not hasattr(reader, name), (type(value).__name__, name)
     for name in FORBIDDEN:
@@ -81,7 +85,7 @@ def _assert_ordinary(value):
     # expose a generic SQL/mutation surface.
     for name, retained in vars(value).items():
         assert not isinstance(retained, (Store, DomainHandler)), (type(value).__name__, name)
-        if isinstance(retained, ConsumerStore):
+        if isinstance(retained, (ConsumerStore, SerializedCommandClient, SerializedReaderClient)):
             continue
         assert not (hasattr(retained, "transaction") and hasattr(retained, "mutate")), (
             type(value).__name__, name
@@ -90,14 +94,53 @@ def _assert_ordinary(value):
     if port is None:
         assert any(isinstance(retained, ConsumerStore) or hasattr(retained, "command_port") for retained in vars(value).values())
         return
-    assert isinstance(port, DomainCommandPort)
-    assert port.reader is reader
+    assert isinstance(port, SerializedCommandClient)
     assert port.endpoints
     for name in FORBIDDEN:
         assert not hasattr(port, name), (type(value).__name__, name)
-    with pytest.raises(TypeError):
-        vars(port)
+    with pytest.raises(TypeError): vars(port)
     assert not any(name in FORBIDDEN for name in dir(port))
+    # Review04's exact facade -> port -> engine -> writer route is gone.  The
+    # supported facade retains a socket client, not a DomainCommandPort.
+    assert "_CommandFacade__port" not in vars(value)
+    with pytest.raises(AttributeError):
+        object.__getattribute__(value, "_CommandFacade__port")
+    with pytest.raises(AttributeError):
+        object.__getattribute__(port, "_DomainCommandPort__engine")
+    descriptor = port.transport.to_dict()
+    assert set(descriptor) == {
+        "transport_revision", "socket_path", "token", "domain_id", "facade",
+        "endpoints", "schema_revision", "owner_pid", "session_id",
+    }
+    assert not any(str(item).endswith((".sqlite", ".sqlite3", ".db")) for item in descriptor.values())
+    _assert_no_live_writer_graph(value)
+
+
+def _assert_no_live_writer_graph(root):
+    seen = set()
+
+    def visit(value):
+        if id(value) in seen or value is None or isinstance(value, (str, bytes, int, float, bool, type, ModuleType)):
+            return
+        seen.add(id(value))
+        assert not isinstance(value, (Store, DomainHandler, DomainCommandPort, Transaction, sqlite3.Connection))
+        if inspect.isroutine(value):
+            return
+        if isinstance(value, dict):
+            for key, item in value.items(): visit(key); visit(item)
+            return
+        if isinstance(value, (list, tuple, set, frozenset)):
+            for item in value: visit(item)
+            return
+        try: members = vars(value).values()
+        except TypeError:
+            members = ()
+            for slot in getattr(type(value), "__slots__", ()):
+                try: members += (object.__getattribute__(value, slot),)
+                except AttributeError: pass
+        for item in members: visit(item)
+
+    visit(root)
 
 
 MODULES = (
