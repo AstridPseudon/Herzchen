@@ -9,7 +9,7 @@
     "wheel": "/tmp/herzchen-int03-final-wheel.20260914042342.out/herzchen_contracts-0.1.0-py3-none-any.whl",
     "wheel_sha256": "7b44a33a187dc8a23bc0f1b768ba2052df02e2bddbeceb8aede748dda8927567"
   },
-  "command": "env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-int03-pkg05-fnd06-dat06-candidate.pwUzWY/venv/bin/python work/_int03_c38_probe.py",
+  "command": "env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-int03-pkg05-fnd06-dat06-candidate.pwUzWY/venv/bin/python work/int-03-c38-foundation-probe.py",
   "interpretation": {
     "admission": "Only an explicit manager admission changes lifecycle to active; admission still leaves dispatch false.",
     "blank_close": "The shipped work.blank_project template has zero tasks; create receipt and fresh SQLite read are present; opening with initial empty content then untouched idle-close preserves the pending project revision and removes only the registered checkout file, with no project-sheet mutation.",
@@ -1171,8 +1171,471 @@
       }
     },
     "db": "/var/folders/0n/hj_vqrps2bz8pnbyvgd58k740000gn/T/int03-c38-wasy5w0o/foundation.sqlite",
-    "overall_ok": true
+    "overall_ok": true,
+    "previous_full_run_retained": true,
+    "run": {
+      "checks": {
+        "built_in_blank_and_untouched_close": true,
+        "create_durable_receipt": true,
+        "explicit_admission_boundary": true,
+        "pending_edit_attach_query": true,
+        "replay_and_invalid_create": true,
+        "revisit_attention_no_dispatch": true
+      },
+      "details": {
+        "built_in_blank_and_untouched_close": {
+          "after": "WorkRecord(ref=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), kind=<WorkKind.PROJECT: 'project'>, title='Untitled project', name='Untitled project', aliases=('project-d2c9e890f5',), parent=None, dependencies=(), project_ref=None, lifecycle=<Lifecycle.PENDING: 'pending'>, readiness={'dispatch': False, 'ready': False, 'status': 'not-evaluated'}, payload={'acceptance': {}, 'alias': 'project-d2c9e890f5', 'aliases': ['project-d2c9e890f5'], 'approach': '', 'budget': None, 'custom': {}, 'dependencies': [], 'documents': [], 'execution': None, 'external_action': None, 'gate': None, 'id': 'project-9618088f4bcd9d9336d2c9e890f5', 'kind': 'project', 'lifecycle': 'pending', 'manager': None, 'metadata': {'template_origin': {'authority': 'pack', 'id': 'work.blank_project', 'kind': 'work_template', 'revision': 'pkg-03.v1'}}, 'name': 'Untitled project', 'outcome': '', 'parent': None, 'project_ref': None, 'protocol': None, 'provenance': {'creator': {'actor': 'curator', 'authenticated': True, 'authority': 'int03-c38', 'credential_ref': 'credential'}, 'curator': {'actor': 'curator', 'authenticated': True, 'authority': 'int03-c38', 'credential_ref': 'credential'}}, 'readiness': {'dispatch': False, 'ready': False, 'status': 'not-evaluated'}, 'schema_revision': 'work.v1', 'scope': '', 'tasks': [], 'title': 'Untitled project', 'worker': None}, version=1)",
+          "before": "WorkRecord(ref=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), kind=<WorkKind.PROJECT: 'project'>, title='Untitled project', name='Untitled project', aliases=('project-d2c9e890f5',), parent=None, dependencies=(), project_ref=None, lifecycle=<Lifecycle.PENDING: 'pending'>, readiness={'dispatch': False, 'ready': False, 'status': 'not-evaluated'}, payload={'acceptance': {}, 'alias': 'project-d2c9e890f5', 'aliases': ['project-d2c9e890f5'], 'approach': '', 'budget': None, 'custom': {}, 'dependencies': [], 'documents': [], 'execution': None, 'external_action': None, 'gate': None, 'id': 'project-9618088f4bcd9d9336d2c9e890f5', 'kind': 'project', 'lifecycle': 'pending', 'manager': None, 'metadata': {'template_origin': {'authority': 'pack', 'id': 'work.blank_project', 'kind': 'work_template', 'revision': 'pkg-03.v1'}}, 'name': 'Untitled project', 'outcome': '', 'parent': None, 'project_ref': None, 'protocol': None, 'provenance': {'creator': {'actor': 'curator', 'authenticated': True, 'authority': 'int03-c38', 'credential_ref': 'credential'}, 'curator': {'actor': 'curator', 'authenticated': True, 'authority': 'int03-c38', 'credential_ref': 'credential'}}, 'readiness': {'dispatch': False, 'ready': False, 'status': 'not-evaluated'}, 'schema_revision': 'work.v1', 'scope': '', 'tasks': [], 'title': 'Untitled project', 'worker': None}, version=1)",
+          "close": "IdleCloseResult(status='closed_cleaned', scope=ResourceRef(authority='int03-c38', kind='authoring-scope', id='project-9618088f4bcd9d9336d2c9e890f5', revision=None), session_id='session-f3ea9fcf92ad51a7c2d9a48f', idle_seconds=10.0, last_content_edit=0.0, finish=SemanticFinishResult(status='pending_released', finish=FinishResult(status='pending_released', scope=ResourceRef(authority='int03-c38', kind='authoring-scope', id='project-9618088f4bcd9d9336d2c9e890f5', revision=None), session_id='session-f3ea9fcf92ad51a7c2d9a48f', receipt=CommandReceipt(logical_request_key='snew-idle-close', request_digest='3eca048f72ec78511a75ef52fb11f806bf39ee000019755b7f466dc636218792', operation='finish', target=ResourceRef(authority='int03-c38', kind='authoring-scope', id='project-9618088f4bcd9d9336d2c9e890f5', revision=None), status=<ReceiptStatus.COMMITTED: 'committed'>, transaction_id='a1061d2c393ac43580737887c21f5cbc', event_ids=('event-6cc6a4bfc210add0bfdc7487077bd878',), result_ref=ResourceRef(authority='int03-c38', kind='authoring-scope', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-3'), error_code=None, replayed=False, observed_revision='rev-3', unknown_reason=None), checkout=AuthoringCheckout(target_scope=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), target_kind='project-sheet', actor=AuthenticatedActor(authority='int03-c38', actor='curator', credential_ref='credential', authenticated=True), session_id='session-f3ea9fcf92ad51a7c2d9a48f', token='token-1f63f907d49c3f48ebf68dc5', fence='fence-e43e4903588b9dbae1820b79', base_revision='rev-1', draft_snapshot_ref=ResourceRef(authority='int03-c38', kind='authoring-snapshot', id='draft-session-f3ea9fcf92ad51a7c2d9a48f', revision='44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a'), final_snapshot_ref=None, allowed_fields=(), state=<AuthoringState.RELEASED: 'released'>, cleanup=<CleanupStatus.PENDING: 'pending'>, finish_claim=FinishClaim(finalization_identity='finish-session-f3ea9fcf92ad51a7c2d9a48f', mode='idle', claim_id='claim-e3a865f1ad4e51bc272389cb'), unmanaged_writers=False), final_snapshot=Snapshot(ref=ResourceRef(authority='int03-c38', kind='authoring-snapshot', id='draft-session-f3ea9fcf92ad51a7c2d9a48f', revision='44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a'), data=b'{}', manifest=()), recovery_pending=False, cleanup=<CleanupStatus.PENDING: 'pending'>, error=None), snapshot=DurableSnapshot(root='/var/folders/0n/hj_vqrps2bz8pnbyvgd58k740000gn/T/int03-c38-5_3fpy6p/blank-checkout', files=(SnapshotFile(relative_path='project.json', data=b'{}', size=2, sha256='44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a'),), tree_digest='85ee6cffed306a19019805c3a4b819454bfc296d9a4ed4710efdd6d800317055', data=b'{\"files\":[{\"bytes_b64\":\"e30=\",\"relative_path\":\"project.json\"}],\"format\":\"herzchen.edt-03.tree.v1\",\"manifest\":[{\"relative_path\":\"project.json\",\"sha256\":\"44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a\",\"size\":2}],\"tree_digest\":\"85ee6cffed306a19019805c3a4b819454bfc296d9a4ed4710efdd6d800317055\"}', ref=None), validation=ValidationResult(valid=True, diagnostics=None), application=None, recovery_pending=False, error=None), cleanup=CleanupObservation(status=<CleanupStatus.COMPLETE: 'complete'>, root='/var/folders/0n/hj_vqrps2bz8pnbyvgd58k740000gn/T/int03-c38-5_3fpy6p/blank-checkout', deleted=('project.json',), remaining=(), error=None), recovery_pending=False, error=None)",
+          "creation_receipts": [
+            {
+              "error_code": null,
+              "event_ids": [
+                "event-493de1ada739570f8ea1ebeb23d29f05"
+              ],
+              "logical_request_key": "snew-template:project",
+              "observed_revision": "rev-1",
+              "operation": "work.create",
+              "replayed": false,
+              "request_digest": "0a04bccd765578f607e3bed678b3a6ee51c93b0811babe8c5c059e12fbd59b88",
+              "result_ref": {
+                "authority": "int03-c38",
+                "id": "project-9618088f4bcd9d9336d2c9e890f5",
+                "kind": "work.project",
+                "revision": "rev-1"
+              },
+              "status": "committed",
+              "target": {
+                "authority": "int03-c38",
+                "id": "project-9618088f4bcd9d9336d2c9e890f5",
+                "kind": "work.project",
+                "revision": null
+              },
+              "transaction_id": "803143fd8d18dd8350061646ffd7b287",
+              "unknown_reason": null
+            }
+          ],
+          "initial_content_bytes": 2,
+          "open": "AuthoringTarget(target=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), scope=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), opened=OpenResult(status='opened', scope=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), handle=SessionHandle(scope=ResourceRef(authority='int03-c38', kind='authoring-scope', id='project-9618088f4bcd9d9336d2c9e890f5', revision=None), target_scope=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), target_kind='project-sheet', actor=AuthenticatedActor(authority='int03-c38', actor='curator', credential_ref='credential', authenticated=True), session_id='session-f3ea9fcf92ad51a7c2d9a48f', token='token-1f63f907d49c3f48ebf68dc5', fence='fence-e43e4903588b9dbae1820b79', base_revision='rev-1', checkout_path=None), checkout=AuthoringCheckout(target_scope=ResourceRef(authority='int03-c38', kind='work.project', id='project-9618088f4bcd9d9336d2c9e890f5', revision='rev-1'), target_kind='project-sheet', actor=AuthenticatedActor(authority='int03-c38', actor='curator', credential_ref='credential', authenticated=True), session_id='session-f3ea9fcf92ad51a7c2d9a48f', token='token-1f63f907d49c3f48ebf68dc5', fence='fence-e43e4903588b9dbae1820b79', base_revision='rev-1', draft_snapshot_ref=ResourceRef(authority='int03-c38', kind='authoring-snapshot', id='draft-session-f3ea9fcf92ad51a7c2d9a48f', revision='44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a'), final_snapshot_ref=None, allowed_fields=(), state=<AuthoringState.OPEN: 'open'>, cleanup=<CleanupStatus.NOT_REQUESTED: 'not_requested'>, finish_claim=None, unmanaged_writers=False), purpose='authoring', activity='editing', waitable=True, project_ref=None, error=None))",
+          "template": {
+            "parameters": {
+              "title": "Untitled project"
+            },
+            "seed": {
+              "criteria": [],
+              "documents": [],
+              "efforts": [],
+              "project": {
+                "fields": {},
+                "kind": "project",
+                "local_id": "project",
+                "outcome": "",
+                "title": "Untitled project"
+              },
+              "protocol": null,
+              "tasks": []
+            },
+            "template": {
+              "authority": "pack",
+              "id": "work.blank_project",
+              "kind": "work_template",
+              "revision": "pkg-03.v1"
+            }
+          }
+        },
+        "create_durable_receipt": {
+          "payload": {
+            "acceptance": {},
+            "alias": "project-6d7d4bb300539f8f2b5b8f682ac8",
+            "aliases": [
+              "project-6d7d4bb300539f8f2b5b8f682ac8"
+            ],
+            "approach": "",
+            "budget": null,
+            "creation_request": "c38-create",
+            "custom": {},
+            "dependencies": [],
+            "documents": [],
+            "execution": null,
+            "external_action": null,
+            "gate": null,
+            "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+            "kind": "project",
+            "lifecycle": "pending",
+            "manager": null,
+            "metadata": {
+              "revisit": "when source changes",
+              "why_pending": "awaiting scope"
+            },
+            "name": "Untitled project",
+            "outcome": "",
+            "parent": null,
+            "project_ref": null,
+            "protocol": null,
+            "provenance": {
+              "creator": "creator-1",
+              "curator": "curator-1"
+            },
+            "readiness": {
+              "dispatch": false,
+              "ready": false,
+              "status": "not-evaluated"
+            },
+            "schema_revision": "work.v1",
+            "scope": "",
+            "tasks": [],
+            "title": "Untitled project",
+            "worker": null
+          },
+          "project": {
+            "authority": "int03-c38",
+            "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+            "kind": "work.project",
+            "revision": "rev-1"
+          },
+          "receipt": {
+            "error_code": null,
+            "event_ids": [
+              "event-aceba5eaf39d23210d3daab7424bd61c"
+            ],
+            "logical_request_key": "c38-create",
+            "observed_revision": "rev-1",
+            "operation": "work.project.create",
+            "replayed": false,
+            "request_digest": "9b7ce757ce3bf9b28251d786f1b9401fd9403ffb46c29110c69e9742cf8c913e",
+            "result_ref": {
+              "authority": "int03-c38",
+              "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+              "kind": "work.project",
+              "revision": "rev-1"
+            },
+            "status": "committed",
+            "target": {
+              "authority": "int03-c38",
+              "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+              "kind": "work.project",
+              "revision": null
+            },
+            "transaction_id": "9e67495e8f47d6a1a83e8f577b52d1bb",
+            "unknown_reason": null
+          }
+        },
+        "explicit_admission_boundary": {
+          "project": {
+            "acceptance": {},
+            "admitted": true,
+            "alias": "project-6d7d4bb300539f8f2b5b8f682ac8",
+            "aliases": [
+              "project-6d7d4bb300539f8f2b5b8f682ac8"
+            ],
+            "approach": "scope remains pending until evidence arrives",
+            "batch_history": [
+              {
+                "decision_ref": null,
+                "manager_action": null,
+                "mapping": {},
+                "task_keys": []
+              }
+            ],
+            "budget": null,
+            "creation_request": "c38-create",
+            "custom": {},
+            "dependencies": [],
+            "documents": [],
+            "execution": null,
+            "external_action": null,
+            "gate": null,
+            "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+            "kind": "project",
+            "last_batch": {
+              "decision_ref": null,
+              "manager_action": null,
+              "mapping": {},
+              "task_keys": []
+            },
+            "lifecycle": "active",
+            "manager": "manager-1",
+            "metadata": {
+              "revisit": "on source revision",
+              "why_pending": "awaiting source owner"
+            },
+            "name": "Untitled project",
+            "outcome": "",
+            "parent": null,
+            "project_ref": null,
+            "protocol": null,
+            "provenance": {
+              "creator": "creator-1",
+              "curator": "curator-1"
+            },
+            "readiness": {
+              "dispatch": false,
+              "ready": false,
+              "status": "not-evaluated"
+            },
+            "resources": {},
+            "schema_revision": "work.v1",
+            "scope": "",
+            "tasks": [],
+            "title": "Untitled project",
+            "worker": null
+          },
+          "receipt": {
+            "error_code": null,
+            "event_ids": [
+              "event-113f735553a639521284e39a018f57a6"
+            ],
+            "logical_request_key": "c38-admit",
+            "observed_revision": "rev-3",
+            "operation": "work.project.activate",
+            "replayed": false,
+            "request_digest": "bcf2d423d3d91d09b22a77f0ee489b355907808d5cf871f3304cafa930e796f3",
+            "result_ref": {
+              "authority": "int03-c38",
+              "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+              "kind": "work.project",
+              "revision": "rev-3"
+            },
+            "status": "committed",
+            "target": {
+              "authority": "int03-c38",
+              "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+              "kind": "work.project",
+              "revision": "rev-2"
+            },
+            "transaction_id": "fedc71042ad9b328c86fb29862cc157d",
+            "unknown_reason": null
+          }
+        },
+        "pending_edit_attach_query": {
+          "documents": [
+            {
+              "association": {
+                "authority": "int03-c38",
+                "id": "link-c33fd36c6aec37e981fe85c88c0a",
+                "kind": "dat.content.association",
+                "revision": "rev-1"
+              },
+              "binding": {
+                "mode": "pinned",
+                "ref": {
+                  "authority": "int03-c38",
+                  "id": "initial-spec",
+                  "kind": "dat.content.document",
+                  "revision": "spec-1"
+                }
+              },
+              "current_revision": {
+                "author": null,
+                "content": {
+                  "status": "pending",
+                  "title": "Initial specification"
+                },
+                "document": {
+                  "authority": "int03-c38",
+                  "id": "initial-spec",
+                  "kind": "dat.content.document",
+                  "revision": null
+                },
+                "initial": true,
+                "record_type": "dat.content.revision",
+                "revision": "spec-1"
+              },
+              "document": {
+                "current_revision": {
+                  "authority": "int03-c38",
+                  "id": "revision-6123a95d1e0137b73f8014cbfb05",
+                  "kind": "dat.content.revision",
+                  "revision": "spec-1"
+                },
+                "document": {
+                  "authority": "int03-c38",
+                  "id": "initial-spec",
+                  "kind": "dat.content.document",
+                  "revision": null
+                },
+                "record_type": "dat.content.document"
+              },
+              "read_only": true,
+              "subject": {
+                "authority": "int03-c38",
+                "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+                "kind": "work.project",
+                "revision": "rev-1"
+              }
+            }
+          ],
+          "project": {
+            "acceptance": {},
+            "alias": "project-6d7d4bb300539f8f2b5b8f682ac8",
+            "aliases": [
+              "project-6d7d4bb300539f8f2b5b8f682ac8"
+            ],
+            "approach": "scope remains pending until evidence arrives",
+            "batch_history": [
+              {
+                "decision_ref": null,
+                "manager_action": null,
+                "mapping": {},
+                "task_keys": []
+              }
+            ],
+            "budget": null,
+            "creation_request": "c38-create",
+            "custom": {},
+            "dependencies": [],
+            "documents": [],
+            "execution": null,
+            "external_action": null,
+            "gate": null,
+            "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+            "kind": "project",
+            "last_batch": {
+              "decision_ref": null,
+              "manager_action": null,
+              "mapping": {},
+              "task_keys": []
+            },
+            "lifecycle": "pending",
+            "manager": null,
+            "metadata": {
+              "revisit": "on source revision",
+              "why_pending": "awaiting source owner"
+            },
+            "name": "Untitled project",
+            "outcome": "",
+            "parent": null,
+            "project_ref": null,
+            "protocol": null,
+            "provenance": {
+              "creator": "creator-1",
+              "curator": "curator-1"
+            },
+            "readiness": {
+              "dispatch": false,
+              "ready": false,
+              "status": "not-evaluated"
+            },
+            "schema_revision": "work.v1",
+            "scope": "",
+            "tasks": [],
+            "title": "Untitled project",
+            "worker": null
+          },
+          "receipt": {
+            "error_code": null,
+            "event_ids": [
+              "event-76c0e0baf4100ba71f613221e88db16c"
+            ],
+            "logical_request_key": "c38-edit",
+            "observed_revision": "rev-2",
+            "operation": "work.project-sheet.apply",
+            "replayed": false,
+            "request_digest": "72af9492135812880fc257fc26398b1466cf5b3548c91b5a8e9ce1b01030ccc0",
+            "result_ref": {
+              "authority": "int03-c38",
+              "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+              "kind": "work.project",
+              "revision": "rev-2"
+            },
+            "status": "committed",
+            "target": {
+              "authority": "int03-c38",
+              "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+              "kind": "work.project",
+              "revision": "rev-1"
+            },
+            "transaction_id": "1cc2695d73c121c1144352adfefc6c68",
+            "unknown_reason": null
+          }
+        },
+        "replay_and_invalid_create": {
+          "changed_request_error": {
+            "message": "logical request key was reused with a changed request digest",
+            "type": "ReplayConflictError"
+          },
+          "events_after": 1,
+          "events_before": 1,
+          "same_ref": {
+            "authority": "int03-c38",
+            "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+            "kind": "work.project",
+            "revision": "rev-1"
+          }
+        },
+        "revisit_attention_no_dispatch": {
+          "project": {
+            "acceptance": {},
+            "alias": "project-6d7d4bb300539f8f2b5b8f682ac8",
+            "aliases": [
+              "project-6d7d4bb300539f8f2b5b8f682ac8"
+            ],
+            "approach": "scope remains pending until evidence arrives",
+            "batch_history": [
+              {
+                "decision_ref": null,
+                "manager_action": null,
+                "mapping": {},
+                "task_keys": []
+              }
+            ],
+            "budget": null,
+            "creation_request": "c38-create",
+            "custom": {},
+            "dependencies": [],
+            "documents": [],
+            "execution": null,
+            "external_action": null,
+            "gate": null,
+            "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+            "kind": "project",
+            "last_batch": {
+              "decision_ref": null,
+              "manager_action": null,
+              "mapping": {},
+              "task_keys": []
+            },
+            "lifecycle": "pending",
+            "manager": null,
+            "metadata": {
+              "revisit": "on source revision",
+              "why_pending": "awaiting source owner"
+            },
+            "name": "Untitled project",
+            "outcome": "",
+            "parent": null,
+            "project_ref": null,
+            "protocol": null,
+            "provenance": {
+              "creator": "creator-1",
+              "curator": "curator-1"
+            },
+            "readiness": {
+              "dispatch": false,
+              "ready": false,
+              "status": "not-evaluated"
+            },
+            "schema_revision": "work.v1",
+            "scope": "",
+            "tasks": [],
+            "title": "Untitled project",
+            "worker": null
+          },
+          "readiness_ref": {
+            "authority": "int03-c38",
+            "id": "readiness-1dea78ea3194e6b24dd345c74d78",
+            "kind": "wrk.readiness",
+            "revision": null
+          },
+          "wait": "WaitingExplanation(ref=ResourceRef(authority='int03-c38', kind='wrk.wait', id='c38-wait', revision='rev-1'), subject_ref=ResourceRef(authority='int03-c38', kind='work.project', id='project-6d7d4bb300539f8f2b5b8f682ac8', revision='rev-2'), missing_obligation='source scope', owner='curator-1', owner_ref=None, awaited_ref=ResourceRef(authority='int03-c38', kind='work.project', id='project-6d7d4bb300539f8f2b5b8f682ac8', revision='rev-2'), awaited_revision='rev-2', current_revision='rev-2', revisit_condition='when source revision or attention changes', attention_event_id='event-16cc777cb0cc6c3088d1e8051d894a10', attention_key='attention-a9c7ec464bf42a27a554cbe72bac', required_decision_ref=None, cap_reached=False, residual_risk={'why': 'scope pending'}, verification_choice=None, metadata={'curator': 'curator-1', 'why_pending': 'awaiting source owner'}, version=1, payload={'allowance': None, 'attention_key': 'attention-a9c7ec464bf42a27a554cbe72bac', 'awaited_ref': {'authority': 'int03-c38', 'id': 'project-6d7d4bb300539f8f2b5b8f682ac8', 'kind': 'work.project', 'revision': 'rev-2'}, 'awaited_revision': 'rev-2', 'cap_reached': False, 'current_revision': 'rev-2', 'dispatch': False, 'launch': False, 'metadata': {'curator': 'curator-1', 'why_pending': 'awaiting source owner'}, 'missing_obligation': 'source scope', 'owner': 'curator-1', 'owner_ref': None, 'record_type': 'wrk.wait', 'required_decision_ref': None, 'reservation_ref': None, 'residual_risk': {'why': 'scope pending'}, 'revisit_condition': 'when source revision or attention changes', 'schema_revision': 'work.decisions.v1', 'subject_ref': {'authority': 'int03-c38', 'id': 'project-6d7d4bb300539f8f2b5b8f682ac8', 'kind': 'work.project', 'revision': 'rev-2'}, 'verification_choice': None}, receipt=CommandReceipt(logical_request_key='c38-wait', request_digest='119e10990edd9dc2b5a7588a7f0f4db1ca61a85a76274e150a62a7e846f423ae', operation='work.wait.record', target=ResourceRef(authority='int03-c38', kind='wrk.wait', id='c38-wait', revision=None), status=<ReceiptStatus.COMMITTED: 'committed'>, transaction_id='b3d26c8cd64924de700ab0717c994ef5', event_ids=('event-16cc777cb0cc6c3088d1e8051d894a10',), result_ref=ResourceRef(authority='int03-c38', kind='wrk.wait', id='c38-wait', revision='rev-1'), error_code=None, replayed=False, observed_revision='rev-1', unknown_reason=None))"
+        }
+      },
+      "overall_ok": true,
+      "schema": "int03-c38-probe-run/v1"
+    }
   },
+  "probe_script": "work/int-03-c38-foundation-probe.py",
+  "probe_script_sha256": "b37ce5caded5cb67e22671a2057908b8338eda91eed833127ce17cd293251721",
   "schema": "int03-c38-foundation-probe/v2",
   "scope": [
     "C38",

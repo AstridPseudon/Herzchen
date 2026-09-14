@@ -100,9 +100,10 @@
   "tests": {
     "c38_foundation_probe": "work/int-03-c38-foundation-probe-20260914.json",
     "c38_foundation_probe_result": "overall_ok=true; 6 checks passed",
-    "c38_foundation_probe_sha256": "601f9bda5bd5b48bb73b1d9c36ab1dae34c4aafb2f828eefa8af8f98fc8ebc5d",
+    "c38_foundation_probe_script_sha256": "b37ce5caded5cb67e22671a2057908b8338eda91eed833127ce17cd293251721",
+    "c38_foundation_probe_sha256": "c2b7aeebdb9aac719ad07cb1419dd33f6ddcf199f0a320b739969513aab56b56",
     "c38_foundation_probe_transcript": "work/int-03-c38-foundation-probe-20260914.txt",
-    "c38_foundation_probe_transcript_sha256": "d3094839a1d533d6860799a76ac5762bd01332c2355c61fae95ed57966b23d98",
+    "c38_foundation_probe_transcript_sha256": "3effb2c89dcf5415ba93faeff84447534dceb44dfa64a4fcfa430c4135b14472",
     "combined_installed_result": "249 passed, 80 subtests passed in 3.70s",
     "combined_transcript": "work/int-03-final-installed-run-20260914.txt",
     "combined_transcript_sha256": "5b4b47bb010d0694da7c249864f20f3731a11314ff37a0d23294f59c32d67892",

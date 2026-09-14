@@ -3,7 +3,9 @@ Observed in this turn; command and result are recorded below
 Candidate: c7156360ab601533a38710b8957887e582db669e / f547137f5804c0d8958d68d08633b35698aa2e43
 Wheel: 7b44a33a187dc8a23bc0f1b768ba2052df02e2bddbeceb8aede748dda8927567
 Command:
-env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-int03-pkg05-fnd06-dat06-candidate.pwUzWY/venv/bin/python work/_int03_c38_probe.py
+env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-int03-pkg05-fnd06-dat06-candidate.pwUzWY/venv/bin/python work/int-03-c38-foundation-probe.py
+Probe script SHA-256: b37ce5caded5cb67e22671a2057908b8338eda91eed833127ce17cd293251721
 Result: overall_ok=true; all six checks true.
 Checks: create_durable_receipt; replay_and_invalid_create; pending_edit_attach_query; revisit_attention_no_dispatch; explicit_admission_boundary; built_in_blank_and_untouched_close.
+Evidence JSON SHA-256: c2b7aeebdb9aac719ad07cb1419dd33f6ddcf199f0a320b739969513aab56b56
 The probe uses only installed public Herzchen APIs and a disposable SQLite store. It does not use SQL to mutate state.
