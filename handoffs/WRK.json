@@ -1,0 +1,204 @@
+{
+  "handoff": "WRK-06",
+  "state": "worker-candidate",
+  "acceptance_claimed": false,
+  "gate_verdict_claimed": false,
+  "custody": {
+    "control_root": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery",
+    "worker_worktree": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-wrk06-worker",
+    "branch": "wrk-06-worker",
+    "baseline_commit": "6efdda1cb73fd4ca3438fd83189a69eb40d42c2b",
+    "baseline_tree": "34f7df82876d6bfa52554c1085a6bd597f25d75a",
+    "final_commit": "recorded after the final owned-path commit in this handoff",
+    "final_tree": "recorded after the final owned-path commit in this handoff",
+    "route": "worker_normal",
+    "model": "gpt-5.6-luna",
+    "reasoning": "high",
+    "xhard_used": false,
+    "source_manifest": {
+      "path": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/source-set-int01-refresh-20260913.json",
+      "sha256": "742fed428923c7702001865407d3d8897ba9685b5fcfd473076fc7edb3ee563a"
+    },
+    "canonical_extraction_map": {
+      "path": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/plan/extraction-map.json",
+      "sha256": "55da00d1d99ff60426f66b555c5728c8cd4f57641dbabe247ad115adf1787db6",
+      "row": "EX-WORK"
+    },
+    "historical_seed_map": {
+      "path": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/package/otto_herzchen_delivery_v11_2/plan/extraction-map.json",
+      "sha256": "c08d94ea32f394596578a3c908e35dc037c1297194d3d5994945a88093101c59",
+      "status": "historical lineage only"
+    }
+  },
+  "lineage": {
+    "extraction_row": "EX-WORK: build-new work/assessment domains; adapt only narrow Runtime identity/receipt/event/lease mechanics",
+    "accepted_baseline": {
+      "commit": "6efdda1cb73fd4ca3438fd83189a69eb40d42c2b",
+      "tree": "34f7df82876d6bfa52554c1085a6bd597f25d75a",
+      "wrK05_result": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-wrk06-worker/work/wrk-05-result.md"
+    },
+    "accepted_source_test_paths": {
+      "src/herzchen/domains/assessment/module.py": "0d553722a5d3439a1b1e870c87844027a02966b3",
+      "src/herzchen/domains/assessment/model.py": "51f6abacba30265e13ce85d3c49d671dcc979007",
+      "src/herzchen/domains/work/module.py": "0af949187dd183885843fb9a4fef06e8309af93e",
+      "src/herzchen/domains/work/batches.py": "52a1f3c5d3a91e8287c311f8d55ab9a2434242ed",
+      "src/herzchen/domains/work/assignments.py": "b7bdeb9f328d651284a65ff6e421afd0a3909a19",
+      "src/herzchen/domains/work/decisions.py": "ffc4102d45d27deb79bebea0397aef7a1d847c0a",
+      "src/herzchen/domains/work/sheet.py": "18ec33cba49659cd29cbdce4d4001afc8977abfc",
+      "src/herzchen/domains/work/model.py": "444f329f4e00fb2292aca8720dfe7fb09be8c3cd",
+      "src/herzchen/packs/templates.py": "6be1a3fe675deb29a503a607fa70809b3cf56c85",
+      "src/herzchen/packs/composition.py": "6eb4549a370d05cab08aeb0f24a053d9bca9915a",
+      "packs/megado/pack.yaml": "428de963b64561842477a93fcc120b515dfd0aa8",
+      "packs/megado/protocols/megado.json": "e826f7622dbb475d1acadffb84a7fb2649bcc066",
+      "packs/megado/templates/delivery.json": "b5d0d393f6b6b08e3347488be28af7ff136ee09b",
+      "packs/megado/templates/reviewed-delivery.json": "6d89f763ab6cb27e9535d270c61c1012f7e27d32",
+      "packs/megado/templates/task-batch.json": "f0e3ca829639e5cb18c39893c7a72cf845567465",
+      "packs/scene-production/pack.yaml": "e97e74962a1fd982f7db4696627d03dcf653647d",
+      "packs/scene-production/protocols/scene.json": "cffd2c9626114936a2f415fd76bd41d447ab9a5e",
+      "packs/scene-production/templates/scene.json": "1175e65cecb8910ad102272d20750acf2b02ac76",
+      "tests/assessment/test_accounting.py": "63155081d397c9ba345808545aacea79bc9b42ff",
+      "tests/work/test_candidates_decisions_waiting.py": "a8b91a80bb923428fb370a1e9a556fcbbb9d8f23",
+      "tests/work/test_identity_graph.py": "d9315b0be0550d942b02e3bdde1fbf804e717cb7",
+      "tests/work/test_batches.py": "7186b9d4ee9c411ac153b763797fc87dd539e9b4",
+      "tests/work/test_sheet_batches.py": "64ca1db3de67c16be4a50cc7771b98f984a0803a",
+      "tests/packs/test_protocol_resources.py": "a4df732b62758c8e75055c3f244fe0e1506479a8",
+      "tests/packs/test_task_templates.py": "ae61639c6a25d93ccb31a24f61fa03c02e9b55d7",
+      "tests/conformance/test_rehearsal.py": "dd121167729170a6d0fb9a01a0e52f66e59fdea1"
+    },
+    "new_wrk06_test": {
+      "path": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-wrk06-worker/tests/work/test_wrk06_handoff.py",
+      "sha256": "b5bd5c1a2375246810f44efecdb6c7a493281eb9924be639a97624b7666227ab",
+      "justification": "Existing tests assert the primitives separately; this narrow fixture is required to capture one fresh public-API eight-area handoff with exact counters, restart, receipt, and event evidence."
+    },
+    "dependencies_consumed": {
+      "FND": {"handoff": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-wrk06-worker/handoffs/FND.json", "sha256": "d4b5b6994e97454d3a9bf886ee69dba48069535b95529de3fb3885d02de8006e", "used": ["Store", "Transaction", "Store.mutate", "identities", "record_references", "command_receipts", "events", "event_sequences"]},
+      "DAT": {"handoff": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-wrk06-worker/handoffs/DAT.json", "sha256": "32efc243f7cb44a8e39933c08fa81df1fe7bc909242203ceee191e2e7d6ce8b8", "used": ["typed ResourceRef document/input boundary", "annotation/open-unknown semantics", "no private document writer"]},
+      "PKG": {"handoff": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-wrk06-worker/handoffs/PKG.json", "sha256": "3618841ce020a509d523832e8f39297f5ab509bc97bd804459d9b775cddb0f60", "used": ["resource-only pack manifests", "TemplateEngine", "WorkTemplate", "WorkProtocol", "no scheduler or manager import"]}
+    },
+    "origin_boundary": {
+      "source_checkout": "absolute worktree paths above, imported with PYTHONPATH=src",
+      "installed_candidate": "disposable wheel/venv below; not treated as source-checkout evidence",
+      "runtime_astrid": "source-checkout lineage only; no live cutover or installed Runtime/Astrid claim"
+    }
+  },
+  "fixtures": {
+    "local_fake_review_and_accounting": {
+      "request_keys": ["scope-megado", "packet-megado", "candidate-A", "candidate-B", "selection-A", "assessment-A", "accept-A"],
+      "scope_ref": {"authority": "wrk06-evidence", "kind": "assessment.scope", "id": "megado-scope", "revision": "rev-1"},
+      "input_ref": {"authority": "wrk06-evidence", "kind": "assessment.input", "id": "packet-megado", "revision": "rev-1"},
+      "candidate_a_ref": {"authority": "wrk06-evidence", "kind": "wrk.candidate", "id": "candidate-A", "revision": "rev-1"},
+      "candidate_b_ref": {"authority": "wrk06-evidence", "kind": "wrk.candidate", "id": "candidate-B", "revision": "rev-1"},
+      "criterion_ref": {"authority": "wrk06-evidence", "kind": "work.criterion", "id": "criterion-3ddff4198d1d4c31d2a12d126799", "revision": "rev-1"},
+      "candidate_pins": {"artifact": "fixture.artifact/artifact@rev-1", "source": "fixture.source/source@rev-1", "spec": "fixture.spec/spec@rev-1", "consumed": ["fixture.source/source@rev-1"]},
+      "selection_ref": {"authority": "wrk06-evidence", "kind": "assessment.selection", "id": "selection-A", "revision": "rev-1"},
+      "result_ref": {"authority": "wrk06-evidence", "kind": "assessment.result", "id": "assessment-A", "revision": "rev-1"},
+      "invocation_ref": {"authority": "wrk06-evidence", "kind": "assessment.invocation", "id": "assessment-A", "revision": null},
+      "operation_ref": {"authority": "wrk06-evidence", "kind": "operation", "id": "assessment-A-invocation", "revision": "rev-2"},
+      "reservation_ref": {"authority": "wrk06-evidence", "kind": "reservation", "id": "assessment-A-reservation", "revision": null},
+      "decision_ref": {"authority": "wrk06-evidence", "kind": "assessment.decision", "id": "accept-A", "revision": "rev-1"},
+      "accounting": {"declared_units": 2, "actual_units": 1, "charged_units": 1, "invocation_state": "committed", "verdict": "PASS", "accepted_property": false, "replay_same_result": true, "assess_candidate_alias_same_result": true, "resume_alias_same_result": true, "replay_receipt_reused": true, "replay_duplicate_event_delta": 0, "replay_duplicate_charge_delta": 0},
+      "receipts_events": {"assessment-A": {"receipt_id": "e063b30c86dd840f7595485fb397ed66", "event_id": "event-c7ce020cdea1580114e07ad09c70440d", "stream": "assessment", "sequence": 4, "event_type": "assessment.completed"}, "accept-A": {"receipt_id": "8b161247981ee6c9f661f90ad169542a", "event_id": "event-52d624f8269358fc2e78b496b1e0b4e2", "stream": "assessment", "sequence": 5, "event_type": "assessment.accepted"}},
+      "observed": "Deterministic local fake reviewer only; no model invocation. A has a durable PASS result and explicit decision identity. A green invocation/result did not set AssessmentResult.accepted and does not close the parent obligation."
+    },
+    "crash_replay_atomicity": {
+      "failure_points": {
+        "after-invocation": {"request_key": "crash-after_invocation", "before_and_after_failure_equal": true, "counters_after_failure": {"identities": 20, "receipts": 15, "events": 15, "pool_used": 1, "pool_held": 0}, "retry_result_id": "crash-after_invocation", "retry_receipt_id": "fec2426c166278bf509d52ef16527431", "retry_event_id": "event-434524eedb6f42523e123b0b515e7591", "retry_sequence": 6, "counters_after_retry": {"identities": 24, "receipts": 20, "events": 20, "pool_used": 2}},
+        "after-finding": {"request_key": "crash-after_finding", "before_and_after_failure_equal": true, "counters_after_failure": {"identities": 24, "receipts": 20, "events": 20, "pool_used": 2, "pool_held": 0}, "retry_result_id": "crash-after_finding", "retry_receipt_id": "d32f493f5d0de21eeae567c11095f2dc", "retry_event_id": "event-2c5df51bd691c91e0a9ddf911d92cd18", "retry_sequence": 7, "counters_after_retry": {"identities": 29, "receipts": 25, "events": 25, "pool_used": 3}},
+        "after-parent": {"request_key": "crash-after_parent", "before_and_after_failure_equal": true, "counters_after_failure": {"identities": 29, "receipts": 25, "events": 25, "pool_used": 3, "pool_held": 0}, "retry_result_id": "crash-after_parent", "retry_receipt_id": "0d5a14af2c27ffff7300a5259c1ff15f", "retry_event_id": "event-94878ccb3826366d9daa1fd939c34176", "retry_sequence": 8, "counters_after_retry": {"identities": 33, "receipts": 30, "events": 30, "pool_used": 4}}
+      },
+      "absent_after_each_failure": ["assessment.result/<request_key>", "assessment.invocation/<request_key>", "reservation/<request_key>-reservation", "assessment.finding/<request_key>-finding-0"],
+      "restart_path": "Store.close -> Store.open(db, authority=..., expected_domains=registered_domains) -> recreate public modules -> retry same logical_request_key",
+      "observed": "All three injected failures rolled back result, invocation, finding, reservation, operation, receipt, event and pool settlement; each retry committed exactly one outcome."
+    },
+    "creative_rejection_and_second_protocol": {
+      "scene_scope_ref": {"authority": "wrk06-evidence", "kind": "assessment.scope", "id": "scene-scope", "revision": "rev-1"},
+      "protocol": "scene.production",
+      "role": "critic",
+      "result_ref": {"authority": "wrk06-evidence", "kind": "assessment.result", "id": "creative-rework", "revision": "rev-1"},
+      "finding_ref": {"authority": "wrk06-evidence", "kind": "assessment.finding", "id": "creative-rework-finding-0", "revision": null},
+      "finding": {"verdict": "REWORK", "subjective": true, "status": "open"},
+      "correction_ref": {"authority": "wrk06-evidence", "kind": "assessment.correction", "id": "creative-correction", "revision": "rev-1"},
+      "correction_parent_ref": {"authority": "wrk06-evidence", "kind": "work.task", "id": "task-55b2efe480703d0fe5dd39c19e22", "revision": "rev-1"},
+      "test_only_rejection": {"error_type": "AssessmentAuthorityError", "message": "test-only evidence cannot clear a subjective finding", "receipt_delta": 0, "event_delta": 0},
+      "receipts_events": {"creative-rework": {"receipt_id": "117de37fbe2f8dc708e82105479a826b", "event_id": "event-1e9761aac60dc195d2c1280523138988", "sequence": 11}, "creative-correction": {"receipt_id": "1031b2f7b5069e3bd30e89d46997c9d5", "event_id": "event-0be1f7dfe3e68b4dce5f7a268ab0509d", "sequence": 12}},
+      "observed": "Generic assessment primitives accepted the scene protocol string/resource boundary without Megado hierarchy. The correction preserves the parent obligation. A subjective/unknown finding is not cleared by test-only evidence, and a successful invocation is not acceptance."
+    },
+    "candidate_ab_and_applicability": {
+      "mismatch": {"request_key": "mismatched-B-result-A", "error_type": "StaleCandidateError", "message": "decision candidate is not the exact assessment candidate", "receipt_delta": 0, "event_delta": 0},
+      "annotation": {"request_key": "annotation-A", "ref": {"authority": "wrk06-evidence", "kind": "wrk.candidate.annotation", "id": "annotation-A", "revision": "rev-1"}, "applicability": "applicable", "affected_refs": []},
+      "source_revision": {"request_key": "source-revision", "before": "fixture.source/source@rev-1", "after": "fixture.source/source@rev-2", "applicability": "stale", "affected_refs": ["fixture.source/source@rev-1"], "receipt_id": "9f627cafe18757118ceb6779c23b6b83", "event_id": "event-04bf31bbd3b8cc01133691ef660424be", "sequence": 1},
+      "historical_a_decision": {"ref": "assessment.decision/accept-A@rev-1", "candidate_ref": "wrk.candidate/candidate-A@rev-1", "disposition": "accept", "readable_after_source_revision": true},
+      "observed": "B did not inherit A result, acceptance or decision. Irrelevant annotation did not stale applicability; consumed source revision staled only the affected applicability."
+    },
+    "no_review_policy_boundary": {
+      "positive": {"request_key": "accept-without-review", "decision_ref": "assessment.decision/accept-without-review@rev-1", "result_ref": null, "no_review": true, "before": {"identities": 42, "receipts": 40, "events": 40, "pool_used": 5}, "after": {"identities": 43, "receipts": 41, "events": 41, "pool_used": 5}, "receipt_id": "ebb8515f6f86a9f708ba140ff0c15341", "event_id": "event-a83dd8ac19115f5cff0950e8f16e0200", "sequence": 15},
+      "negative": {"request_key": "reject-without-review", "error_type": "AssessmentAuthorityError", "message": "policy requires a review; no-review evidence is not admissible", "receipt_delta": 0, "event_delta": 0},
+      "observed": "Only review_required=false + allow_no_review=true with the designated approver/authority produced the evidence-only decision. A successful invocation is not treated as acceptance."
+    },
+    "waiting_restart_occupancy": {
+      "assignment_ref": {"authority": "wrk06-evidence", "kind": "wrk.assignment", "id": "assignment-3000e80255bf5275f3f3bb5298d1", "revision": "rev-1"},
+      "wait_ref": {"authority": "wrk06-evidence", "kind": "wrk.wait", "id": "wait-1", "revision": "rev-1"},
+      "wait_request_key": "wait-1",
+      "owner_ref": "wrk.assignment/assignment-3000e80255bf5275f3f3bb5298d1@rev-1",
+      "awaited_ref": "wrk.decision/wait-decision@rev-1",
+      "awaited_revision": "rev-1",
+      "current_revision": "rev-1",
+      "attention_event_id": "event-0828deb90ac734e59abe594c93968e41",
+      "stream": "attention:task-55b2efe480703d0fe5dd39c19e22",
+      "event_sequence": [{"event_id": "event-0828deb90ac734e59abe594c93968e41", "sequence": 1}, {"event_id": "event-1c94129638b628ca61c177991e2bcbf4", "sequence": 2}],
+      "receipt_events": {"wait-1": {"receipt_id": "f2017bbcbe85ca63703ce16b22b70746", "event_id": "event-0828deb90ac734e59abe594c93968e41", "sequence": 1}, "wait-2": {"receipt_id": "830f95bfd3b78984d87f71392a141b56", "event_id": "event-1c94129638b628ca61c177991e2bcbf4", "sequence": 2}},
+      "restart_readback": true,
+      "dispatch": false,
+      "reservation_ref": null,
+      "cursor_reconciliation": {"page1": ["event-0828deb90ac734e59abe594c93968e41"], "page2_after_cursor": ["event-1c94129638b628ca61c177991e2bcbf4"], "duplicate": true, "reordered": true, "work_ready": false, "business_dispatches": 0},
+      "bypass_rejection": {"request_key": "bypass-wait", "error_type": "WaitingError", "message": "a cap must wait for the real decision, not an equivalent renamed review", "receipt_delta": 0, "event_delta": 0},
+      "observed": "Close/reopen read the same wait; attention is cursor-based, duplicate/out-of-order notifications cause no dispatch, and the alternate renamed-review path is rejected without mutation."
+    },
+    "megado_import_structure_and_replay": {
+      "resource_refs": {"protocol": "pack/work_protocol/megado.delivery@1", "delivery_template": "pack/work_template/megado.delivery_seed@1.1.0", "reviewed_delivery": "packs/megado/templates/reviewed-delivery.json", "task_batch": "packs/megado/templates/task-batch.json"},
+      "role_slots": ["coordinator", "worker_normal", "worker_xhard", "reviewer_normal", "reviewer_xhard", "oracle", "final_reviewer"],
+      "routes": {"execute": {"normal": "worker_normal", "xhard": "worker_xhard"}, "assess": {"normal": "reviewer_normal", "xhard": "reviewer_xhard"}},
+      "direct_shipped_resource": {"records": 0, "replay_records": 0, "before": {"identities": 51, "receipts": 49, "events": 49}, "after": {"identities": 51, "receipts": 49, "events": 49}, "replay_after": {"identities": 51, "receipts": 49, "events": 49}, "limitation": "The public TemplateEngine accepts seed.nodes/efforts/tasks/criteria/scenarios/gates; shipped delivery.json uses seed.work plus separate links. Direct typed instantiation created only the supplied owner project, not the shipped child structure."},
+      "baseline_adapted_typed_import": {"source_ref": "pack/work_template/megado.delivery_seed@1.1.0", "adapter_template_ref": "pack/work_template/megado.delivery_seed.baseline-adapted@1.1.0", "before": {"identities": 51, "receipts": 49, "events": 49, "pool_used": 5}, "after": {"identities": 55, "receipts": 53, "events": 53, "pool_used": 5}, "replay_after": {"identities": 55, "receipts": 53, "events": 53, "pool_used": 5}, "stable_ids_by_local_alias": {"effort": "work.effort/effort-464ad0e6b19162c7f9cb2e78334e@rev-1", "criterion": "work.criterion/criterion-5f6955c007bf5855f035025ab30f@rev-1", "implement": "work.task/task-64c11b6571f94c9021bba57d4950@rev-1", "verify": "work.task/task-2bf6e0137be47660b0b0e3d32f63@rev-1"}, "project_ref": "work.project/project-563c9c21d45fd84d6712edbb2289@rev-1", "dependency_links": {"implement": ["criterion-5f6955c007bf5855f035025ab30f"], "verify": ["task-64c11b6571f94c9021bba57d4950"]}, "gate_ids": [], "replay_same_ids": true, "duplicate_rows": 0, "duplicate_charges": 0, "no_new_limit_or_scheduler_state": true},
+      "observed": "Megado resources remained data; no scheduler, manager, review pool, hidden allowance, or model review was created by import. External/shared pools stayed references."
+    },
+    "second_protocol_boundary": {
+      "resource_ref": "pack/work_protocol/scene.production@1",
+      "role_slots": ["creator", "editor", "critic"],
+      "routes": {},
+      "project_ref": "work.project/project-7a410df011318a36d4aafa724712@rev-2",
+      "protocol_ref": "pack/work_protocol/scene.production@1",
+      "receipt_id": "391a192df75f90465f27f033e0721e28",
+      "event_id": "event-d707868d380fbda23365e04ddf662e32",
+      "event_sequence": 2,
+      "separate_from_megado_import": true,
+      "observed": "Scene protocol adoption is an independent typed project revision with its own role slots and no Megado hierarchy/import."
+    }
+  },
+  "protocols": {
+    "megado": {"pack_manifest": "packs/megado/pack.yaml", "manifest_sha256": "8cfc9a0225c282714f1e0b8ceb71946b74326fca1884241d23aed032892e7861", "protocol_sha256": "c14ef4b7c025d36bf4e2bbb99cb75a51d8bd787d9e102b91b869f3f73825cc30", "delivery_sha256": "fcf99881754a155da027b2b1e775260a349376e6ccc9e5edc94ee1cecfa087f8"},
+    "scene_production": {"pack_manifest": "packs/scene-production/pack.yaml", "manifest_sha256": "2ce6ac8d61491fc6167b71ef371837587b5ff49684d4d8398bc8900d8221e35d", "protocol_sha256": "5a7022520994ea7747b897cddc4008f10451e861a9d6955e868a1e5790794380", "role_slots": ["creator", "editor", "critic"], "routes": {}}
+  },
+  "tests": {
+    "source_interpreter": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/.venvs/int-02/bin/python",
+    "source_pythonpath": "PYTHONPATH=src",
+    "source_focused_command": "env PYTHONPATH=src /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/.venvs/int-02/bin/python -m pytest -q tests/assessment/test_accounting.py tests/work/test_candidates_decisions_waiting.py tests/work/test_identity_graph.py tests/work/test_batches.py tests/work/test_sheet_batches.py tests/work/test_wrk06_handoff.py tests/packs/test_protocol_resources.py tests/packs/test_task_templates.py tests/conformance/test_rehearsal.py tests/kernel/test_receipts_limits.py tests/kernel/test_recovery.py",
+    "source_focused_result": "82 passed",
+    "source_without_pythonpath": "Initial command failed during collection with ModuleNotFoundError for checkout optional domains and installed-kernel API mismatch; documented reason for explicit PYTHONPATH=src.",
+    "edt04_recheck_command": "env PYTHONPATH=src /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/.venvs/int-02/bin/python -m pytest -q tests/authoring/test_finish.py::FinishTests::test_concurrent_manual_idle_race_has_one_application",
+    "edt04_recheck_result": "1 passed in 0.07s; prior known race output remains a foundation blocker and was not altered or dismissed",
+    "edt04_prior_output": {"path": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/wrk-05-edt04-race-traceback-20260914.txt", "sha256": "f96f4067625e20079e74eede66380903f9e0a181f6bb003f850b3a1da44c72bf"},
+    "disposable_installed": {"python": "/tmp/wrk06-candidate.ksQiaP/venv311/bin/python", "venv": "/tmp/wrk06-candidate.ksQiaP/venv311", "wheel": "/tmp/wrk06-candidate.ksQiaP/wheels/herzchen_contracts-0.1.0-py3-none-any.whl", "wheel_sha256": "bcceec60013c77c549227e20198fc84ef8593a085e6d001fdcf09a54b40fda44", "command_prefix": "env -u PYTHONPATH -u PYTHONHOME", "installed_focused_result": "82 passed in 0.88s", "origins": {"herzchen": "/private/tmp/wrk06-candidate.ksQiaP/venv311/lib/python3.11/site-packages/herzchen/__init__.py", "herzchen.contracts": "/private/tmp/wrk06-candidate.ksQiaP/venv311/lib/python3.11/site-packages/herzchen/contracts/__init__.py", "herzchen.kernel": "/private/tmp/wrk06-candidate.ksQiaP/venv311/lib/python3.11/site-packages/herzchen/kernel/__init__.py", "herzchen.domains.assessment": "/private/tmp/wrk06-candidate.ksQiaP/venv311/lib/python3.11/site-packages/herzchen/domains/assessment/__init__.py", "herzchen.domains.work": "/private/tmp/wrk06-candidate.ksQiaP/venv311/lib/python3.11/site-packages/herzchen/domains/work/__init__.py", "herzchen.packs.templates": "/private/tmp/wrk06-candidate.ksQiaP/venv311/lib/python3.11/site-packages/herzchen/packs/templates.py"}},
+    "new_test_sha256": "b5bd5c1a2375246810f44efecdb6c7a493281eb9924be639a97624b7666227ab",
+    "commands_are_bounded": true
+  },
+  "limitations": [
+    "No real model invocation; all review/assessment results use a deterministic local fake reviewer fixture.",
+    "No live Astrid or Runtime cutover, scheduler, manager, review pool, product acceptance, or gate verdict is claimed.",
+    "Direct shipped Megado delivery.json import is unsupported by the baseline TemplateEngine seed vocabulary; the exact limitation and a clearly labeled baseline-adapted typed import are recorded.",
+    "No raw SQL writes, private SQLite writer, second receipt/event engine, hidden import path, or foundation-owned source change was introduced.",
+    "The prior EDT-04 concurrency race is preserved as a foundation blocker even though the single recheck passed once."
+  ],
+  "changed_owned_paths": ["handoffs/WRK.json", "work/wrk-06-result.md", "tests/work/test_wrk06_handoff.py"],
+  "final_file_hashes": {"handoffs/WRK.json": "to be filled after final commit", "work/wrk-06-result.md": "to be filled after final commit", "tests/work/test_wrk06_handoff.py": "b5bd5c1a2375246810f44efecdb6c7a493281eb9924be639a97624b7666227ab"}
+}
