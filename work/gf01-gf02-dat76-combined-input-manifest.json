@@ -1,0 +1,53 @@
+{
+  "schema": "gf01-gf02-dat76-combined-input-manifest.v1",
+  "generated_at": "2026-09-14T14:02:48+02:00",
+  "checkout": "Herzchen-int-final-combined-xhard-worker",
+  "integration_base": {
+    "commit": "8235d9aacbe7357e8f72cec8342eca77aab0cb58",
+    "tree": "c69702a8b42420159dbcdb4b0d572c0e8f9dfffa",
+    "role": "GF01/P01 accepted source and current integration baseline",
+    "mapping": "retained as checkout base; no equivalent cherry-pick required"
+  },
+  "inputs": [
+    {"commit":"046b9acfdc9ba541faff65ff3713961890684303","tree":"047a43ba687f45c298139b595756dac84ab729da","role":"GF01 accepted ancestry","mapping":"already reachable from integration_base"},
+    {"commit":"c9a797882ee128dfd6aabf63df0610251db9db0c","tree":"db71b18fdb5fddaf6a88938b251b745db399b18e","role":"GF01 typed command admission ancestry","mapping":"already reachable from integration_base"},
+    {"commit":"f7712bd8a52df29619c582fbdc67deb7927f9738","tree":"33182f521d274b5720704086d7bac51d557fd66e","role":"GF01 accepted GF02 replay integration ancestry","mapping":"already reachable from integration_base"},
+    {"commit":"b480890086d92c968deeff25fffa6c145828c551","tree":"007e8b7aa91cd92b3dc342948ff7bff3e90f712f","role":"GF01 canonical replay boundary ancestry","mapping":"already reachable from integration_base"},
+    {"commit":"7298363f70aa4dc39cbe374083275ec377d9b2a5","tree":"23e35ba9cd2a618226ac79635b82614200203aff","role":"GF01 operation replay ancestry","mapping":"already reachable from integration_base"},
+    {"commit":"7911f36edf38fecd80615dd4643379e37e26c760","tree":"914cfc1dfda244c8b4d3578729deaf53e5865532","role":"GF01 complete typed admission ancestry","mapping":"already reachable from integration_base"},
+    {"commit":"f7d570cc35b183515098a4b2f707c3225d422797","tree":"a05abcf5e65d510a5da26faee4653bea438af74d","role":"GF01 manager custody ancestry","mapping":"already reachable from integration_base"},
+    {"commit":"8235d9aacbe7357e8f72cec8342eca77aab0cb58","tree":"c69702a8b42420159dbcdb4b0d572c0e8f9dfffa","role":"GF01/P01 removal of unsupported project-parent mutation port","mapping":"integration_base"},
+    {"commit":"6c9bf746c5ef4509f0071603f7a3b59e908370a0","tree":"0e95a070db51eccb120d3797b56c837a9c93c4a1","role":"common GF01/GF02/DAT divergence base","mapping":"already reachable from integration_base"},
+    {"commit":"ef13cfed36f8d43925a28e8312bf0235379b1488","tree":"ab3c8439cc0af8eb9f685caf921613a34424e9a2","role":"GF02 complete logical-context and caller reference-pin semantics","mapping":"squash-equivalent in 74c8cb56b0e530985384535ebeac7e8f1864427d"},
+    {"commit":"ff5d85cc09ace8731845e8c7fb54d63bfd07e081","tree":"a6f030b399a747524dc356e632e90b02a1647083","role":"GF02 custody and historical evidence","mapping":"squash-equivalent in 74c8cb56b0e530985384535ebeac7e8f1864427d"},
+    {"commit":"f620cd36d8f9267935e7b4ae7aa1f950a4b1db2d","tree":"bb6c3077fa0fc9537fc712db80dc23cdbbdf5c07","role":"GF02 reproduced C33 replay closures","mapping":"squash-equivalent in 74c8cb56b0e530985384535ebeac7e8f1864427d with GF01 typed command-facade conflict resolution"},
+    {"commit":"3582d9d129369c14be17ccc7e822001719ecfe6c","tree":"e959a37b689805ad40b4ac234030535ccb5f7507","role":"GF02 assessment and cleanup replay closures","mapping":"squash-equivalent in 74c8cb56b0e530985384535ebeac7e8f1864427d with GF01 typed command-facade conflict resolution"},
+    {"commit":"768b765abeb3b53eeb67c8a124f48ad121bdcc76","tree":"33ad8844fd54a7a6898d1b12780c887034906297","role":"authoritative sealed GF02 manager custody; v3 worker final absent after authorized fence","mapping":"squash-equivalent in 74c8cb56b0e530985384535ebeac7e8f1864427d with GF01 typed command-facade and reject_finish preservation"},
+    {"commit":"73b71d25b31091f581ff7fe40fbcc6f59764adda","tree":"12a8cbc83e36d09051c9fb51bc9e147cc8d6c85f","role":"DAT historical 77-row C33 test/evidence lineage","mapping":"test/evidence-only squash-equivalent in 74c8cb56b0e530985384535ebeac7e8f1864427d"},
+    {"commit":"254c1e9e715e625cf5448291e80b36cacc75c538","tree":"8b5c4134bc64fa9781a403193f27fedf5e791646","role":"DAT corrected C33 phases and baselines","mapping":"test/evidence-only squash-equivalent in 74c8cb56b0e530985384535ebeac7e8f1864427d"},
+    {"commit":"9e27291551e28baae8c31d2d8fae91c2312430d0","tree":"475ce532e9d2079d7abf99a56db04bdb18c40951","role":"DAT same-logical-key parent-link fixture correction","mapping":"test-only squash-equivalent in 74c8cb56b0e530985384535ebeac7e8f1864427d"},
+    {"commit":"9028f0f08af1844e29fba5fa4b14aa65793d161e","tree":"2d553b6c4c6ff653fca902741962953a66b3a11c","role":"DAT current 76-port inventory adaptation","mapping":"test/evidence-only squash-equivalent in 74c8cb56b0e530985384535ebeac7e8f1864427d; no DAT product source"
+    }
+  ],
+  "process_inputs": {
+    "adopted_amendment": {
+      "path": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/periodic01-adopted-process-amendment-20260914.md",
+      "sha256": "d5e6f6ee114913a31f8fce4fed7a1f835f089e0859ccd5ce7941e9f094951503"
+    },
+    "current_map": {
+      "path": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/plan/extraction-map.json",
+      "sha256": "bea51be5e6721e20a21e6befc0cd75dd340af103f722f0d154a671721520e413"
+    }
+  },
+  "verification": {
+    "object_types": "all listed Git inputs resolved as commits",
+    "trees": "all resolved trees matched the required or recorded exact tree",
+    "ancestry": "GF01 accepted inputs and DAT lineage are ancestors of their stated tips; GF02 chain descends from the common base through the authoritative manager custody commit",
+    "pre_change_status": "clean at integration_base"
+  },
+  "integration_source_checkpoint": {
+    "commit": "74c8cb56b0e530985384535ebeac7e8f1864427d",
+    "tree": "834dab82c220aaa4c9a3c11a851af8ec60c6cb0e",
+    "parent": "8235d9aacbe7357e8f72cec8342eca77aab0cb58"
+  }
+}
