@@ -18,7 +18,7 @@ import json
 import uuid
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
-from herzchen.contracts import AuthenticatedActor, CommandEnvelope, DomainContribution, ReferenceBinding, ResourceRef, TransactionContext, canonical_json, ReplayConflictError
+from herzchen.contracts import AuthenticatedActor, CommandEnvelope, DomainContribution, ReferenceBinding, ResourceRef, TransactionContext, canonical_json, canonical_request_digest, ReplayConflictError
 from herzchen.kernel import VersionConflictError
 
 from .model import Lifecycle, WorkKind, WorkNotFoundError, WorkRecord, WorkValidationError
@@ -151,6 +151,15 @@ class ProjectBatches:
         with _COMMAND_PORTS[self].transaction() as tx:
             prior = _COMMAND_PORTS[self].get_receipt(request_key)
             replay_target = prior.target if prior is not None else record.ref
+            if prior is not None and prior.target.revision is not None and prior.target.revision.startswith("rev-"):
+                try:
+                    replay_version = int(prior.target.revision.removeprefix("rev-"))
+                except ValueError:
+                    replay_version = None
+                replay_revision = prior.target.revision
+            else:
+                replay_version = record.version
+                replay_revision = record.revision
             command_payload = {
                 "sheet": _safe(sheet),
                 "decision_ref": _safe(decision_ref),
@@ -158,7 +167,7 @@ class ProjectBatches:
             }
             envelope = self._envelope(
                 "work.project-sheet.apply", replay_target, command_payload, request_key, actor,
-                expected_version=record.version, expected_revision=record.revision,
+                expected_version=replay_version, expected_revision=replay_revision,
             )
             receipt = _COMMAND_PORTS[self].mutate(
                 envelope,
@@ -856,9 +865,35 @@ class ProjectBatches:
         selected = actor or self.default_actor or AuthenticatedActor("herzchen.work", "work-batch", "herzchen.work")
         if not isinstance(selected, AuthenticatedActor):
             raise TypeError("actor must be an FND AuthenticatedActor")
-        digest_value = payload if digest_payload is None else digest_payload
-        digest_target = ResourceRef(target.authority, target.kind, target.id)
-        return CommandEnvelope(operation, BATCH_SCHEMA_REVISION, target, TransactionContext(selected, key, _digest({"operation": operation, "target": digest_target, "payload": digest_value}), expected_revision=expected_revision, expected_version=expected_version), payload)
+        context = TransactionContext(
+            selected,
+            key,
+            "0" * 64,
+            expected_revision=expected_revision,
+            expected_version=expected_version,
+        )
+        digest = canonical_request_digest(
+            logical_request_key=key,
+            operation=operation,
+            schema_revision=BATCH_SCHEMA_REVISION,
+            target=target,
+            actor=selected,
+            payload=payload,
+            context=context,
+        )
+        return CommandEnvelope(
+            operation,
+            BATCH_SCHEMA_REVISION,
+            target,
+            TransactionContext(
+                selected,
+                key,
+                digest,
+                expected_revision=expected_revision,
+                expected_version=expected_version,
+            ),
+            dict(payload),
+        )
 
     @staticmethod
     def _now() -> str:
