@@ -158,8 +158,12 @@ def test_assessment_finding_close_replays_and_changed_finding_precondition_confl
     assert replay.status == first.status == "closed"
     assert store.get_receipt("finding-close") == receipt
     assert _counts(store) == before
+    derived = assessment.get_finding(finding)
+    replay_after_projection_change = assessment.close_finding(derived, evidence_refs=(artifact,), rationale="verified", logical_request_key="finding-close")
+    assert replay_after_projection_change.status == "closed"
+    assert _counts(store) == before
     with pytest.raises(ReplayConflictError):
-        assessment.close_finding(assessment.get_finding(finding), evidence_refs=(artifact,), rationale="verified", logical_request_key="finding-close")
+        assessment.close_finding(derived.ref, evidence_refs=(artifact,), rationale="verified", logical_request_key="finding-close")
     assert _counts(store) == before
     store.close()
 

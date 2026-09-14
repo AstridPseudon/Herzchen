@@ -197,6 +197,8 @@ def _receipt_lookup(store: Store, row: Mapping[str, Any], key: str) -> dict[str,
         key + "-result",
         "claim:" + key,
     )
+    if row["operation"] == "finish.recovery":
+        candidates = (key + ":capture-failure",) + candidates
     event_ids = {
         event.event_id
         for event in store.list_events()
