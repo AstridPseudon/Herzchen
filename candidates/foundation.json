@@ -27,7 +27,7 @@
       "implementation_tree": "fc8c13750d8bb1a7c3d1247d86d6233e1818e64d"
     },
     "SNEW-01": {
-      "commit": "acd9ae3666574add8b9289d368a9b9f6f74b694a7",
+      "commit": "acd9ae3666574add8b9289d368a9b9f6f74b694b",
       "handoff": "work/snew01-blank-project-worker-result.md",
       "manager_supplement_sha256": "5b7a08a6ec1fefc38ad08ba68e37d6d1c030c25260b1f161eb8edf42ccd64940",
       "static_seed_sha256": "5675a02cc9a34bf90de0d5e91dc0617965fe15b133ab1b0cb4b0340bb19af31b",
@@ -80,15 +80,247 @@
     "C38",
     "C39"
   ],
+  "criteria_scope_status": {
+    "C01": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_consumer_authority_and_activation_qualification_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C02": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_cross_product_consumer_collision_qualification_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C03": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_external_host_uncertain_outcome_journey_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C04": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_product_route_capacity_campaign_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C05": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_consumer_scope_and_detach_qualification_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C06": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_product_pinned_definition_surface_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C07": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_consumer_cross_scope_campaign_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C08": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_otto_blank_lifecycle_consumer_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C09": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_product_filesystem_writer_qualification_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C10": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_consumer_packet_reuse_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C11": {
+      "foundation_scope_status": "supported_minimal_composition_slice",
+      "later_product_status": "exhaustive_composition_and_independent_domain_author_qualification_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C12": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_product_template_consumer_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C13": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_manager_route_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C14": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_manager_consumer_journey_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C15": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_public_handoff_consumer_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C16": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_semantic_batch_consumer_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C17": {
+      "foundation_scope_status": "supported_artifact_proof",
+      "later_product_status": "later_release_publication_qualification_pending",
+      "status": "supported_by_current_candidate"
+    },
+    "C31": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_manager_consumer_reuse_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C33": {
+      "foundation_scope_status": "supported_bounded_installed_api",
+      "later_product_status": "later_full_consumer_command_mapping_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C34": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_otto_astrid_consumer_qualification_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C35": {
+      "foundation_scope_status": "supported_current_herzchen_verticals",
+      "later_product_status": "later_full_graph_and_consumer_rehearsal_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C38": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_consumer_manager_admission_journey_pending",
+      "status": "supported_by_current_candidate"
+    },
+    "C39": {
+      "foundation_scope_status": "supported_primitives_only",
+      "later_product_status": "later_supported_manager_host_action_pending",
+      "status": "supported_foundation_slice"
+    }
+  },
   "follow_up_brief": "work/int-03-snew01-gap-brief.md (historical gap brief; closed by accepted SNEW01 correction)",
-  "follow_up_brief_sha256": "fd2756e4c4f0b790637db11a5df399cb848778057889ecc03b6fb32fe1696c36",
+  "follow_up_brief_sha256": "d81ddfdbbdc6ccdaa2d36bf3655c0cab575524ef5a51e975b2afca8ffa95716d",
   "foundation_scope": {
-    "C38": "supported_by_current_candidate",
-    "C39": "supported_foundation_slice_with_later_manager_host_action_pending",
-    "S-NEW-01": "supported_by_current_candidate"
+    "C01": "supported",
+    "C02": "supported",
+    "C03": "supported",
+    "C04": "supported",
+    "C05": "supported",
+    "C06": "supported",
+    "C07": "supported",
+    "C08": "supported",
+    "C09": "supported",
+    "C10": "supported",
+    "C11": "supported_minimal_composition_slice",
+    "C12": "supported",
+    "C13": "supported",
+    "C14": "supported",
+    "C15": "supported",
+    "C16": "supported",
+    "C17": "supported_artifact_proof",
+    "C31": "supported",
+    "C33": "supported_bounded_installed_api",
+    "C34": "supported",
+    "C35": "supported_current_herzchen_verticals",
+    "C38": "supported",
+    "C39": "supported_primitives_only",
+    "S-NEW-01": "supported"
   },
   "gate_state": "pending",
   "gate_verdict_claimed": false,
+  "git_pin_verification": {
+    "all_verified": true,
+    "command": "git rev-parse <commit> and git rev-parse <commit>^{tree}; git cat-file -t <object>",
+    "pins": [
+      {
+        "commit": "046b9acfdc9ba541faff65ff3713961890684303",
+        "commit_object": "verified",
+        "name": "source_candidate",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+        "tree": "047a43ba687f45c298139b595756dac84ab729da",
+        "tree_object": "verified"
+      },
+      {
+        "commit": "9e15ad908c4a9773ce27e7ff8e03e3dfca274c9b",
+        "commit_object": "verified",
+        "name": "FND-06",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+        "tree": "db08184a5bf81a74c1970db7ac741f97cc192cda",
+        "tree_object": "verified"
+      },
+      {
+        "commit": "2f4dd05e624be2fd228886977be093b386d6f94b",
+        "commit_object": "verified",
+        "name": "DAT-06",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+        "tree": "e64232672f3e8acbc845369ce68176dccb490455",
+        "tree_object": "verified"
+      },
+      {
+        "commit": "1735eadcbf0c5a447a7c74e9ab213b225e4e5ed8",
+        "commit_object": "verified",
+        "name": "PKG-05",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+        "tree": "fc8c13750d8bb1a7c3d1247d86d6233e1818e64d",
+        "tree_object": "verified"
+      },
+      {
+        "commit": "b036bbbe11e93811a62b95150338a192b5fd6806",
+        "commit_object": "verified",
+        "name": "WRK-06",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+        "tree": "304cfefe37c5c6c284ac667f2a7b8043aa9031f2",
+        "tree_object": "verified"
+      },
+      {
+        "commit": "77bd75e4b4047d3ca32550f299d2b9cf2305dbfa",
+        "commit_object": "verified",
+        "name": "EDT-06",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+        "tree": "61f2f9a6141a38c4ac3706f8842838993ec930df",
+        "tree_object": "verified"
+      },
+      {
+        "commit": "acd9ae3666574add8b9289d368a9b9f6f74b694b",
+        "commit_object": "verified",
+        "name": "SNEW-01",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+        "tree": "793c435567261ad077f093ac4a7f5ba30bcd05a7",
+        "tree_object": "verified"
+      },
+      {
+        "commit": "0d07a5c00910b32f033aaa960fac0bcd6617e0ed",
+        "commit_object": "verified",
+        "name": "INT-02",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+        "tree": "a8cf4b4de355d3baa6f44a4864a1d9408d9a991b",
+        "tree_object": "verified"
+      },
+      {
+        "commit": "50da2534d436d88d40a66c6cd9b51b4bae3848cf",
+        "commit_object": "verified",
+        "name": "pre_pkg",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+        "tree": "b3db8dc506a2c1a186deae31af5e217fb2274548",
+        "tree_object": "verified"
+      },
+      {
+        "commit": "c7156360ab601533a38710b8957887e582db669e",
+        "commit_object": "verified",
+        "name": "SNEW-baseline",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+        "tree": "f547137f5804c0d8958d68d08633b35698aa2e43",
+        "tree_object": "verified"
+      },
+      {
+        "commit": "96e5664237eb35adeb4cad08bddd8cd6df0a2ae1",
+        "commit_object": "verified",
+        "name": "Astrid",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/sources/Astrid-96e5664237eb",
+        "tree": "19f7539a266618a797559eedbda48e2752b30fa3",
+        "tree_object": "verified"
+      }
+    ]
+  },
   "inputs": {
     "area_contracts_sha256": "0fdbd9ed47f16da3b11f0750503e7f5dfbd58f41ef18368e9fb27553096e4e04",
     "extraction_map_sha256": "e273cb7b7e9c26f83a8e1002753c835863333b77e9bfce5b5a3909b1801dbbd5",
@@ -109,9 +341,9 @@
     "c38_foundation_probe": "work/int-03-c38-foundation-probe-20260914.json",
     "c38_foundation_probe_result": "overall_ok=true; 6 checks passed",
     "c38_foundation_probe_script_sha256": "61527f89f5ecd7073a260f8cd28c6df45138cb3b17c2d0c940ee01a25da75891",
-    "c38_foundation_probe_sha256": "3eb6d389dbfa5431d7ab587edea3f59cb25a974cee1a56688d68f56495875f88",
+    "c38_foundation_probe_sha256": "847aacd0355cb892d93bf25d8aa0c6175ccb81a93895516a6907c49c19b9b9a9",
     "c38_foundation_probe_transcript": "work/int-03-c38-foundation-probe-20260914.txt",
-    "c38_foundation_probe_transcript_sha256": "72aa2e09e0242f0dd378d116ce3e717bc8b1adaf1276e9b813c43f4e92c95724",
+    "c38_foundation_probe_transcript_sha256": "20fcde34aece812f72a095cfb86b902bb225d57984db19f6bcd808125e053ef0",
     "combined_installed_result": "249 passed, 80 subtests passed in 3.70s",
     "combined_transcript": "work/int-03-final-installed-run-20260914.txt",
     "combined_transcript_sha256": "5b4b47bb010d0694da7c249864f20f3731a11314ff37a0d23294f59c32d67892",

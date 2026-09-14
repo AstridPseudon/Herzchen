@@ -1947,7 +1947,7 @@
   },
   "state": "observed-installed-candidate",
   "worker_correction": {
-    "commit": "acd9ae3666574add8b9289d368a9b9f6f74b694a7",
+    "commit": "acd9ae3666574add8b9289d368a9b9f6f74b694b",
     "manager_supplement": "work/snew01-blank-project-manager-completion-supplement-20260914.md",
     "manager_supplement_sha256": "5b7a08a6ec1fefc38ad08ba68e37d6d1c030c25260b1f161eb8edf42ccd64940",
     "static_seed_sha256": "fcf99881754a155da027b2b1e775260a349376e6ccc9e5edc94ee1cecfa087f8",

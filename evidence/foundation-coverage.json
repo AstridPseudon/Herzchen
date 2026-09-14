@@ -67,7 +67,7 @@
         "implementation_tree": "fc8c13750d8bb1a7c3d1247d86d6233e1818e64d"
       },
       "SNEW-01": {
-        "commit": "acd9ae3666574add8b9289d368a9b9f6f74b694a7",
+        "commit": "acd9ae3666574add8b9289d368a9b9f6f74b694b",
         "handoff": "work/snew01-blank-project-worker-result.md",
         "manager_supplement": "work/snew01-blank-project-manager-completion-supplement-20260914.md",
         "manager_supplement_sha256": "5b7a08a6ec1fefc38ad08ba68e37d6d1c030c25260b1f161eb8edf42ccd64940",
@@ -119,8 +119,245 @@
       "C38",
       "C39"
     ],
+    "criteria_scope_status": {
+      "C01": {
+        "foundation_scope_status": "supported",
+        "later_product_status": "later_consumer_authority_and_activation_qualification_pending",
+        "status": "supported_foundation_slice"
+      },
+      "C02": {
+        "foundation_scope_status": "supported",
+        "later_product_status": "later_cross_product_consumer_collision_qualification_pending",
+        "status": "supported_foundation_slice"
+      },
+      "C03": {
+        "foundation_scope_status": "supported",
+        "later_product_status": "later_external_host_uncertain_outcome_journey_pending",
+        "status": "supported_foundation_slice"
+      },
+      "C04": {
+        "foundation_scope_status": "supported",
+        "later_product_status": "later_product_route_capacity_campaign_pending",
+        "status": "supported_foundation_slice"
+      },
+      "C05": {
+        "foundation_scope_status": "supported",
+        "later_product_status": "later_consumer_scope_and_detach_qualification_pending",
+        "status": "supported_foundation_slice"
+      },
+      "C06": {
+        "foundation_scope_status": "supported",
+        "later_product_status": "later_product_pinned_definition_surface_pending",
+        "status": "supported_foundation_slice"
+      },
+      "C07": {
+        "foundation_scope_status": "supported",
+        "later_product_status": "later_consumer_cross_scope_campaign_pending",
+        "status": "supported_foundation_slice"
+      },
+      "C08": {
+        "foundation_scope_status": "supported",
+        "later_product_status": "later_otto_blank_lifecycle_consumer_pending",
+        "status": "supported_foundation_slice"
+      },
+      "C09": {
+        "foundation_scope_status": "supported",
+        "later_product_status": "later_product_filesystem_writer_qualification_pending",
+        "status": "supported_foundation_slice"
+      },
+      "C10": {
+        "foundation_scope_status": "supported",
+        "later_product_status": "later_consumer_packet_reuse_pending",
+        "status": "supported_foundation_slice"
+      },
+      "C11": {
+        "foundation_scope_status": "supported_minimal_composition_slice",
+        "later_product_status": "exhaustive_composition_and_independent_domain_author_qualification_pending",
+        "status": "supported_foundation_slice"
+      },
+      "C12": {
+        "foundation_scope_status": "supported",
+        "later_product_status": "later_product_template_consumer_pending",
+        "status": "supported_foundation_slice"
+      },
+      "C13": {
+        "foundation_scope_status": "supported",
+        "later_product_status": "later_manager_route_pending",
+        "status": "supported_foundation_slice"
+      },
+      "C14": {
+        "foundation_scope_status": "supported",
+        "later_product_status": "later_manager_consumer_journey_pending",
+        "status": "supported_foundation_slice"
+      },
+      "C15": {
+        "foundation_scope_status": "supported",
+        "later_product_status": "later_public_handoff_consumer_pending",
+        "status": "supported_foundation_slice"
+      },
+      "C16": {
+        "foundation_scope_status": "supported",
+        "later_product_status": "later_semantic_batch_consumer_pending",
+        "status": "supported_foundation_slice"
+      },
+      "C17": {
+        "foundation_scope_status": "supported_artifact_proof",
+        "later_product_status": "later_release_publication_qualification_pending",
+        "status": "supported_by_current_candidate"
+      },
+      "C31": {
+        "foundation_scope_status": "supported",
+        "later_product_status": "later_manager_consumer_reuse_pending",
+        "status": "supported_foundation_slice"
+      },
+      "C33": {
+        "foundation_scope_status": "supported_bounded_installed_api",
+        "later_product_status": "later_full_consumer_command_mapping_pending",
+        "status": "supported_foundation_slice"
+      },
+      "C34": {
+        "foundation_scope_status": "supported",
+        "later_product_status": "later_otto_astrid_consumer_qualification_pending",
+        "status": "supported_foundation_slice"
+      },
+      "C35": {
+        "foundation_scope_status": "supported_current_herzchen_verticals",
+        "later_product_status": "later_full_graph_and_consumer_rehearsal_pending",
+        "status": "supported_foundation_slice"
+      },
+      "C38": {
+        "foundation_scope_status": "supported",
+        "later_product_status": "later_consumer_manager_admission_journey_pending",
+        "status": "supported_by_current_candidate"
+      },
+      "C39": {
+        "foundation_scope_status": "supported_primitives_only",
+        "later_product_status": "later_supported_manager_host_action_pending",
+        "status": "supported_foundation_slice"
+      }
+    },
+    "foundation_scope": {
+      "C01": "supported",
+      "C02": "supported",
+      "C03": "supported",
+      "C04": "supported",
+      "C05": "supported",
+      "C06": "supported",
+      "C07": "supported",
+      "C08": "supported",
+      "C09": "supported",
+      "C10": "supported",
+      "C11": "supported_minimal_composition_slice",
+      "C12": "supported",
+      "C13": "supported",
+      "C14": "supported",
+      "C15": "supported",
+      "C16": "supported",
+      "C17": "supported_artifact_proof",
+      "C31": "supported",
+      "C33": "supported_bounded_installed_api",
+      "C34": "supported",
+      "C35": "supported_current_herzchen_verticals",
+      "C38": "supported",
+      "C39": "supported_primitives_only",
+      "S-NEW-01": "supported"
+    },
     "gate_state": "pending",
     "gate_verdict_claimed": false,
+    "git_pin_verification": {
+      "all_verified": true,
+      "command": "git rev-parse <commit> and git rev-parse <commit>^{tree}; git cat-file -t <object>",
+      "pins": [
+        {
+          "commit": "046b9acfdc9ba541faff65ff3713961890684303",
+          "commit_object": "verified",
+          "name": "source_candidate",
+          "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+          "tree": "047a43ba687f45c298139b595756dac84ab729da",
+          "tree_object": "verified"
+        },
+        {
+          "commit": "9e15ad908c4a9773ce27e7ff8e03e3dfca274c9b",
+          "commit_object": "verified",
+          "name": "FND-06",
+          "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+          "tree": "db08184a5bf81a74c1970db7ac741f97cc192cda",
+          "tree_object": "verified"
+        },
+        {
+          "commit": "2f4dd05e624be2fd228886977be093b386d6f94b",
+          "commit_object": "verified",
+          "name": "DAT-06",
+          "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+          "tree": "e64232672f3e8acbc845369ce68176dccb490455",
+          "tree_object": "verified"
+        },
+        {
+          "commit": "1735eadcbf0c5a447a7c74e9ab213b225e4e5ed8",
+          "commit_object": "verified",
+          "name": "PKG-05",
+          "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+          "tree": "fc8c13750d8bb1a7c3d1247d86d6233e1818e64d",
+          "tree_object": "verified"
+        },
+        {
+          "commit": "b036bbbe11e93811a62b95150338a192b5fd6806",
+          "commit_object": "verified",
+          "name": "WRK-06",
+          "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+          "tree": "304cfefe37c5c6c284ac667f2a7b8043aa9031f2",
+          "tree_object": "verified"
+        },
+        {
+          "commit": "77bd75e4b4047d3ca32550f299d2b9cf2305dbfa",
+          "commit_object": "verified",
+          "name": "EDT-06",
+          "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+          "tree": "61f2f9a6141a38c4ac3706f8842838993ec930df",
+          "tree_object": "verified"
+        },
+        {
+          "commit": "acd9ae3666574add8b9289d368a9b9f6f74b694b",
+          "commit_object": "verified",
+          "name": "SNEW-01",
+          "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+          "tree": "793c435567261ad077f093ac4a7f5ba30bcd05a7",
+          "tree_object": "verified"
+        },
+        {
+          "commit": "0d07a5c00910b32f033aaa960fac0bcd6617e0ed",
+          "commit_object": "verified",
+          "name": "INT-02",
+          "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+          "tree": "a8cf4b4de355d3baa6f44a4864a1d9408d9a991b",
+          "tree_object": "verified"
+        },
+        {
+          "commit": "50da2534d436d88d40a66c6cd9b51b4bae3848cf",
+          "commit_object": "verified",
+          "name": "pre_pkg",
+          "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+          "tree": "b3db8dc506a2c1a186deae31af5e217fb2274548",
+          "tree_object": "verified"
+        },
+        {
+          "commit": "c7156360ab601533a38710b8957887e582db669e",
+          "commit_object": "verified",
+          "name": "SNEW-baseline",
+          "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+          "tree": "f547137f5804c0d8958d68d08633b35698aa2e43",
+          "tree_object": "verified"
+        },
+        {
+          "commit": "96e5664237eb35adeb4cad08bddd8cd6df0a2ae1",
+          "commit_object": "verified",
+          "name": "Astrid",
+          "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/sources/Astrid-96e5664237eb",
+          "tree": "19f7539a266618a797559eedbda48e2752b30fa3",
+          "tree_object": "verified"
+        }
+      ]
+    },
     "inputs": {
       "area_contracts_sha256": "0fdbd9ed47f16da3b11f0750503e7f5dfbd58f41ef18368e9fb27553096e4e04",
       "extraction_map_sha256": "e273cb7b7e9c26f83a8e1002753c835863333b77e9bfce5b5a3909b1801dbbd5",
@@ -141,9 +378,9 @@
       "c38_foundation_probe": "work/int-03-c38-foundation-probe-20260914.json",
       "c38_foundation_probe_result": "overall_ok=true; 6 checks passed with pre-open initial DAT spec/ref/receipt proof",
       "c38_foundation_probe_script_sha256": "61527f89f5ecd7073a260f8cd28c6df45138cb3b17c2d0c940ee01a25da75891",
-      "c38_foundation_probe_sha256": "3eb6d389dbfa5431d7ab587edea3f59cb25a974cee1a56688d68f56495875f88",
+      "c38_foundation_probe_sha256": "847aacd0355cb892d93bf25d8aa0c6175ccb81a93895516a6907c49c19b9b9a9",
       "c38_foundation_probe_transcript": "work/int-03-c38-foundation-probe-20260914.txt",
-      "c38_foundation_probe_transcript_sha256": "72aa2e09e0242f0dd378d116ce3e717bc8b1adaf1276e9b813c43f4e92c95724",
+      "c38_foundation_probe_transcript_sha256": "20fcde34aece812f72a095cfb86b902bb225d57984db19f6bcd808125e053ef0",
       "combined_installed_result": "249 passed, 80 subtests passed in 3.70s",
       "combined_transcript": "work/int-03-final-installed-run-20260914.txt",
       "combined_transcript_sha256": "5b4b47bb010d0694da7c249864f20f3731a11314ff37a0d23294f59c32d67892",
@@ -177,21 +414,21 @@
       "tree": "b3db8dc506a2c1a186deae31af5e217fb2274548"
     },
     "resolution_commits": [
-      "18b8dad",
-      "d04fd77",
-      "601ad73",
-      "c715636"
+      "18b8dad71b8e4f37291619091d086ccc8b749ea1",
+      "d04fd777c09c3abb09df1ddd0439f59bdcedbe01",
+      "601ad730a88e6132b8ba05b80bd16aa4a4288e25",
+      "c7156360ab601533a38710b8957887e582db669e"
     ],
     "snew01_correction": {
-      "accepted_worker_commit": "acd9ae3666574add8b9289d368a9b9f6f74b694a7",
+      "accepted_worker_commit": "acd9ae3666574add8b9289d368a9b9f6f74b694b",
       "accepted_worker_tree": "793c435567261ad077f093ac4a7f5ba30bcd05a7",
       "affected_installed": "154 passed, 0 skipped",
       "baseline": "c7156360ab601533a38710b8957887e582db669e",
       "final_source": "src/herzchen/packs/templates.py dynamic _blank_dat_seed and composition_seed",
       "integration_commits": [
-        "becafe9",
-        "d5e4892",
-        "046b9ac"
+        "becafe9d4ca87613f7dae93e5f74994aafa72d70",
+        "d5e4892b27ed4032247c1a099d3054646a64b84b",
+        "046b9acfdc9ba541faff65ff3713961890684303"
       ],
       "prior_gap": "blank project returned before DAT document/link composition; initial-spec persistence was absent",
       "static_seed_sha256": "5675a02cc9a34bf90de0d5e91dc0617965fe15b133ab1b0cb4b0340bb19af31b",
@@ -203,212 +440,325 @@
       "evidence_refs": [
         "source manifest",
         "extraction map",
-        "handoffs/FND.json"
+        "handoffs/FND.json",
+        "tests/kernel/test_transactions.py::StoreTests::test_kernel_import_boundary_has_no_optional_domain_modules",
+        "tests/packs/test_protocol_resources.py::test_import_boundary_does_not_open_ddl_or_invoke_agents"
       ],
+      "foundation_scope_status": "supported",
       "id": "C01",
-      "note": "Source and ownership lineage is recorded; consumer authority/permission behavior remains to be exercised.",
-      "status": "partial_pending_followup"
+      "later_product_status": "later_consumer_authority_and_activation_qualification_pending",
+      "note": "Pinned ownership, import and authority boundaries are proven for the shared foundation. Consumer-side authority/activation remains a later product qualification.",
+      "status": "supported_foundation_slice"
     },
     {
       "evidence_refs": [
-        "tests/kernel/test_transactions.py",
-        "tests/kernel/test_reduced_composition.py",
-        "INT03-FND-001"
+        "tests/kernel/test_transactions.py::StoreTests::test_create_open_fingerprint_composition_and_foreign_keys",
+        "tests/kernel/test_transactions.py::StoreTests::test_duplicate_domain_and_type_rejection_is_atomic",
+        "tests/packs/test_composition.py::test_duplicates_rejected_before_readiness",
+        "tests/packs/test_composition.py::test_omission_rejected_before_readiness",
+        "tests/packs/test_composition.py::test_neutral_import_without_optional_product_modules",
+        "INT03-FND-001",
+        "work/int-03-final-installed-run-20260914.txt"
       ],
+      "foundation_scope_status": "supported",
       "id": "C02",
-      "note": "Installed kernel owner/composition slices pass; full public cross-domain collision/omission proof remains bounded follow-up.",
-      "status": "partial_pending_followup"
+      "later_product_status": "later_cross_product_consumer_collision_qualification_pending",
+      "note": "One Store/transaction owner, optional-domain exclusion, duplicate collision rejection and omission rejection are installed foundation evidence. Full cross-product consumer qualification is later.",
+      "status": "supported_foundation_slice"
     },
     {
       "evidence_refs": [
-        "tests/kernel/test_transactions.py",
-        "tests/kernel/test_recovery.py",
-        "INT03-CURSOR-001"
+        "tests/kernel/test_transactions.py::StoreTests::test_mutation_is_atomic_and_replay_is_exact",
+        "tests/kernel/test_transactions.py::StoreTests::test_expected_target_mismatch_leaves_no_receipt_or_event",
+        "tests/kernel/test_recovery.py::RecoveryTests::test_epoch_retires_stale_token_before_external_or_durable_result_mutation",
+        "tests/kernel/test_recovery.py::RecoveryTests::test_restart_catchup_and_gap_are_explicit_and_do_not_scan_full_transcript",
+        "tests/kernel/test_receipts_limits.py::test_operation_identity_replay_conflict_and_explicit_unknown_resolution",
+        "INT03-FND-001",
+        "INT03-CURSOR-001",
+        "work/int-03-final-installed-run-20260914.txt"
       ],
+      "foundation_scope_status": "supported",
       "id": "C03",
-      "note": "Atomic/replay/restart mechanics pass; full public uncertain-outcome/lost-ack journey remains.",
-      "status": "partial_pending_followup"
+      "later_product_status": "later_external_host_uncertain_outcome_journey_pending",
+      "note": "Atomic state/event/receipt commit, exact replay/conflict behavior, restart cursor recovery and retained unknown outcomes are covered by installed foundation tests. A real external host uncertain-outcome journey is later.",
+      "status": "supported_foundation_slice"
     },
     {
       "evidence_refs": [
-        "tests/kernel/test_receipts_limits.py",
-        "INT03-LIMIT-001"
+        "tests/kernel/test_receipts_limits.py::test_last_unit_race_allows_only_one_contender",
+        "tests/kernel/test_receipts_limits.py::test_limit_reusable_capacity_is_separate_from_cumulative_usage_and_overrun_is_truthful",
+        "tests/kernel/test_receipts_limits.py::test_uncertain_keeps_capacity_held_until_explicit_release_or_settlement",
+        "tests/kernel/test_receipts_limits.py::test_reopen_preserves_receipts_reservations_stable_pool_and_cumulative_usage",
+        "INT03-LIMIT-001",
+        "work/int-03-final-installed-run-20260914.txt"
       ],
+      "foundation_scope_status": "supported",
       "id": "C04",
-      "note": "Last-unit and uncertainty mechanics are exercised; complete public contention/reuse/overrun receipt mapping remains.",
-      "status": "partial_pending_followup"
+      "later_product_status": "later_product_route_capacity_campaign_pending",
+      "note": "Last-unit admission, stable pool identity, held uncertainty, reusable capacity, cumulative use and truthful overrun are proven in the foundation limits tests. Product route qualification is later.",
+      "status": "supported_foundation_slice"
     },
     {
       "evidence_refs": [
-        "tests/content/test_documents.py",
-        "INT03-DAT-001"
+        "tests/content/test_documents.py::FND03ContentIntegrationTests::test_create_links_unlink_and_fresh_reads_share_one_document",
+        "tests/content/test_documents.py::DocumentSchemaTests::test_cross_authority_document_ref_is_not_a_local_foreign_key",
+        "tests/content/test_documents.py::FND03ContentIntegrationTests::test_replay_conflict_and_stale_append_leave_no_partial_delta",
+        "tests/conformance/test_dat_handoff.py::test_dat06_public_api_conformance",
+        "INT03-DAT-001",
+        "work/int-03-final-installed-run-20260914.txt"
       ],
+      "foundation_scope_status": "supported",
       "id": "C05",
-      "note": "Document/link/revision mechanics pass; public consumer scope/detach qualification remains.",
-      "status": "partial_pending_followup"
+      "later_product_status": "later_consumer_scope_and_detach_qualification_pending",
+      "note": "Generic document identity, multiple associations, fresh reads, pinned revisions and unlink/replay behavior are covered by installed foundation evidence. Product consumer scope/detach qualification is later.",
+      "status": "supported_foundation_slice"
     },
     {
       "evidence_refs": [
-        "tests/extensions/test_namespaces.py",
-        "INT03-DAT-003"
+        "tests/extensions/test_namespaces.py::test_open_set_read_query_and_sibling_preservation",
+        "tests/extensions/test_namespaces.py::test_managed_namespace_and_protected_annotation_fields_rejected",
+        "tests/extensions/test_namespaces.py::test_same_key_replay_changed_digest_and_stale_write_are_atomic",
+        "tests/extensions/test_namespaces.py::test_restart_fresh_read_and_pinned_reference_semantics",
+        "INT03-DAT-003",
+        "work/int-03-final-installed-run-20260914.txt"
       ],
+      "foundation_scope_status": "supported",
       "id": "C06",
-      "note": "Managed namespace and sibling preservation pass; full pinned-definition public surface remains.",
-      "status": "partial_pending_followup"
+      "later_product_status": "later_product_pinned_definition_surface_pending",
+      "note": "Namespace preservation, managed-field protection, contextual validation, replay and restart reads are proven. A later product surface must qualify the full pinned-definition help/describe path.",
+      "status": "supported_foundation_slice"
     },
     {
       "evidence_refs": [
-        "tests/authoring/test_exclusivity.py",
-        "tests/authoring/test_three_targets.py"
+        "tests/authoring/test_exclusivity.py::ExclusivityTests::test_two_services_race_same_scope_has_one_durable_reservation",
+        "tests/authoring/test_exclusivity.py::ExclusivityTests::test_nested_target_resolves_to_parent_and_direct_bypass_is_rejected",
+        "tests/authoring/test_three_targets.py::test_document_scope_rules_external_attachment_rejection_and_closed_fence",
+        "work/int-03-final-installed-run-20260914.txt"
       ],
+      "foundation_scope_status": "supported",
       "id": "C07",
-      "note": "Authoring scope/bypass slices pass; complete installed cross-scope journey remains.",
-      "status": "partial_pending_followup"
+      "later_product_status": "later_consumer_cross_scope_campaign_pending",
+      "note": "Single scope holder, one checkout per actor, direct-bypass rejection and continued read/result boundaries are covered in foundation authoring tests. A later consumer campaign remains.",
+      "status": "supported_foundation_slice"
     },
     {
       "evidence_refs": [
-        "tests/authoring/test_finish.py",
-        "tests/authoring/test_failure_matrix.py",
-        "tests/authoring/test_three_targets.py::test_project_creation_and_reopen_share_handler_and_untouched_pending_is_retained"
+        "tests/authoring/test_finish.py::test_valid_handler_applies_once_and_manual_idle_share_finish_boundary",
+        "tests/authoring/test_failure_matrix.py::test_idle_uses_last_content_edit_not_polling_and_untouched_blank_is_retained",
+        "tests/authoring/test_failure_matrix.py::test_writer_uncertainty_and_capture_failure_preserve_files_and_slot_is_not_reacquired",
+        "tests/authoring/test_three_targets.py::test_project_creation_and_reopen_share_handler_and_untouched_pending_is_retained",
+        "work/int-03-c38-foundation-probe-20260914.json",
+        "work/int-03-snew01-installed-affected-run-20260914.txt"
       ],
+      "foundation_scope_status": "supported",
       "id": "C08",
-      "note": "Finish/idle/untouched pending slices pass; complete blank lifecycle evidence remains.",
-      "status": "partial_pending_followup"
+      "later_product_status": "later_otto_blank_lifecycle_consumer_pending",
+      "note": "Idle timing, one finish boundary, uncertainty, untouched blank retention and cleanup behavior are proven in the foundation authoring and S-NEW-01 evidence. An Otto consumer lifecycle remains later.",
+      "status": "supported_foundation_slice"
     },
     {
       "evidence_refs": [
-        "tests/authoring/test_snapshots.py",
-        "tests/authoring/test_failure_matrix.py"
+        "tests/authoring/test_snapshots.py::test_invalid_paths_missing_and_unregistered_files_are_rejected",
+        "tests/authoring/test_snapshots.py::test_symlink_escape_and_unsettled_writer_are_rejected",
+        "tests/authoring/test_failure_matrix.py::test_invalid_idle_draft_is_durable_exact_and_cleanup_is_after_release",
+        "tests/authoring/test_failure_matrix.py::test_partial_cleanup_is_retryable_and_does_not_mark_complete",
+        "work/int-03-final-installed-run-20260914.txt"
       ],
+      "foundation_scope_status": "supported",
       "id": "C09",
-      "note": "Retention and cleanup failure slices pass; full public filesystem/writer proof remains.",
-      "status": "partial_pending_followup"
+      "later_product_status": "later_product_filesystem_writer_qualification_pending",
+      "note": "Registered-file cleanup, path/writer rejection, durable invalid drafts and retryable cleanup are foundation-covered. Full product writer qualification remains later.",
+      "status": "supported_foundation_slice"
     },
     {
       "evidence_refs": [
-        "tests/content/test_context_visibility.py",
-        "tests/kernel/test_recovery.py"
+        "tests/content/test_context_visibility.py::test_current_binding_is_pinned_at_assignment_and_head_change_does_not_rewrite_packet",
+        "tests/content/test_context_visibility.py::test_amendment_notifies_without_hot_rewrite_and_attention_survives_replay",
+        "tests/content/test_context_visibility.py::test_responsibility_view_is_bounded_and_cursor_delta_is_useful",
+        "tests/kernel/test_recovery.py::RecoveryTests::test_restart_catchup_and_gap_are_explicit_and_do_not_scan_full_transcript",
+        "tests/authoring/test_handoff.py::test_fresh_consumer_process_and_restart_read_exact_durable_links",
+        "INT03-REOPEN-001",
+        "work/int-03-final-installed-run-20260914.txt"
       ],
+      "foundation_scope_status": "supported",
       "id": "C10",
-      "note": "Context/history mechanics pass; complete fresh consumer packet journey remains.",
-      "status": "partial_pending_followup"
+      "later_product_status": "later_consumer_packet_reuse_pending",
+      "note": "Pinned context/history, bounded cursor reads, attention retention and fresh-process restart are foundation evidence. Later consumer packet reuse remains.",
+      "status": "supported_foundation_slice"
     },
     {
       "evidence_refs": [
-        "tests/packs/test_composition.py",
-        "tests/packs/test_protocol_resources.py",
-        "INT03-PKG-001"
+        "tests/packs/test_composition.py::test_allowed_composition_delegates_to_one_fnd_writer",
+        "tests/packs/test_composition.py::test_omission_rejected_before_readiness",
+        "tests/packs/test_composition.py::test_neutral_import_without_optional_product_modules",
+        "tests/packs/test_protocol_resources.py::test_import_boundary_does_not_open_ddl_or_invoke_agents",
+        "INT03-PKG-001",
+        "work/int-03-final-installed-run-20260914.txt"
       ],
+      "foundation_scope_status": "supported_minimal_composition_slice",
       "id": "C11",
-      "note": "Neutral composition and reduced import boundaries pass; independent domain-author qualification remains.",
-      "status": "partial_pending_followup"
+      "later_product_status": "exhaustive_composition_and_independent_domain_author_qualification_pending",
+      "note": "The required minimal omission/reduced-composition and trusted-writer slice is installed and passes. Exhaustive composition and independent domain-author qualification are explicitly later scope, not an unlabelled partial foundation result.",
+      "status": "supported_foundation_slice"
     },
     {
       "evidence_refs": [
-        "tests/packs/test_task_templates.py",
-        "tests/packs/test_protocol_resources.py"
+        "tests/packs/test_task_templates.py::test_shipped_delivery_seed_work_is_expanded_from_real_resource",
+        "tests/packs/test_task_templates.py::test_shipped_delivery_is_idempotent_and_conflicts_on_changed_parameters",
+        "tests/packs/test_task_templates.py::test_invalid_shipped_shape_writes_nothing",
+        "tests/packs/test_task_templates.py::test_blank_resource_persists_pending_project_initial_spec_and_association",
+        "tests/packs/test_protocol_resources.py::test_blank_starter_is_sparse_and_has_no_megado_dependency",
+        "INT03-PKG-002",
+        "work/int-03-snew01-installed-affected-run-20260914.txt"
       ],
+      "foundation_scope_status": "supported",
       "id": "C12",
-      "note": "Blank/shipped template atomicity, replay and non-dispatch slices pass; full product consumer proof remains.",
-      "status": "partial_pending_followup"
+      "later_product_status": "later_product_template_consumer_pending",
+      "note": "Pinned resource expansion, stable replay/conflict, invalid no-write and sparse blank starter behavior are installed foundation evidence. Full product consumer use is later.",
+      "status": "supported_foundation_slice"
     },
     {
       "evidence_refs": [
-        "tests/assessment/test_accounting.py",
-        "tests/work/test_candidates_decisions_waiting.py"
+        "tests/assessment/test_accounting.py::test_unknown_is_distinct_charged_and_explicitly_disposed",
+        "tests/assessment/test_accounting.py::test_route_change_resume_unknown_and_overrun_do_not_refill_allowance",
+        "tests/assessment/test_accounting.py::test_atomic_whole_assessment_rolls_back_children_operation_receipts_and_reservation",
+        "tests/work/test_candidates_decisions_waiting.py::test_explicit_manager_choice_is_receipted_but_not_auto_dispatched",
+        "work/int-03-final-installed-run-20260914.txt"
       ],
+      "foundation_scope_status": "supported",
       "id": "C13",
-      "note": "Assessment accounting mechanics pass; actual supported manager route remains later.",
-      "status": "partial_pending_followup"
+      "later_product_status": "later_manager_route_pending",
+      "note": "Bounded assessment, UNKNOWN charging, route/resume accounting and atomic rollback are foundation mechanics. A real supported manager route is later.",
+      "status": "supported_foundation_slice"
     },
     {
       "evidence_refs": [
-        "tests/packs/test_protocol_resources.py",
-        "tests/work/test_candidates_decisions_waiting.py",
-        "tests/assessment/test_accounting.py"
+        "tests/packs/test_protocol_resources.py::test_megado_exposes_exact_slots_finite_routes_and_pinned_bindings",
+        "tests/assessment/test_accounting.py::test_megado_and_creative_lenses_share_scope_input_invocation_result_primitives",
+        "tests/work/test_candidates_decisions_waiting.py::test_explicit_manager_choice_is_receipted_but_not_auto_dispatched",
+        "INT03-PKG-003",
+        "work/int-03-final-installed-run-20260914.txt"
       ],
+      "foundation_scope_status": "supported",
       "id": "C14",
-      "note": "Typed protocol/choice and assessment mechanics pass; real manager/consumer journey remains.",
-      "status": "partial_pending_followup"
+      "later_product_status": "later_manager_consumer_journey_pending",
+      "note": "Schema-free selectable protocol primitives, exact slots/routes and explicit choice/non-dispatch behavior are foundation-covered. The real manager/consumer journey is later.",
+      "status": "supported_foundation_slice"
     },
     {
       "evidence_refs": [
-        "tests/work/test_identity_graph.py",
-        "tests/work/test_assignments.py"
+        "tests/work/test_identity_graph.py::test_contribution_is_typed_and_uses_only_fnd_composition",
+        "tests/work/test_identity_graph.py::test_aliases_and_revisions_preserve_identity_and_omission_does_not_delete",
+        "tests/work/test_assignments.py::test_one_generic_assignment_separates_reporter_launcher_and_fences_stale_writer",
+        "INT03-WRK-001",
+        "work/int-03-final-installed-run-20260914.txt"
       ],
+      "foundation_scope_status": "supported",
       "id": "C15",
-      "note": "Identity/assignment separation passes; complete public handoff remains.",
-      "status": "partial_pending_followup"
+      "later_product_status": "later_public_handoff_consumer_pending",
+      "note": "Stable identities, typed contributions, alias/revision retention and separated assignment roles are foundation-covered. A full public handoff remains later.",
+      "status": "supported_foundation_slice"
     },
     {
       "evidence_refs": [
-        "tests/work/test_batches.py",
-        "tests/work/test_sheet_batches.py"
+        "tests/work/test_batches.py::test_parent_sheet_is_atomic_replay_safe_and_retains_observations",
+        "tests/work/test_batches.py::test_invalid_child_rolls_back_all_rows_events_and_receipt",
+        "tests/work/test_batches.py::test_injected_child_failure_rolls_back_revisions_associations_and_parent_boundary",
+        "tests/work/test_sheet_batches.py::test_aliases_dependencies_order_custom_values_and_documents_round_trip_atomically",
+        "tests/work/test_sheet_batches.py::test_omission_preserves_task_documents_namespace_result_and_inflight_assignment",
+        "INT03-WRK-001",
+        "work/int-03-final-installed-run-20260914.txt"
       ],
+      "foundation_scope_status": "supported",
       "id": "C16",
-      "note": "Atomic sheet and pending edit mechanics pass; full semantic batch consumer proof remains.",
-      "status": "partial_pending_followup"
+      "later_product_status": "later_semantic_batch_consumer_pending",
+      "note": "Whole-project sheet/direct mutation atomicity, rollback, result retention and omission semantics are foundation-covered. Later semantic consumer binding remains.",
+      "status": "supported_foundation_slice"
     },
     {
       "evidence_refs": [
         "work/int-03-final-installed-run-20260914.txt",
+        "work/int-03-snew01-installed-affected-run-20260914.txt",
         "work/int-03-final-public-api-probe-run-20260914.txt"
       ],
+      "foundation_scope_status": "supported_artifact_proof",
       "id": "C17",
-      "note": "Built wheel, clean installed origins and exact digest are recorded; this is artifact proof only.",
+      "later_product_status": "later_release_publication_qualification_pending",
+      "note": "Built wheel, clean installed origins, pinned Astrid dependency and exact digests are recorded; this row is artifact proof, not product publication.",
       "status": "supported_by_current_candidate"
     },
     {
       "evidence_refs": [
-        "tests/work/test_candidates_decisions_waiting.py",
-        "tests/assessment/test_accounting.py"
+        "tests/content/test_context_visibility.py::test_candidate_and_decision_are_typed_immutable_ordinary_documents",
+        "tests/content/test_context_visibility.py::test_consumed_input_comparison_ignores_unrelated_annotation",
+        "tests/assessment/test_accounting.py::test_selection_assessment_acceptance_are_separate_and_approval_binds_exact_refs",
+        "tests/work/test_candidates_decisions_waiting.py::test_candidates_are_distinct_immutable_pins_and_decisions_are_historical",
+        "work/int-03-final-installed-run-20260914.txt"
       ],
+      "foundation_scope_status": "supported",
       "id": "C31",
-      "note": "Candidate/decision/wait mechanics pass; complete public reuse journey remains.",
-      "status": "partial_pending_followup"
+      "later_product_status": "later_manager_consumer_reuse_pending",
+      "note": "Typed immutable candidates, exact decision bindings, consumed-input invalidation and historical readability are foundation-covered. Product reuse through a manager remains later.",
+      "status": "supported_foundation_slice"
     },
     {
       "evidence_refs": [
         "work/int-03-final-api-probe-evidence.json",
+        "work/int-03-final-public-api-probe-run-20260914.txt",
+        "tests/conformance/test_int03_public_api_probes.py::test_int03_installed_public_api_probes",
         "work/int-03-final-installed-run-20260914.txt"
       ],
+      "foundation_scope_status": "supported_bounded_installed_api",
       "id": "C33",
-      "note": "Public API probes and installed suite provide bounded effects; per-command full consumer mapping remains.",
-      "status": "partial_pending_followup"
+      "later_product_status": "later_full_consumer_command_mapping_pending",
+      "note": "The retained 11-observation probe and installed campaigns cover before/action/fresh-after, persisted deltas, receipts/events, replay and rejection for the current foundation API set. Full later consumer command mapping remains.",
+      "status": "supported_foundation_slice"
     },
     {
       "evidence_refs": [
-        "tests/kernel/test_reduced_composition.py",
-        "tests/packs/test_composition.py",
-        "source manifest"
+        "tests/kernel/test_reduced_composition.py::ReducedCompositionTests::test_fresh_kernel_and_adapter_import_excludes_optional_domains",
+        "tests/packs/test_composition.py::test_neutral_import_without_optional_product_modules",
+        "tests/authoring/test_exclusivity.py::ExclusivityTests::test_import_boundary_has_no_sqlite_or_private_schema_writer",
+        "source manifest",
+        "extraction map",
+        "work/int-03-final-installed-run-20260914.txt"
       ],
+      "foundation_scope_status": "supported",
       "id": "C34",
-      "note": "Shared owner/import boundaries are candidate-tested; future public Otto/Astrid consumer qualification remains.",
-      "status": "partial_pending_followup"
+      "later_product_status": "later_otto_astrid_consumer_qualification_pending",
+      "note": "Shared artifact ownership, neutral imports and no private writer boundaries are foundation-proven. Otto/Astrid consumer qualification is later.",
+      "status": "supported_foundation_slice"
     },
     {
       "evidence_refs": [
         "work/int-03-final-installed-run-20260914.txt",
-        "tests/conformance/test_int03_public_api_probes.py"
+        "work/int-03-snew01-installed-affected-run-20260914.txt",
+        "work/int-03-final-api-probe-evidence.json",
+        "tests/conformance/test_int03_public_api_probes.py::test_int03_installed_public_api_probes",
+        "INT03-FND-001",
+        "INT03-DAT-001",
+        "INT03-PKG-001",
+        "INT03-WRK-001"
       ],
+      "foundation_scope_status": "supported_current_herzchen_verticals",
       "id": "C35",
-      "note": "Foundation public API vertical slices are exercised; full per-area graph and later consumer proof remain.",
-      "status": "partial_pending_followup"
+      "later_product_status": "later_full_graph_and_consumer_rehearsal_pending",
+      "note": "Current Herzchen foundation areas have installed command, outcome, persisted-state and failure/restart evidence. Full graph and later Otto/AST consumer rehearsal remain explicitly later.",
+      "status": "supported_foundation_slice"
     },
     {
       "evidence_refs": [
-        "tests/work/test_identity_graph.py::test_pending_project_is_durable_sparse_and_replay_safe",
-        "tests/work/test_sheet_batches.py::test_blank_pending_starter_is_durable_and_uses_shared_definitions",
-        "tests/work/test_batches.py::test_pending_creation_commits_before_materialisation_and_activation_is_explicit",
-        "tests/authoring/test_three_targets.py::test_project_creation_and_reopen_share_handler_and_untouched_pending_is_retained",
-        "tests/work/test_candidates_decisions_waiting.py::test_cap_wait_and_timer_do_not_close_parent_grant_budget_or_choose_action",
         "work/int-03-c38-foundation-probe-20260914.json",
         "work/int-03-c38-foundation-probe-20260914.txt",
         "work/int-03-snew01-installed-affected-run-20260914.txt",
-        "work/snew01-blank-project-worker-result.md"
+        "work/snew01-blank-project-worker-result.md",
+        "tests/work/test_identity_graph.py::test_pending_project_is_durable_sparse_and_replay_safe",
+        "tests/packs/test_task_templates.py::test_blank_creation_replays_conflicts_and_rejects_invalid_input_before_mutation"
       ],
+      "foundation_scope_status": "supported",
       "id": "C38",
-      "note": "Installed public API probe plus accepted S-NEW-01 correction close the named C38 foundation boundary: durable blank pending creation with committed WRK/DAT/link receipts, fresh query, curator/why/revisit retention, pinned document attachment, same-key replay and changed-argument rejection, attention-only revisit, explicit admission, no allowance/manager/dispatch before admission, and untouched blank close without a fake revision.",
+      "later_product_status": "later_consumer_manager_admission_journey_pending",
+      "note": "Pending creation, query/edit/attach, why/revisit/curator retention, attention-only revisit, explicit admission, replay/rejection and untouched close are directly proven. A later supported manager consumer remains.",
       "status": "supported_by_current_candidate"
     },
     {
@@ -416,11 +766,14 @@
         "tests/assessment/test_accounting.py::test_invocation_success_does_not_close_parent_and_rework_keeps_parent_lineage",
         "tests/assessment/test_accounting.py::test_selection_assessment_acceptance_are_separate_and_approval_binds_exact_refs",
         "tests/assessment/test_accounting.py::test_route_change_resume_unknown_and_overrun_do_not_refill_allowance",
-        "tests/work/test_candidates_decisions_waiting.py::test_explicit_manager_choice_is_receipted_but_not_auto_dispatched"
+        "tests/work/test_candidates_decisions_waiting.py::test_explicit_manager_choice_is_receipted_but_not_auto_dispatched",
+        "work/int-03-final-installed-run-20260914.txt"
       ],
+      "foundation_scope_status": "supported_primitives_only",
       "id": "C39",
-      "note": "Foundation candidate/decision primitives are exercised by the retained REWORK/correction/approval, exact candidate/criterion, stale/unknown/allowance, and explicit non-dispatch choice tests. The criterion’s real supported manager/host action remains a later OTT/INT journey and is explicitly outside this foundation packet.",
-      "status": "partial_pending_followup"
+      "later_product_status": "later_supported_manager_host_action_pending",
+      "note": "REWORK/correction/approval, exact candidate/criterion, stale/unknown/allowance and explicit non-dispatch choice are foundation primitives. A real supported manager/host next action is later and not claimed.",
+      "status": "supported_foundation_slice"
     }
   ],
   "criteria_scope": [
@@ -448,6 +801,123 @@
     "C38",
     "C39"
   ],
+  "criteria_scope_status": {
+    "C01": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_consumer_authority_and_activation_qualification_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C02": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_cross_product_consumer_collision_qualification_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C03": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_external_host_uncertain_outcome_journey_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C04": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_product_route_capacity_campaign_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C05": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_consumer_scope_and_detach_qualification_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C06": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_product_pinned_definition_surface_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C07": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_consumer_cross_scope_campaign_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C08": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_otto_blank_lifecycle_consumer_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C09": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_product_filesystem_writer_qualification_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C10": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_consumer_packet_reuse_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C11": {
+      "foundation_scope_status": "supported_minimal_composition_slice",
+      "later_product_status": "exhaustive_composition_and_independent_domain_author_qualification_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C12": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_product_template_consumer_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C13": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_manager_route_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C14": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_manager_consumer_journey_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C15": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_public_handoff_consumer_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C16": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_semantic_batch_consumer_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C17": {
+      "foundation_scope_status": "supported_artifact_proof",
+      "later_product_status": "later_release_publication_qualification_pending",
+      "status": "supported_by_current_candidate"
+    },
+    "C31": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_manager_consumer_reuse_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C33": {
+      "foundation_scope_status": "supported_bounded_installed_api",
+      "later_product_status": "later_full_consumer_command_mapping_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C34": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_otto_astrid_consumer_qualification_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C35": {
+      "foundation_scope_status": "supported_current_herzchen_verticals",
+      "later_product_status": "later_full_graph_and_consumer_rehearsal_pending",
+      "status": "supported_foundation_slice"
+    },
+    "C38": {
+      "foundation_scope_status": "supported",
+      "later_product_status": "later_consumer_manager_admission_journey_pending",
+      "status": "supported_by_current_candidate"
+    },
+    "C39": {
+      "foundation_scope_status": "supported_primitives_only",
+      "later_product_status": "later_supported_manager_host_action_pending",
+      "status": "supported_foundation_slice"
+    }
+  },
   "evidence_inventory": {
     "accepted_source_handoffs": [
       "handoffs/FND.json",
@@ -464,7 +934,7 @@
     "public_api_probe_transcript": "work/int-03-final-public-api-probe-run-20260914.txt",
     "snew01_affected_installed_run": "work/int-03-snew01-installed-affected-run-20260914.txt",
     "snew01_gap_brief": "work/int-03-snew01-gap-brief.md",
-    "snew01_gap_brief_sha256": "fd2756e4c4f0b790637db11a5df399cb848778057889ecc03b6fb32fe1696c36",
+    "snew01_gap_brief_sha256": "d81ddfdbbdc6ccdaa2d36bf3655c0cab575524ef5a51e975b2afca8ffa95716d",
     "snew01_manager_supplement": "work/snew01-blank-project-manager-completion-supplement-20260914.md",
     "snew01_worker_result": "work/snew01-blank-project-worker-result.md",
     "snew01_worker_result_sha256": "8466b6eea9434e2b6451a205622ccd255923d83883b6f885a32c03f8fc1fea55"
@@ -476,6 +946,100 @@
   },
   "gate_state": "pending",
   "gate_verdict_claimed": false,
+  "git_pin_verification": {
+    "all_verified": true,
+    "command": "git rev-parse <commit> and git rev-parse <commit>^{tree}; git cat-file -t <object>",
+    "pins": [
+      {
+        "commit": "046b9acfdc9ba541faff65ff3713961890684303",
+        "commit_object": "verified",
+        "name": "source_candidate",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+        "tree": "047a43ba687f45c298139b595756dac84ab729da",
+        "tree_object": "verified"
+      },
+      {
+        "commit": "9e15ad908c4a9773ce27e7ff8e03e3dfca274c9b",
+        "commit_object": "verified",
+        "name": "FND-06",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+        "tree": "db08184a5bf81a74c1970db7ac741f97cc192cda",
+        "tree_object": "verified"
+      },
+      {
+        "commit": "2f4dd05e624be2fd228886977be093b386d6f94b",
+        "commit_object": "verified",
+        "name": "DAT-06",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+        "tree": "e64232672f3e8acbc845369ce68176dccb490455",
+        "tree_object": "verified"
+      },
+      {
+        "commit": "1735eadcbf0c5a447a7c74e9ab213b225e4e5ed8",
+        "commit_object": "verified",
+        "name": "PKG-05",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+        "tree": "fc8c13750d8bb1a7c3d1247d86d6233e1818e64d",
+        "tree_object": "verified"
+      },
+      {
+        "commit": "b036bbbe11e93811a62b95150338a192b5fd6806",
+        "commit_object": "verified",
+        "name": "WRK-06",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+        "tree": "304cfefe37c5c6c284ac667f2a7b8043aa9031f2",
+        "tree_object": "verified"
+      },
+      {
+        "commit": "77bd75e4b4047d3ca32550f299d2b9cf2305dbfa",
+        "commit_object": "verified",
+        "name": "EDT-06",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+        "tree": "61f2f9a6141a38c4ac3706f8842838993ec930df",
+        "tree_object": "verified"
+      },
+      {
+        "commit": "acd9ae3666574add8b9289d368a9b9f6f74b694b",
+        "commit_object": "verified",
+        "name": "SNEW-01",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+        "tree": "793c435567261ad077f093ac4a7f5ba30bcd05a7",
+        "tree_object": "verified"
+      },
+      {
+        "commit": "0d07a5c00910b32f033aaa960fac0bcd6617e0ed",
+        "commit_object": "verified",
+        "name": "INT-02",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+        "tree": "a8cf4b4de355d3baa6f44a4864a1d9408d9a991b",
+        "tree_object": "verified"
+      },
+      {
+        "commit": "50da2534d436d88d40a66c6cd9b51b4bae3848cf",
+        "commit_object": "verified",
+        "name": "pre_pkg",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+        "tree": "b3db8dc506a2c1a186deae31af5e217fb2274548",
+        "tree_object": "verified"
+      },
+      {
+        "commit": "c7156360ab601533a38710b8957887e582db669e",
+        "commit_object": "verified",
+        "name": "SNEW-baseline",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int03-final-integration",
+        "tree": "f547137f5804c0d8958d68d08633b35698aa2e43",
+        "tree_object": "verified"
+      },
+      {
+        "commit": "96e5664237eb35adeb4cad08bddd8cd6df0a2ae1",
+        "commit_object": "verified",
+        "name": "Astrid",
+        "repository": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/sources/Astrid-96e5664237eb",
+        "tree": "19f7539a266618a797559eedbda48e2752b30fa3",
+        "tree_object": "verified"
+      }
+    ]
+  },
   "mechanical_comparison": {
     "changed_fields": [],
     "command": "jq -S '[.scenarios[] | {id,produced_by,criteria,name,required_proof,state}]' /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/package/otto_herzchen_delivery_v11_2/validation/scenarios.json > /tmp/int03-seed-projection.json && jq -S '.original_scenario_records' work/int-03-foundation-coverage-packet-receipt.json > /tmp/int03-receipt-projection.json && cmp -s /tmp/int03-seed-projection.json /tmp/int03-receipt-projection.json",
@@ -1537,6 +2101,6 @@
     "status": "not_executed"
   },
   "schema": "foundation-coverage/v2",
-  "scope_note": "C38 and S-NEW-01 foundation obligations are supported by the accepted installed candidate. C39 host action remains later; no gate verdict or product qualification is claimed. Historical gap brief is retained with closure receipt.",
+  "scope_note": "Each criterion has separate foundation_scope_status and later_product_status. The packet supports the named current Herzchen foundation slices with exact installed tests/receipts; later consumer, host and publication work is named per criterion. No gate verdict is claimed.",
   "state": "prepared"
 }

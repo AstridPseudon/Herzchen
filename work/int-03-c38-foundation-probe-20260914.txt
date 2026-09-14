@@ -8,5 +8,5 @@ Probe script SHA-256: 61527f89f5ecd7073a260f8cd28c6df45138cb3b17c2d0c940ee01a25d
 Result: overall_ok=true; all six checks true.
 Checks: create_durable_receipt; replay_and_invalid_create; pending_edit_attach_query; revisit_attention_no_dispatch; explicit_admission_boundary; built_in_blank_and_untouched_close.
 The final blank check now reads the initial DAT document/ref and active project association before opening, verifies three creation receipts and empty template revision, then verifies untouched close preserves the document revision/association.
-Evidence JSON SHA-256 before this transcript rewrite: 3eb6d389dbfa5431d7ab587edea3f59cb25a974cee1a56688d68f56495875f88
+Evidence JSON SHA-256 before this transcript rewrite: 847aacd0355cb892d93bf25d8aa0c6175ccb81a93895516a6907c49c19b9b9a9
 The probe uses only installed public Herzchen APIs and a disposable SQLite store. It does not use SQL to mutate state.
