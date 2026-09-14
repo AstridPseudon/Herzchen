@@ -218,7 +218,8 @@ def test_blank_starter_is_sparse_and_has_no_megado_dependency() -> None:
     work = template["seed"]["work"]
     assert len(work) == 1 and work[0]["kind"] == "project"
     assert template["seed"]["links"] == []
-    assert template["seed"]["documents"] == []
+    assert [document["role"] for document in template["seed"]["documents"]] == ["initial-specification"]
+    assert template["seed"]["document_links"][0]["subject"] == {"$local": "project"}
     assert template["seed"]["assessments"] == []
     assert template["seed"]["status"] == "planning_only"
     assert work[0]["custom"] == {}

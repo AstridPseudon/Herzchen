@@ -9,6 +9,9 @@ import pytest
 
 from herzchen.content import ContentCommandHandler
 from herzchen.contracts import AuthenticatedActor, ReferenceBinding, ReplayConflictError, ResourceRef
+from herzchen.authoring.finish import SemanticFinishAdapter
+from herzchen.authoring.idle import IdleCloseService
+from herzchen.authoring.sessions import AuthoringSessionService
 from herzchen.domains.work import WorkGraph, WorkKind
 from herzchen.domains.work.module import contribution as work_contribution
 from herzchen.kernel import Store
@@ -231,7 +234,7 @@ def test_existing_plural_seed_shape_remains_compatible(harness):
     assert [record.title for record in result.records] == ["Still works"]
 
 
-def test_blank_resource_uses_common_fields_and_has_no_side_effects(harness):
+def test_blank_resource_persists_pending_project_initial_spec_and_association(harness):
     store, graph, engine, _ = harness
 
     rendered = render_blank_project()
@@ -249,8 +252,86 @@ def test_blank_resource_uses_common_fields_and_has_no_side_effects(harness):
     assert project.payload["budget"] is None
     assert project.payload["readiness"]["dispatch"] is False
     assert len(graph.list()) == 1
-    assert len(store.list_events()) == 1
-    assert result.receipts[0].event_ids
+    assert result.local_refs == {"project": project.ref}
+    assert set(result.document_refs) == {"initial-specification"}
+    assert set(result.association_refs) == {"project:project.documents:specification"}
+    document = ContentCommandHandler(store).read(result.document_refs["initial-specification"])
+    assert document["document"]["role"] == "initial-specification"
+    assert document["revision"]["initial"] is True
+    assert document["revision"]["parent_revision"] is None
+    assert document["revision"]["content"] == {
+        "title": "Untitled project", "outcome": "", "instructions": "", "requires": [],
+        "acceptance": {}, "custom": {}, "documents": [], "tasks": [],
+    }
+    association = ContentCommandHandler(store).read(result.association_refs["project:project.documents:specification"])
+    assert association["payload"]["active"] is True
+    assert association["payload"]["association"]["subject"] == project.ref.to_dict()
+    assert association["payload"]["association"]["document"]["ref"] == result.document_refs["initial-specification"].to_dict()
+    assert len(result.receipts) == 3
+    assert all(receipt.event_ids for receipt in result.receipts)
+    assert len(store.list_events()) == 3
+
+
+def test_blank_creation_replays_conflicts_and_rejects_invalid_input_before_mutation(harness):
+    store, graph, engine, _ = harness
+    first = engine.instantiate("work.blank_project", {"title": "A title"}, logical_request_key="blank")
+    events = store.list_events()
+    receipts = tuple(store.get_receipt(receipt.logical_request_key) for receipt in first.receipts)
+    replay = engine.instantiate("work.blank_project", {"title": "A title"}, logical_request_key="blank")
+    assert replay.project.ref == first.project.ref
+    assert replay.document_refs == first.document_refs
+    assert replay.association_refs == first.association_refs
+    assert replay.receipts == first.receipts
+    assert store.list_events() == events
+    assert tuple(store.get_receipt(receipt.logical_request_key) for receipt in replay.receipts) == receipts
+    with pytest.raises(ReplayConflictError):
+        engine.instantiate("work.blank_project", {"title": "Changed"}, logical_request_key="blank")
+    assert store.list_events() == events
+    assert tuple(store.get_receipt(receipt.logical_request_key) for receipt in first.receipts) == receipts
+
+    invalid_store = Store.create(harness[0].path + ".invalid", authority="pkg03-invalid")
+    invalid_graph = WorkGraph(invalid_store, actor=harness[3])
+    invalid_graph.register()
+    try:
+        invalid_engine = TemplateEngine(invalid_store, graph=invalid_graph, actor=harness[3])
+        with pytest.raises(TemplateValidationError):
+            invalid_engine.instantiate("work.blank_project", {"title": ""}, logical_request_key="invalid")
+        assert invalid_graph.list() == ()
+        assert invalid_store.list_events() == ()
+        assert invalid_store.get_receipt("invalid:project") is None
+    finally:
+        invalid_store.close()
+
+
+def test_blank_initial_spec_untouched_pending_close_retains_durable_content_and_cleans_registered_files(harness, tmp_path):
+    store, graph, engine, actor = harness
+    result = engine.instantiate("work.blank_project", logical_request_key="close-blank", actor=actor)
+    document_ref = result.document_refs["initial-specification"]
+    initial = ContentCommandHandler(store).read(document_ref)
+    initial_bytes = json.dumps(initial["revision"]["content"], sort_keys=True, separators=(",", ":")).encode()
+    service = AuthoringSessionService(store)
+    opened = service.open(
+        result.project.ref, actor, request_id="close-open", target_kind="project-sheet",
+        base_revision=result.project.revision, initial_content=initial_bytes, pending=True,
+    )
+    root = tmp_path / "checkout"
+    root.mkdir()
+    (root / "project.json").write_bytes(initial_bytes)
+    idle = IdleCloseService(SemanticFinishAdapter(service), clock=lambda: 10.0)
+    closed = idle.close_if_idle(
+        opened.handle, request_id="close-idle", checkout_root=root,
+        registered_files=["project.json"], inactivity_seconds=1, last_content_edit=0, now=10,
+        quiesce=lambda: True, writer_check=lambda: True,
+    )
+    assert closed.status == "closed_cleaned"
+    assert not (root / "project.json").exists()
+    assert service.read(result.project.ref).status == "available"
+    fresh_project = graph.get(result.project.ref)
+    assert fresh_project.payload["tasks"] == []
+    assert fresh_project.revision == result.project.revision
+    fresh_document = ContentCommandHandler(store).read(document_ref)
+    assert fresh_document["current_revision"]["revision"] == initial["current_revision"]["revision"]
+    assert ContentCommandHandler(store).read(result.association_refs["project:project.documents:specification"])["payload"]["active"] is True
 
 
 def test_bundle_is_literal_idempotent_and_retains_origin_namespaces_and_review(harness):

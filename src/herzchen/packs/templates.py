@@ -389,7 +389,32 @@ def validate_template(template: WorkTemplate) -> WorkTemplate:
 def _blank_seed() -> dict[str, Any]:
     return {
         "project": {"local_id": "project", "kind": "project", "title": {"$param": "title"}, "outcome": "", "fields": {}},
-        "efforts": [], "tasks": [], "criteria": [], "documents": [],
+        "efforts": [], "tasks": [], "criteria": [],
+        "documents": [{
+            "local_id": "initial-specification",
+            "title": "Initial project specification",
+            "role": "initial-specification",
+            "visibility": "private",
+            "access_mode": "append",
+            "content": {
+                "title": {"$param": "title"},
+                "outcome": "",
+                "instructions": "",
+                "requires": [],
+                "acceptance": {},
+                "custom": {},
+                "documents": [],
+                "tasks": [],
+            },
+        }],
+        "document_links": [{
+            "subject": {"$local": "project"},
+            "document": {"$local": "initial-specification"},
+            "namespace": "project.documents",
+            "key": "specification",
+            "binding": "current",
+            "access_mode": "append",
+        }],
         "protocol": None,
     }
 
@@ -741,8 +766,12 @@ class TemplateEngine:
         if resource.id == BLANK_TEMPLATE_ID and nodes:
             raise TemplateValidationError("blank project must contain zero work nodes")
         request = _request_key(logical_request_key, resource, rendered)
-        self._validate_seed_references(seed, nodes, owner_record, name_set)
-        document_values, document_link_values = self._document_seed_values(seed, name_set)
+        project_local_name = None
+        if project_seed is not None and any(key in project_seed for key in ("local_id", "key", "id")):
+            project_local_name = _local_name(project_seed)
+        reference_names = name_set | ({project_local_name} if project_local_name is not None else set())
+        self._validate_seed_references(seed, nodes, owner_record, reference_names)
+        document_values, document_link_values = self._document_seed_values(seed, reference_names)
         ordered = self._ordered_nodes(nodes, edges)
 
         # All checks above are intentionally before the first public WRK
@@ -760,8 +789,8 @@ class TemplateEngine:
                 owner_record = self.graph.create_project(title=title, outcome=outcome, metadata=metadata,
                                                          logical_request_key=request + ":project", actor=actor)
                 receipts.append(self.store.get_receipt(request + ":project"))
-            if resource.id == BLANK_TEMPLATE_ID:
-                return TemplateResult(owner_record, (), {"project": owner_record.ref}, tuple(receipts), rendered, False)
+            if project_local_name is not None:
+                local_refs[project_local_name] = owner_record.ref
 
             for node in ordered:
                 name = _local_name(node)
