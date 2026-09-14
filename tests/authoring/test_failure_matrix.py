@@ -5,6 +5,7 @@ import hashlib
 from pathlib import Path
 import tempfile
 import threading
+from types import SimpleNamespace
 import unittest
 
 from herzchen.authoring.cleanup import RegisteredFile, cleanup_registered_files
@@ -12,7 +13,8 @@ from herzchen.authoring.finish import SemanticFinishAdapter, ValidationResult
 from herzchen.authoring.idle import IdleCloseService
 from herzchen.authoring.sessions import AuthoringSessionService, InvalidSessionError, register_authoring
 from herzchen.authoring.snapshots import DurableSnapshotAdapter
-from herzchen.contracts import AuthenticatedActor, AuthoringState, CleanupStatus, ResourceRef
+from herzchen.authoring.writer_lease import FileWriterLeaseAuthority
+from herzchen.contracts import AuthenticatedActor, AuthoringState, CleanupStatus, ResourceRef, canonical_json
 from herzchen.kernel import Store
 
 
@@ -44,8 +46,15 @@ class FailureMatrixTests(unittest.TestCase):
         self.idle = IdleCloseService(self.finish, clock=lambda: self.clock_value)
         self.actor = AuthenticatedActor("auth", "edt04-actor", "credential")
         self.scope = ResourceRef("neutral-store", "project", "edt04-project", "base-1")
+        self.writer_leases = FileWriterLeaseAuthority(
+            self.base / "locks", authority="failure-matrix-host",
+            secret=b"failure-matrix-writer-key-material", writer_identities=("editor",),
+        )
+        self._retirement = self.writer_leases.hold_retirement(self.root, owner_identity="editor")
+        self.retirement_guard = self._retirement.__enter__()
 
     def tearDown(self) -> None:
+        self._retirement.__exit__(None, None, None)
         self.store.close()
         self.tempdir.cleanup()
 
@@ -64,6 +73,16 @@ class FailureMatrixTests(unittest.TestCase):
     def exact(path: str, data: bytes) -> RegisteredFile:
         return RegisteredFile(path, hashlib.sha256(data).hexdigest(), len(data))
 
+    def authenticate_cleanup(self, entries):
+        manifest = tuple(sorted(canonical_json({
+            "relative_path": entry.relative_path, "size": entry.size, "sha256": entry.sha256,
+        }) for entry in entries))
+        handle = SimpleNamespace(session_id="physical", token="token", fence="fence")
+        fence = self.retirement_guard.issue_fence(handle, manifest, snapshot_digest="0" * 64)
+        self.retirement_guard.authenticate_fence(
+            fence, handle=handle, manifest=manifest, snapshot_digest="0" * 64,
+        )
+
     def test_idle_uses_last_content_edit_not_polling_and_untouched_blank_is_retained(self) -> None:
         (self.root / "draft.txt").write_bytes(b"blank")
         opened = self.open()
@@ -77,6 +96,7 @@ class FailureMatrixTests(unittest.TestCase):
             inactivity_seconds=10,
             quiesce=lambda: True,
             writer_check=lambda: True,
+            retirement_guard=self.retirement_guard,
         ).status, "not_idle")
         result = self.idle.close_if_idle(
             opened.handle,
@@ -88,6 +108,7 @@ class FailureMatrixTests(unittest.TestCase):
             inactivity_seconds=10,
             quiesce=lambda: True,
             writer_check=lambda: True,
+            retirement_guard=self.retirement_guard,
         )
         self.assertEqual(result.status, "closed_cleaned")
         self.assertEqual(result.finish.finish.status, "pending_released")
@@ -111,6 +132,7 @@ class FailureMatrixTests(unittest.TestCase):
             inactivity_seconds=10,
             quiesce=lambda: True,
             writer_check=lambda: True,
+            retirement_guard=self.retirement_guard,
         )
         self.assertEqual(result.status, "not_idle")
         self.assertEqual(result.last_content_edit, 40.0)
@@ -130,6 +152,7 @@ class FailureMatrixTests(unittest.TestCase):
             inactivity_seconds=10,
             quiesce=lambda: True,
             writer_check=lambda: True,
+            retirement_guard=self.retirement_guard,
         )
         self.assertEqual(result.status, "closed_cleaned")
         self.assertEqual(result.finish.finish.status, "finished")
@@ -176,6 +199,7 @@ class FailureMatrixTests(unittest.TestCase):
                 checkout_root=self.root,
                 registered_files=["draft.txt"],
                 handler=handler,
+                retirement_guard=self.retirement_guard,
             )
             with results_lock:
                 results.append((mode, result))
@@ -208,6 +232,7 @@ class FailureMatrixTests(unittest.TestCase):
             checkout_root=self.root,
             registered_files=["draft.txt"],
             handler=handler,
+            retirement_guard=self.retirement_guard,
         )
         self.assertEqual(replay.status, "replayed")
 
@@ -219,6 +244,7 @@ class FailureMatrixTests(unittest.TestCase):
             checkout_root=self.root,
             registered_files=["draft.txt"],
             handler=handler,
+            retirement_guard=self.retirement_guard,
         )
         self.assertNotIn(changed.status, {"finished", "already_finished"})
         self.assertTrue(changed.recovery_pending)
@@ -232,6 +258,7 @@ class FailureMatrixTests(unittest.TestCase):
             checkout_root=self.root,
             registered_files=["draft.txt"],
             handler=handler,
+            retirement_guard=self.retirement_guard,
         )
         self.assertNotIn(stale_result.status, {"finished", "already_finished"})
         self.assertTrue(stale_result.recovery_pending)
@@ -247,6 +274,7 @@ class FailureMatrixTests(unittest.TestCase):
             checkout_root=self.root,
             registered_files=["draft.txt"],
             handler=Handler(valid=False),
+            retirement_guard=self.retirement_guard,
             last_content_edit=1,
             now=20,
             inactivity_seconds=10,
@@ -275,6 +303,7 @@ class FailureMatrixTests(unittest.TestCase):
             inactivity_seconds=10,
             quiesce=lambda: "unknown",
             writer_check=lambda: "unknown",
+            retirement_guard=self.retirement_guard,
         )
         self.assertEqual(active.status, "writer_active")
         self.assertTrue((self.root / "draft.txt").exists())
@@ -288,6 +317,7 @@ class FailureMatrixTests(unittest.TestCase):
             inactivity_seconds=10,
             quiesce=lambda: True,
             writer_check=lambda: True,
+            retirement_guard=self.retirement_guard,
         )
         self.assertEqual(failed.status, "recovery_pending")
         self.assertTrue(failed.recovery_pending)
@@ -297,14 +327,18 @@ class FailureMatrixTests(unittest.TestCase):
     def test_cleanup_rejects_unexpected_files_symlink_and_parent_swap(self) -> None:
         (self.root / "one.tmp").write_bytes(b"one")
         (self.root / "unexpected.tmp").write_bytes(b"keep")
-        unexpected = cleanup_registered_files(self.root, [self.exact("one.tmp", b"one")], writer_check=lambda: True)
+        one = self.exact("one.tmp", b"one")
+        self.authenticate_cleanup([one])
+        unexpected = cleanup_registered_files(self.root, [one], retirement_guard=self.retirement_guard, writer_check=lambda: True)
         self.assertEqual(unexpected.status, CleanupStatus.UNSAFE)
         self.assertTrue((self.root / "one.tmp").exists())
         (self.root / "unexpected.tmp").unlink()
         outside = self.base / "outside.txt"
         outside.write_bytes(b"outside")
         (self.root / "link.tmp").symlink_to(outside)
-        symlink = cleanup_registered_files(self.root, [self.exact("link.tmp", b"outside")], writer_check=lambda: True)
+        link = self.exact("link.tmp", b"outside")
+        self.authenticate_cleanup([link])
+        symlink = cleanup_registered_files(self.root, [link], retirement_guard=self.retirement_guard, writer_check=lambda: True)
         self.assertEqual(symlink.status, CleanupStatus.UNSAFE)
         self.assertTrue((self.root / "link.tmp").is_symlink())
         (self.root / "link.tmp").unlink()
@@ -315,7 +349,8 @@ class FailureMatrixTests(unittest.TestCase):
             original.rename(moved)
             original.symlink_to(moved, target_is_directory=True)
             return True
-        parent_swap = cleanup_registered_files(original, [self.exact("one.tmp", b"one")], writer_check=lambda: True, before_delete=swap)
+        self.authenticate_cleanup([one])
+        parent_swap = cleanup_registered_files(original, [one], retirement_guard=self.retirement_guard, writer_check=lambda: True, before_delete=swap)
         self.assertEqual(parent_swap.status, CleanupStatus.UNSAFE)
         self.assertTrue((moved / "one.tmp").exists())
         original.unlink()
@@ -326,16 +361,21 @@ class FailureMatrixTests(unittest.TestCase):
         (self.root / "two.tmp").write_bytes(b"two")
         def fail_second(path):
             return path != "two.tmp"
+        entries = [self.exact("one.tmp", b"one"), self.exact("two.tmp", b"two")]
+        self.authenticate_cleanup(entries)
         partial = cleanup_registered_files(
             self.root,
-            [self.exact("one.tmp", b"one"), self.exact("two.tmp", b"two")],
+            entries,
             writer_check=lambda: True,
+            retirement_guard=self.retirement_guard,
             before_delete=fail_second,
         )
         self.assertEqual(partial.status, CleanupStatus.UNSAFE)
         self.assertEqual(partial.deleted, ("one.tmp",))
         self.assertEqual(partial.remaining, ("two.tmp",))
-        retry = cleanup_registered_files(self.root, [self.exact("two.tmp", b"two")], writer_check=lambda: True)
+        retry_entry = self.exact("two.tmp", b"two")
+        self.authenticate_cleanup([retry_entry])
+        retry = cleanup_registered_files(self.root, [retry_entry], retirement_guard=self.retirement_guard, writer_check=lambda: True)
         self.assertEqual(retry.status, CleanupStatus.COMPLETE)
         self.assertFalse((self.root / "two.tmp").exists())
 

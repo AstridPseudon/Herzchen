@@ -117,10 +117,14 @@ class SemanticFinishAdapter:
         mode: str,
         request_id: str,
         error: str,
+        retirement_guard: Optional[object] = None,
     ) -> SemanticFinishResult:
         """Durably retain the pre-late-write capture and release for retry."""
         session_snapshot = tree.as_session_snapshot(self.snapshots._ref(handle, "final", tree.tree_digest))
-        self.service._transition_recovery(handle, request_id + ":late-write", session_snapshot, error)
+        self.service._transition_recovery(
+            handle, request_id + ":late-write", session_snapshot, error,
+            retirement_guard=retirement_guard,
+        )
         record = self.service.reader.get_identity(handle.scope)
         checkout = None
         if record is not None:
@@ -220,12 +224,26 @@ class SemanticFinishAdapter:
         quiesce: Optional[Callable[..., Any]] = None,
         writer_check: Optional[Callable[..., Any]] = None,
         capture_barrier: Optional[Callable[..., Any]] = None,
+        retirement_guard: Optional[object] = None,
         **hook_kwargs: Any,
     ) -> SemanticFinishResult:
-        """Capture and validate outside the short common writer transaction."""
+        """Capture and validate under one held lease around the FND commit."""
         # Capture and the post-barrier verification must inspect the same
         # registered set even when a host supplied a one-shot iterator.
         registered_files = tuple(registered_files)
+        assertion = getattr(retirement_guard, "assert_held", None)
+        if not callable(assertion):
+            return SemanticFinishResult(
+                "recovery_pending", recovery_pending=True,
+                error="authenticated retirement exclusion is required before final capture",
+            )
+        try:
+            assertion(checkout_root)
+        except BaseException as exc:
+            return SemanticFinishResult(
+                "recovery_pending", recovery_pending=True,
+                error=str(exc) or "authenticated retirement exclusion is not held",
+            )
         # Exact request replay is deliberately delegated unchanged.  The
         # session service checks the request receipt before invoking capture,
         # so a lost response cannot cause a second handler application.
@@ -292,6 +310,7 @@ class SemanticFinishAdapter:
                 return self._late_write_recovery(
                     handle, tree, mode=mode, request_id=request_id,
                     error=str(exc) or "checkout changed after final capture",
+                    retirement_guard=retirement_guard,
                 )
             # Token, fence, and base admission are checked before the handler
             # is allowed to inspect/apply semantic changes.
@@ -327,7 +346,8 @@ class SemanticFinishAdapter:
                     target=handle.scope, actor=handle.actor,
                 )
                 rejected = self.service._reject_finish(
-                    handle, request_id, digest, checkout, session_snapshot, _diagnostic_text(validation.diagnostics), ValueError
+                    handle, request_id, digest, checkout, session_snapshot, _diagnostic_text(validation.diagnostics), ValueError,
+                    retirement_guard=retirement_guard,
                 )
                 return SemanticFinishResult("rejected", rejected, tree, validation, error=_diagnostic_text(validation.diagnostics))
 
@@ -363,6 +383,7 @@ class SemanticFinishAdapter:
                         expected_base_revision=expected_base_revision,
                         apply=apply,
                         pending=pending,
+                        retirement_guard=retirement_guard,
                     )
             except BaseException as exc:
                 reconciled = self._reconcile_completed_finish(

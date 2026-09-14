@@ -255,7 +255,10 @@ class ExclusivityTests(unittest.TestCase):
         alternate = self.service.finish(opened.handle, request_id="finish-idle-loser", mode="idle", capture=b"must-not-be-read", apply=apply)
         self.assertEqual(alternate.status, "already_finished")
         self.assertEqual(len(applied), 1)
-        self.assertEqual(self.service.cleanup(opened.handle, request_id="cleanup", status=CleanupStatus.COMPLETE).cleanup, CleanupStatus.COMPLETE)
+        # A caller-supplied boolean/status is not writer ownership proof.  A
+        # direct unfenced session finish therefore cannot record cleanup
+        # complete; the lifecycle path supplies the authenticated held lease.
+        self.assertEqual(self.service.cleanup(opened.handle, request_id="cleanup", status=CleanupStatus.COMPLETE).cleanup, CleanupStatus.UNSAFE)
 
         reopened = self.open(request_id="reopen")
         self.assertEqual(reopened.status, "opened")

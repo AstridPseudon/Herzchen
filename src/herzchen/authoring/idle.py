@@ -2,7 +2,7 @@
 
 This is a policy boundary, not a background scheduler.  A host may call
 ``close_if_idle`` from its existing poll/timer mechanism.  The function uses
-the persisted/declared content-edit time, fences managed writers, delegates
+the persisted/declared content-edit time, requires a held writer lease, delegates
 capture and semantic work to EDT-03, and invokes cleanup only after the common
 finish boundary has retired the token.
 """
@@ -221,6 +221,7 @@ class IdleCloseService:
         pending: Optional[bool],
         quiesce: Optional[Callable[..., Any]] = None,
         writer_check: Optional[Callable[[], Any]] = None,
+        retirement_guard: Optional[object] = None,
     ) -> Optional[SemanticFinishResult]:
         """Use the common finish boundary without inventing a blank revision.
 
@@ -252,11 +253,15 @@ class IdleCloseService:
                 handle,
                 request_id=request_id,
                 mode="idle",
-                capture=Snapshot(checkout.draft_snapshot_ref, initial),
+                capture=Snapshot(
+                    self.finish_adapter.snapshots._ref(handle, "final", tree.tree_digest), initial,
+                    tuple(canonical_json(entry.to_dict()) for entry in tree.manifest),
+                ),
                 retirement_manifest=tuple(canonical_json(entry.to_dict()) for entry in tree.manifest),
                 expected_base_revision=None,
                 apply=None,
                 pending=True,
+                retirement_guard=retirement_guard,
             )
             return SemanticFinishResult(result.status, result, tree, ValidationResult(True), recovery_pending=result.recovery_pending, error=result.error)
         except BaseException:
@@ -276,6 +281,7 @@ class IdleCloseService:
         settled: Any = True,
         fresh_capture: bool = False,
         capture_barrier: Optional[Callable[..., Any]] = None,
+        retirement_guard: Optional[object] = None,
     ) -> IdleCloseResult:
         exact_files = tuple(files)
         record = self._record(handle)
@@ -299,13 +305,29 @@ class IdleCloseService:
                 self.service.refresh_final_snapshot(
                     handle, request_id=request_id + ":refresh",
                     snapshot=tree.as_session_snapshot(adapter._ref(handle, "final", tree.tree_digest)),
+                    retirement_guard=retirement_guard,
                 )
+                self.service.validate_retirement_handoff(handle, retirement_guard)
                 exact_files = registered_files_from_manifest(tree.manifest)
             except BaseException as exc:
                 observation = CleanupObservation(CleanupStatus.UNSAFE, str(checkout_root), error=str(exc) or "fresh cleanup capture was unsafe")
                 if self.service is not None:
-                    self.service.cleanup(handle, request_id=request_id + ":cleanup", status=observation.status)
+                    self.service.cleanup(handle, request_id=request_id + ":cleanup", status=observation.status, retirement_guard=retirement_guard)
                 return IdleCloseResult("cleanup_pending", handle.scope, handle.session_id, cleanup=observation, recovery_pending=True, error=observation.error)
+        elif self.service is not None:
+            try:
+                self.service.validate_retirement_handoff(handle, retirement_guard)
+            except BaseException:
+                try:
+                    self.service.reestablish_retirement_fence(
+                        handle, request_id=request_id + ":fence-reacquire",
+                        retirement_guard=retirement_guard,
+                    )
+                    self.service.validate_retirement_handoff(handle, retirement_guard)
+                except BaseException as exc:
+                    observation = CleanupObservation(CleanupStatus.UNSAFE, str(checkout_root), error=str(exc))
+                    self.service.cleanup(handle, request_id=request_id + ":cleanup", status=observation.status, retirement_guard=retirement_guard)
+                    return IdleCloseResult("cleanup_pending", handle.scope, handle.session_id, cleanup=observation, recovery_pending=True, error=observation.error)
         def cleanup_check() -> Any:
             if quiesce is not None:
                 self._quiesce(quiesce, writer_check)
@@ -314,12 +336,19 @@ class IdleCloseService:
                 return writer_check()
             return None
         try:
-            observation = self._cleanup(checkout_root, exact_files, writer_check=cleanup_check)
+            observation = self._cleanup(
+                checkout_root, exact_files, retirement_guard=retirement_guard,
+                writer_check=cleanup_check,
+            )
         except BaseException as exc:
             observation = CleanupObservation(CleanupStatus.PENDING, str(checkout_root), error=str(exc))
         if self.service is not None:
             try:
-                self.service.cleanup(handle, request_id=request_id + ":cleanup", status=observation.status)
+                durable = self.service.cleanup(handle, request_id=request_id + ":cleanup", status=observation.status, retirement_guard=retirement_guard)
+                if observation.status == CleanupStatus.COMPLETE and durable.cleanup == CleanupStatus.COMPLETE:
+                    marker = getattr(retirement_guard, "mark_complete", None)
+                    if callable(marker):
+                        marker()
             except BaseException as exc:
                 return IdleCloseResult("cleanup_pending", handle.scope, handle.session_id, cleanup=observation, recovery_pending=True, error=str(exc))
         return IdleCloseResult("closed_cleaned" if observation.status == CleanupStatus.COMPLETE else "cleanup_pending", handle.scope, handle.session_id, cleanup=observation, recovery_pending=observation.status != CleanupStatus.COMPLETE, error=observation.error)
@@ -343,10 +372,24 @@ class IdleCloseService:
         pending: Optional[bool] = None,
         expected_base_revision: Optional[str] = None,
         hook_kwargs: Optional[Mapping[str, Any]] = None,
+        retirement_guard: Optional[object] = None,
     ) -> IdleCloseResult:
         """Attempt an idle close; return an honest retryable outcome."""
         if inactivity_seconds < 0 or isinstance(inactivity_seconds, bool):
             raise ValueError("inactivity_seconds must be non-negative")
+        assertion = getattr(retirement_guard, "assert_held", None)
+        if not callable(assertion):
+            return IdleCloseResult(
+                "writer_active", handle.scope, handle.session_id,
+                recovery_pending=True, error="authenticated retirement exclusion is required",
+            )
+        try:
+            assertion(checkout_root)
+        except BaseException as exc:
+            return IdleCloseResult(
+                "writer_active", handle.scope, handle.session_id,
+                recovery_pending=True, error=str(exc) or "authenticated retirement exclusion is not held",
+            )
         current = self._record(handle)
         if current is not None:
             checkout = current.payload.get("checkout")
@@ -357,6 +400,7 @@ class IdleCloseService:
                         handle, checkout_root, current_files or (), request_id=request_id,
                         writer_check=writer_check, quiesce=quiesce, settled=settled,
                         fresh_capture=fresh_capture, capture_barrier=capture_barrier,
+                        retirement_guard=retirement_guard,
                     )
                 return IdleCloseResult("already_closed", handle.scope, handle.session_id, error="authoring session is already closed")
         edit = self.last_content_edit(handle, last_content_edit)
@@ -379,6 +423,7 @@ class IdleCloseService:
             finish = None if capture_barrier is not None else self._untouched_pending_finish(
                 handle, checkout_root, files or (), request_id=request_id, pending=pending,
                 quiesce=quiesce, writer_check=writer_check,
+                retirement_guard=retirement_guard,
             )
             if finish is None:
                 finish = self._finish_call(
@@ -394,6 +439,7 @@ class IdleCloseService:
                     quiesce=quiesce,
                     writer_check=writer_check,
                     capture_barrier=capture_barrier,
+                    retirement_guard=retirement_guard,
                     **dict(hook_kwargs or {}),
                 )
         except BaseException as exc:
@@ -406,6 +452,19 @@ class IdleCloseService:
             return IdleCloseResult("recovery_pending", handle.scope, handle.session_id, idle_for, edit, finish, recovery_pending=True, error=finish.error)
         if finish.status not in {"finished", "pending_released", "rejected", "already_finished", "replayed"} or finish.finish is None:
             return result
+        if self.service is not None:
+            try:
+                self.service.validate_retirement_handoff(handle, retirement_guard)
+            except BaseException as exc:
+                observation = CleanupObservation(CleanupStatus.UNSAFE, str(checkout_root), error=str(exc))
+                self.service.cleanup(
+                    handle, request_id=request_id + ":cleanup", status=observation.status,
+                    retirement_guard=retirement_guard,
+                )
+                return IdleCloseResult(
+                    "cleanup_pending", handle.scope, handle.session_id, idle_for, edit,
+                    finish, observation, recovery_pending=True, error=observation.error,
+                )
         exact_files = files
         if finish.snapshot is not None:
             exact_files = registered_files_from_manifest(finish.snapshot.manifest)
@@ -422,12 +481,19 @@ class IdleCloseService:
                 return writer_check()
             return None
         try:
-            observation = self._cleanup(checkout_root, exact_files, writer_check=cleanup_check)
+            observation = self._cleanup(
+                checkout_root, exact_files, retirement_guard=retirement_guard,
+                writer_check=cleanup_check,
+            )
         except BaseException as exc:
             observation = CleanupObservation(CleanupStatus.PENDING, str(checkout_root), error=str(exc))
         if self.service is not None:
             try:
-                self.service.cleanup(handle, request_id=request_id + ":cleanup", status=observation.status)
+                durable = self.service.cleanup(handle, request_id=request_id + ":cleanup", status=observation.status, retirement_guard=retirement_guard)
+                if observation.status == CleanupStatus.COMPLETE and durable.cleanup == CleanupStatus.COMPLETE:
+                    marker = getattr(retirement_guard, "mark_complete", None)
+                    if callable(marker):
+                        marker()
             except BaseException as exc:
                 return IdleCloseResult("cleanup_pending", handle.scope, handle.session_id, idle_for, edit, finish, observation, recovery_pending=True, error=str(exc))
         status = "closed_cleaned" if observation.status == CleanupStatus.COMPLETE else "cleanup_pending"

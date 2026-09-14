@@ -7,7 +7,9 @@ of its own.
 
 The implementation is intentionally conservative about files.  A materializer
 and snapshot port may be supplied by a host, but this layer never recursively
-deletes a checkout and never claims EDT-04's descriptor-relative race proof.
+deletes a checkout.  It authenticates the authoring-local held retirement
+lease before durable cleanup completion; descriptor-relative unlink remains in
+the physical cleanup module.
 """
 
 from __future__ import annotations
@@ -41,6 +43,8 @@ from herzchen.contracts import (
     canonical_json,
     canonical_request_digest,
 )
+
+from .writer_lease import HeldRetirementLease, WriterLeaseError, validated_retirement_manifest
 
 
 FND02_CONTRACT_REVISION = "fnd-02.v1.1"
@@ -491,6 +495,7 @@ class AuthoringSessionService:
         initial_bytes: bytes,
         *,
         pending: bool,
+        unmanaged_writers: bool,
         purpose: str,
         activity: str,
     ) -> Tuple[AuthoringCheckout, Snapshot, SessionHandle, Mapping[str, Any]]:
@@ -498,7 +503,10 @@ class AuthoringSessionService:
         token = _opaque_id("token")
         fence = _opaque_id("fence")
         draft = Snapshot(ResourceRef(getattr(_COMMAND_PORTS[self], "authority", scope.authority), "authoring-snapshot", "draft-" + session_id, sha256(initial_bytes).hexdigest()), initial_bytes)
-        checkout = AuthoringCheckout(scope, target_kind, actor, session_id, token, fence, base_revision, draft.ref, None, tuple(allowed_fields))
+        checkout = AuthoringCheckout(
+            scope, target_kind, actor, session_id, token, fence, base_revision,
+            draft.ref, None, tuple(allowed_fields), unmanaged_writers=unmanaged_writers,
+        )
         handle = SessionHandle(_scope_key(scope), scope, target_kind, actor, session_id, token, fence, base_revision)
         payload = {
             "type": "authoring_scope",
@@ -538,6 +546,7 @@ class AuthoringSessionService:
         initial_content: Union[bytes, str] = b"",
         parent_scope: Optional[ResourceRef] = None,
         pending: bool = False,
+        unmanaged_writers: bool = False,
         materialize: Optional[Callable[..., Any]] = None,
         project: Optional[Mapping[str, Any]] = None,
     ) -> OpenResult:
@@ -546,7 +555,9 @@ class AuthoringSessionService:
         target_kind = target_kind or target.kind
         base_revision = base_revision or target.revision or "initial"
         initial_bytes = _bytes(initial_content)
-        values = {"scope": scope.to_dict(), "target": target.to_dict(), "target_kind": target_kind, "base_revision": base_revision, "purpose": purpose, "activity": activity, "allowed_fields": tuple(allowed_fields), "initial_digest": sha256(initial_bytes).hexdigest(), "pending": pending, "project": project}
+        if not isinstance(unmanaged_writers, bool):
+            raise TypeError("unmanaged_writers must be boolean")
+        values = {"scope": scope.to_dict(), "target": target.to_dict(), "target_kind": target_kind, "base_revision": base_revision, "purpose": purpose, "activity": activity, "allowed_fields": tuple(allowed_fields), "initial_digest": sha256(initial_bytes).hexdigest(), "pending": pending, "unmanaged_writers": unmanaged_writers, "project": project}
         scope_ref = _scope_key(scope)
         digest = self._request_digest("open", request_id, values, target=scope_ref, actor=actor)
 
@@ -572,7 +583,11 @@ class AuthoringSessionService:
                 if actor_record is not None and self._actor_active(actor_record.payload):
                     return OpenResult("actor_occupied", scope, purpose=actor_record.payload.get("purpose"), activity=actor_record.payload.get("activity"), error="actor already occupies a scope")
 
-                checkout, draft, handle, payload = self._new_checkout(scope, actor, target_kind, base_revision, allowed_fields, initial_bytes, pending=pending, purpose=purpose, activity=activity)
+                checkout, draft, handle, payload = self._new_checkout(
+                    scope, actor, target_kind, base_revision, allowed_fields, initial_bytes,
+                    pending=pending, unmanaged_writers=unmanaged_writers,
+                    purpose=purpose, activity=activity,
+                )
                 self._mutate(tx, actor=actor, operation="actor.open", request_id=request_id + ":actor", target=actor_ref, digest=digest, record=actor_record, payload={"type": "authoring_actor", "active": True, "scope": scope.to_dict(), "session_id": checkout.session_id, "purpose": purpose, "activity": activity}, effects={"scope": scope.id, "session_id": checkout.session_id})
                 receipt = self._mutate(tx, actor=actor, operation="open", request_id=request_id, target=scope_ref, digest=digest, record=scope_record, payload=payload, effects={"session_id": checkout.session_id, "scope": scope.id}, request_payload=values)
                 self._put_snapshot(tx, draft)
@@ -777,6 +792,7 @@ class AuthoringSessionService:
         apply: Optional[Callable[..., Any]] = None,
         pending: Optional[bool] = None,
         retirement_manifest: Optional[Sequence[str]] = None,
+        retirement_guard: Optional[object] = None,
     ) -> FinishResult:
         if mode not in {"manual", "idle"}:
             raise ValueError("finish mode must be manual or idle")
@@ -801,11 +817,11 @@ class AuthoringSessionService:
                 snap = self._capture(checkout, capture)
             except BaseException as exc:
                 draft = Snapshot(checkout.draft_snapshot_ref, b64decode(record.payload.get("draft_bytes_b64", "")))
-                self._transition_recovery(handle, request_id + ":capture-failure", draft, str(exc))
+                self._transition_recovery(handle, request_id + ":capture-failure", draft, str(exc), retirement_guard=retirement_guard)
                 return FinishResult("recovery_pending", handle.scope, handle.session_id, final_snapshot=draft, recovery_pending=True, cleanup=CleanupStatus.PENDING, error=str(exc))
             base_expected = expected_base_revision or checkout.base_revision
             if base_expected != checkout.base_revision:
-                return self._reject_finish(handle, request_id, digest, checkout, snap, "base revision mismatch", BaseRevisionMismatchError)
+                return self._reject_finish(handle, request_id, digest, checkout, snap, "base revision mismatch", BaseRevisionMismatchError, retirement_guard=retirement_guard)
             is_pending = checkout.target_kind in {"project", "project-sheet", "pending-project"} and (pending if pending is not None else bool(record.payload.get("pending"))) and snap.data == b64decode(record.payload.get("draft_bytes_b64", ""))
             claim = FinishClaim("finish-" + checkout.session_id, mode, _opaque_id("claim"))
             scope_ref = handle.scope
@@ -845,13 +861,23 @@ class AuthoringSessionService:
                     # This is the immutable retirement handoff.  Cleanup may
                     # only use these exact per-file bytes, sizes and digests;
                     # it must not derive a new baseline from the checkout.
-                    final_payload["retirement_manifest"] = list(retirement_manifest if retirement_manifest is not None else snap.manifest)
-                    final_payload["retirement_fence"] = {
-                        "session_id": claimed.session_id,
-                        "token": claimed.token,
-                        "fence": claimed.fence,
-                        "manifest_digest": _digest(list(retirement_manifest if retirement_manifest is not None else snap.manifest)),
-                    }
+                    selected_manifest = validated_retirement_manifest(
+                        tuple(retirement_manifest if retirement_manifest is not None else snap.manifest)
+                    )
+                    if tuple(snap.manifest) != selected_manifest:
+                        raise InvalidSessionError("retirement manifest does not match the final snapshot")
+                    final_payload["retirement_manifest"] = list(selected_manifest)
+                    if retirement_guard is None:
+                        final_payload.pop("retirement_fence", None)
+                    else:
+                        if not isinstance(retirement_guard, HeldRetirementLease):
+                            raise InvalidSessionError("retirement guard is not an issued held lease")
+                        issuer = getattr(retirement_guard, "issue_fence", None)
+                        if not callable(issuer):
+                            raise InvalidSessionError("retirement guard is not a held authenticated capability")
+                        final_payload["retirement_fence"] = dict(
+                            issuer(handle, selected_manifest, snapshot_digest=snap.digest)
+                        )
                     receipt = self._mutate(tx, actor=handle.actor, operation="finish", request_id=request_id, target=scope_ref, digest=digest, record=_as_record(_COMMAND_PORTS[self].get_identity(scope_ref)), payload=final_payload, effects={"mode": mode, "final_digest": snap.digest, "pending": is_pending}, request_payload=request_payload)
                     actor_record = _as_record(_COMMAND_PORTS[self].get_identity(actor_ref))
                     if actor_record is not None:
@@ -862,14 +888,14 @@ class AuthoringSessionService:
             except BaseRevisionMismatchError:
                 raise
             except BaseException as exc:
-                self._transition_recovery(handle, request_id + ":recovery", snap, str(exc))
+                self._transition_recovery(handle, request_id + ":recovery", snap, str(exc), retirement_guard=retirement_guard)
                 return FinishResult("recovery_pending", scope_ref, handle.session_id, final_snapshot=snap, recovery_pending=True, cleanup=CleanupStatus.PENDING, error=str(exc))
 
-    def _reject_finish(self, handle: SessionHandle, request_id: str, digest: str, checkout: AuthoringCheckout, snap: Snapshot, error: str, exc_type: type[Exception]) -> FinishResult:
-        self._transition_recovery(handle, request_id + ":rejected", snap, error, rejected=True)
+    def _reject_finish(self, handle: SessionHandle, request_id: str, digest: str, checkout: AuthoringCheckout, snap: Snapshot, error: str, exc_type: type[Exception], *, retirement_guard: Optional[object] = None) -> FinishResult:
+        self._transition_recovery(handle, request_id + ":rejected", snap, error, rejected=True, retirement_guard=retirement_guard)
         return FinishResult("rejected", handle.scope, handle.session_id, final_snapshot=snap, recovery_pending=False, cleanup=CleanupStatus.PENDING, error=error)
 
-    def _transition_recovery(self, handle: SessionHandle, request_id: str, snap: Snapshot, error: str, *, rejected: bool = False) -> None:
+    def _transition_recovery(self, handle: SessionHandle, request_id: str, snap: Snapshot, error: str, *, rejected: bool = False, retirement_guard: Optional[object] = None) -> None:
         record = _as_record(_COMMAND_PORTS[self].get_identity(handle.scope))
         if record is None:
             return
@@ -882,13 +908,17 @@ class AuthoringSessionService:
         payload["final_bytes_b64"] = b64encode(snap.data).decode("ascii")
         payload["final_digest"] = snap.digest
         payload["final_snapshot_ref"] = snap.ref.to_dict()
-        payload["retirement_manifest"] = list(snap.manifest)
-        payload["retirement_fence"] = {
-            "session_id": checkout.session_id,
-            "token": checkout.token,
-            "fence": checkout.fence,
-            "manifest_digest": _digest(list(snap.manifest)),
-        }
+        manifest = validated_retirement_manifest(snap.manifest)
+        payload["retirement_manifest"] = list(manifest)
+        if retirement_guard is None:
+            payload.pop("retirement_fence", None)
+        else:
+            if not isinstance(retirement_guard, HeldRetirementLease):
+                raise InvalidSessionError("retirement guard is not an issued held lease")
+            issuer = getattr(retirement_guard, "issue_fence", None)
+            if not callable(issuer):
+                raise InvalidSessionError("retirement guard is not a held authenticated capability")
+            payload["retirement_fence"] = dict(issuer(handle, manifest, snapshot_digest=snap.digest))
         payload["recovery_pending"] = not rejected
         payload["error"] = error
         actor_ref = _actor_key(handle.actor, getattr(_COMMAND_PORTS[self], "authority", handle.scope.authority))
@@ -904,7 +934,7 @@ class AuthoringSessionService:
             self._put_snapshot(tx, snap)
             self._put_refs(tx, snap.ref)
 
-    def refresh_final_snapshot(self, handle: SessionHandle, *, request_id: str, snapshot: Snapshot) -> Snapshot:
+    def refresh_final_snapshot(self, handle: SessionHandle, *, request_id: str, snapshot: Snapshot, retirement_guard: object) -> Snapshot:
         """Durably replace a released finish with a fresh retry capture.
 
         This is only used after unsafe cleanup.  The caller must have made a
@@ -929,13 +959,14 @@ class AuthoringSessionService:
         payload["final_bytes_b64"] = b64encode(snapshot.data).decode("ascii")
         payload["final_digest"] = snapshot.digest
         payload["final_snapshot_ref"] = snapshot.ref.to_dict()
-        payload["retirement_manifest"] = list(snapshot.manifest)
-        payload["retirement_fence"] = {
-            "session_id": updated_checkout.session_id,
-            "token": updated_checkout.token,
-            "fence": updated_checkout.fence,
-            "manifest_digest": _digest(list(snapshot.manifest)),
-        }
+        manifest = validated_retirement_manifest(snapshot.manifest)
+        if not isinstance(retirement_guard, HeldRetirementLease):
+            raise InvalidSessionError("retirement guard is not an issued held lease")
+        issuer = getattr(retirement_guard, "issue_fence", None)
+        if not callable(issuer):
+            raise InvalidSessionError("retirement guard is not a held authenticated capability")
+        payload["retirement_manifest"] = list(manifest)
+        payload["retirement_fence"] = dict(issuer(handle, manifest, snapshot_digest=snapshot.digest))
         payload["recovery_pending"] = False
         payload.pop("error", None)
         digest = self._request_digest(
@@ -987,7 +1018,129 @@ class AuthoringSessionService:
         checkout = None if record is None else self._payload_checkout(record.payload)
         return FinishResult("released", handle.scope, handle.session_id, checkout=checkout, cleanup=CleanupStatus.PENDING)
 
-    def cleanup(self, handle: SessionHandle, *, request_id: str, status: CleanupStatus = CleanupStatus.PENDING) -> CleanupResult:
+    def validate_retirement_handoff(self, handle: SessionHandle, retirement_guard: object) -> Tuple[str, ...]:
+        """Validate the exact durable snapshot, manifest, fence, and held lease."""
+        if not isinstance(retirement_guard, HeldRetirementLease):
+            raise InvalidSessionError("authenticated retirement exclusion is not held")
+        record = _as_record(_COMMAND_PORTS[self].get_identity(handle.scope))
+        if record is None:
+            raise InvalidSessionError("scope is not admitted")
+        checkout = self._payload_checkout(record.payload)
+        if checkout is None or checkout.session_id != handle.session_id:
+            raise InvalidSessionError("session is not current")
+        if (
+            checkout.token != handle.token
+            or checkout.fence != handle.fence
+            or checkout.target_scope != handle.target_scope
+            or checkout.actor != handle.actor
+        ):
+            raise InvalidSessionError("stale authoring token or fence")
+        if checkout.state == AuthoringState.OPEN:
+            raise InvalidSessionError("release must precede cleanup")
+        try:
+            manifest = validated_retirement_manifest(record.payload.get("retirement_manifest"))
+        except WriterLeaseError as exc:
+            raise InvalidSessionError(str(exc)) from exc
+        final_digest = record.payload.get("final_digest")
+        final_ref_value = record.payload.get("final_snapshot_ref")
+        if not isinstance(final_digest, str) or not isinstance(final_ref_value, Mapping):
+            raise InvalidSessionError("durable retirement snapshot is absent or partial")
+        try:
+            final_ref = ResourceRef.from_dict(final_ref_value)
+        except (TypeError, ValueError, KeyError) as exc:
+            raise InvalidSessionError("durable retirement snapshot reference is malformed") from exc
+        snapshot_record = _as_record(_COMMAND_PORTS[self].get_identity(final_ref))
+        if snapshot_record is None:
+            raise InvalidSessionError("durable retirement snapshot is absent")
+        encoded_bytes = snapshot_record.payload.get("bytes_b64")
+        if not isinstance(encoded_bytes, str):
+            raise InvalidSessionError("durable retirement snapshot bytes are absent")
+        try:
+            durable_bytes = b64decode(encoded_bytes, validate=True)
+        except (ValueError, TypeError) as exc:
+            raise InvalidSessionError("durable retirement snapshot bytes are malformed") from exc
+        if (
+            snapshot_record.payload.get("type") != "authoring_snapshot"
+            or snapshot_record.payload.get("digest") != final_digest
+            or snapshot_record.payload.get("manifest") != list(manifest)
+            or sha256(durable_bytes).hexdigest() != final_digest
+        ):
+            raise InvalidSessionError("durable retirement manifest does not match its snapshot")
+        authenticator = getattr(retirement_guard, "authenticate_fence", None)
+        if not callable(authenticator):
+            raise InvalidSessionError("authenticated retirement exclusion is not held")
+        try:
+            authenticator(
+                record.payload.get("retirement_fence"),
+                handle=handle,
+                manifest=manifest,
+                snapshot_digest=final_digest,
+            )
+        except BaseException as exc:
+            raise InvalidSessionError(str(exc) or "retirement fence is not authenticated") from exc
+        if checkout.unmanaged_writers:
+            raise InvalidSessionError("checkout has unknown or unmanaged writers")
+        return manifest
+
+    def reestablish_retirement_fence(self, handle: SessionHandle, *, request_id: str, retirement_guard: object) -> Tuple[str, ...]:
+        """Authenticate a prior handoff and bind it to a newly held lease."""
+        if not isinstance(retirement_guard, HeldRetirementLease):
+            raise InvalidSessionError("retirement exclusion cannot be re-established")
+        record = _as_record(_COMMAND_PORTS[self].get_identity(handle.scope))
+        if record is None:
+            raise InvalidSessionError("scope is not admitted")
+        checkout = self._validate_record(handle, record, require_open=False)
+        if checkout.state == AuthoringState.OPEN:
+            raise InvalidSessionError("release must precede retirement reacquisition")
+        try:
+            manifest = validated_retirement_manifest(record.payload.get("retirement_manifest"))
+        except WriterLeaseError as exc:
+            raise InvalidSessionError(str(exc)) from exc
+        final_digest = record.payload.get("final_digest")
+        if not isinstance(final_digest, str):
+            raise InvalidSessionError("durable retirement snapshot digest is absent")
+        authority = getattr(retirement_guard, "authority", None)
+        authenticate = getattr(authority, "authenticate_fence", None)
+        issue = getattr(retirement_guard, "issue_fence", None)
+        assertion = getattr(retirement_guard, "assert_held", None)
+        if not callable(authenticate) or not callable(issue) or not callable(assertion):
+            raise InvalidSessionError("retirement exclusion cannot be re-established")
+        try:
+            assertion()
+            old_fence = record.payload.get("retirement_fence")
+            authenticate(old_fence, handle=handle, manifest=manifest, snapshot_digest=final_digest)
+            if not isinstance(old_fence, Mapping) or (
+                old_fence.get("checkout_root") != getattr(retirement_guard, "root", None)
+                or old_fence.get("root_dev") != getattr(retirement_guard, "root_dev", None)
+                or old_fence.get("root_ino") != getattr(retirement_guard, "root_ino", None)
+            ):
+                raise InvalidSessionError("retirement fence belongs to a different checkout")
+            new_fence = dict(issue(handle, manifest, snapshot_digest=final_digest))
+        except BaseException as exc:
+            if isinstance(exc, InvalidSessionError):
+                raise
+            raise InvalidSessionError(str(exc) or "retirement exclusion cannot be re-established") from exc
+        payload = dict(record.payload)
+        payload["retirement_fence"] = new_fence
+        payload["recovery_pending"] = False
+        digest = self._request_digest(
+            "cleanup.refresh", request_id,
+            {"session": handle.session_id, "manifest": _digest(list(manifest)), "lease": new_fence.get("lease_id")},
+            target=handle.scope, actor=handle.actor,
+        )
+        with _COMMAND_PORTS[self].transaction() as tx:
+            current = _as_record(_COMMAND_PORTS[self].get_identity(handle.scope))
+            if current is None:
+                raise InvalidSessionError("scope is not admitted")
+            self._validate_record(handle, current, require_open=False)
+            self._mutate(
+                tx, actor=handle.actor, operation="cleanup.refresh", request_id=request_id,
+                target=handle.scope, digest=digest, record=current, payload=payload,
+                effects={"retirement_lease": new_fence.get("lease_id")},
+            )
+        return manifest
+
+    def cleanup(self, handle: SessionHandle, *, request_id: str, status: CleanupStatus = CleanupStatus.PENDING, retirement_guard: Optional[object] = None) -> CleanupResult:
         record = _as_record(_COMMAND_PORTS[self].get_identity(handle.scope))
         if record is None:
             raise InvalidSessionError("scope is not admitted")
@@ -996,20 +1149,15 @@ class AuthoringSessionService:
             raise InvalidSessionError("session is not current")
         if checkout.token != handle.token or checkout.fence != handle.fence or checkout.target_scope != handle.target_scope or checkout.actor != handle.actor:
             raise InvalidSessionError("stale authoring token or fence")
-        retirement_fence = record.payload.get("retirement_fence")
-        retirement_manifest = record.payload.get("retirement_manifest")
-        if isinstance(retirement_fence, Mapping) and isinstance(retirement_manifest, list):
-            if (
-                retirement_fence.get("session_id") != checkout.session_id
-                or retirement_fence.get("token") != checkout.token
-                or retirement_fence.get("fence") != checkout.fence
-                or retirement_fence.get("manifest_digest") != _digest(retirement_manifest)
-            ):
-                raise InvalidSessionError("retirement fence does not match the captured manifest")
         if checkout.state == AuthoringState.OPEN:
             raise InvalidSessionError("release must precede cleanup")
-        if status == CleanupStatus.COMPLETE and checkout.unmanaged_writers:
-            status = CleanupStatus.UNSAFE
+        if status == CleanupStatus.COMPLETE:
+            try:
+                if retirement_guard is None:
+                    raise InvalidSessionError("authenticated retirement exclusion is not held")
+                self.validate_retirement_handoff(handle, retirement_guard)
+            except BaseException:
+                status = CleanupStatus.UNSAFE
         updated = checkout.mark_cleanup(status)
         payload = dict(record.payload)
         payload["checkout"] = updated.to_dict()

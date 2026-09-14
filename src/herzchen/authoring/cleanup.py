@@ -17,6 +17,8 @@ from typing import Callable, Iterable, Mapping, Optional, Sequence, Tuple, Union
 
 from herzchen.contracts import CleanupStatus
 
+from .writer_lease import HeldRetirementLease
+
 
 class CleanupError(RuntimeError):
     """Base class for safe-cleanup failures."""
@@ -143,6 +145,7 @@ def registered_files_from_manifest(manifest: Iterable[object]) -> Tuple[Register
 
 
 def _writer_is_quiescent(writer_check: Optional[Callable[[], object]]) -> None:
+    """Apply a supplemental health probe; never treat it as ownership."""
     if writer_check is None:
         raise CleanupWriterError("managed writer state is unknown")
     try:
@@ -154,6 +157,28 @@ def _writer_is_quiescent(writer_check: Optional[Callable[[], object]]) -> None:
     if value is False or (isinstance(value, str) and value in {"active", "open", "writing"}):
         raise CleanupWriterError("managed writer is active")
     raise CleanupWriterError("managed writer state is unknown")
+
+
+def _writer_guard_is_held(retirement_guard: object, checkout_root: Union[str, os.PathLike[str]]) -> None:
+    if not isinstance(retirement_guard, HeldRetirementLease):
+        raise CleanupWriterError("authenticated retirement exclusion is not held")
+    assertion = getattr(retirement_guard, "assert_held", None)
+    if not callable(assertion):
+        raise CleanupWriterError("retirement guard is not a held capability")
+    try:
+        assertion(checkout_root)
+    except BaseException as exc:
+        raise CleanupWriterError("authenticated retirement exclusion is not held") from exc
+
+
+def _manifest_is_authenticated(retirement_guard: object, entries: Sequence[RegisteredFile]) -> None:
+    assertion = getattr(retirement_guard, "assert_cleanup_manifest", None)
+    if not callable(assertion):
+        raise CleanupWriterError("retirement guard has no authenticated cleanup manifest")
+    try:
+        assertion(entries)
+    except BaseException as exc:
+        raise CleanupWriterError("cleanup manifest is not authenticated by the held fence") from exc
 
 
 def _open_root(root: Union[str, os.PathLike[str]]) -> Tuple[Path, int, _Identity, _Identity]:
@@ -273,8 +298,10 @@ def cleanup_registered_files(
     checkout_root: Union[str, os.PathLike[str]],
     registered_files: Iterable[Union[str, os.PathLike[str], RegisteredFile, Mapping[str, object]]],
     *,
+    retirement_guard: Optional[object] = None,
     writer_check: Optional[Callable[[], object]] = None,
     before_delete: Optional[Callable[[str], object]] = None,
+    before_unlink: Optional[Callable[[str], object]] = None,
 ) -> CleanupObservation:
     """Delete only the supplied registered files, or return a retryable state.
 
@@ -285,7 +312,9 @@ def cleanup_registered_files(
     leaves all other files for a later retry.  Nonempty requests must use the
     exact digest and size captured before retirement; current bytes are never
     accepted as a just-in-time baseline.  Writer ownership must also be
-    explicitly quiescent for every call, including retries.
+    covered by an authenticated, held exclusive retirement guard for the
+    entire compare/unlink sequence.  A boolean writer probe is only a
+    supplemental health signal and can never substitute for that capability.
     """
     entries = _entries(registered_files)
     if entries and any(item.sha256 is None or item.size is None for item in entries):
@@ -294,7 +323,10 @@ def cleanup_registered_files(
     deleted = []
     remaining = [item.relative_path for item in entries]
     try:
-        _writer_is_quiescent(writer_check)
+        _writer_guard_is_held(retirement_guard, path)
+        _manifest_is_authenticated(retirement_guard, entries)
+        if writer_check is not None:
+            _writer_is_quiescent(writer_check)
         _validate_root(path, root_identity, parent_identity)
         registered_names = {item.relative_path for item in entries}
         actual_names = set(_scan_files(root_fd))
@@ -302,7 +334,9 @@ def cleanup_registered_files(
         if unexpected:
             raise CleanupIdentityError("unexpected checkout files: " + ", ".join(unexpected))
         for item in entries:
-            _writer_is_quiescent(writer_check)
+            _writer_guard_is_held(retirement_guard, path)
+            if writer_check is not None:
+                _writer_is_quiescent(writer_check)
             _validate_root(path, root_identity, parent_identity)
             parts = item.relative_path.split("/")
             try:
@@ -315,7 +349,9 @@ def cleanup_registered_files(
                     result = before_delete(item.relative_path)
                     if result is False:
                         raise CleanupWriterError("cleanup deletion was not authorised")
-                _writer_is_quiescent(writer_check)
+                _writer_guard_is_held(retirement_guard, path)
+                if writer_check is not None:
+                    _writer_is_quiescent(writer_check)
                 _validate_root(path, root_identity, parent_identity)
                 current_identity, current_size, current_digest = _read_identity_and_digest(
                     parent_fd, name, RegisteredFile(item.relative_path, None, None)
@@ -330,6 +366,11 @@ def cleanup_registered_files(
                     raise CleanupIdentityError("registered cleanup file size changed: " + item.relative_path)
                 if current_digest != expected_digest:
                     raise CleanupIdentityError("registered cleanup file digest changed: " + item.relative_path)
+                if before_unlink is not None:
+                    result = before_unlink(item.relative_path)
+                    if result is False:
+                        raise CleanupWriterError("cleanup unlink was not authorised")
+                    _writer_guard_is_held(retirement_guard, path)
                 os.unlink(name, dir_fd=parent_fd)
             except FileNotFoundError as exc:
                 raise CleanupIdentityError("registered cleanup file disappeared: " + item.relative_path) from exc

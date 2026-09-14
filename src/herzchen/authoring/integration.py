@@ -22,6 +22,7 @@ from .finish import SemanticFinishAdapter, SemanticFinishResult
 from .idle import IdleCloseResult, IdleCloseService
 from .sessions import AuthoringSessionService, CleanupResult, FinishResult, OpenResult, SessionHandle
 from .snapshots import DurableSnapshotAdapter
+from .writer_lease import FileWriterLeaseAuthority, WriterLeaseError
 
 
 class SemanticHandler(Protocol):
@@ -103,6 +104,8 @@ class AuthoringLifecycle:
         *,
         cleanup: Callable[..., CleanupObservation] = cleanup_registered_files,
         clock: Callable[[], float] = time.time,
+        writer_leases: Optional[FileWriterLeaseAuthority] = None,
+        writer_identity: Optional[str] = None,
     ) -> None:
         if not isinstance(service, AuthoringSessionService):
             raise TypeError("service must be the supplied AuthoringSessionService")
@@ -110,6 +113,25 @@ class AuthoringLifecycle:
         self.finish_adapter = SemanticFinishAdapter(service)
         self.idle_service = IdleCloseService(self.finish_adapter, cleanup=cleanup, clock=clock)
         self.cleanup = cleanup
+        self.writer_leases = writer_leases
+        self.writer_identity = writer_identity
+
+    def _lease_context(self, checkout_root: Union[str, Path], writer_identity: Optional[str]) -> Any:
+        if self.writer_leases is None:
+            raise WriterLeaseError("authenticated writer lease authority is unavailable")
+        identity = writer_identity or self.writer_identity
+        if not isinstance(identity, str) or not identity:
+            raise WriterLeaseError("authenticated writer identity is unavailable")
+        return self.writer_leases.hold_retirement(checkout_root, owner_identity=identity)
+
+    def _current_handoff(self, handle: SessionHandle, guard: object, request_id: str) -> Any:
+        try:
+            return self.service.validate_retirement_handoff(handle, guard)
+        except BaseException:
+            self.service.reestablish_retirement_fence(
+                handle, request_id=request_id + ":fence-reacquire", retirement_guard=guard,
+            )
+            return self.service.validate_retirement_handoff(handle, guard)
 
     @property
     def idle(self) -> IdleCloseService:
@@ -126,6 +148,7 @@ class AuthoringLifecycle:
         initial_content: Union[bytes, str] = b"",
         scope: Optional[ResourceRef] = None,
         pending: bool = False,
+        unmanaged_writers: bool = False,
         allowed_fields: Iterable[str] = (),
         purpose: str = "authoring",
         activity: str = "editing",
@@ -147,7 +170,8 @@ class AuthoringLifecycle:
         opened = self.service.open(
             target, actor, request_id=request_id, target_kind=target_kind or target.kind,
             base_revision=base_revision, initial_content=initial_content,
-            parent_scope=canonical_scope, pending=pending, allowed_fields=tuple(allowed_fields),
+            parent_scope=canonical_scope, pending=pending, unmanaged_writers=unmanaged_writers,
+            allowed_fields=tuple(allowed_fields),
             purpose=purpose, activity=activity, materialize=materialize, project=project,
         )
         return AuthoringTarget(target, canonical_scope, opened)
@@ -193,29 +217,52 @@ class AuthoringLifecycle:
         quiesce: Optional[Callable[..., Any]] = None,
         writer_check: Optional[Callable[[], Any]] = None,
         capture_barrier: Optional[Callable[..., Any]] = None,
+        writer_identity: Optional[str] = None,
         **hook_kwargs: Any,
     ) -> LifecycleFinishResult:
         handle = target.handle if isinstance(target, AuthoringTarget) else target
-        result = self.finish_adapter.finish(
-            handle, request_id=request_id, mode=mode, checkout_root=checkout_root,
-            registered_files=registered_files, handler=handler,
-            expected_base_revision=expected_base_revision, pending=pending,
-            settled=settled, quiesce=quiesce, writer_check=writer_check,
-            capture_barrier=capture_barrier, **hook_kwargs,
-        )
-        if not cleanup or not self._released(result):
+        try:
+            with self._lease_context(checkout_root, writer_identity) as guard:
+                result = self.finish_adapter.finish(
+                    handle, request_id=request_id, mode=mode, checkout_root=checkout_root,
+                    registered_files=registered_files, handler=handler,
+                    expected_base_revision=expected_base_revision, pending=pending,
+                    settled=settled, quiesce=quiesce, writer_check=writer_check,
+                    capture_barrier=capture_barrier, retirement_guard=guard, **hook_kwargs,
+                )
+                if not cleanup or not self._released(result):
+                    return LifecycleFinishResult(result)
+                try:
+                    manifest = self._current_handoff(handle, guard, request_id)
+                    exact_files = registered_files_from_manifest(manifest)
+                except BaseException as exc:
+                    observation = CleanupObservation(CleanupStatus.UNSAFE, str(checkout_root), error=str(exc))
+                    durable = self.service.cleanup(
+                        handle, request_id=request_id + ":cleanup", status=CleanupStatus.UNSAFE,
+                        retirement_guard=guard,
+                    )
+                    return LifecycleFinishResult(result, observation, durable)
+                def cleanup_check() -> Any:
+                    if quiesce is not None:
+                        SemanticFinishAdapter._writer_is_quiescent(quiesce, writer_check)
+                        return True
+                    return writer_check() if writer_check is not None else True
+                observation = self.cleanup(
+                    checkout_root, exact_files, retirement_guard=guard, writer_check=cleanup_check,
+                )
+                durable = self.service.cleanup(
+                    handle, request_id=request_id + ":cleanup", status=observation.status,
+                    retirement_guard=guard,
+                )
+                if observation.status == CleanupStatus.COMPLETE and durable.cleanup == CleanupStatus.COMPLETE:
+                    guard.mark_complete()
+                return LifecycleFinishResult(result, observation, durable)
+        except BaseException as exc:
+            result = SemanticFinishResult(
+                "recovery_pending", recovery_pending=True,
+                error=str(exc) or "retirement exclusion could not be acquired",
+            )
             return LifecycleFinishResult(result)
-        exact_files = self._retirement_files(result, registered_files)
-        def cleanup_check() -> Any:
-            if quiesce is not None:
-                SemanticFinishAdapter._writer_is_quiescent(quiesce, writer_check)
-                return True
-            if writer_check is not None:
-                return writer_check()
-            return None
-        observation = self.cleanup(checkout_root, exact_files, writer_check=cleanup_check)
-        durable = self.service.cleanup(handle, request_id=request_id + ":cleanup", status=observation.status)
-        return LifecycleFinishResult(result, observation, durable)
 
     def idle_close(
         self,
@@ -225,13 +272,28 @@ class AuthoringLifecycle:
         checkout_root: Union[str, Path],
         registered_files: Any,
         handler: SemanticHandler,
+        writer_identity: Optional[str] = None,
         **kwargs: Any,
     ) -> IdleCloseResult:
         handle = target.handle if isinstance(target, AuthoringTarget) else target
-        return self.idle_service.close_if_idle(
-            handle, request_id=request_id, checkout_root=checkout_root,
-            registered_files=registered_files, handler=handler, **kwargs,
-        )
+        try:
+            with self._lease_context(checkout_root, writer_identity) as guard:
+                result = self.idle_service.close_if_idle(
+                    handle, request_id=request_id, checkout_root=checkout_root,
+                    registered_files=registered_files, handler=handler,
+                    retirement_guard=guard, **kwargs,
+                )
+                if result.cleanup is not None and result.cleanup.status == CleanupStatus.COMPLETE:
+                    record = self.service.reader.get_identity(handle.scope)
+                    checkout = None if record is None else record.payload.get("checkout")
+                    if isinstance(checkout, dict) and checkout.get("cleanup") == CleanupStatus.COMPLETE.value:
+                        guard.mark_complete()
+                return result
+        except BaseException as exc:
+            return IdleCloseResult(
+                "writer_active", handle.scope, handle.session_id,
+                recovery_pending=True, error=str(exc) or "retirement exclusion could not be acquired",
+            )
 
     def release(self, target: Union[AuthoringTarget, SessionHandle], *, request_id: str) -> FinishResult:
         handle = target.handle if isinstance(target, AuthoringTarget) else target
@@ -249,53 +311,61 @@ class AuthoringLifecycle:
         settled: Any = True,
         fresh_capture: bool = False,
         capture_barrier: Optional[Callable[..., Any]] = None,
+        writer_identity: Optional[str] = None,
     ) -> CleanupObservation:
         handle = target.handle if isinstance(target, AuthoringTarget) else target
-        record = self.service.reader.get_identity(handle.scope)
-        payload = {} if record is None else record.payload
-        manifest = payload.get("retirement_manifest")
-        exact_files = registered_files
-        if manifest and not fresh_capture:
-            exact_files = registered_files_from_manifest(manifest)
+        try:
+            with self._lease_context(checkout_root, writer_identity) as guard:
+                record = self.service.reader.get_identity(handle.scope)
+                payload = {} if record is None else record.payload
+                manifest = payload.get("retirement_manifest")
+                exact_files = registered_files
 
-        if fresh_capture:
-            try:
-                SemanticFinishAdapter._writer_is_quiescent(quiesce, writer_check)
-                paths = tuple(
-                    item.relative_path if hasattr(item, "relative_path") else item
-                    for item in (registered_files or ())
+                if fresh_capture:
+                    SemanticFinishAdapter._writer_is_quiescent(quiesce, writer_check)
+                    paths = tuple(
+                        item.relative_path if hasattr(item, "relative_path") else item
+                        for item in (registered_files or ())
+                    )
+                    if not paths and manifest:
+                        paths = tuple(item.relative_path for item in registered_files_from_manifest(manifest))
+                    adapter = DurableSnapshotAdapter(self.service)
+                    tree = adapter.capture(checkout_root, paths, settled=settled)
+                    if capture_barrier is not None:
+                        _call(capture_barrier, tree, snapshot=tree, checkout_root=str(checkout_root), registered_files=paths)
+                    SemanticFinishAdapter._writer_is_quiescent(quiesce, writer_check)
+                    adapter.verify_manifest(tree, checkout_root, paths)
+                    self.service.refresh_final_snapshot(
+                        handle, request_id=request_id + ":refresh",
+                        snapshot=tree.as_session_snapshot(adapter._ref(handle, "final", tree.tree_digest)),
+                        retirement_guard=guard,
+                    )
+                    self.service.validate_retirement_handoff(handle, guard)
+                    exact_files = registered_files_from_manifest(tree.manifest)
+                else:
+                    manifest = self._current_handoff(handle, guard, request_id)
+                    exact_files = registered_files_from_manifest(manifest)
+
+                def fenced_check() -> Any:
+                    if quiesce is not None:
+                        SemanticFinishAdapter._writer_is_quiescent(quiesce, writer_check)
+                        return True
+                    return writer_check() if writer_check is not None else True
+
+                observation = self.cleanup(
+                    checkout_root, exact_files, retirement_guard=guard, writer_check=fenced_check,
                 )
-                if not paths and manifest:
-                    paths = tuple(item.relative_path for item in registered_files_from_manifest(manifest))
-                adapter = DurableSnapshotAdapter(self.service)
-                tree = adapter.capture(checkout_root, paths, settled=settled)
-                if capture_barrier is not None:
-                    _call(capture_barrier, tree, snapshot=tree, checkout_root=str(checkout_root), registered_files=paths)
-                SemanticFinishAdapter._writer_is_quiescent(quiesce, writer_check)
-                adapter.verify_manifest(tree, checkout_root, paths)
-                self.service.refresh_final_snapshot(
-                    handle, request_id=request_id + ":refresh", snapshot=tree.as_session_snapshot(adapter._ref(handle, "final", tree.tree_digest))
+                durable = self.service.cleanup(
+                    handle, request_id=request_id, status=observation.status, retirement_guard=guard,
                 )
-                exact_files = registered_files_from_manifest(tree.manifest)
-            except BaseException as exc:
-                observation = CleanupObservation(
-                    CleanupStatus.UNSAFE,
-                    str(checkout_root), error=str(exc) or "fresh cleanup capture was unsafe",
-                )
-                self.service.cleanup(handle, request_id=request_id, status=observation.status)
+                if observation.status == CleanupStatus.COMPLETE and durable.cleanup == CleanupStatus.COMPLETE:
+                    guard.mark_complete()
                 return observation
-
-        def fenced_check() -> Any:
-            if quiesce is not None:
-                SemanticFinishAdapter._writer_is_quiescent(quiesce, writer_check)
-                return True
-            if writer_check is None:
-                return None
-            return writer_check()
-
-        observation = self.cleanup(checkout_root, exact_files, writer_check=fenced_check)
-        self.service.cleanup(handle, request_id=request_id, status=observation.status)
-        return observation
+        except BaseException as exc:
+            return CleanupObservation(
+                CleanupStatus.UNSAFE, str(checkout_root),
+                error=str(exc) or "retirement exclusion could not be acquired or re-established",
+            )
 
     def _retirement_files(self, result: SemanticFinishResult, fallback: Any) -> Any:
         if result.snapshot is not None:

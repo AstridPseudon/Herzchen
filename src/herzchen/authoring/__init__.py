@@ -7,6 +7,7 @@ from .finish import *
 from .cleanup import *
 from .idle import *
 from .integration import *
+from .writer_lease import *
 
 __all__ = tuple(__all__) + (
     "SnapshotError", "InvalidSnapshotPath", "SnapshotPathEscape", "UnregisteredFileError",
@@ -20,4 +21,8 @@ __all__ = tuple(__all__) + (
     "IdleCloseService", "IdleCloser", "IdleCloseCoordinator", "idle_close",
     "SemanticHandler", "CallableSemanticHandler", "AuthoringTarget", "LifecycleFinishResult",
     "AuthoringLifecycle", "AuthoringLifecycleAdapter", "SharedAuthoringLifecycle",
+    "FENCE_FORMAT", "LOCK_FORMAT", "WriterLeaseError", "WriterLeaseUnavailable",
+    "WriterLeaseAuthenticationError", "WriterLeaseStaleError", "WriterLeaseRevokedError",
+    "validated_retirement_manifest", "FileWriterLeaseAuthority", "HeldRetirementLease",
+    "GuardedWriterDescriptor",
 )

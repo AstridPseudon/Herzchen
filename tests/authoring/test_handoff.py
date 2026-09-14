@@ -14,7 +14,7 @@ import time
 
 import pytest
 
-from herzchen.authoring import AuthoringLifecycle, CallableSemanticHandler
+from herzchen.authoring import AuthoringLifecycle, CallableSemanticHandler, FileWriterLeaseAuthority
 from herzchen.authoring.cleanup import CleanupPathError, CleanupStatus, RegisteredFile, cleanup_registered_files
 from herzchen.authoring.sessions import AuthoringSessionService, domain_contribution, register_authoring
 from herzchen.authoring.snapshots import DurableSnapshotAdapter
@@ -42,11 +42,19 @@ def _target(authority: str, ident: str) -> ResourceRef:
     return ResourceRef(authority, "handoff-target", ident, "base-1")
 
 
+def _lifecycle(service: AuthoringSessionService, tmp_path: Path) -> AuthoringLifecycle:
+    leases = FileWriterLeaseAuthority(
+        tmp_path / "writer-locks", authority="handoff-host",
+        secret=b"handoff-test-writer-authority-key", writer_identities=("editor",),
+    )
+    return AuthoringLifecycle(service, writer_leases=leases, writer_identity="editor")
+
+
 def test_deterministic_idle_clock_and_actual_timer_fixture(tmp_path: Path) -> None:
     db = tmp_path / "timer.sqlite"
     store = Store.create(db, authority="edt06-timer")
     register_authoring(store)
-    lifecycle = AuthoringLifecycle(AuthoringSessionService(store))
+    lifecycle = _lifecycle(AuthoringSessionService(store), tmp_path)
     actor = _actor("timer")
     target = _target(store.authority, "timer-target")
     root = tmp_path / "timer-checkout"
@@ -54,8 +62,8 @@ def test_deterministic_idle_clock_and_actual_timer_fixture(tmp_path: Path) -> No
     (root / "draft.txt").write_bytes(b"timer bytes")
     try:
         opened = lifecycle.open(target, actor, request_id="timer-open", target_kind="document", initial_content=b"initial")
-        deterministic = lifecycle.idle.close_if_idle(
-            opened.handle,
+        deterministic = lifecycle.idle_close(
+            opened,
             request_id="timer-not-idle",
             checkout_root=root,
             registered_files=["draft.txt"],
@@ -74,8 +82,8 @@ def test_deterministic_idle_clock_and_actual_timer_fixture(tmp_path: Path) -> No
         holder = {}
 
         def timer_close() -> None:
-            holder["result"] = lifecycle.idle.close_if_idle(
-                opened.handle,
+            holder["result"] = lifecycle.idle_close(
+                opened,
                 request_id="timer-actual-close",
                 checkout_root=root,
                 registered_files=["draft.txt"],
@@ -105,7 +113,7 @@ def test_failed_cleanup_is_durable_and_retry_removes_only_registered_files(tmp_p
     store = Store.create(db, authority="edt06-recovery")
     register_authoring(store)
     service = AuthoringSessionService(store)
-    lifecycle = AuthoringLifecycle(service)
+    lifecycle = _lifecycle(service, tmp_path)
     actor = _actor("recovery")
     target = _target(store.authority, "recovery-target")
     root = tmp_path / "recovery-checkout"
@@ -211,7 +219,7 @@ def test_fresh_consumer_process_and_restart_read_exact_durable_links(tmp_path: P
         """
         import json, sys
         from pathlib import Path
-        from herzchen.authoring import AuthoringLifecycle
+        from herzchen.authoring import AuthoringLifecycle, FileWriterLeaseAuthority
         from herzchen.authoring.sessions import AuthoringSessionService, register_authoring
         from herzchen.contracts import AuthenticatedActor, ResourceRef
         from herzchen.kernel import Store
@@ -226,7 +234,8 @@ def test_fresh_consumer_process_and_restart_read_exact_durable_links(tmp_path: P
         store = Store.create(db, authority="edt06-process")
         register_authoring(store)
         service = AuthoringSessionService(store)
-        lifecycle = AuthoringLifecycle(service)
+        leases = FileWriterLeaseAuthority(root.parent / "writer-locks", authority="process-host", secret=b"process-test-writer-authority-key", writer_identities=("editor",))
+        lifecycle = AuthoringLifecycle(service, writer_leases=leases, writer_identity="editor")
         actor = AuthenticatedActor("edt06-auth", "process-writer", "credential-process-writer")
         target = ResourceRef("edt06-process", "handoff-target", "process-target", "base-1")
         opened = lifecycle.open(target, actor, request_id="process-open", target_kind="document", initial_content=b"initial")

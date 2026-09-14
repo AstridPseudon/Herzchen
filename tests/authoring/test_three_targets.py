@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from herzchen.authoring import AuthoringLifecycle, AuthoringTarget
+from herzchen.authoring import AuthoringLifecycle, AuthoringTarget, FileWriterLeaseAuthority
 from herzchen.authoring.snapshots import DurableSnapshotAdapter
 from herzchen.authoring.sessions import AuthoringSessionService, InvalidSessionError, register_authoring
 from herzchen.content import ContentCommandHandler, ContentDocument, ContentRevision
@@ -51,6 +51,16 @@ def _json_file(root: Path, name: str, value: object) -> Path:
     path = root / name
     path.write_text(json.dumps(value, sort_keys=True), encoding="utf-8")
     return path
+
+
+def _lifecycle(store: Store, tmp_path: Path) -> AuthoringLifecycle:
+    leases = FileWriterLeaseAuthority(
+        tmp_path / "writer-locks", authority="three-target-host",
+        secret=b"three-target-writer-authority-key!", writer_identities=("editor",),
+    )
+    return AuthoringLifecycle(
+        AuthoringSessionService(store), writer_leases=leases, writer_identity="editor",
+    )
 
 
 def _document(authority: str, ident: str, *, scope: ResourceRef | None = None, imported: bool = False) -> ContentDocument:
@@ -94,7 +104,7 @@ def test_all_real_targets_share_finish_idle_cleanup_and_owner_application(tmp_pa
     batches = ProjectBatches(store, actor=_actor("manager"))
     content = ContentCommandHandler(store)
     pack_handler = ManagedPackAuthoringHandler(store)
-    lifecycle = AuthoringLifecycle(AuthoringSessionService(store))
+    lifecycle = _lifecycle(store, tmp_path)
     document_handler = DocumentAuthoringHandler(store, authoring=lifecycle.service)
     try:
         assert lifecycle.finish_adapter is lifecycle.idle.finish_adapter
@@ -177,7 +187,7 @@ def test_project_creation_and_reopen_share_handler_and_untouched_pending_is_reta
     graph = WorkGraph(store, actor=actor)
     graph.register()
     batches = ProjectBatches(store, actor=actor)
-    lifecycle = AuthoringLifecycle(AuthoringSessionService(store))
+    lifecycle = _lifecycle(store, tmp_path)
     try:
         created = batches.create_pending_project(title="Blank", logical_request_key="blank-create", actor=actor)
         root = tmp_path / "blank-checkout"
@@ -216,7 +226,7 @@ def test_document_scope_rules_external_attachment_rejection_and_closed_fence(tmp
     content = ContentCommandHandler(store)
     service = AuthoringSessionService(store)
     document_handler = DocumentAuthoringHandler(store, authoring=service)
-    lifecycle = AuthoringLifecycle(service)
+    lifecycle = _lifecycle(store, tmp_path)
     try:
         parent = _ref(store.authority, "work.project", "parent")
         private = _document(store.authority, "private", scope=parent)
@@ -252,7 +262,7 @@ def test_wrk_direct_and_sheet_owner_path_reject_replay_and_preserve_unrelated_fi
     graph = WorkGraph(store, actor=actor)
     graph.register()
     batches = ProjectBatches(store, actor=actor)
-    lifecycle = AuthoringLifecycle(AuthoringSessionService(store))
+    lifecycle = _lifecycle(store, tmp_path)
     try:
         project = graph.create_project(title="WRK", logical_request_key="wrk-project", actor=actor)
         task = graph.create_task(project, title="Keep", fields={"untouched": "yes"}, logical_request_key="wrk-task", actor=actor)
@@ -296,7 +306,7 @@ def test_wrk_direct_and_sheet_owner_path_reject_replay_and_preserve_unrelated_fi
 def test_rejected_bytes_are_durable_and_no_success_receipt_or_unowned_change(tmp_path: Path):
     store = Store.create(tmp_path / "reject.sqlite", authority="edt05-reject")
     _register_public_handlers(store, pack=True)
-    lifecycle = AuthoringLifecycle(AuthoringSessionService(store))
+    lifecycle = _lifecycle(store, tmp_path)
     actor = _actor("reject")
     root = tmp_path / "reject-checkout"
     root.mkdir()
@@ -332,7 +342,7 @@ def test_shared_adapter_is_neutral_and_reuses_one_finish_boundary(tmp_path: Path
     store = Store.create(tmp_path / "boundary.sqlite", authority="edt05-boundary")
     try:
         _register_public_handlers(store)
-        lifecycle = AuthoringLifecycle(AuthoringSessionService(store))
+        lifecycle = _lifecycle(store, tmp_path)
         assert lifecycle.finish_adapter is lifecycle.idle_service.finish_adapter
         assert lifecycle.cleanup is lifecycle.idle_service._cleanup
     finally:

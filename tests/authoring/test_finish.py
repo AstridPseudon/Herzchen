@@ -8,6 +8,7 @@ import unittest
 from herzchen.authoring.finish import SemanticFinishAdapter, ValidationResult
 from herzchen.authoring.sessions import AuthoringSessionService, register_authoring
 from herzchen.authoring.snapshots import DurableSnapshotAdapter
+from herzchen.authoring.writer_lease import FileWriterLeaseAuthority
 from herzchen.contracts import AuthenticatedActor, ResourceRef
 from herzchen.kernel import Store
 
@@ -42,6 +43,10 @@ class FinishTests(unittest.TestCase):
         self.service = AuthoringSessionService(self.store)
         self.scope = ResourceRef("neutral-store", "project", "finish-project", "base-1")
         self.actor = AuthenticatedActor("auth", "finish-actor", "credential")
+        self.writer_leases = FileWriterLeaseAuthority(
+            Path(self.tempdir.name) / "locks", authority="finish-host",
+            secret=b"finish-test-writer-authority-key!", writer_identities=("editor",),
+        )
 
     def tearDown(self) -> None:
         self.store.close()
@@ -51,33 +56,25 @@ class FinishTests(unittest.TestCase):
         opened = self.service.open(self.scope, self.actor, request_id="open", target_kind="project", base_revision="base-1", initial_content=b"initial")
         handler = Handler()
         adapter = SemanticFinishAdapter(self.service)
-        finished = adapter.finish(
-            opened.handle,
-            request_id="finish-manual",
-            mode="manual",
-            checkout_root=self.root,
-            registered_files=["project.json"],
-            handler=handler,
-        )
+        with self.writer_leases.hold_retirement(self.root, owner_identity="editor") as guard:
+            finished = adapter.finish(
+                opened.handle,
+                request_id="finish-manual", mode="manual", checkout_root=self.root,
+                registered_files=["project.json"], handler=handler, retirement_guard=guard,
+            )
+            idle_loser = adapter.finish(
+                opened.handle,
+                request_id="finish-idle", mode="idle", checkout_root=self.root,
+                registered_files=["project.json"], handler=Handler(), retirement_guard=guard,
+            )
+            replay = adapter.finish(
+                opened.handle,
+                request_id="finish-manual", mode="manual", checkout_root=self.root,
+                registered_files=["project.json"], handler=handler, retirement_guard=guard,
+            )
         self.assertEqual(finished.status, "finished")
         self.assertEqual(handler.applied, 1)
-        idle_loser = adapter.finish(
-            opened.handle,
-            request_id="finish-idle",
-            mode="idle",
-            checkout_root=self.root,
-            registered_files=["project.json"],
-            handler=Handler(),
-        )
         self.assertEqual(idle_loser.status, "already_finished")
-        replay = adapter.finish(
-            opened.handle,
-            request_id="finish-manual",
-            mode="manual",
-            checkout_root=self.root,
-            registered_files=["project.json"],
-            handler=handler,
-        )
         self.assertEqual(replay.status, "replayed")
         self.assertEqual(handler.applied, 1)
         self.assertIsNotNone(finished.finish.receipt)
@@ -98,14 +95,16 @@ class FinishTests(unittest.TestCase):
                 checkout_root=self.root,
                 registered_files=["project.json"],
                 handler=handler,
+                retirement_guard=guard,
             ))
 
-        first = threading.Thread(target=contender, args=("manual",))
-        second = threading.Thread(target=contender, args=("idle",))
-        first.start()
-        second.start()
-        first.join(2)
-        second.join(2)
+        with self.writer_leases.hold_retirement(self.root, owner_identity="editor") as guard:
+            first = threading.Thread(target=contender, args=("manual",))
+            second = threading.Thread(target=contender, args=("idle",))
+            first.start()
+            second.start()
+            first.join(2)
+            second.join(2)
         self.assertFalse(first.is_alive())
         self.assertFalse(second.is_alive())
         self.assertEqual(sorted(result.status for result in results), ["already_finished", "finished"])
@@ -114,14 +113,11 @@ class FinishTests(unittest.TestCase):
     def test_validation_failure_preserves_rejected_bytes_and_diagnostics(self) -> None:
         opened = self.service.open(self.scope, self.actor, request_id="open", target_kind="project", base_revision="base-1", initial_content=b"initial")
         handler = Handler(valid=False)
-        result = SemanticFinishAdapter(self.service).finish(
-            opened.handle,
-            request_id="reject",
-            mode="manual",
-            checkout_root=self.root,
-            registered_files=["project.json"],
-            handler=handler,
-        )
+        with self.writer_leases.hold_retirement(self.root, owner_identity="editor") as guard:
+            result = SemanticFinishAdapter(self.service).finish(
+                opened.handle, request_id="reject", mode="manual", checkout_root=self.root,
+                registered_files=["project.json"], handler=handler, retirement_guard=guard,
+            )
         self.assertEqual(result.status, "rejected")
         self.assertEqual(handler.applied, 0)
         self.assertIn("invalid draft", result.error)
@@ -130,14 +126,11 @@ class FinishTests(unittest.TestCase):
 
     def test_application_failure_is_recovery_pending_without_success_receipt(self) -> None:
         opened = self.service.open(self.scope, self.actor, request_id="open", target_kind="project", base_revision="base-1", initial_content=b"initial")
-        result = SemanticFinishAdapter(self.service).finish(
-            opened.handle,
-            request_id="apply-fails",
-            mode="manual",
-            checkout_root=self.root,
-            registered_files=["project.json"],
-            handler=Handler(fail_apply=True),
-        )
+        with self.writer_leases.hold_retirement(self.root, owner_identity="editor") as guard:
+            result = SemanticFinishAdapter(self.service).finish(
+                opened.handle, request_id="apply-fails", mode="manual", checkout_root=self.root,
+                registered_files=["project.json"], handler=Handler(fail_apply=True), retirement_guard=guard,
+            )
         self.assertEqual(result.status, "recovery_pending")
         self.assertTrue(result.recovery_pending)
         self.assertIsNone(self.store.get_receipt("apply-fails"))
@@ -145,14 +138,11 @@ class FinishTests(unittest.TestCase):
 
     def test_capture_failure_does_not_write_a_false_success(self) -> None:
         opened = self.service.open(self.scope, self.actor, request_id="open", target_kind="project", base_revision="base-1", initial_content=b"initial")
-        result = SemanticFinishAdapter(self.service).finish(
-            opened.handle,
-            request_id="capture-fails",
-            mode="manual",
-            checkout_root=self.root,
-            registered_files=["missing.json"],
-            handler=Handler(),
-        )
+        with self.writer_leases.hold_retirement(self.root, owner_identity="editor") as guard:
+            result = SemanticFinishAdapter(self.service).finish(
+                opened.handle, request_id="capture-fails", mode="manual", checkout_root=self.root,
+                registered_files=["missing.json"], handler=Handler(), retirement_guard=guard,
+            )
         self.assertEqual(result.status, "failed")
         self.assertTrue(result.recovery_pending)
         self.assertIsNone(self.store.get_receipt("capture-fails"))

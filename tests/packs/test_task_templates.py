@@ -13,6 +13,7 @@ from herzchen.contracts import AuthenticatedActor, ReferenceBinding, ReplayConfl
 from herzchen.authoring.finish import SemanticFinishAdapter
 from herzchen.authoring.idle import IdleCloseService
 from herzchen.authoring.sessions import AuthoringSessionService, register_authoring
+from herzchen.authoring.writer_lease import FileWriterLeaseAuthority
 from herzchen.domains.work import WorkGraph, WorkKind
 from herzchen.kernel import Store
 from herzchen.packs.templates import (
@@ -328,11 +329,16 @@ def test_blank_initial_spec_untouched_pending_close_retains_durable_content_and_
     root.mkdir()
     (root / "project.json").write_bytes(initial_bytes)
     idle = IdleCloseService(SemanticFinishAdapter(service), clock=lambda: 10.0)
-    closed = idle.close_if_idle(
-        opened.handle, request_id="close-idle", checkout_root=root,
-        registered_files=["project.json"], inactivity_seconds=1, last_content_edit=0, now=10,
-        quiesce=lambda: True, writer_check=lambda: True,
+    leases = FileWriterLeaseAuthority(
+        tmp_path / "writer-locks", authority="task-template-host",
+        secret=b"task-template-writer-authority-key", writer_identities=("editor",),
     )
+    with leases.hold_retirement(root, owner_identity="editor") as guard:
+        closed = idle.close_if_idle(
+            opened.handle, request_id="close-idle", checkout_root=root,
+            registered_files=["project.json"], inactivity_seconds=1, last_content_edit=0, now=10,
+            quiesce=lambda: True, writer_check=lambda: True, retirement_guard=guard,
+        )
     assert closed.status == "closed_cleaned"
     assert not (root / "project.json").exists()
     assert service.read(result.project.ref).status == "available"
