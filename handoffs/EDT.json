@@ -41,7 +41,7 @@
     "regression": {"command": "env -u PYTHONPATH -u PYTHONHOME .../venv/bin/python -m pytest -q tests/authoring/test_exclusivity.py tests/authoring/test_finish.py tests/authoring/test_snapshots.py", "exit": 0, "result": "19 passed"},
     "fresh_persisted_state": {"exit": 0, "result": "untouched pending_released; edited finished; cleanup complete; events/receipts persisted; restart ok"}
   },
-  "gaps": {"EDT05": "not implemented", "EDT06": "not implemented", "product_or_astrid_cutover": "not claimed", "cross_service_finish_loser": "baseline EDT-03 sessions.py behavior; no out-of-scope edit"},
+  "gaps": {"EDT05": "not implemented", "EDT06": "not implemented", "product_or_astrid_cutover": "not claimed", "cross_service_finish_loser": "resolved by EDT-04 correction 4769c1153fd3177271b4d849cb7a3fceb450273b; sessions.py unchanged"},
   "correction": {
     "kind": "owner-authorized cross-service finish loser reconciliation continuation",
     "original_candidate_immutable": true,

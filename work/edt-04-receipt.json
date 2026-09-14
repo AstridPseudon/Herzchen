@@ -123,8 +123,8 @@
     "symlink_parent_unexpected_partial": "tests/authoring/test_failure_matrix.py:193-231",
     "manual_idle_claim_replay": "tests/authoring/test_finish.py:49-111; tests/authoring/test_exclusivity.py:237-275",
     "two_service_reservation": "tests/authoring/test_exclusivity.py:103-169",
-    "cross_service_finish_gap": "baseline EDT-03 finish port; sessions.py out of scope"
+      "cross_service_finish_gap": "resolved by EDT-04 correction continuation 4769c1153fd3177271b4d849cb7a3fceb450273b; sessions.py remained unchanged"
   },
-  "gaps": ["EDT-05 target-handler unification", "EDT-06 consumer handoff", "no product/Astrid cutover verdict", "cross-service concurrent finish loser behavior remains baseline EDT-03 boundary"],
+  "gaps": ["EDT-05 target-handler unification", "EDT-06 consumer handoff", "no product/Astrid cutover verdict"],
   "upstream_push_merge_or_control_ledger_write": false
 }
