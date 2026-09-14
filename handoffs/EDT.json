@@ -1,86 +1,109 @@
 {
-  "task": "EDT-04",
-  "owner": "EDT",
-  "status": "ready_for_root_acceptance",
-  "scope": "idle-close and recoverable cleanup only",
-  "invoking_root": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20",
-  "control_root": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery",
-  "package_path": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/package/otto_herzchen_delivery_v11_2",
-  "worker_worktree": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-edt04-worker",
-  "branch": "edt-04-worker",
-  "accepted_baseline": {"commit": "5a28e1fee1811d77c0a6558311c77525c36ed069", "tree": "640ac1a230d0535bde7ab23d172e2faf76b3f101"},
-  "final_implementation": {"commit": "61bbedd1f682e2a7cd511b4081b1a89d4da16e6d", "tree": "5c59ff7ece86b21a90c4e2bf274056b05479f09e"},
-  "route": {"class": "normal", "model": "gpt-5.6-luna", "reasoning": "high"},
-  "launch": {
-    "command": "/Users/hannahomalley/.local/bin/codex exec --skip-git-repo-check -m gpt-5.6-luna -c model_reasoning_effort=high -s danger-full-access --json -o /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/edt-04-worker-last.txt < /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/edt-04-worker-brief-20260914.md | tee /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/edt-04-worker-jsonl-20260914.txt",
-    "process_or_session": {"cli_thread_id": "01a09d39-19af-7721-9ebf-f234747e31ef", "functions_exec_session_handle": 56088},
-    "brief_sha256": "3d863519b5c458e0af7d959e27ea0372af5b56ecb71ee56cde6b4fc95c7e550e",
-    "jsonl_path": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/edt-04-worker-jsonl-20260914.txt",
-    "observed_terminal_status": "in_progress at dispatch; command records include completed proof exits"
+  "handoff": "EDT-06",
+  "task": "Hand off authoring service and recovery evidence",
+  "status": "worker-evidence-complete",
+  "acceptance_claimed": false,
+  "gate_verdict_claimed": false,
+  "criteria": ["C07", "C08", "C09", "C33", "C35"],
+  "deliverable": "handoffs/EDT.json",
+  "scope": "Evidence-only handoff over accepted EDT-05 mechanics. No product, Astrid, Runtime, publication, execution, scheduler, or remote-host cutover is claimed.",
+  "route": {"mode": "normal", "model": "gpt-5.6-luna", "reasoning": "high", "xhard_or_sol_used": false, "verified_codex_cli": true},
+  "workspace": {
+    "invoking_root": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20",
+    "control_root": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery",
+    "worker_root": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-edt06-worker",
+    "branch": "edt-06-worker",
+    "baseline_commit": "dfc323203843e0b58cc0790485cb6e7b825d6c02",
+    "baseline_tree": "efe0ae1ed39643042ec2f87b00ca537f08ea6a28",
+    "test_evidence_commit": "77bd75e4b4047d3ca32550f299d2b9cf2305dbfa",
+    "test_evidence_tree": "61f2f9a6141a38c4ac3706f8842838993ec930df"
   },
-  "source_manifest": {"path": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/source-set-int01-refresh-20260913.json", "sha256": "742fed428923c7702001865407d3d8897ba9685b5fcfd473076fc7edb3ee563a"},
-  "ex_edit_lineage": {
-    "map": "plan/extraction-map.json:1293-1455",
-    "runtime_dirfd": {"blob": "4f936bebd4dae78c09c33603596431627e8409c6", "lines": "129-172;185-210;241-299;398-424;492-560"},
-    "runtime_cas": {"blob": "d0c3bf4b4d3d81176cfb87c10bf08133f9e2e12a", "lines": "11-79"},
-    "runtime_tests": [{"path": "tests/test_dirfd_publication.py", "blob": "933d727cd496cd716d9c4db95d1a8c68bc615ed5", "lines": "45-176;178-297"}, {"path": "tests/test_runtime_domains.py", "blob": "8b5529ddd4e1accc239aa6c23000af54ed846646", "lines": "42-77;221-300"}],
-    "accepted_edt03": "work/edt-03-result.md:25-42 and tests/authoring/test_finish.py:49-158",
-    "accepted_edt02": "tests/authoring/test_exclusivity.py:103-169 and 237-275"
+  "accepted_edt05": {
+    "implementation_commit": "023de7472e15c8b64356dc1d2b3a400071502462",
+    "implementation_tree": "c449148badec5670358499411920dacce6fdb3b4",
+    "evidence_commit": "dfc323203843e0b58cc0790485cb6e7b825d6c02",
+    "evidence_tree": "efe0ae1ed39643042ec2f87b00ca537f08ea6a28",
+    "source_manifest_sha256": "742fed428923c7702001865407d3d8897ba9685b5fcfd473076fc7edb3ee563a",
+    "retained_surfaces": ["AuthoringLifecycle", "SemanticFinishAdapter", "IdleCloseService", "DurableSnapshotAdapter", "cleanup_registered_files", "AuthoringSessionService", "Store", "DAT DocumentAuthoringHandler", "WRK ProjectBatches", "PKG ManagedPackAuthoringHandler"]
   },
-  "changed_path_sha256": {
-    "src/herzchen/authoring/idle.py": "3aa87655cab06068c1724178834ffd3445be042ff68a08b38a893f3ebc305e60",
-    "src/herzchen/authoring/cleanup.py": "f3aed208d4b90c67d35a7e8cfbad81d3d561207002b5a716c74bcdfb5da98dae",
-    "src/herzchen/authoring/__init__.py": "5e9d4f85fc0b1f53ce4fc5390f4d271a80c547e592cc66c85abfc509dcf35988",
-    "tests/authoring/test_failure_matrix.py": "81b318a2cca230494ab5568e636b58714adb3186cce62333828c607a8c580f05"
+  "lineage": {
+    "source_manifest": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/source-set-int01-refresh-20260913.json",
+    "astrid": {"commit": "96e5664237eb35adeb4cad08bddd8cd6df0a2ae1", "tree": "19f7539a266618a797559eedbda48e2752b30fa3"},
+    "runtime": {"commit": "afccb430e2a983c968b6a8a96fd630ba3a6262fc", "tree": "be89db2f02231aeef212bdb266d12c51778f32ae"},
+    "fnd07_race_correction": "open integration dependency; no accepted correction was supplied to this lane and no FND-07 files were changed",
+    "source_manifest_mutated": false,
+    "package_seed_mutated": false,
+    "control_root_mutated": false,
+    "upstream_mutated": false
   },
-  "proof": {
-    "candidate_python": "/opt/homebrew/bin/python3.11",
-    "candidate_wheel_sha256": "78d1e6f5ef80f4b123cfb402466589616ecb314fc47438c53e82b610f9ba11ad",
-    "installed_origin": "/private/tmp/herzchen-edt04-candidate-final.XGAgDS/venv/lib/python3.11/site-packages/herzchen",
-    "focused": {"command": "env -u PYTHONPATH -u PYTHONHOME .../venv/bin/python -m pytest -q tests/authoring/test_failure_matrix.py", "exit": 0, "result": "7 passed"},
-    "regression": {"command": "env -u PYTHONPATH -u PYTHONHOME .../venv/bin/python -m pytest -q tests/authoring/test_exclusivity.py tests/authoring/test_finish.py tests/authoring/test_snapshots.py", "exit": 0, "result": "19 passed"},
-    "fresh_persisted_state": {"exit": 0, "result": "untouched pending_released; edited finished; cleanup complete; events/receipts persisted; restart ok"}
+  "platform_toolchain": {
+    "primary_os": "macOS 15.6.1 arm64",
+    "kernel": "Darwin 24.6.0 / RELEASE_ARM64_T8122",
+    "python_interpreter": "/opt/homebrew/bin/python3.11",
+    "python_version": "3.11.16 (Clang 17.0.0)",
+    "build_backend": "setuptools.build_meta",
+    "build_requirement": "setuptools>=68",
+    "disposable_venv": "/private/tmp/herzchen-edt06-final-EGvLDv/venv",
+    "pip": "26.2.1",
+    "pytest": "9.1.1",
+    "pythonpath": null,
+    "pythonhome": null,
+    "wheel": "/tmp/herzchen-edt06-final-EGvLDv/wheels/herzchen_contracts-0.1.0-py3-none-any.whl",
+    "wheel_sha256": "130892bee07f23212be0d4adf64b0caf9deb51472a832dc5b7b99fcec8cce051"
   },
-  "gaps": {"EDT05": "not implemented", "EDT06": "not implemented", "product_or_astrid_cutover": "not claimed", "cross_service_finish_loser": "resolved by EDT-04 correction 4769c1153fd3177271b4d849cb7a3fceb450273b; sessions.py unchanged"},
-  "correction": {
-    "kind": "owner-authorized cross-service finish loser reconciliation continuation",
-    "original_candidate_immutable": true,
-    "baseline": {"commit": "4d654b086a8da7cd0d8b5b36acf7ca4e49d1f0a3", "tree": "739ec55cdefb820e4806c6b75438628d3c467e39"},
-    "implementation_parent": {"commit": "61bbedd1f682e2a7cd511b4081b1a89d4da16e6d", "tree": "5c59ff7ece86b21a90c4e2bf274056b05479f09e"},
-    "commit": "4769c1153fd3177271b4d849cb7a3fceb450273b",
-    "tree": "95a492ac07adbb33ab1f384d1b25b82d7485b06f",
-    "source_paths": ["src/herzchen/authoring/finish.py", "tests/authoring/test_failure_matrix.py"],
-    "source_sha256": {
-      "src/herzchen/authoring/finish.py": "0e450e9126dad0657161c080f5312830384f52b34d84c4383002a1edc659c8c7",
-      "tests/authoring/test_failure_matrix.py": "e157cd8308c454c66bf285cd7044f4e8a2780f7c9e2cfb184264bce1c16ae267"
+  "installed_origins": {
+    "site_packages": "/private/tmp/herzchen-edt06-final-EGvLDv/venv/lib/python3.11/site-packages",
+    "herzchen": "/private/tmp/herzchen-edt06-final-EGvLDv/venv/lib/python3.11/site-packages/herzchen/__init__.py",
+    "authoring_integration": "/private/tmp/herzchen-edt06-final-EGvLDv/venv/lib/python3.11/site-packages/herzchen/authoring/integration.py",
+    "authoring_cleanup": "/private/tmp/herzchen-edt06-final-EGvLDv/venv/lib/python3.11/site-packages/herzchen/authoring/cleanup.py",
+    "authoring_idle": "/private/tmp/herzchen-edt06-final-EGvLDv/venv/lib/python3.11/site-packages/herzchen/authoring/idle.py",
+    "authoring_snapshots": "/private/tmp/herzchen-edt06-final-EGvLDv/venv/lib/python3.11/site-packages/herzchen/authoring/snapshots.py",
+    "authoring_sessions": "/private/tmp/herzchen-edt06-final-EGvLDv/venv/lib/python3.11/site-packages/herzchen/authoring/sessions.py",
+    "content_authoring": "/private/tmp/herzchen-edt06-final-EGvLDv/venv/lib/python3.11/site-packages/herzchen/content/authoring.py",
+    "work_batches": "/private/tmp/herzchen-edt06-final-EGvLDv/venv/lib/python3.11/site-packages/herzchen/domains/work/batches.py",
+    "pack_authoring": "/private/tmp/herzchen-edt06-final-EGvLDv/venv/lib/python3.11/site-packages/herzchen/packs/authoring.py",
+    "store": "/private/tmp/herzchen-edt06-final-EGvLDv/venv/lib/python3.11/site-packages/herzchen/kernel/store.py"
+  },
+  "verification": {
+    "compile": {"command": "/opt/homebrew/bin/python3.11 -m compileall -q src tests", "exit": 0},
+    "source_full": {"command": "PYTHONPATH=\"$PWD/src\" /opt/homebrew/bin/python3.11 -m pytest -q", "exit": 0, "result": "212 passed, 12 skipped, 80 subtests passed in 1.29s"},
+    "source_focused_handoff": {"command": "PYTHONPATH=\"$PWD/src\" /opt/homebrew/bin/python3.11 -m pytest -q tests/authoring/test_handoff.py tests/authoring/test_three_targets.py tests/authoring/test_failure_matrix.py tests/authoring/test_finish.py tests/authoring/test_snapshots.py", "exit": 0, "result": "25 passed, 1 skipped in 0.33s"},
+    "installed_focused_affected": {"command": "env -u PYTHONPATH -u PYTHONHOME <venv>/bin/python -m pytest -q focused EDT/DAT/WRK/PKG regressions", "exit": 0, "result": "88 passed, 11 skipped in 0.61s"},
+    "installed_import_provenance": {"exit": 0, "all_listed_origins_under_disposable_site_packages": true, "PYTHONPATH": null, "PYTHONHOME": null}
+  },
+  "observations": {
+    "shared_lifecycle": "Project, document, and pack owner handlers use one AuthoringLifecycle finish adapter, idle service, and registered-file cleanup callable; existing EDT-05 three-target tests passed.",
+    "durable_finish": "Writer process 2333 finished against /tmp/herzchen-edt06-probe-9qv6R3/handoff.sqlite and /tmp/herzchen-edt06-probe-9qv6R3/checkout; registered.tmp was physically absent after complete cleanup; state was finished.",
+    "second_process": "Fresh reader process 2334 reopened the same database and returned available, finished, complete; it read exact bytes 'exact probe bytes' from the durable snapshot.",
+    "event_receipt_links": {
+      "receipt_status": "committed",
+      "receipt_event_ids": ["event-0fd6321fd127f342b8560992a2ac904c"],
+      "event_stream_ids": ["event-562d05245e8e1721f1d2c699be7b5f77", "event-fb888161b51a49d39aa9b14465d2e67b", "event-0fd6321fd127f342b8560992a2ac904c", "event-ebb34f9179e9b3360ace4e6e4ef6cb58"],
+      "receipt_event_after_refs": [{"authority": "edt06-probe", "kind": "authoring-scope", "id": "probe-target", "revision": "rev-3"}],
+      "snapshot_ref": {"authority": "edt06-probe", "kind": "authoring-snapshot", "id": "final-session-57e7a7b6afbe841a1cbb1712-cb59f49dbbdf1933d578a5d08b00834a2cc88554e7352a7f730f80019ed07ba7", "revision": "cb59f49dbbdf1933d578a5d08b00834a2cc88554e7352a7f730f80019ed07ba7"},
+      "snapshot_digest": "2d382b76664419fd6154992aec98fa92c4f68d1c5389f427e7ff60c722a2e4e2"
     },
-    "candidate": {
-      "python": "/opt/homebrew/bin/python3.11",
-      "wheel": "/tmp/herzchen-edt04-correction.55AJdU/dist/herzchen_contracts-0.1.0-py3-none-any.whl",
-      "wheel_sha256": "fb39f36bd5ec2b35d22fccde16f497469eb8e9012366954f039cf9baf4d3dd3e",
-      "venv": "/tmp/herzchen-edt04-correction.55AJdU/venv",
-      "environment": "PYTHONPATH and PYTHONHOME unset",
-      "origins": {
-        "herzchen": "/private/tmp/herzchen-edt04-correction.55AJdU/venv/lib/python3.11/site-packages/herzchen/__init__.py",
-        "finish": "/private/tmp/herzchen-edt04-correction.55AJdU/venv/lib/python3.11/site-packages/herzchen/authoring/finish.py",
-        "sessions": "/private/tmp/herzchen-edt04-correction.55AJdU/venv/lib/python3.11/site-packages/herzchen/authoring/sessions.py"
-      }
+    "idle": {"deterministic": "last_content_edit=100.0, now=105.0, threshold=10.0 returned not_idle with idle_seconds=5.0 and retained the file", "actual_timer": "threading.Timer(0.05s) invoked IdleCloseService with real time; it returned closed_cleaned and removed only the registered draft file", "model_invoked_for_waiting": false},
+    "recovery": {
+      "database": "/tmp/herzchen-edt06-recovery-b9Zuki/recovery.sqlite",
+      "checkout": "/tmp/herzchen-edt06-recovery-b9Zuki/checkout",
+      "failure_cleanup": "unsafe; registered.tmp remained and durable cleanup_outcome was unsafe",
+      "unmanaged_retry": "unsafe; registered.tmp and unmanaged-execution-materialisation.tmp both remained",
+      "successful_retry": "complete; registered.tmp was removed after unmanaged materialisation was removed",
+      "path_escape": "CleanupPathError; outside bytes remained unchanged",
+      "symlink": "unsafe; pinned-execution.bin symlink remained and outside bytes remained unchanged",
+      "reopen_after_recovery": "new Store/AuthoringSessionService read available and cleanup complete; DurableSnapshotAdapter read exact durable registered bytes",
+      "unsaved_buffer": "reopen retained only persisted opening bytes; an unsubmitted memory-only edit was not claimed recoverable"
     },
-    "tests": {
-      "source_command": "env -u PYTHONHOME PYTHONPATH=\"$PWD/src\" /opt/homebrew/bin/python3.11 -m pytest -q tests/authoring/test_failure_matrix.py tests/authoring/test_exclusivity.py tests/authoring/test_finish.py tests/authoring/test_snapshots.py",
-      "source_exit": 0,
-      "source_result": "27 passed",
-      "installed_command": "env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-edt04-correction.55AJdU/venv/bin/python -m pytest -q tests/authoring/test_failure_matrix.py tests/authoring/test_exclusivity.py tests/authoring/test_finish.py tests/authoring/test_snapshots.py",
-      "installed_exit": 0,
-      "installed_result": "27 passed",
-      "first_setup_attempt_exit": 1,
-      "first_setup_attempt": "nested document scope without canonical parent; setup-only ScopeResolutionError, not proof",
-      "fresh_persisted_state_exit": 0,
-      "fresh_persisted_state_result": "new DB finished; committed finish receipt/event persisted; exact replay replayed",
-      "race_evidence": "tests/authoring/test_failure_matrix.py:138-232; one finished, one already_finished, one application, one finish receipt/event, coherent claim/state, changed-input and stale-token non-success"
-    },
-    "residual_gaps": {"EDT05": "not implemented", "EDT06": "not implemented", "product_or_astrid_cutover": "not claimed"}
+    "ownership": "Finish/release retires the checkout capability before physical cleanup; existing owner and lifecycle tests verify late mutation is fenced and actor ownership is released.",
+    "physical_scope": "Cleanup is registered-file-only and fail-closed; unexpected, unmanaged, symlink/path-escape, and pinned execution materialisation files are not recursively deleted."
   },
-  "artifacts": {"result": "work/edt-04-result.md", "receipt": "work/edt-04-receipt.json", "source_tests": ["src/herzchen/authoring/idle.py", "src/herzchen/authoring/cleanup.py", "src/herzchen/authoring/__init__.py", "src/herzchen/authoring/finish.py", "tests/authoring/test_failure_matrix.py"]},
-  "upstream_push_merge_or_control_ledger_write": false
+  "limitations": [
+    "This is worker evidence, not an acceptance or gate verdict.",
+    "No Astrid or Runtime production cutover, product-private import, manager/scheduler/readiness decision, or remote-host support is claimed.",
+    "Remote finalisation remains explicitly unsupported pending an acknowledgement protocol.",
+    "No product-specific console entrypoint is asserted; the evidence exercises the shipped Python authoring APIs.",
+    "The separately running FND-07 race-correction scratch lane remains an open integration dependency; this worktree did not change it."
+  ],
+  "changed_artifacts": {"test": "tests/authoring/test_handoff.py", "test_sha256": "a87954c563fae3c6e745681ba87b3d0ed88d4ff8dff7c0efaff3a91f8ad317a9", "implementation_sources_changed": false}
 }

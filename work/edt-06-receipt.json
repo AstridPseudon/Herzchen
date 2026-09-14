@@ -1,0 +1,64 @@
+{
+  "handoff": "EDT-06",
+  "status": "worker-evidence-complete",
+  "acceptance_claimed": false,
+  "gate_verdict_claimed": false,
+  "route": {
+    "mode": "normal",
+    "model": "gpt-5.6-luna",
+    "reasoning": "high",
+    "xhard_or_sol_used": false,
+    "verified_codex_cli": true
+  },
+  "cli_session_process": {
+    "worker_branch": "edt-06-worker",
+    "primary_interpreter": "/opt/homebrew/bin/python3.11",
+    "disposable_venv": "/private/tmp/herzchen-edt06-final-EGvLDv/venv",
+    "PYTHONPATH": null,
+    "PYTHONHOME": null,
+    "writer_pid": 2333,
+    "reader_pid": 2334,
+    "writer_database": "/tmp/herzchen-edt06-probe-9qv6R3/handoff.sqlite",
+    "writer_checkout": "/tmp/herzchen-edt06-probe-9qv6R3/checkout"
+  },
+  "workspace": {
+    "invoking_root": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20",
+    "control_root": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery",
+    "worker_root": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-edt06-worker",
+    "baseline_commit": "dfc323203843e0b58cc0790485cb6e7b825d6c02",
+    "baseline_tree": "efe0ae1ed39643042ec2f87b00ca537f08ea6a28",
+    "accepted_edt05_commit": "023de7472e15c8b64356dc1d2b3a400071502462",
+    "accepted_edt05_tree": "c449148badec5670358499411920dacce6fdb3b4",
+    "source_manifest_sha256": "742fed428923c7702001865407d3d8897ba9685b5fcfd473076fc7edb3ee563a"
+  },
+  "result": {
+    "criteria": ["C07", "C08", "C09", "C33", "C35"],
+    "implementation_retained": true,
+    "implementation_commit": "023de7472e15c8b64356dc1d2b3a400071502462",
+    "implementation_tree": "c449148badec5670358499411920dacce6fdb3b4",
+    "test_evidence_commit": "77bd75e4b4047d3ca32550f299d2b9cf2305dbfa",
+    "test_evidence_tree": "61f2f9a6141a38c4ac3706f8842838993ec930df",
+    "test_path": "tests/authoring/test_handoff.py",
+    "test_sha256": "a87954c563fae3c6e745681ba87b3d0ed88d4ff8dff7c0efaff3a91f8ad317a",
+    "wheel": "/tmp/herzchen-edt06-final-EGvLDv/wheels/herzchen_contracts-0.1.0-py3-none-any.whl",
+    "wheel_sha256": "130892bee07f23212be0d4adf64b0caf9deb51472a832dc5b7b99fcec8cce051",
+    "source_full": "212 passed, 12 skipped, 80 subtests passed; exit 0",
+    "installed_focused_affected": "88 passed, 11 skipped; exit 0",
+    "manifest_unchanged": true,
+    "fnd07_race_correction": "open integration dependency; not supplied or changed"
+  },
+  "evidence": {
+    "handoff": "handoffs/EDT.json",
+    "result": "work/edt-06-result.md",
+    "receipt": "work/edt-06-receipt.json",
+    "process_handoff": "fresh writer and reader processes shared one durable SQLite database and exact snapshot/receipt/event links",
+    "timer": "deterministic idle clock plus 0.05-second actual threading.Timer; no model invocation",
+    "recovery": "failed cleanup preserved registered bytes; unmanaged/symlink/path-escape materialisation remained untouched; later registered-only retry completed",
+    "restart": "finish and recovery reopen readbacks passed; unsaved in-memory buffer recovery is explicitly limited"
+  },
+  "limitations": [
+    "No acceptance or gate verdict is claimed.",
+    "Remote finalisation is unsupported pending acknowledgement protocol.",
+    "No product/Astrid/Runtime cutover, remote-host support, scheduler, manager, readiness, publication, or execution claim."
+  ]
+}
