@@ -12,7 +12,7 @@ import inspect
 from pathlib import Path
 from typing import Any, Callable, Mapping, Optional, Protocol, Union
 
-from herzchen.contracts import AuthoringCheckout, ResourceRef
+from herzchen.contracts import AuthoringCheckout, AuthoringState, ResourceRef
 
 from .sessions import AuthoringSessionService, FinishResult, SessionHandle
 from .snapshots import DurableSnapshot, DurableSnapshotAdapter, SnapshotError
@@ -87,6 +87,75 @@ class SemanticFinishAdapter:
         self.service = service
         self.snapshots = snapshot_adapter or DurableSnapshotAdapter(service)
 
+    def _reconcile_completed_finish(
+        self,
+        handle: SessionHandle,
+        *,
+        mode: str,
+        expected_base_revision: Optional[str],
+        pending: Optional[bool],
+        final_digest: str,
+    ) -> Optional[FinishResult]:
+        """Return the durable winner for a same-operation cross-service race.
+
+        ``AuthoringSessionService`` owns the claim transaction.  Two service
+        instances can therefore both reach that boundary without sharing its
+        per-instance lock.  Once one transaction closes the checkout, the
+        other instance must inspect the durable claim and finish receipt.  A
+        digest and capability check keeps that reconciliation from turning a
+        changed or foreign attempt into a success response.
+        """
+        record = self.service.writer.get_identity(handle.scope)
+        if record is None:
+            return None
+        payload = getattr(record, "payload", None)
+        if not isinstance(payload, Mapping):
+            return None
+        raw_checkout = payload.get("checkout")
+        if not isinstance(raw_checkout, Mapping):
+            return None
+        try:
+            checkout = AuthoringCheckout.from_dict(raw_checkout)
+        except (TypeError, ValueError, KeyError):
+            return None
+        if checkout.session_id != handle.session_id or checkout.token != handle.token or checkout.fence != handle.fence:
+            return None
+        if checkout.target_scope != handle.target_scope or checkout.actor != handle.actor:
+            return None
+        if checkout.state not in {AuthoringState.FINISHED, AuthoringState.RELEASED}:
+            return None
+        claim = checkout.finish_claim
+        if claim is None or claim.finalization_identity != "finish-" + handle.session_id:
+            return None
+        if payload.get("final_digest") != final_digest:
+            return None
+        if payload.get("finish_mode") not in {"manual", "idle"} or mode not in {"manual", "idle"}:
+            return None
+        durable_pending = bool(payload.get("pending", False))
+        if pending is not None and durable_pending != bool(pending):
+            return None
+        expected = expected_base_revision or handle.base_revision
+        if expected != checkout.base_revision:
+            return None
+        finish_request_id = payload.get("finish_request_id")
+        if not isinstance(finish_request_id, str):
+            return None
+        receipt = self.service.writer.get_receipt(finish_request_id)
+        if receipt is None or getattr(receipt, "operation", None) != "finish":
+            return None
+        status = getattr(getattr(receipt, "status", None), "value", getattr(receipt, "status", None))
+        if status != "committed":
+            return None
+        return FinishResult(
+            "already_finished",
+            handle.scope,
+            handle.session_id,
+            receipt,
+            checkout,
+            recovery_pending=False,
+            cleanup=checkout.cleanup,
+        )
+
     def finish(
         self,
         handle: SessionHandle,
@@ -128,15 +197,22 @@ class SemanticFinishAdapter:
         current_checkout = None if current is None else current.payload.get("checkout")
         if isinstance(current_checkout, Mapping) and current_checkout.get("session_id") == handle.session_id and current_checkout.get("state") != "open":
             try:
-                result = self.service.finish(
+                tree = self.snapshots.capture(checkout_root, registered_files, settled=settled)
+                result = self._reconcile_completed_finish(
                     handle,
-                    request_id=request_id,
                     mode=mode,
-                    capture=lambda *_args, **_kwargs: b"closed-capture-not-used",
                     expected_base_revision=expected_base_revision,
                     pending=pending,
+                    final_digest=tree.digest,
                 )
-                return SemanticFinishResult(result.status, result, recovery_pending=result.recovery_pending, error=result.error)
+                if result is not None:
+                    return SemanticFinishResult("already_finished", result, tree)
+                return SemanticFinishResult(
+                    "failed",
+                    snapshot=tree,
+                    recovery_pending=True,
+                    error="closed checkout does not match a durable completed finish",
+                )
             except BaseException as exc:
                 return SemanticFinishResult("failed", recovery_pending=True, error=str(exc))
 
@@ -181,15 +257,42 @@ class SemanticFinishAdapter:
                     **hook_kwargs,
                 )
 
-            result = self.service.finish(
-                handle,
-                request_id=request_id,
-                mode=mode,
-                capture=session_snapshot,
-                expected_base_revision=expected_base_revision,
-                apply=apply,
-                pending=pending,
-            )
+            try:
+                # Use the supplied common writer transaction around the
+                # session port.  Store implements nested transactions as
+                # savepoints, so this serializes separate services on the
+                # durable writer without an EDT lock or a second boundary.
+                with self.service.writer.transaction():
+                    result = self.service.finish(
+                        handle,
+                        request_id=request_id,
+                        mode=mode,
+                        capture=session_snapshot,
+                        expected_base_revision=expected_base_revision,
+                        apply=apply,
+                        pending=pending,
+                    )
+            except BaseException as exc:
+                reconciled = self._reconcile_completed_finish(
+                    handle,
+                    mode=mode,
+                    expected_base_revision=expected_base_revision,
+                    pending=pending,
+                    final_digest=tree.digest,
+                )
+                if reconciled is not None:
+                    return SemanticFinishResult("already_finished", reconciled, tree, validation)
+                raise
+            if result.status in {"in_progress", "already_finished", "recovery_pending"}:
+                reconciled = self._reconcile_completed_finish(
+                    handle,
+                    mode=mode,
+                    expected_base_revision=expected_base_revision,
+                    pending=pending,
+                    final_digest=tree.digest,
+                )
+                if reconciled is not None:
+                    return SemanticFinishResult("already_finished", reconciled, tree, validation)
             return SemanticFinishResult(result.status, result, tree, validation, application_box.get("value"), result.recovery_pending, result.error)
         except BaseException as exc:
             return SemanticFinishResult("failed", snapshot=locals().get("tree"), recovery_pending=True, error=str(exc))

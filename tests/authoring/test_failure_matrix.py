@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 import tempfile
+import threading
 import unittest
 
 from herzchen.authoring.cleanup import cleanup_registered_files
@@ -132,6 +134,102 @@ class FailureMatrixTests(unittest.TestCase):
         reopened = self.service.open(self.scope, self.actor, request_id="reopen", target_kind="project", base_revision="base-1", initial_content=b"new turn")
         self.assertEqual(reopened.status, "opened")
         self.assertNotEqual(reopened.handle.token, opened.handle.token)
+
+    def test_cross_service_finish_loser_reconciles_durable_winner(self) -> None:
+        """Separate service/adapter instances share one durable finish claim."""
+        (self.root / "draft.txt").write_bytes(b"cross-service draft")
+        opened = self.open(initial=b"initial", pending=False)
+        service_a = AuthoringSessionService(self.store)
+        service_b = AuthoringSessionService(self.store)
+        adapter_a = SemanticFinishAdapter(service_a)
+        adapter_b = SemanticFinishAdapter(service_b)
+        validation_barrier = threading.Barrier(2)
+        application_lock = threading.Lock()
+        applied = []
+
+        class ConcurrentHandler(Handler):
+            def validate(self, snapshot, checkout, checkout_root):
+                value = super().validate(snapshot, checkout, checkout_root)
+                validation_barrier.wait(timeout=5)
+                return value
+
+            def apply(self, snapshot, checkout, tx, writer):
+                with application_lock:
+                    applied.append(snapshot.digest)
+                return super().apply(snapshot, checkout, tx, writer)
+
+        handler = ConcurrentHandler()
+        results = []
+        results_lock = threading.Lock()
+
+        def contender(adapter, mode):
+            result = adapter.finish(
+                opened.handle,
+                request_id="cross-service-" + mode,
+                mode=mode,
+                checkout_root=self.root,
+                registered_files=["draft.txt"],
+                handler=handler,
+            )
+            with results_lock:
+                results.append((mode, result))
+
+        first = threading.Thread(target=contender, args=(adapter_a, "manual"))
+        second = threading.Thread(target=contender, args=(adapter_b, "idle"))
+        first.start()
+        second.start()
+        first.join(10)
+        second.join(10)
+        self.assertFalse(first.is_alive())
+        self.assertFalse(second.is_alive())
+        self.assertEqual(sorted(result.status for _, result in results), ["already_finished", "finished"])
+        self.assertEqual(len(applied), 1)
+
+        record = self.store.get_identity(opened.handle.scope)
+        checkout = record.payload["checkout"]
+        self.assertEqual(checkout["state"], AuthoringState.FINISHED.value)
+        self.assertEqual(checkout["finish_claim"]["finalization_identity"], "finish-" + opened.handle.session_id)
+        self.assertEqual(record.payload["final_digest"], applied[0])
+        self.assertEqual(record.payload["finish_request_id"], next(mode_result[1].finish.receipt.logical_request_key for mode_result in results if mode_result[1].status == "finished"))
+        self.assertEqual(self.store.connection.execute("SELECT COUNT(*) FROM command_receipts WHERE operation = 'finish'").fetchone()[0], 1)
+        self.assertEqual(self.store.connection.execute("SELECT COUNT(*) FROM events WHERE event_type = 'authoring.finish'").fetchone()[0], 1)
+
+        winner_mode, winner = next(mode_result for mode_result in results if mode_result[1].status == "finished")
+        replay = (adapter_a if winner_mode == "manual" else adapter_b).finish(
+            opened.handle,
+            request_id=winner.finish.receipt.logical_request_key,
+            mode=winner_mode,
+            checkout_root=self.root,
+            registered_files=["draft.txt"],
+            handler=handler,
+        )
+        self.assertEqual(replay.status, "replayed")
+
+        (self.root / "draft.txt").write_bytes(b"changed input")
+        changed = adapter_a.finish(
+            opened.handle,
+            request_id="cross-service-changed",
+            mode="manual",
+            checkout_root=self.root,
+            registered_files=["draft.txt"],
+            handler=handler,
+        )
+        self.assertNotIn(changed.status, {"finished", "already_finished"})
+        self.assertTrue(changed.recovery_pending)
+
+        (self.root / "draft.txt").write_bytes(b"cross-service draft")
+        stale = replace(opened.handle, token="stale-token")
+        stale_result = adapter_b.finish(
+            stale,
+            request_id="cross-service-stale",
+            mode="idle",
+            checkout_root=self.root,
+            registered_files=["draft.txt"],
+            handler=handler,
+        )
+        self.assertNotIn(stale_result.status, {"finished", "already_finished"})
+        self.assertTrue(stale_result.recovery_pending)
+        self.assertEqual(len(applied), 1)
 
     def test_invalid_idle_draft_is_durable_exact_and_cleanup_is_after_release(self) -> None:
         raw = b"malformed\x00draft"
