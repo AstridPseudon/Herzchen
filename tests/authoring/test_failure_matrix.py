@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import hashlib
 from pathlib import Path
 import tempfile
 import threading
 import unittest
 
-from herzchen.authoring.cleanup import cleanup_registered_files
+from herzchen.authoring.cleanup import RegisteredFile, cleanup_registered_files
 from herzchen.authoring.finish import SemanticFinishAdapter, ValidationResult
 from herzchen.authoring.idle import IdleCloseService
 from herzchen.authoring.sessions import AuthoringSessionService, InvalidSessionError
@@ -57,6 +58,10 @@ class FailureMatrixTests(unittest.TestCase):
             initial_content=initial,
             pending=pending,
         )
+
+    @staticmethod
+    def exact(path: str, data: bytes) -> RegisteredFile:
+        return RegisteredFile(path, hashlib.sha256(data).hexdigest(), len(data))
 
     def test_idle_uses_last_content_edit_not_polling_and_untouched_blank_is_retained(self) -> None:
         (self.root / "draft.txt").write_bytes(b"blank")
@@ -291,14 +296,14 @@ class FailureMatrixTests(unittest.TestCase):
     def test_cleanup_rejects_unexpected_files_symlink_and_parent_swap(self) -> None:
         (self.root / "one.tmp").write_bytes(b"one")
         (self.root / "unexpected.tmp").write_bytes(b"keep")
-        unexpected = cleanup_registered_files(self.root, ["one.tmp"], writer_check=lambda: True)
+        unexpected = cleanup_registered_files(self.root, [self.exact("one.tmp", b"one")], writer_check=lambda: True)
         self.assertEqual(unexpected.status, CleanupStatus.UNSAFE)
         self.assertTrue((self.root / "one.tmp").exists())
         (self.root / "unexpected.tmp").unlink()
         outside = self.base / "outside.txt"
         outside.write_bytes(b"outside")
         (self.root / "link.tmp").symlink_to(outside)
-        symlink = cleanup_registered_files(self.root, ["link.tmp"], writer_check=lambda: True)
+        symlink = cleanup_registered_files(self.root, [self.exact("link.tmp", b"outside")], writer_check=lambda: True)
         self.assertEqual(symlink.status, CleanupStatus.UNSAFE)
         self.assertTrue((self.root / "link.tmp").is_symlink())
         (self.root / "link.tmp").unlink()
@@ -309,7 +314,7 @@ class FailureMatrixTests(unittest.TestCase):
             original.rename(moved)
             original.symlink_to(moved, target_is_directory=True)
             return True
-        parent_swap = cleanup_registered_files(original, ["one.tmp"], writer_check=lambda: True, before_delete=swap)
+        parent_swap = cleanup_registered_files(original, [self.exact("one.tmp", b"one")], writer_check=lambda: True, before_delete=swap)
         self.assertEqual(parent_swap.status, CleanupStatus.UNSAFE)
         self.assertTrue((moved / "one.tmp").exists())
         original.unlink()
@@ -320,11 +325,16 @@ class FailureMatrixTests(unittest.TestCase):
         (self.root / "two.tmp").write_bytes(b"two")
         def fail_second(path):
             return path != "two.tmp"
-        partial = cleanup_registered_files(self.root, ["one.tmp", "two.tmp"], writer_check=lambda: True, before_delete=fail_second)
+        partial = cleanup_registered_files(
+            self.root,
+            [self.exact("one.tmp", b"one"), self.exact("two.tmp", b"two")],
+            writer_check=lambda: True,
+            before_delete=fail_second,
+        )
         self.assertEqual(partial.status, CleanupStatus.UNSAFE)
         self.assertEqual(partial.deleted, ("one.tmp",))
         self.assertEqual(partial.remaining, ("two.tmp",))
-        retry = cleanup_registered_files(self.root, ["two.tmp"], writer_check=lambda: True)
+        retry = cleanup_registered_files(self.root, [self.exact("two.tmp", b"two")], writer_check=lambda: True)
         self.assertEqual(retry.status, CleanupStatus.COMPLETE)
         self.assertFalse((self.root / "two.tmp").exists())
 

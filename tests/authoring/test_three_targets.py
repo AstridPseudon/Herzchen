@@ -99,7 +99,7 @@ def test_all_real_targets_share_finish_idle_cleanup_and_owner_application(tmp_pa
         )
         project_finish = lifecycle.finish(
             opened_project, request_id="project-finish", mode="manual", checkout_root=project_root,
-            registered_files=["project.json"], handler=batches.lifecycle_handler(project, authoring=lifecycle.service, handle=opened_project.handle, request_id="project-domain"),
+            registered_files=["project.json"], handler=batches.lifecycle_handler(project, authoring=lifecycle.service, handle=opened_project.handle, request_id="project-domain"), writer_check=lambda: True,
         )
         assert project_finish.status == "finished", project_finish.finish.error
         assert project_finish.cleanup is not None and project_finish.cleanup.complete
@@ -129,7 +129,7 @@ def test_all_real_targets_share_finish_idle_cleanup_and_owner_application(tmp_pa
         document_owner = document_handler.lifecycle_handler(document_materialisation, request_id="document-domain")
         document_finish = lifecycle.finish(
             opened_document, request_id="document-finish", mode="manual", checkout_root=document_root,
-            registered_files=["document.json"], handler=document_owner,
+            registered_files=["document.json"], handler=document_owner, writer_check=lambda: True,
         )
         assert document_finish.status == "finished"
         assert document_handler.read(doc.ref)["content"]["revision"]["content"] == {"body": "after", "untouched": True}
@@ -147,7 +147,7 @@ def test_all_real_targets_share_finish_idle_cleanup_and_owner_application(tmp_pa
         )
         pack_finish = lifecycle.finish(
             opened_pack, request_id="pack-finish", mode="manual", checkout_root=pack_root,
-            registered_files=["pack-content.json"], handler=pack_handler.lifecycle_handler(pack, request_id="pack-domain"),
+            registered_files=["pack-content.json"], handler=pack_handler.lifecycle_handler(pack, request_id="pack-domain"), writer_check=lambda: True,
         )
         assert pack_finish.status == "finished"
         assert not (pack_root / "pack-content.json").exists()
@@ -190,7 +190,7 @@ def test_project_creation_and_reopen_share_handler_and_untouched_pending_is_reta
         reopened = lifecycle.open(created.project.ref, actor, request_id="project-reopen", target_kind="project-sheet", base_revision=saved.revision, initial_content=b"{}")
         finished = lifecycle.finish(
             reopened, request_id="project-reopen-finish", mode="manual", checkout_root=reopen_root,
-            registered_files=["project.json"], handler=batches.lifecycle_handler(created.project, authoring=lifecycle.service, handle=reopened.handle, request_id="reopen-domain"),
+            registered_files=["project.json"], handler=batches.lifecycle_handler(created.project, authoring=lifecycle.service, handle=reopened.handle, request_id="reopen-domain"), writer_check=lambda: True,
         )
         assert finished.status == "finished"
         assert graph.list(project=created.project)[0].title == "Reopened"
@@ -263,6 +263,7 @@ def test_wrk_direct_and_sheet_owner_path_reject_replay_and_preserve_unrelated_fi
             opened, request_id="wrk-finish", mode="manual", checkout_root=root,
             registered_files=["project.json"],
             handler=batches.lifecycle_handler(project, authoring=lifecycle.service, handle=opened.handle, request_id="wrk-domain"),
+            writer_check=lambda: True,
         )
         assert result.status == "finished"
         after = graph.get(task.ref)
@@ -290,7 +291,7 @@ def test_rejected_bytes_are_durable_and_no_success_receipt_or_unowned_change(tmp
     handler = ManagedPackAuthoringHandler(store)
     opened = lifecycle.open(_ref(store.authority, "managed_pack", pack.pack_id), actor, request_id="reject-open", target_kind="managed-pack", base_revision="initial", initial_content=b"{}")
     try:
-        result = lifecycle.finish(opened, request_id="reject-finish", mode="manual", checkout_root=root, registered_files=["pack-content.json"], handler=handler.lifecycle_handler(pack, request_id="reject-domain"))
+        result = lifecycle.finish(opened, request_id="reject-finish", mode="manual", checkout_root=root, registered_files=["pack-content.json"], handler=handler.lifecycle_handler(pack, request_id="reject-domain"), writer_check=lambda: True)
         assert result.status == "rejected"
         assert result.finish.finish is not None and result.finish.finish.receipt is None
         assert (root / "pack-content.json").exists() is False

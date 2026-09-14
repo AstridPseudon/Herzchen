@@ -309,11 +309,13 @@ class IdleCloseService:
                 if self.service is not None:
                     self.service.cleanup(handle, request_id=request_id + ":cleanup", status=observation.status)
                 return IdleCloseResult("cleanup_pending", handle.scope, handle.session_id, cleanup=observation, recovery_pending=True, error=observation.error)
-        cleanup_check = writer_check
-        if quiesce is not None:
-            def cleanup_check() -> bool:
+        def cleanup_check() -> Any:
+            if quiesce is not None:
                 self._quiesce(quiesce, writer_check)
                 return True
+            if writer_check is not None:
+                return writer_check()
+            return None
         try:
             observation = self._cleanup(checkout_root, exact_files, writer_check=cleanup_check)
         except BaseException as exc:
@@ -415,11 +417,13 @@ class IdleCloseService:
             manifest = None if record is None else record.payload.get("retirement_manifest")
             if manifest:
                 exact_files = registered_files_from_manifest(manifest)
-        cleanup_check = writer_check
-        if quiesce is not None:
-            def cleanup_check() -> bool:
+        def cleanup_check() -> Any:
+            if quiesce is not None:
                 self._quiesce(quiesce, writer_check)
                 return True
+            if writer_check is not None:
+                return writer_check()
+            return None
         try:
             observation = self._cleanup(checkout_root, exact_files, writer_check=cleanup_check)
         except BaseException as exc:

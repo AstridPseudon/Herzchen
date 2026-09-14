@@ -206,11 +206,13 @@ class AuthoringLifecycle:
         if not cleanup or not self._released(result):
             return LifecycleFinishResult(result)
         exact_files = self._retirement_files(result, registered_files)
-        cleanup_check = writer_check
-        if quiesce is not None:
-            def cleanup_check() -> bool:
+        def cleanup_check() -> Any:
+            if quiesce is not None:
                 SemanticFinishAdapter._writer_is_quiescent(quiesce, writer_check)
                 return True
+            if writer_check is not None:
+                return writer_check()
+            return None
         observation = self.cleanup(checkout_root, exact_files, writer_check=cleanup_check)
         durable = self.service.cleanup(handle, request_id=request_id + ":cleanup", status=observation.status)
         return LifecycleFinishResult(result, observation, durable)
@@ -291,7 +293,7 @@ class AuthoringLifecycle:
                 return None
             return writer_check()
 
-        observation = self.cleanup(checkout_root, exact_files, writer_check=fenced_check if (quiesce is not None or writer_check is not None) else None)
+        observation = self.cleanup(checkout_root, exact_files, writer_check=fenced_check)
         self.service.cleanup(handle, request_id=request_id, status=observation.status)
         return observation
 

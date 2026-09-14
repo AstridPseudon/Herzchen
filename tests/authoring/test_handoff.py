@@ -15,7 +15,7 @@ import time
 import pytest
 
 from herzchen.authoring import AuthoringLifecycle, CallableSemanticHandler
-from herzchen.authoring.cleanup import CleanupPathError, CleanupStatus, cleanup_registered_files
+from herzchen.authoring.cleanup import CleanupPathError, CleanupStatus, RegisteredFile, cleanup_registered_files
 from herzchen.authoring.sessions import AuthoringSessionService
 from herzchen.authoring.snapshots import DurableSnapshotAdapter
 from herzchen.contracts import AuthenticatedActor, AuthoringState, ResourceRef
@@ -192,7 +192,7 @@ def test_failed_cleanup_is_durable_and_retry_removes_only_registered_files(tmp_p
         symlink.symlink_to(outside)
         with pytest.raises(CleanupPathError):
             cleanup_registered_files(root, ["../outside.bin"])
-        unsafe = cleanup_registered_files(root, ["pinned-execution.bin"], writer_check=lambda: True)
+        unsafe = cleanup_registered_files(root, [RegisteredFile("pinned-execution.bin", "0" * 64, 0)], writer_check=lambda: True)
         assert unsafe.status == CleanupStatus.UNSAFE
         assert symlink.is_symlink()
         assert outside.read_bytes() == b"outside"

@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
+import pytest
+
 from herzchen.authoring import AuthoringLifecycle
-from herzchen.authoring.cleanup import cleanup_registered_files
+from herzchen.authoring.cleanup import CleanupIdentityError, RegisteredFile, cleanup_registered_files
 from herzchen.authoring.finish import ValidationResult
 from herzchen.authoring.sessions import AuthoringSessionService
 from herzchen.authoring.snapshots import DurableSnapshotAdapter
@@ -25,6 +28,10 @@ def _actor() -> AuthenticatedActor:
 
 def _target(identifier: str) -> ResourceRef:
     return ResourceRef("gf03-store", "project", identifier, "base-1")
+
+
+def _exact(path: str, data: bytes) -> RegisteredFile:
+    return RegisteredFile(path, hashlib.sha256(data).hexdigest(), len(data))
 
 
 def _open(lifecycle: AuthoringLifecycle, target: ResourceRef, request_id: str):
@@ -174,14 +181,63 @@ def test_exact_manifest_rejects_in_place_late_write_during_cleanup(tmp_path: Pat
         store.close()
 
 
-def test_missing_or_unknown_writer_state_blocks_deletion(tmp_path: Path):
+def test_public_cleanup_without_writer_callback_blocks_exact_deletion(tmp_path: Path):
     root = tmp_path / "writer-checkout"
     root.mkdir()
     file = root / "draft.txt"
     file.write_bytes(b"keep")
-    unknown = cleanup_registered_files(root, [{"relative_path": "draft.txt", "sha256": "e" * 64, "size": 4}], writer_check=lambda: None)
+    blocked = cleanup_registered_files(root, [_exact("draft.txt", b"keep")])
+    assert blocked.status == CleanupStatus.UNSAFE
+    assert blocked.remaining == ("draft.txt",)
+    assert file.read_bytes() == b"keep"
+
+
+def test_public_cleanup_with_unknown_writer_state_blocks_deletion(tmp_path: Path):
+    root = tmp_path / "writer-checkout"
+    root.mkdir()
+    file = root / "draft.txt"
+    file.write_bytes(b"keep")
+    unknown = cleanup_registered_files(root, [_exact("draft.txt", b"keep")], writer_check=lambda: None)
     assert unknown.status == CleanupStatus.UNSAFE
     assert file.exists()
+
+
+def test_public_cleanup_with_active_or_raising_writer_state_blocks_deletion(tmp_path: Path):
+    for label, writer_check in (("active", lambda: "active"), ("raises", lambda: (_ for _ in ()).throw(RuntimeError("writer probe failed")))):
+        root = tmp_path / ("writer-" + label)
+        root.mkdir()
+        file = root / "draft.txt"
+        file.write_bytes(b"keep")
+        blocked = cleanup_registered_files(root, [_exact("draft.txt", b"keep")], writer_check=writer_check)
+        assert blocked.status == CleanupStatus.UNSAFE
+        assert blocked.remaining == ("draft.txt",)
+        assert file.read_bytes() == b"keep"
+
+
+def test_public_cleanup_rejects_bare_or_partial_metadata_even_when_writer_quiescent(tmp_path: Path):
+    for label, entry in (
+        ("bare", "draft.txt"),
+        ("missing-size", RegisteredFile("draft.txt", hashlib.sha256(b"keep").hexdigest(), None)),
+        ("missing-digest", RegisteredFile("draft.txt", None, 4)),
+    ):
+        root = tmp_path / ("metadata-" + label)
+        root.mkdir()
+        file = root / "draft.txt"
+        file.write_bytes(b"keep")
+        with pytest.raises(CleanupIdentityError):
+            cleanup_registered_files(root, [entry], writer_check=lambda: True)
+        assert file.read_bytes() == b"keep"
+
+
+def test_public_cleanup_deletes_only_exact_manifest_with_quiescent_writer(tmp_path: Path):
+    root = tmp_path / "exact-checkout"
+    root.mkdir()
+    file = root / "draft.txt"
+    file.write_bytes(b"exact")
+    result = cleanup_registered_files(root, [_exact("draft.txt", b"exact")], writer_check=lambda: True)
+    assert result.status == CleanupStatus.COMPLETE, result.error
+    assert result.deleted == ("draft.txt",)
+    assert not file.exists()
 
 
 def test_unchanged_manual_and_idle_finish_still_persist_and_clean(tmp_path: Path):

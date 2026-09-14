@@ -42,10 +42,10 @@ class CleanupWriterError(CleanupUnsafeError):
 class RegisteredFile:
     """A disposable file registered by an authoring session.
 
-    ``sha256`` and ``size`` are optional for compatibility with direct
-    cleanup callers.  The shared authoring lifecycle always supplies both
-    from the immutable final-capture manifest; a bare path is therefore never
-    used as the retirement baseline by that lifecycle.
+    ``sha256`` and ``size`` are the exact final-capture values that authorize
+    retirement.  The fields remain optional at the value-object boundary so
+    callers can be validated with the established narrow cleanup error, but a
+    nonempty public cleanup request must supply both.
     """
 
     relative_path: str
@@ -144,7 +144,7 @@ def registered_files_from_manifest(manifest: Iterable[object]) -> Tuple[Register
 
 def _writer_is_quiescent(writer_check: Optional[Callable[[], object]]) -> None:
     if writer_check is None:
-        return
+        raise CleanupWriterError("managed writer state is unknown")
     try:
         value = writer_check()
     except BaseException as exc:
@@ -282,9 +282,14 @@ def cleanup_registered_files(
     descriptor, hashed, identity-checked, and checked again immediately before
     its unlink.  Parent/root replacement and any unexpected filesystem object
     fail closed.  A failure after earlier deletions returns those deletions and
-    leaves all other files for a later retry.
+    leaves all other files for a later retry.  Nonempty requests must use the
+    exact digest and size captured before retirement; current bytes are never
+    accepted as a just-in-time baseline.  Writer ownership must also be
+    explicitly quiescent for every call, including retries.
     """
     entries = _entries(registered_files)
+    if entries and any(item.sha256 is None or item.size is None for item in entries):
+        raise CleanupIdentityError("registered cleanup entries require exact digest and size")
     path, root_fd, root_identity, parent_identity = _open_root(checkout_root)
     deleted = []
     remaining = [item.relative_path for item in entries]
