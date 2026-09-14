@@ -213,3 +213,49 @@ The remaining caveat is unchanged: the Astrid helper's hyphenated-subpath tree
 digest is an observed managed-fixture artifact, not a standalone live-source
 certification. This correction claims neither PKG-05 acceptance nor INT-03
 completion.
+
+## Neutral fixture provenance amendment
+
+Test-amendment commit/tree: `d8a9bf129f9cb93cf7086aafaf562eb4551dfaa0` /
+`04e0898b4fbcd663f02742eee46a086bd2e7b3c5`.
+
+The parent-held caveat is preserved: the prior neutral-adapter proof carried
+the Astrid source-setup subpath fixture values
+`e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` and
+`21f6272fb3b4303c51d386f0e726c7c605841549b8750367376a0d6088973cbf`. Those
+values are not promoted here as live provenance.
+
+The amended test now reads the real `packs/megado/pack.yaml`,
+`skill/SKILL.md`, and `skill/references/improvement-loop.md` bytes. It supplies
+the accepted PKG-04 revision
+`62503c6bf1e08e6399ed97bc4ee5aab7d3f3d96e` and accepted inventory identity
+`3a5406c6c8640c0f3a771b21c0c30a88242b904150dc5c1362c925a334453974` only as
+fake-adapter input. Its tree identity is explicitly test-only and derived from
+the actual pack files using the test's length-prefixed path/byte hash:
+`a0564f88f80233c71c3650a66c3c9f6b79e63f311ab9370405e619c3c78af951`.
+The test comment/report explicitly says this verifies the consumer seam and
+bytes, not authoritative Astrid source admission.
+
+A second neutral-adapter test mutates the real improvement-loop handle's
+`sha256` away from its actual bytes and asserts the existing
+`PackContentError("resource digest mismatch")` failure. This proves exact
+resource-hash rejection rather than a keyword-only validation.
+
+Focused amendment receipts, using the existing disposable Python 3.11
+candidate and `env -u PYTHONPATH`:
+
+- Source-focused `tests/packs/test_authoring.py`: **16 passed in 0.98s**, exit `0`.
+- Installed-focused `tests/packs/test_authoring.py`: **16 passed in 0.96s**, exit `0`.
+- Installed origins remained Astrid, Herzchen, and
+  `herzchen.packs.authoring` under
+  `/private/tmp/herzchen-pkg05-candidate.7zo9W7/lib/python3.11/site-packages/`.
+- The installed run used the unchanged corrected wheel
+  `/tmp/herzchen-pkg05-correction-wheel.Oi1DvR/herzchen_contracts-0.1.0-py3-none-any.whl`
+  with SHA-256
+  `969bc8e9c595426ba19eb57a1eef857e682dfba2ce4ff7a4b3ce480a4ab224d5`;
+  no production source rebuild was needed for this test-only amendment.
+- The blocked-import neutral path passed, and no `e3b0...` or `21f627...`
+  value is used as a live managed-source claim by this amendment.
+
+This remains a narrow test/report correction only. It claims neither PKG-05
+acceptance nor INT-03 completion.
