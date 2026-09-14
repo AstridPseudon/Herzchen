@@ -99,6 +99,7 @@ No broad/full-suite run was used for acceptance.
 
 ## Final ownership/hygiene receipt
 
+- Allowed-path implementation commit: `7439b8aa7eb1596f891015cbfa7bbe52145b4846`; tree: `54a9cc59d581b38b3107b5a7501ddda6976739f9`.
 - Allowed paths only: PKG source, focused PKG test, and this PKG report.
 - No catalog hardcoding; no private writer; no SQL write path; no upstream write; no FND/DAT/WRK/EDT/OTT/control/seed/manifest/contract/shared-map owner-file change.
 - Generated wheel, build metadata, venv, caches, and bytecode are outside the worker checkout and were not left as tracked or working-tree artifacts.
