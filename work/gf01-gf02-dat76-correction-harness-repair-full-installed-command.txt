@@ -1,0 +1,9 @@
+Working directory: /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-int-final-correction-xhard-worker
+Command:
+env -u PYTHONHOME -u PYTHONPATH PYTHONDONTWRITEBYTECODE=1 TMPDIR=/private/tmp C33_RUN_ID=gf01-gf02-dat76-correction-full-installed-final-20260914 C33_SOURCE_COMMIT=7c15ae26909cd8a0da52e4a3231468d7459146f5 C33_SOURCE_TREE=3b27fa3319b57ada95b4aadc62445834bfb4e7d4 C33_WHEEL_PATH=/private/tmp/herzchen-correction-delivery.gA7Nsm/dist/herzchen_contracts-0.1.0-py3-none-any.whl C33_WHEEL_SHA256=4da6dd9f56f705831f0dc8a282526de0c28031fca2331074b359803195db4f9b C33_RESULT_PATH=/private/tmp/c33-harness-repair-full-installed.final.0poPEf/result.json C33_MATRIX_PATH=/private/tmp/c33-harness-repair-full-installed.final.0poPEf/matrix.json C33_MODULE_ORIGINS_JSON="$(cat work/gf01-gf02-dat76-correction-module-origins.json)" /private/tmp/herzchen-correction-delivery.gA7Nsm/venv/bin/python -m pytest -q -ra tests/conformance/test_c33_persisted_port_conformance.py
+Environment: PYTHONHOME=unset; PYTHONPATH=unset; PYTHONDONTWRITEBYTECODE=1; TMPDIR=/private/tmp
+Python: /private/tmp/herzchen-correction-delivery.gA7Nsm/venv/bin/python; 3.11.16
+Wheel: /private/tmp/herzchen-correction-delivery.gA7Nsm/dist/herzchen_contracts-0.1.0-py3-none-any.whl; SHA-256 4da6dd9f56f705831f0dc8a282526de0c28031fca2331074b359803195db4f9b
+Pytest exit: 0
+Output: 77 passed in 4.49s
+Result: 76 rows; module_origins records 16 installed modules; source commit/tree and wheel path/SHA are present in result header.

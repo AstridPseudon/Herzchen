@@ -1,0 +1,1 @@
+C33 strict acceptance: 76 admitted descriptors, all passed
