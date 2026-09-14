@@ -1,0 +1,6 @@
+integration_head=c7156360ab601533a38710b8957887e582db669e
+integration_tree=f547137f5804c0d8958d68d08633b35698aa2e43
+wheel_sha256=7b44a33a187dc8a23bc0f1b768ba2052df02e2bddbeceb8aede748dda8927567
+astrid_wheel_sha256=1da76f252f96e7db84c31a387704e8a6ecdf22333098528139b3db83c8fda67a
+.                                                                        [100%]
+1 passed in 0.17s

@@ -1,0 +1,125 @@
+{
+  "acceptance_claimed": false,
+  "accepted_source_pins": {
+    "DAT-06": {
+      "commit": "2f4dd05e624be2fd228886977be093b386d6f94b",
+      "handoff": "handoffs/DAT.json",
+      "note": "final DAT-06 worker result; installed supplement accepted separately",
+      "tree": "e64232672f3e8acbc845369ce68176dccb490455"
+    },
+    "EDT-06": {
+      "handoff": "handoffs/EDT.json",
+      "test_evidence_commit": "77bd75e4b4047d3ca32550f299d2b9cf2305dbfa",
+      "test_evidence_tree": "61f2f9a6141a38c4ac3706f8842838993ec930df"
+    },
+    "FND-06": {
+      "commit": "9e15ad908c4a9773ce27e7ff8e03e3dfca274c9b",
+      "handoff": "handoffs/FND.json",
+      "tree": "db08184a5bf81a74c1970db7ac741f97cc192cda"
+    },
+    "INT-02": {
+      "commit": "0d07a5c",
+      "note": "accepted fixture lineage; exact full pin retained in INT-02 receipt"
+    },
+    "PKG-05": {
+      "handoff": "handoffs/PKG.json",
+      "implementation_commit": "1735eadcbf0c5a447a7c74e9ab213b225e4e5ed8",
+      "implementation_tree": "fc8c13750d8bb1a7c3d1247d86d6233e1818e64d"
+    },
+    "WRK-06": {
+      "commit": "b036bbbe11e93811a62b95150338a192b5fd6806",
+      "handoff": "handoffs/WRK.json",
+      "tree": "304cfefe37c5c6c284ac667f2a7b8043aa9031f2"
+    }
+  },
+  "astrid_dependency": {
+    "role": "pinned adapter dependency for installed campaign; no consumer cutover claim",
+    "source_commit": "96e5664237eb35adeb4cad08bddd8cd6df0a2ae1",
+    "source_tree": "19f7539a266618a797559eedbda48e2752b30fa3",
+    "temporary_wheel_sha256": "1da76f252f96e7db84c31a387704e8a6ecdf22333098528139b3db83c8fda67a"
+  },
+  "boundaries": [
+    "No review/oracle call",
+    "No product/consumer qualification",
+    "No publication/upstream/control mutation",
+    "Future Otto/Astrid journeys remain later-stage obligations",
+    "C39 real manager/host action remains a later consumer journey; foundation packet claims only shared candidate/decision primitives",
+    "S-NEW-01 atomic initial-spec document/ref/receipt is an explicit owner follow-up; packet is not gate-ready while it remains open"
+  ],
+  "candidate_head_frozen": true,
+  "coverage_artifact": "evidence/foundation-coverage.json",
+  "criteria_scope": [
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C05",
+    "C06",
+    "C07",
+    "C08",
+    "C09",
+    "C10",
+    "C11",
+    "C12",
+    "C13",
+    "C14",
+    "C15",
+    "C16",
+    "C17",
+    "C31",
+    "C33",
+    "C34",
+    "C35",
+    "C38",
+    "C39"
+  ],
+  "follow_up_brief": "work/int-03-snew01-gap-brief.md",
+  "foundation_scope": {
+    "C38": "supported_by_current_candidate",
+    "C39": "supported_foundation_slice_with_later_manager_host_action_pending",
+    "S-NEW-01": "partial_pending_followup_atomic_initial_spec_creation"
+  },
+  "gate_state": "pending",
+  "gate_verdict_claimed": false,
+  "inputs": {
+    "area_contracts_sha256": "0fdbd9ed47f16da3b11f0750503e7f5dfbd58f41ef18368e9fb27553096e4e04",
+    "extraction_map_sha256": "8740730f3b9896d04f608fda745843a6887993aafe8955ea3df46ddf63804784",
+    "scenario_count": 49,
+    "scenario_seed_sha256": "99ece17752f2b67cc5658ae344067dc7bcb4089608e27b1e426b291b177624f9",
+    "scenario_state_counts": {
+      "UNDETERMINED": 49
+    },
+    "shipped_delivery_seed_sha256": "fcf99881754a155da027b2b1e775260a349376e6ccc9e5edc94ee1cecfa087f8",
+    "source_manifest_sha256": "742fed428923c7702001865407d3d8897ba9685b5fcfd473076fc7edb3ee563a"
+  },
+  "review_requested": false,
+  "schema": "foundation-candidate/v2",
+  "source_commit": "c7156360ab601533a38710b8957887e582db669e",
+  "source_tree": "f547137f5804c0d8958d68d08633b35698aa2e43",
+  "state": "worker-candidate",
+  "tests": {
+    "c38_foundation_probe": "work/int-03-c38-foundation-probe-20260914.json",
+    "c38_foundation_probe_result": "overall_ok=true; 6 checks passed",
+    "c38_foundation_probe_sha256": "601f9bda5bd5b48bb73b1d9c36ab1dae34c4aafb2f828eefa8af8f98fc8ebc5d",
+    "c38_foundation_probe_transcript": "work/int-03-c38-foundation-probe-20260914.txt",
+    "c38_foundation_probe_transcript_sha256": "d3094839a1d533d6860799a76ac5762bd01332c2355c61fae95ed57966b23d98",
+    "combined_installed_result": "249 passed, 80 subtests passed in 3.70s",
+    "combined_transcript": "work/int-03-final-installed-run-20260914.txt",
+    "combined_transcript_sha256": "5b4b47bb010d0694da7c249864f20f3731a11314ff37a0d23294f59c32d67892",
+    "installed_origins_verified": true,
+    "public_api_probe_result": "1 passed in 0.17s",
+    "public_api_probe_transcript": "work/int-03-final-public-api-probe-run-20260914.txt",
+    "public_api_probe_transcript_sha256": "d2f31c46add23a7712adc7adfd29bbcf276b8e1f0c9aece1fdbef9bdd8ace104"
+  },
+  "wheel": {
+    "distribution": "herzchen-contracts==0.1.0",
+    "environment_unset": [
+      "PYTHONPATH",
+      "PYTHONHOME"
+    ],
+    "path": "/tmp/herzchen-int03-final-wheel.20260914042342.out/herzchen_contracts-0.1.0-py3-none-any.whl",
+    "pytest": "9.1.1",
+    "python": "3.11.16",
+    "sha256": "7b44a33a187dc8a23bc0f1b768ba2052df02e2bddbeceb8aede748dda8927567"
+  }
+}

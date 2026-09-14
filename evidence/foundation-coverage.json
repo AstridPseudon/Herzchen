@@ -1,0 +1,1502 @@
+{
+  "acceptance_claimed": false,
+  "area_relation_notes": {
+    "area_contracts_status": "not_executed",
+    "corrected_missing_area_links": {
+      "S-ELEGANCE-CONTEXT": {
+        "proposed_area": "integration_release/INT",
+        "stage_boundary": "Later installed Otto qualification; foundation consumes shared context/history primitives."
+      },
+      "S-ELEGANCE-DEFINITION": {
+        "proposed_area": "integration_release/INT",
+        "stage_boundary": "Foundation public definition/operation path; consumer bindings are later."
+      },
+      "S-LOOP-02": {
+        "proposed_area": "integration_release/INT",
+        "stage_boundary": "Connected later campaign; not a foundation consumer prerequisite."
+      },
+      "S-MANAGER-CHOICE": {
+        "proposed_area": "integration_release/INT",
+        "stage_boundary": "Later manager-led Otto journey."
+      },
+      "S-PENDING-LOOP-CORE": {
+        "proposed_area": "integration_release/INT",
+        "stage_boundary": "Foundation mechanics only; manager judgment follows INT-05/07."
+      },
+      "S-REVIEW-CHOICE": {
+        "proposed_area": "integration_release/INT",
+        "stage_boundary": "Later route proof; no extra review stage."
+      }
+    },
+    "ids_with_no_area_contract_row": [
+      "S-LOOP-02",
+      "S-PENDING-LOOP-CORE",
+      "S-ELEGANCE-CONTEXT",
+      "S-ELEGANCE-DEFINITION",
+      "S-MANAGER-CHOICE",
+      "S-REVIEW-CHOICE"
+    ],
+    "meaning": "These six current seed records retain their exact criteria obligations and are explicitly mapped with an empty area list because validation/area-contracts.json does not list them. Empty area resolution does not remove their scenario or criterion obligations."
+  },
+  "candidate": {
+    "acceptance_claimed": false,
+    "accepted_source_pins": {
+      "DAT-06": {
+        "commit": "2f4dd05e624be2fd228886977be093b386d6f94b",
+        "handoff": "handoffs/DAT.json",
+        "note": "final DAT-06 worker result; installed supplement accepted separately",
+        "tree": "e64232672f3e8acbc845369ce68176dccb490455"
+      },
+      "EDT-06": {
+        "handoff": "handoffs/EDT.json",
+        "test_evidence_commit": "77bd75e4b4047d3ca32550f299d2b9cf2305dbfa",
+        "test_evidence_tree": "61f2f9a6141a38c4ac3706f8842838993ec930df"
+      },
+      "FND-06": {
+        "commit": "9e15ad908c4a9773ce27e7ff8e03e3dfca274c9b",
+        "handoff": "handoffs/FND.json",
+        "tree": "db08184a5bf81a74c1970db7ac741f97cc192cda"
+      },
+      "INT-02": {
+        "commit": "0d07a5c",
+        "note": "accepted fixture lineage; exact full pin retained in INT-02 receipt"
+      },
+      "PKG-05": {
+        "handoff": "handoffs/PKG.json",
+        "implementation_commit": "1735eadcbf0c5a447a7c74e9ab213b225e4e5ed8",
+        "implementation_tree": "fc8c13750d8bb1a7c3d1247d86d6233e1818e64d"
+      },
+      "WRK-06": {
+        "commit": "b036bbbe11e93811a62b95150338a192b5fd6806",
+        "handoff": "handoffs/WRK.json",
+        "tree": "304cfefe37c5c6c284ac667f2a7b8043aa9031f2"
+      }
+    },
+    "astrid_dependency": {
+      "role": "pinned adapter dependency for installed campaign; no consumer cutover claim",
+      "source_commit": "96e5664237eb35adeb4cad08bddd8cd6df0a2ae1",
+      "source_tree": "19f7539a266618a797559eedbda48e2752b30fa3",
+      "temporary_wheel_sha256": "1da76f252f96e7db84c31a387704e8a6ecdf22333098528139b3db83c8fda67a"
+    },
+    "boundaries": [
+      "No review/oracle call",
+      "No product/consumer qualification",
+      "No publication/upstream/control mutation",
+      "Future Otto/Astrid journeys remain later-stage obligations"
+    ],
+    "candidate_head_frozen": true,
+    "coverage_artifact": "evidence/foundation-coverage.json",
+    "criteria_scope": [
+      "C01",
+      "C02",
+      "C03",
+      "C04",
+      "C05",
+      "C06",
+      "C07",
+      "C08",
+      "C09",
+      "C10",
+      "C11",
+      "C12",
+      "C13",
+      "C14",
+      "C15",
+      "C16",
+      "C17",
+      "C31",
+      "C33",
+      "C34",
+      "C35",
+      "C38",
+      "C39"
+    ],
+    "gate_state": "pending",
+    "gate_verdict_claimed": false,
+    "inputs": {
+      "area_contracts_sha256": "0fdbd9ed47f16da3b11f0750503e7f5dfbd58f41ef18368e9fb27553096e4e04",
+      "extraction_map_sha256": "8740730f3b9896d04f608fda745843a6887993aafe8955ea3df46ddf63804784",
+      "scenario_count": 49,
+      "scenario_seed_sha256": "99ece17752f2b67cc5658ae344067dc7bcb4089608e27b1e426b291b177624f9",
+      "scenario_state_counts": {
+        "UNDETERMINED": 49
+      },
+      "shipped_delivery_seed_sha256": "fcf99881754a155da027b2b1e775260a349376e6ccc9e5edc94ee1cecfa087f8",
+      "source_manifest_sha256": "742fed428923c7702001865407d3d8897ba9685b5fcfd473076fc7edb3ee563a"
+    },
+    "review_requested": false,
+    "schema": "foundation-candidate/v2",
+    "source_commit": "c7156360ab601533a38710b8957887e582db669e",
+    "source_tree": "f547137f5804c0d8958d68d08633b35698aa2e43",
+    "state": "worker-candidate",
+    "tests": {
+      "combined_installed_result": "249 passed, 80 subtests passed in 3.70s",
+      "combined_transcript": "work/int-03-final-installed-run-20260914.txt",
+      "combined_transcript_sha256": "5b4b47bb010d0694da7c249864f20f3731a11314ff37a0d23294f59c32d67892",
+      "installed_origins_verified": true,
+      "public_api_probe_result": "1 passed in 0.17s",
+      "public_api_probe_transcript": "work/int-03-final-public-api-probe-run-20260914.txt",
+      "public_api_probe_transcript_sha256": "d2f31c46add23a7712adc7adfd29bbcf276b8e1f0c9aece1fdbef9bdd8ace104"
+    },
+    "wheel": {
+      "distribution": "herzchen-contracts==0.1.0",
+      "environment_unset": [
+        "PYTHONPATH",
+        "PYTHONHOME"
+      ],
+      "path": "/tmp/herzchen-int03-final-wheel.20260914042342.out/herzchen_contracts-0.1.0-py3-none-any.whl",
+      "pytest": "9.1.1",
+      "python": "3.11.16",
+      "sha256": "7b44a33a187dc8a23bc0f1b768ba2052df02e2bddbeceb8aede748dda8927567"
+    }
+  },
+  "correction_history": {
+    "final_result": "249 passed, 80 subtests passed",
+    "pre_pkg_integration_candidate": {
+      "failure": "tests/work/test_wrk06_handoff.py::test_wrk06_public_handoff_rehearsal; old integrated TemplateEngine returned no seed.work local refs",
+      "head": "50da2534d436d88d40a66c6cd9b51b4bae3848cf",
+      "result": "233 passed, 1 failed",
+      "tree": "b3db8dc506a2c1a186deae31af5e217fb2274548"
+    },
+    "resolution_commits": [
+      "18b8dad",
+      "d04fd77",
+      "601ad73",
+      "c715636"
+    ]
+  },
+  "criteria": [
+    {
+      "evidence_refs": [
+        "source manifest",
+        "extraction map",
+        "handoffs/FND.json"
+      ],
+      "id": "C01",
+      "note": "Source and ownership lineage is recorded; consumer authority/permission behavior remains to be exercised.",
+      "status": "partial_pending_followup"
+    },
+    {
+      "evidence_refs": [
+        "tests/kernel/test_transactions.py",
+        "tests/kernel/test_reduced_composition.py",
+        "INT03-FND-001"
+      ],
+      "id": "C02",
+      "note": "Installed kernel owner/composition slices pass; full public cross-domain collision/omission proof remains bounded follow-up.",
+      "status": "partial_pending_followup"
+    },
+    {
+      "evidence_refs": [
+        "tests/kernel/test_transactions.py",
+        "tests/kernel/test_recovery.py",
+        "INT03-CURSOR-001"
+      ],
+      "id": "C03",
+      "note": "Atomic/replay/restart mechanics pass; full public uncertain-outcome/lost-ack journey remains.",
+      "status": "partial_pending_followup"
+    },
+    {
+      "evidence_refs": [
+        "tests/kernel/test_receipts_limits.py",
+        "INT03-LIMIT-001"
+      ],
+      "id": "C04",
+      "note": "Last-unit and uncertainty mechanics are exercised; complete public contention/reuse/overrun receipt mapping remains.",
+      "status": "partial_pending_followup"
+    },
+    {
+      "evidence_refs": [
+        "tests/content/test_documents.py",
+        "INT03-DAT-001"
+      ],
+      "id": "C05",
+      "note": "Document/link/revision mechanics pass; public consumer scope/detach qualification remains.",
+      "status": "partial_pending_followup"
+    },
+    {
+      "evidence_refs": [
+        "tests/extensions/test_namespaces.py",
+        "INT03-DAT-003"
+      ],
+      "id": "C06",
+      "note": "Managed namespace and sibling preservation pass; full pinned-definition public surface remains.",
+      "status": "partial_pending_followup"
+    },
+    {
+      "evidence_refs": [
+        "tests/authoring/test_exclusivity.py",
+        "tests/authoring/test_three_targets.py"
+      ],
+      "id": "C07",
+      "note": "Authoring scope/bypass slices pass; complete installed cross-scope journey remains.",
+      "status": "partial_pending_followup"
+    },
+    {
+      "evidence_refs": [
+        "tests/authoring/test_finish.py",
+        "tests/authoring/test_failure_matrix.py",
+        "tests/authoring/test_three_targets.py::test_project_creation_and_reopen_share_handler_and_untouched_pending_is_retained"
+      ],
+      "id": "C08",
+      "note": "Finish/idle/untouched pending slices pass; complete blank lifecycle evidence remains.",
+      "status": "partial_pending_followup"
+    },
+    {
+      "evidence_refs": [
+        "tests/authoring/test_snapshots.py",
+        "tests/authoring/test_failure_matrix.py"
+      ],
+      "id": "C09",
+      "note": "Retention and cleanup failure slices pass; full public filesystem/writer proof remains.",
+      "status": "partial_pending_followup"
+    },
+    {
+      "evidence_refs": [
+        "tests/content/test_context_visibility.py",
+        "tests/kernel/test_recovery.py"
+      ],
+      "id": "C10",
+      "note": "Context/history mechanics pass; complete fresh consumer packet journey remains.",
+      "status": "partial_pending_followup"
+    },
+    {
+      "evidence_refs": [
+        "tests/packs/test_composition.py",
+        "tests/packs/test_protocol_resources.py",
+        "INT03-PKG-001"
+      ],
+      "id": "C11",
+      "note": "Neutral composition and reduced import boundaries pass; independent domain-author qualification remains.",
+      "status": "partial_pending_followup"
+    },
+    {
+      "evidence_refs": [
+        "tests/packs/test_task_templates.py",
+        "tests/packs/test_protocol_resources.py"
+      ],
+      "id": "C12",
+      "note": "Blank/shipped template atomicity, replay and non-dispatch slices pass; full product consumer proof remains.",
+      "status": "partial_pending_followup"
+    },
+    {
+      "evidence_refs": [
+        "tests/assessment/test_accounting.py",
+        "tests/work/test_candidates_decisions_waiting.py"
+      ],
+      "id": "C13",
+      "note": "Assessment accounting mechanics pass; actual supported manager route remains later.",
+      "status": "partial_pending_followup"
+    },
+    {
+      "evidence_refs": [
+        "tests/packs/test_protocol_resources.py",
+        "tests/work/test_candidates_decisions_waiting.py",
+        "tests/assessment/test_accounting.py"
+      ],
+      "id": "C14",
+      "note": "Typed protocol/choice and assessment mechanics pass; real manager/consumer journey remains.",
+      "status": "partial_pending_followup"
+    },
+    {
+      "evidence_refs": [
+        "tests/work/test_identity_graph.py",
+        "tests/work/test_assignments.py"
+      ],
+      "id": "C15",
+      "note": "Identity/assignment separation passes; complete public handoff remains.",
+      "status": "partial_pending_followup"
+    },
+    {
+      "evidence_refs": [
+        "tests/work/test_batches.py",
+        "tests/work/test_sheet_batches.py"
+      ],
+      "id": "C16",
+      "note": "Atomic sheet and pending edit mechanics pass; full semantic batch consumer proof remains.",
+      "status": "partial_pending_followup"
+    },
+    {
+      "evidence_refs": [
+        "work/int-03-final-installed-run-20260914.txt",
+        "work/int-03-final-public-api-probe-run-20260914.txt"
+      ],
+      "id": "C17",
+      "note": "Built wheel, clean installed origins and exact digest are recorded; this is artifact proof only.",
+      "status": "supported_by_current_candidate"
+    },
+    {
+      "evidence_refs": [
+        "tests/work/test_candidates_decisions_waiting.py",
+        "tests/assessment/test_accounting.py"
+      ],
+      "id": "C31",
+      "note": "Candidate/decision/wait mechanics pass; complete public reuse journey remains.",
+      "status": "partial_pending_followup"
+    },
+    {
+      "evidence_refs": [
+        "work/int-03-final-api-probe-evidence.json",
+        "work/int-03-final-installed-run-20260914.txt"
+      ],
+      "id": "C33",
+      "note": "Public API probes and installed suite provide bounded effects; per-command full consumer mapping remains.",
+      "status": "partial_pending_followup"
+    },
+    {
+      "evidence_refs": [
+        "tests/kernel/test_reduced_composition.py",
+        "tests/packs/test_composition.py",
+        "source manifest"
+      ],
+      "id": "C34",
+      "note": "Shared owner/import boundaries are candidate-tested; future public Otto/Astrid consumer qualification remains.",
+      "status": "partial_pending_followup"
+    },
+    {
+      "evidence_refs": [
+        "work/int-03-final-installed-run-20260914.txt",
+        "tests/conformance/test_int03_public_api_probes.py"
+      ],
+      "id": "C35",
+      "note": "Foundation public API vertical slices are exercised; full per-area graph and later consumer proof remain.",
+      "status": "partial_pending_followup"
+    },
+    {
+      "evidence_refs": [
+        "tests/work/test_identity_graph.py::test_pending_project_is_durable_sparse_and_replay_safe",
+        "tests/work/test_sheet_batches.py::test_blank_pending_starter_is_durable_and_uses_shared_definitions",
+        "tests/work/test_batches.py::test_pending_creation_commits_before_materialisation_and_activation_is_explicit",
+        "tests/authoring/test_three_targets.py::test_project_creation_and_reopen_share_handler_and_untouched_pending_is_retained",
+        "tests/work/test_candidates_decisions_waiting.py::test_cap_wait_and_timer_do_not_close_parent_grant_budget_or_choose_action",
+        "work/int-03-c38-foundation-probe-20260914.json",
+        "work/int-03-c38-foundation-probe-20260914.txt"
+      ],
+      "id": "C38",
+      "note": "Installed public API probe closes the named C38 foundation boundary: durable blank pending creation with committed receipt, fresh query, curator/why/revisit retention, pinned document attachment, same-key replay and changed-argument rejection, attention-only revisit, explicit admission, no allowance/manager/dispatch before admission, and untouched blank close without a fake revision.",
+      "status": "supported_by_current_candidate"
+    },
+    {
+      "evidence_refs": [
+        "tests/assessment/test_accounting.py::test_invocation_success_does_not_close_parent_and_rework_keeps_parent_lineage",
+        "tests/assessment/test_accounting.py::test_selection_assessment_acceptance_are_separate_and_approval_binds_exact_refs",
+        "tests/assessment/test_accounting.py::test_route_change_resume_unknown_and_overrun_do_not_refill_allowance",
+        "tests/work/test_candidates_decisions_waiting.py::test_explicit_manager_choice_is_receipted_but_not_auto_dispatched"
+      ],
+      "id": "C39",
+      "note": "Foundation candidate/decision primitives are exercised by the retained REWORK/correction/approval, exact candidate/criterion, stale/unknown/allowance, and explicit non-dispatch choice tests. The criterion’s real supported manager/host action remains a later OTT/INT journey and is explicitly outside this foundation packet.",
+      "status": "partial_pending_followup"
+    }
+  ],
+  "criteria_scope": [
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C05",
+    "C06",
+    "C07",
+    "C08",
+    "C09",
+    "C10",
+    "C11",
+    "C12",
+    "C13",
+    "C14",
+    "C15",
+    "C16",
+    "C17",
+    "C31",
+    "C33",
+    "C34",
+    "C35",
+    "C38",
+    "C39"
+  ],
+  "evidence_inventory": {
+    "accepted_source_handoffs": [
+      "handoffs/FND.json",
+      "handoffs/DAT.json",
+      "handoffs/PKG.json",
+      "handoffs/WRK.json",
+      "handoffs/EDT.json"
+    ],
+    "c38_foundation_probe": "work/int-03-c38-foundation-probe-20260914.json",
+    "c38_foundation_probe_transcript": "work/int-03-c38-foundation-probe-20260914.txt",
+    "combined_installed_campaign": "work/int-03-final-installed-run-20260914.txt",
+    "historical_packet_receipt": "work/int-03-foundation-coverage-packet-receipt.json",
+    "public_api_probe": "work/int-03-final-api-probe-evidence.json",
+    "public_api_probe_transcript": "work/int-03-final-public-api-probe-run-20260914.txt",
+    "snew01_gap_brief": "work/int-03-snew01-gap-brief.md"
+  },
+  "foundation_slice_notes": {
+    "C38": "The installed public API probe closes the named C38 foundation boundary: create/query/edit/attach document, retain why/revisit/curator, revisit as attention only, explicit admission, replay/invalid rejection, no cloned allowance/dispatch, and blank idle close with unchanged project revision. Full future manager/host journeys remain later C39/OTT scope.",
+    "C39": "Foundation candidate/decision primitives are supported by retained installed tests. A real manager next action through a supported host remains later-stage C39/OTT evidence and is not claimed here.",
+    "S-NEW-01": "The probe proves built-in blank template rendering, fresh pending project receipt/read, initial empty authoring bytes, replay/invalid rejection and unchanged untouched close. Remaining exact gap: work.blank_project atomically persists only the project with documents=[]; no public create-and-open path currently persists an initial-spec document/ref/receipt in the same creation transaction before optional authoring."
+  },
+  "gate_state": "pending",
+  "gate_verdict_claimed": false,
+  "mechanical_comparison": {
+    "changed_fields": [],
+    "command": "jq -S '[.scenarios[] | {id,produced_by,criteria,name,required_proof,state}]' /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/package/otto_herzchen_delivery_v11_2/validation/scenarios.json > /tmp/int03-seed-projection.json && jq -S '.original_scenario_records' work/int-03-foundation-coverage-packet-receipt.json > /tmp/int03-receipt-projection.json && cmp -s /tmp/int03-seed-projection.json /tmp/int03-receipt-projection.json",
+    "compared_fields": [
+      "id",
+      "name",
+      "required_proof",
+      "state",
+      "produced_by",
+      "criteria"
+    ],
+    "extra_ids": [],
+    "missing_ids": [],
+    "records_compared": 49,
+    "result": "PASS"
+  },
+  "original_scenario_records": [
+    {
+      "criteria": [
+        "C01",
+        "C02",
+        "C03"
+      ],
+      "id": "S-CORE-01",
+      "name": "Minimum and composed SQLite owner",
+      "produced_by": "INT-03",
+      "required_proof": "Create/open/refuse malformed schema; same state/event/receipt transaction; duplicate/conflicting operation identity; restart and restore.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C04"
+      ],
+      "id": "S-CORE-02",
+      "name": "Shared allowance and uncertainty",
+      "produced_by": "INT-03",
+      "required_proof": "Two real processes request last call; lost acknowledgement remains charged/held; capacity recycles while spend remains consumed; no reset by rename.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C06"
+      ],
+      "id": "S-DATA-01",
+      "name": "Metadata descriptions and protected fields",
+      "produced_by": "INT-03",
+      "required_proof": "Task/shot-shaped resources accept schema-bound custom fields; typo fails precisely; unknown annotations preserved; protected state cannot be forged.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C05",
+        "C10"
+      ],
+      "id": "S-DATA-02",
+      "name": "Generic docs and context",
+      "produced_by": "INT-03",
+      "required_proof": "One doc linked to multiple resources; private visibility and backlinks filtered; current versus pinned identity; direct doc open honors owning scope.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C02",
+        "C11"
+      ],
+      "id": "S-PACK-01",
+      "name": "Pack and composition boundaries",
+      "produced_by": "INT-03",
+      "required_proof": "Minimum/core works without work domain; declared module conflicts refuse; ordinary capability/protocol resource cannot execute DDL.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C12",
+        "C14"
+      ],
+      "id": "S-TEMPLATE-01",
+      "name": "Reusable task-structure templates",
+      "produced_by": "INT-03",
+      "required_proof": "Typed literal parameters; stable local-reference remapping; atomic work/doc/assessment seeds; idempotent instantiate; no inherited acceptance/budget or launch.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C13",
+        "C14",
+        "C15"
+      ],
+      "id": "S-WORK-01",
+      "name": "Work, responsibilities and assessment history",
+      "produced_by": "INT-03",
+      "required_proof": "Tasks versus jobs, real dependencies, same obligation across correction; PASS/REWORK/UNKNOWN distinct from invocation success; global shared review caps.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C07",
+        "C08",
+        "C16"
+      ],
+      "id": "S-EDIT-01",
+      "name": "Actual exclusive edit and idle finish",
+      "produced_by": "INT-03",
+      "required_proof": "Whole sheet, metadata and linked doc batch; one scope/actor; valid/nochange/invalid idle paths; late-token rejection; next editor gets current revision.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C08",
+        "C09",
+        "C17"
+      ],
+      "id": "S-EDIT-02",
+      "name": "Filesystem and execution isolation",
+      "produced_by": "INT-03",
+      "required_proof": "Crash before/after commit and deletion; save error; symlink/unregistered file refusal; actual helper/writer coordination; pinned running pack survives cleanup.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C17",
+        "C18",
+        "C19"
+      ],
+      "id": "S-OTTO-01",
+      "name": "Installed Otto project journey",
+      "produced_by": "INT-05",
+      "required_proof": "Fresh build install, rough intake, dependencies, actual available launcher, continuation/handoff, whole-sheet docs/metadata, actual result and history.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C20",
+        "C21"
+      ],
+      "id": "S-OTTO-02",
+      "name": "Bounded management, shared attention and restart",
+      "produced_by": "INT-05",
+      "required_proof": "One parent, accountable manager and bounded executors; explicit handoff; one shared timed-attention path using 3h and another interval; no automatic business dispatch; clock and accounting survive restart. Full Demi-god UX deferred.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C22",
+        "C25"
+      ],
+      "id": "S-ASTRID-01",
+      "name": "Current baseline and sole-owner adoption",
+      "produced_by": "INT-07",
+      "required_proof": "After G-OTTO only: current source custody, original SDK/CLI baseline, exact Runtime identity, no duplicate local database/project authority.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C05",
+        "C06",
+        "C23",
+        "C24"
+      ],
+      "id": "S-ASTRID-02",
+      "name": "Real shared shot/docs/work and packs",
+      "produced_by": "INT-07",
+      "required_proof": "Shot metadata/primary rules, shared doc links, creative work template, event correlation, pinned user-owned pack after idle cleanup, local media result.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C17",
+        "C25",
+        "C26",
+        "C27"
+      ],
+      "id": "S-JOINT-01",
+      "name": "Both installed consumers, repeatable recovery",
+      "produced_by": "INT-07",
+      "required_proof": "Build once, clean install both, generated-client parity, preserved regressions, real conformance, safe restore and final candidate/evidence completeness.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C28"
+      ],
+      "id": "S-RELEASE-01",
+      "name": "Multi-repo source promotion",
+      "produced_by": "INT-08",
+      "required_proof": "After G-FINAL: explicit destinations and sideeffects checked; each remote outcome verified; partial/unknown outcome never called complete.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C29"
+      ],
+      "id": "S-HANDOVER-01",
+      "name": "Post-promotion finish",
+      "produced_by": "INT-09",
+      "required_proof": "Actual target-set identity and small supported-entry smoke; stewardship, recovery, limitations and final provenance handoff.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C03",
+        "C33"
+      ],
+      "id": "S-MUTATION-01",
+      "name": "Public mutation and event coverage",
+      "produced_by": "INT-03",
+      "required_proof": "Execute each registered shared/work mutator through actual public SDK/CLI; capture before and independent after reads, unchanged fields, persisted effects, linked semantic events/receipt, no-op, rejection and conflicting/same-key replay. No test-only SQL mutations.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C13",
+        "C31"
+      ],
+      "id": "S-CANDIDATE-01",
+      "name": "Exact candidate and decision basis",
+      "produced_by": "INT-03",
+      "required_proof": "Build candidates A and B with distinct consumed input revisions; select/assess/decide against exact criteria. Old A verdict cannot certify B. An unrelated annotation does not automatically invalidate all evidence. Reuse same question decision identity and preserve outcomes.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C03",
+        "C32",
+        "C33"
+      ],
+      "id": "S-CURSOR-01",
+      "name": "Durable cursor and notification recovery",
+      "produced_by": "INT-03",
+      "required_proof": "Disconnect a consumer, mutate through public tools, restart, then deliver missing/duplicate/out-of-order hints. Re-read ordered accessible history by cursor; no lost committed result, false gap inference, synthetic progress or duplicate business operation.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C02",
+        "C34"
+      ],
+      "id": "S-BOUNDARY-01",
+      "name": "Explicit ownership and reduced composition",
+      "produced_by": "INT-03",
+      "required_proof": "Inspect installed package origins, registered owner/type/handler paths and actual SQLite composition. Core+documents works without work/assessment or products; core does not import or foreign-key optional tables. Shared owner supplies each domain transaction.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C33",
+        "C35"
+      ],
+      "id": "S-VERTICAL-01",
+      "name": "Foundation area tool-to-data proof",
+      "produced_by": "INT-03",
+      "required_proof": "For each foundation area in area-contracts.json, execute actual positive, negative, persisted-state, event/receipt, replay and applicable recovery probes. No empty proof axes or fake product passes from package lint.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C21",
+        "C32"
+      ],
+      "id": "S-WAIT-01",
+      "name": "Useful waiting without a workflow engine",
+      "produced_by": "INT-05",
+      "required_proof": "Create missing dependency and explicit responsible owner/revisit signal; inspect readiness through ordinary Otto tools, restart host, deliver duplicate signal, then let agent select next action. No implicit dispatch, priority change or extra review.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C22",
+        "C23",
+        "C33",
+        "C34",
+        "C35"
+      ],
+      "id": "S-ASTRID-03",
+      "name": "Common conformance through actual creative facade",
+      "produced_by": "INT-07",
+      "required_proof": "Use real adopted Astrid/Runtime tools for shot annotation/doc changes and primary-candidate promotion. Independent fresh reads verify actual managed data, events and existing behavior; generic metadata cannot impersonate promotion. Record preserved baseline and shared module origins.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C01",
+        "C02",
+        "C17",
+        "C26",
+        "C34",
+        "C35"
+      ],
+      "id": "S-REUSE-01",
+      "name": "Extraction lineage and retained assertions",
+      "produced_by": "INT-03",
+      "required_proof": "Trace resolved reuse entries from exact current source symbols/tests to installed Herzchen. Run retained/adapted behaviour assertions plus changed-requirement tests; deliberate lost assertion or wrong installed origin fails qualification. Reasons distinguish historical/proposed source from implemented code. No Astrid consumer changes are required or permitted yet.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C17",
+        "C22",
+        "C23",
+        "C24",
+        "C26",
+        "C34",
+        "C35"
+      ],
+      "id": "S-REUSE-02",
+      "name": "Real consumer switch and duplicate retirement",
+      "produced_by": "INT-07",
+      "required_proof": "After G-OTTO, prove Astrid and its Runtime call the same validated shared components; retained creative baseline assertions and affected Otto and retained small neutral-fixture tests pass; independent Fieldnote qualification remains pending. Enumerate removed/no-longer-active duplicate paths, or justified thin facades with callers and owner. Negative control detects an active private copied event/store implementation; preserve still-needed code and historical evidence.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C12",
+        "C15",
+        "C18",
+        "C25",
+        "C35"
+      ],
+      "id": "S-OTTO-PLAN-01",
+      "name": "Represent the construction plan through public work tools",
+      "produced_by": "OTT-06",
+      "required_proof": "Use supported work/template/import commands to represent the complete catalog in an isolated realm, preserving all scoped aliases/dependency/gate/criterion meanings and explicit source provenance. Independent fresh reads compare the full mapping. Renamed project/stage IDs still work. Importing a seed creates neither completion claims, active managers nor live grants. No private bootstrap SQL/product import and no mutation to the live construction control root.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C04",
+        "C07",
+        "C08",
+        "C13",
+        "C18",
+        "C19",
+        "C20",
+        "C21",
+        "C25",
+        "C26",
+        "C27",
+        "C31",
+        "C32",
+        "C33",
+        "C35"
+      ],
+      "id": "S-OTTO-PLAN-02",
+      "name": "Operate a small portfolio through installed Otto",
+      "produced_by": "OTT-06",
+      "required_proof": "Two bounded projects and disposable repos: real bounded agent decision through verified tools, task/doc/metadata batch and idle finish, one shared handoff, failed result/correction, unchanged dependent held while disjoint work continues, worker continuity, budget retained after interruption, explicit candidate/review fixture and local promotion/partial outcome. New intake does not silently expand release. Prove before/after persisted state/events and unchanged live build ledger. Fake reviews are accounting fixtures, not independent certification or fresh live budget.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C19",
+        "C25"
+      ],
+      "id": "S-AST-CONTROL-01",
+      "name": "Isolated handoff before live use",
+      "produced_by": "OTT-06",
+      "required_proof": "Adopt a fixture with stable aliases, previous decisions/results, a real supported existing session and external accounting references. Independent reads match. Import/ack retries create no duplicated tasks or manager. Record snapshot/cursor and no new allowance; this is not C36 live evidence.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C22",
+        "C36"
+      ],
+      "id": "S-AST-CONTROL-02",
+      "name": "Actual scoped AST cutover",
+      "produced_by": "AST-02",
+      "required_proof": "Qualified controller artifact is installed separately; bootstrap AST is frozen, exact state imported and compared, cutover recorded, and only then Otto dispatch enabled. Old local edits fail. Parent budget/gates/source promotion stay outside; preserve actual AST-01 work and session identity.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C19",
+        "C20",
+        "C36"
+      ],
+      "id": "S-AST-CONTROL-03",
+      "name": "Real Astrid delivery through Otto",
+      "produced_by": "AST-06",
+      "required_proof": "Actual plan/task/doc changes, assignments, supported continuation, results, decisions and handoffs are performed through shipped Otto tools. Logs cite real operations; no manual work later backfilled as use. Report all workarounds and observed versus unexercised features separately.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C17",
+        "C19",
+        "C25"
+      ],
+      "id": "S-AST-CONTROL-04",
+      "name": "Pinned controller isolated from development",
+      "produced_by": "INT-05",
+      "required_proof": "Record actual installed module paths and artifacts; edits/installations in candidate source do not alter controller imports, realm, credentials or schema. Test cleanup is unable to target its live paths. Recheck affected delivered-version behavior after common fixes.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C19",
+        "C25"
+      ],
+      "id": "S-AST-CONTROL-05",
+      "name": "Controller recovery without duplicate work",
+      "produced_by": "INT-05",
+      "required_proof": "On a disposable copy rehearse lost handoff acknowledgement, unavailable controller, export/restore and explicit authority return. Fence old dispatcher; reconcile post-snapshot completed/unknown actions and shared usage before resuming. Never make a stale restore a free retry. No deliberate live controller crash required.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C27",
+        "C35",
+        "C36"
+      ],
+      "id": "S-AST-CONTROL-06",
+      "name": "Separate migration and controller verdicts",
+      "produced_by": "INT-07",
+      "required_proof": "Compare live-use controller build(s) with final deliverable; correlate external scope reports and actual receipts; evaluate Astrid compatibility and Otto usability independently. Retest affected final-version cases. Fallback or private intervention stays visible and cannot be erased by a synthetic rerun.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C19",
+        "C21",
+        "C25"
+      ],
+      "id": "S-OPT-01",
+      "name": "Three-hour scheduling and accounting in isolated fixtures",
+      "produced_by": "INT-05",
+      "required_proof": "Persist an anchor; not due before +3h; due at +3h; one reservation under process race; late windows coalesce; restarts/upgrades/fallback preserve anchor; inflight/unknown prevents duplicate launch; not-invoked proof and late result handling; phase stop rejects new calls. A short actual timer smoke plus controlled-clock fixtures are labelled, not counted as real Astra reviews.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C36",
+        "C37"
+      ],
+      "id": "S-OPT-02",
+      "name": "Real safe-start and ideal communication",
+      "produced_by": "AST-02",
+      "required_proof": "After actual qualified cutover, verify shipped read/edit/assignment tools and capture truthful baseline and exact ideal/rubric/protocol/controller refs. Manager read-back understands responsibilities and next action; no duplicate owner or delayed start awaiting a reviewer.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C36",
+        "C37"
+      ],
+      "id": "S-OPT-03",
+      "name": "Actual-versus-ideal comparison closes the loop",
+      "produced_by": "AST-06",
+      "required_proof": "For each actually due/coalesced 3h interval record the parent reservation and verified Astra-high call, evidence-backed rubric comparison, prior-action outcomes and chosen minimal fixes. Preserve unknown/missed observations, healthy waiting and zero-change conclusions. A phase shorter than 3h has baseline/closure evidence and no invented call. Trace supported changes from originating 3h or 12h findings to the orchestrator decision, actual plan/brief revision or delegated assignment, implementation receipts and observed effect. Report-only or merely queued work cannot count as implementation. Show concrete explanations/revisit for blocked actions; no changes solely to fill an interval. Name the destination of each implemented change in its existing decision context and retain baseline/expected signal, exact changed revision, observed effect and uncertainty. Local success is not automatically a reusable default; unchanged work or confounders limit causal claims. Record unimplemented, unobserved, ineffective or harmful outcomes honestly and the accountable next action.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C27",
+        "C35",
+        "C37"
+      ],
+      "id": "S-OPT-04",
+      "name": "Optimisation cannot replace product proof",
+      "produced_by": "INT-07",
+      "required_proof": "Changed ideal cannot erase old obligations; ad-hoc/12h/3h/gate accounting remains distinct; reports do not issue acceptance. Actual approved fixes name existing owner, preserved candidate/controller inputs, isolated tests and upgrade receipts. Compare final versions; mandatory unresolved controller defects do not disappear because Astrid passes. Demonstrate that an ordinary useful in-mandate correction is acted on without another approval ceremony, but genuine new authority and live-controller upgrade boundaries remain. The next check distinguishes non-execution from ineffective implementation; no extra model review is required for objective verification. For a supported reusable improvement, identify the maintained tool/skill/domain revision, applicable scope and smallest relevant regression/example. In existing fixture or fresh-session proof, a later applicable assignment can discover/use the adopted change while an older pinned assignment and a local-only exception remain unchanged. Do not require a new live agent turn, third app, paid review or positive improvement claim when evidence is absent; fixtures prove mechanics only.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C18",
+        "C38"
+      ],
+      "id": "S-PENDING-01",
+      "name": "Pending projects without manufactured execution",
+      "produced_by": "INT-05",
+      "required_proof": "Use public tools to create, query and batch-edit a rough pending project with docs/reason/curator; restart and read independently. A due revisit and completed upstream dependency do not activate or dispatch. Manager explicitly chooses the next step. No default manager, budget or full tasklist. Import stable pending IDs idempotently.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C13",
+        "C31",
+        "C39"
+      ],
+      "id": "S-LOOP-01",
+      "name": "Advisor-led refinement on one stable obligation",
+      "produced_by": "INT-05",
+      "required_proof": "Through the supported task tools, a manager chooses implementation/check/assessment/correction steps; the parent task keeps identity. Preserve each candidate and actual invocation. REWORK then correction then approval; approval for A cannot close B, unknown/missing approval cannot complete, limits remain consumed. No machine-evaluated condition or recursive workflow needed. Use a real bounded worker decision; mocked advisor outputs only prove mechanics and do not certify the actual product.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C14",
+        "C38",
+        "C39"
+      ],
+      "id": "S-LOOP-02",
+      "name": "Different approaches and non-executable custom guidance",
+      "produced_by": "INT-07",
+      "required_proof": "Represent sequential, parallel, human-approval and conditional-fallback approaches in the same work schema using ordinary relationships/instructions/namespaced data. Preserve unknown annotations, validate declared choices, prevent managed-state spoofing. Readiness and revisit events do not select a branch or launch. Repeat affected current scenarios after Astrid shared-code changes.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C38",
+        "C39"
+      ],
+      "id": "S-PENDING-LOOP-CORE",
+      "name": "Work-domain pending and required-decision mechanics",
+      "produced_by": "INT-03",
+      "required_proof": "Real domain command fixtures before product handoff: sparse pending item, identity/restart/query, no template dispatch or allowance. Existing task/assessment/candidate records support required-decision scope and retain correction history. Guards reject wrong role, stale candidate and missing evidence under the supported registered operation. These fixtures do not prove managerial judgment or certify future live work. Actual manager-loop behavior follows in INT-05/07.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C03",
+        "C08",
+        "C12",
+        "C38"
+      ],
+      "id": "S-NEW-01",
+      "name": "Saved zero-task project and normal blank close",
+      "produced_by": "INT-03",
+      "required_proof": "Create through the real owning work/domain API with the built-in template; fresh-read the committed pending ID, template revision and initial empty spec before editing. Render through the existing handler; untouched finish retains the same project and emits no fabricated task/new content revision. No manager, gate, budget, DDL or dispatch. Same request replay returns the same ID, changed arguments reject, admission still requires its actual scope/authority.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C08",
+        "C09",
+        "C12",
+        "C16",
+        "C18",
+        "C38"
+      ],
+      "id": "S-NEW-02",
+      "name": "New project autosave, idle finish and reopen",
+      "produced_by": "INT-05",
+      "required_proof": "Use installed Otto through public help/tools to create-and-open, observe immediate pending durability, add multiple real tasks/docs/custom fields and save on disk. Use controlled-clock plus short real timer tests. Observe actual changed state, events, receipt, closed token, another allowed editor claim and absence of registered temp files after idle. Reopen the same project with stable IDs/content and a fresh token. Repeat with a wholly untouched blank starter. No auto-admission or project deletion.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C03",
+        "C07",
+        "C08",
+        "C09",
+        "C18",
+        "C38"
+      ],
+      "id": "S-NEW-03",
+      "name": "New-project partial failure, concurrent retries and safe retention",
+      "produced_by": "INT-05",
+      "required_proof": "Exercise actual creation concurrency and manual/idle finish races, occupied actor before create, commit-before-response, materialisation failure after saved identity, malformed on-disk draft, failed DB/capture, late old token and cleanup failure. Prove one project/reservation/result per logical request; saved-but-not-opened partial result retains recoverable project. Rejected raw bytes persist before safe release; failed preservation or unknown writers prevent file deletion. No automatic project/archive cleanup. Original invocation pools and existing controller state untouched.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C08",
+        "C12",
+        "C18",
+        "C22",
+        "C23",
+        "C24",
+        "C34",
+        "C38"
+      ],
+      "id": "S-NEW-04",
+      "name": "Blank and selected templates across Otto and Astrid",
+      "produced_by": "INT-07",
+      "required_proof": "Invoke blank/default and a valid selected protocol/creative template through current installed consumer entrypoints using the same work/resource/authoring implementation. Test unknown template and missing selected parameters fail before creation. Existing Astrid project gains work view on its true ID without duplicate authority; a genuinely new project uses Runtime creation. Prove persisted docs/metadata/tasks and exact event/receipt/cleanup, with ongoing pinned execution copy retained. Rerun affected earlier S-NEW cases for changed shared code; do not claim package schema success as adapter proof.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C10",
+        "C19",
+        "C21",
+        "C35"
+      ],
+      "id": "S-ELEGANCE-CONTEXT",
+      "name": "Resolved brief and meaningful continuity through installed tools",
+      "produced_by": "INT-05",
+      "required_proof": "Fresh manager reads one bounded relevant responsibility view and scoped links, with mandate/profile provenance and deltas. Relevant hidden/conflicting/stale context is excluded or reported; cutoff/omissions are explicit. A real bounded turn selects an action through the supported interface without manual packet/session duplication. Duplicate/lost notification, restart and partial delivery preserve unresolved attention and reconcile actual receipts. No trace dump, hidden SQL or product-private helper. Extend the existing rehearsal with a same-scope task/dependency/brief amendment linked to its decision while a prior assignment remains pinned and a result arrives. Fresh reads/next dispatch see the adopted current instructions; old packets, results and allowance history survive. Recover interrupted attention; reject stale queued dispatch or explicitly hold/rebrief it. A cross-scope interruption exposes partial progress through linked receipts rather than claiming a global transaction.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C06",
+        "C14",
+        "C16",
+        "C35"
+      ],
+      "id": "S-ELEGANCE-DEFINITION",
+      "name": "Shared declaration and operation across data surfaces",
+      "produced_by": "INT-03",
+      "required_proof": "One pinned test definition supplies describe/help, rendered editable shape, validation and supported query. A valid update and the same malformed/protected/conflicting update exercise direct commands and the relevant sheet path through one domain implementation. Unrelated fields/results survive; snapshots/events/receipts and replay agree. Verify installed consumer bindings later under the same affected conformance, not only a JSON fixture.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C14",
+        "C21",
+        "C35",
+        "C39"
+      ],
+      "id": "S-MANAGER-CHOICE",
+      "name": "Programmatically defined records; agent-determined next work",
+      "produced_by": "INT-05",
+      "required_proof": "Exercise a simple tests-only task and an advisor refinement using the same work records. The actual bounded manager chooses a justified next step or alternative; a prerequisite passing, schedule becoming due, template being checked in or custom field changing does not choose business work or accept the result. A preauthorised timed check may run, but its advice cannot rewrite the plan. Preserve histories/limits and sparse pending work. Use the existing live-agent allowance, not an extra agent trial.",
+      "state": "UNDETERMINED"
+    },
+    {
+      "criteria": [
+        "C13",
+        "C14",
+        "C35"
+      ],
+      "id": "S-REVIEW-CHOICE",
+      "name": "Normal versus XHARD review without stacked panels",
+      "produced_by": "INT-05",
+      "required_proof": "Resolve reviewer_normal to Luna xhigh and reviewer_xhard to Sol high from the adopted generic pack configuration; independently demonstrate route/profile binding, fresh reviewer context and shared stage accounting with labelled fixtures. Switching profile keeps prior calls, the evidence basis and required blockers. Manager inspection creates no independent-review claim; tests-only template creates none. Programme foundation/conditional Otto remain explicitly Sol and final Astra. No extra product certification invoked merely to demonstrate routing.",
+      "state": "UNDETERMINED"
+    }
+  ],
+  "scenario_coverage": [
+    {
+      "areas": [
+        "kernel/FND"
+      ],
+      "coverage_status": "partial_pending_followup",
+      "evidence_reference": "E-FND; E-RUN; C02/C03 mapping",
+      "id": "S-CORE-01"
+    },
+    {
+      "areas": [
+        "kernel/FND"
+      ],
+      "coverage_status": "partial_pending_followup",
+      "evidence_reference": "E-FND; E-RUN; C04 mapping",
+      "id": "S-CORE-02"
+    },
+    {
+      "areas": [
+        "metadata_docs/DAT"
+      ],
+      "coverage_status": "partial_pending_followup",
+      "evidence_reference": "E-DAT; E-RUN; C06 mapping",
+      "id": "S-DATA-01"
+    },
+    {
+      "areas": [
+        "metadata_docs/DAT"
+      ],
+      "coverage_status": "partial_pending_followup",
+      "evidence_reference": "E-DAT; E-RUN; C05/C10 mapping",
+      "id": "S-DATA-02"
+    },
+    {
+      "areas": [
+        "packs_templates/PKG"
+      ],
+      "coverage_status": "partial_pending_followup",
+      "evidence_reference": "E-INT; E-RUN; C02/C11 mapping",
+      "id": "S-PACK-01"
+    },
+    {
+      "areas": [
+        "packs_templates/PKG"
+      ],
+      "coverage_status": "partial_pending_followup",
+      "evidence_reference": "E-INT; E-RUN; C12/C14 mapping",
+      "id": "S-TEMPLATE-01"
+    },
+    {
+      "areas": [
+        "work_assessment/WRK"
+      ],
+      "coverage_status": "partial_pending_followup",
+      "evidence_reference": "E-INT; E-RUN; WRK pending obligations",
+      "id": "S-WORK-01"
+    },
+    {
+      "areas": [
+        "authoring/EDT"
+      ],
+      "coverage_status": "partial_pending_followup",
+      "evidence_reference": "E-INT; E-RUN; EDT pending obligations",
+      "id": "S-EDIT-01"
+    },
+    {
+      "areas": [
+        "authoring/EDT"
+      ],
+      "coverage_status": "partial_pending_followup",
+      "evidence_reference": "E-INT; E-RUN; EDT pending obligations",
+      "id": "S-EDIT-02"
+    },
+    {
+      "areas": [
+        "agent_host/OTT",
+        "otto_product/OTT"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Missing public Otto/host journey",
+      "id": "S-OTTO-01"
+    },
+    {
+      "areas": [
+        "otto_product/OTT"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Missing public Otto/host journey",
+      "id": "S-OTTO-02"
+    },
+    {
+      "areas": [
+        "astrid_adoption/AST"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Source lineage only; no AST consumer proof",
+      "id": "S-ASTRID-01"
+    },
+    {
+      "areas": [
+        "astrid_adoption/AST"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Source lineage only; no AST consumer proof",
+      "id": "S-ASTRID-02"
+    },
+    {
+      "areas": [
+        "integration_release/INT"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Missing joint installed consumer proof",
+      "id": "S-JOINT-01"
+    },
+    {
+      "areas": [
+        "integration_release/INT"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Deferred after G-FINAL",
+      "id": "S-RELEASE-01"
+    },
+    {
+      "areas": [
+        "integration_release/INT"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Deferred after promotion",
+      "id": "S-HANDOVER-01"
+    },
+    {
+      "areas": [
+        "kernel/FND",
+        "metadata_docs/DAT"
+      ],
+      "coverage_status": "partial_pending_followup",
+      "evidence_reference": "E-FND; E-DAT; E-RUN; no public SDK/CLI proof",
+      "id": "S-MUTATION-01"
+    },
+    {
+      "areas": [
+        "work_assessment/WRK"
+      ],
+      "coverage_status": "partial_pending_followup",
+      "evidence_reference": "E-FND source lineage; WRK-04/07 pending",
+      "id": "S-CANDIDATE-01"
+    },
+    {
+      "areas": [
+        "kernel/FND"
+      ],
+      "coverage_status": "partial_pending_followup",
+      "evidence_reference": "E-FND; E-RUN; consumer cursor proof pending",
+      "id": "S-CURSOR-01"
+    },
+    {
+      "areas": [
+        "kernel/FND"
+      ],
+      "coverage_status": "partial_pending_followup",
+      "evidence_reference": "E-FND; E-RUN; public authority proof pending",
+      "id": "S-BOUNDARY-01"
+    },
+    {
+      "areas": [
+        "integration_release/INT"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "E-AREA status not_executed; public area proof missing",
+      "id": "S-VERTICAL-01"
+    },
+    {
+      "areas": [
+        "agent_host/OTT",
+        "otto_product/OTT",
+        "work_assessment/WRK"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Missing installed Otto wait/attention journey",
+      "id": "S-WAIT-01"
+    },
+    {
+      "areas": [
+        "astrid_adoption/AST"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Missing actual Astrid/Runtime facade proof",
+      "id": "S-ASTRID-03"
+    },
+    {
+      "areas": [
+        "integration_release/INT",
+        "kernel/FND"
+      ],
+      "coverage_status": "partial_pending_followup",
+      "evidence_reference": "E-FND source/test lineage and E-RUN origins; exact scenario qualification pending",
+      "id": "S-REUSE-01"
+    },
+    {
+      "areas": [
+        "astrid_adoption/AST",
+        "integration_release/INT"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Post-G-OTTO consumer switch pending",
+      "id": "S-REUSE-02"
+    },
+    {
+      "areas": [
+        "integration_release/INT",
+        "otto_product/OTT"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Missing public plan import/read proof",
+      "id": "S-OTTO-PLAN-01"
+    },
+    {
+      "areas": [
+        "integration_release/INT",
+        "otto_product/OTT"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Missing installed Otto portfolio rehearsal",
+      "id": "S-OTTO-PLAN-02"
+    },
+    {
+      "areas": [
+        "otto_product/OTT"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Missing isolated installed controller handoff",
+      "id": "S-AST-CONTROL-01"
+    },
+    {
+      "areas": [
+        "astrid_adoption/AST"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Post-G-OTTO AST cutover pending",
+      "id": "S-AST-CONTROL-02"
+    },
+    {
+      "areas": [
+        "astrid_adoption/AST"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Missing actual Astrid delivery through Otto",
+      "id": "S-AST-CONTROL-03"
+    },
+    {
+      "areas": [
+        "integration_release/INT",
+        "otto_product/OTT"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Missing pinned controller proof",
+      "id": "S-AST-CONTROL-04"
+    },
+    {
+      "areas": [
+        "integration_release/INT",
+        "otto_product/OTT"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Missing controller recovery proof",
+      "id": "S-AST-CONTROL-05"
+    },
+    {
+      "areas": [
+        "integration_release/INT"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Missing final migration/controller verdict",
+      "id": "S-AST-CONTROL-06"
+    },
+    {
+      "areas": [
+        "agent_host/OTT",
+        "otto_product/OTT"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Missing installed attention/accounting fixtures",
+      "id": "S-OPT-01"
+    },
+    {
+      "areas": [
+        "astrid_adoption/AST",
+        "otto_product/OTT"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Post-cutover proof pending",
+      "id": "S-OPT-02"
+    },
+    {
+      "areas": [
+        "astrid_adoption/AST"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Actual optimization proof pending",
+      "id": "S-OPT-03"
+    },
+    {
+      "areas": [
+        "integration_release/INT"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Final optimization/product-proof separation pending",
+      "id": "S-OPT-04"
+    },
+    {
+      "areas": [
+        "work_assessment/WRK"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Missing installed Otto pending-project journey",
+      "id": "S-PENDING-01"
+    },
+    {
+      "areas": [
+        "work_assessment/WRK"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "WRK assessment/iteration and real worker decision pending",
+      "id": "S-LOOP-01"
+    },
+    {
+      "area_link_correction": {
+        "proposed_area": "integration_release/INT",
+        "stage_boundary": "Connected later campaign; not a foundation consumer prerequisite."
+      },
+      "areas": [],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "No area-contract row; post-Astrid affected consumer proof pending",
+      "id": "S-LOOP-02"
+    },
+    {
+      "area_link_correction": {
+        "proposed_area": "integration_release/INT",
+        "stage_boundary": "Foundation mechanics only; manager judgment follows INT-05/07."
+      },
+      "areas": [],
+      "coverage_status": "supported_foundation_slice",
+      "evidence_reference": "tests/work/test_identity_graph.py::test_pending_project_is_durable_sparse_and_replay_safe; tests/work/test_candidates_decisions_waiting.py::test_explicit_manager_choice_is_receipted_but_not_auto_dispatched; work/int-03-c38-foundation-probe-20260914.json (pending/revisit/admission mechanics)",
+      "id": "S-PENDING-LOOP-CORE"
+    },
+    {
+      "areas": [
+        "packs_templates/PKG",
+        "third_specialist/PKG",
+        "work_assessment/WRK"
+      ],
+      "coverage_status": "partial_pending_followup",
+      "evidence_reference": "tests/packs/test_task_templates.py::test_blank_resource_uses_common_fields_and_has_no_side_effects; tests/work/test_identity_graph.py::test_pending_project_is_durable_sparse_and_replay_safe; tests/authoring/test_three_targets.py::test_project_creation_and_reopen_share_handler_and_untouched_pending_is_retained; work/int-03-c38-foundation-probe-20260914.json (replay/invalid/close mechanics; atomic initial-spec creation gap remains)",
+      "id": "S-NEW-01"
+    },
+    {
+      "areas": [
+        "agent_host/OTT",
+        "authoring/EDT",
+        "otto_product/OTT",
+        "work_assessment/WRK"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Missing installed Otto create/open/autosave/idle journey",
+      "id": "S-NEW-02"
+    },
+    {
+      "areas": [
+        "agent_host/OTT",
+        "authoring/EDT",
+        "otto_product/OTT"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Missing installed concurrent failure/retention journey",
+      "id": "S-NEW-03"
+    },
+    {
+      "areas": [
+        "astrid_adoption/AST",
+        "packs_templates/PKG",
+        "third_specialist/PKG"
+      ],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Missing Otto/Astrid adapter proof",
+      "id": "S-NEW-04"
+    },
+    {
+      "area_link_correction": {
+        "proposed_area": "integration_release/INT",
+        "stage_boundary": "Later installed Otto qualification; foundation consumes shared context/history primitives."
+      },
+      "areas": [],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Missing installed manager/context journey",
+      "id": "S-ELEGANCE-CONTEXT"
+    },
+    {
+      "area_link_correction": {
+        "proposed_area": "integration_release/INT",
+        "stage_boundary": "Foundation public definition/operation path; consumer bindings are later."
+      },
+      "areas": [],
+      "coverage_status": "partial_pending_followup",
+      "evidence_reference": "E-INT; E-RUN; installed consumer binding remains pending",
+      "id": "S-ELEGANCE-DEFINITION"
+    },
+    {
+      "area_link_correction": {
+        "proposed_area": "integration_release/INT",
+        "stage_boundary": "Later manager-led Otto journey."
+      },
+      "areas": [],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "Missing real bounded manager action",
+      "id": "S-MANAGER-CHOICE"
+    },
+    {
+      "area_link_correction": {
+        "proposed_area": "integration_release/INT",
+        "stage_boundary": "Later route proof; no extra review stage."
+      },
+      "areas": [],
+      "coverage_status": "not_evidenced",
+      "evidence_reference": "No review/oracle call; routing remains unproved",
+      "id": "S-REVIEW-CHOICE"
+    }
+  ],
+  "scenario_seed": {
+    "current_obligation_count": 49,
+    "path": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/package/otto_herzchen_delivery_v11_2/validation/scenarios.json",
+    "record_count": 49,
+    "schema": "planned-campaign/v2",
+    "scope_revision": 9,
+    "sha256": "99ece17752f2b67cc5658ae344067dc7bcb4089608e27b1e426b291b177624f9",
+    "state_counts": {
+      "UNDETERMINED": 49
+    },
+    "status": "not_executed"
+  },
+  "schema": "foundation-coverage/v2",
+  "scope_note": "C38 is supported by the direct installed probe. S-NEW-01 remains partial pending a bounded owner implementation/fixture for atomic blank-project initial-spec persistence; do not call the foundation packet gate-ready while that exact obligation is open. C39 host action remains later. The exact owner brief is sealed at work/int-03-snew01-gap-brief.md.",
+  "state": "prepared"
+}

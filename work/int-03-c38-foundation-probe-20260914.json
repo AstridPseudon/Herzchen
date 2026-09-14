@@ -1,0 +1,1190 @@
+{
+  "candidate": {
+    "environment": "env -u PYTHONPATH -u PYTHONHOME",
+    "head": "c7156360ab601533a38710b8957887e582db669e",
+    "pytest": "9.1.1",
+    "python": "3.11.16",
+    "tree": "f547137f5804c0d8958d68d08633b35698aa2e43",
+    "venv": "/tmp/herzchen-int03-pkg05-fnd06-dat06-candidate.pwUzWY/venv",
+    "wheel": "/tmp/herzchen-int03-final-wheel.20260914042342.out/herzchen_contracts-0.1.0-py3-none-any.whl",
+    "wheel_sha256": "7b44a33a187dc8a23bc0f1b768ba2052df02e2bddbeceb8aede748dda8927567"
+  },
+  "command": "env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-int03-pkg05-fnd06-dat06-candidate.pwUzWY/venv/bin/python work/_int03_c38_probe.py",
+  "interpretation": {
+    "admission": "Only an explicit manager admission changes lifecycle to active; admission still leaves dispatch false.",
+    "blank_close": "The shipped work.blank_project template has zero tasks; create receipt and fresh SQLite read are present; opening with initial empty content then untouched idle-close preserves the pending project revision and removes only the registered checkout file, with no project-sheet mutation.",
+    "creation": "A blank pending project is written immediately with zero tasks, empty outcome, no manager/budget/allowance, and a committed creation receipt.",
+    "query_edit_attach": "Fresh ProjectSheet export observes the pending project and one pinned initial-spec document association after an ordinary sheet edit; curator and why/revisit metadata survive.",
+    "remaining": "No named C38 foundation behavior remains unexercised in this probe. Full Otto host action remains C39/later and is not pulled into foundation.",
+    "replay_invalid": "Same logical request replays the same identity without a new event; changed arguments raise a replay conflict.",
+    "revisit": "A typed wait records owner, awaited reference, revisit condition and residual why metadata; readiness observation is attention-only and keeps pending/admission/dispatch false."
+  },
+  "observed": {
+    "authority": "int03-c38",
+    "checks": {
+      "built_in_blank_and_untouched_close": {
+        "after": {
+          "aliases": [
+            "project-d2c9e890f5"
+          ],
+          "dependencies": [],
+          "kind": {},
+          "lifecycle": {},
+          "name": "Untitled project",
+          "parent": null,
+          "payload": {
+            "acceptance": {},
+            "alias": "project-d2c9e890f5",
+            "aliases": [
+              "project-d2c9e890f5"
+            ],
+            "approach": "",
+            "budget": null,
+            "custom": {},
+            "dependencies": [],
+            "documents": [],
+            "execution": null,
+            "external_action": null,
+            "gate": null,
+            "id": "project-9618088f4bcd9d9336d2c9e890f5",
+            "kind": "project",
+            "lifecycle": "pending",
+            "manager": null,
+            "metadata": {
+              "template_origin": {
+                "authority": "pack",
+                "id": "work.blank_project",
+                "kind": "work_template",
+                "revision": "pkg-03.v1"
+              }
+            },
+            "name": "Untitled project",
+            "outcome": "",
+            "parent": null,
+            "project_ref": null,
+            "protocol": null,
+            "provenance": {
+              "creator": {
+                "actor": "curator",
+                "authenticated": true,
+                "authority": "int03-c38",
+                "credential_ref": "credential"
+              },
+              "curator": {
+                "actor": "curator",
+                "authenticated": true,
+                "authority": "int03-c38",
+                "credential_ref": "credential"
+              }
+            },
+            "readiness": {
+              "dispatch": false,
+              "ready": false,
+              "status": "not-evaluated"
+            },
+            "schema_revision": "work.v1",
+            "scope": "",
+            "tasks": [],
+            "title": "Untitled project",
+            "worker": null
+          },
+          "project_ref": null,
+          "readiness": {
+            "dispatch": false,
+            "ready": false,
+            "status": "not-evaluated"
+          },
+          "ref": {
+            "authority": "int03-c38",
+            "id": "project-9618088f4bcd9d9336d2c9e890f5",
+            "kind": "work.project",
+            "revision": "rev-1"
+          },
+          "title": "Untitled project",
+          "version": 1
+        },
+        "before": {
+          "aliases": [
+            "project-d2c9e890f5"
+          ],
+          "dependencies": [],
+          "kind": {},
+          "lifecycle": {},
+          "name": "Untitled project",
+          "parent": null,
+          "payload": {
+            "acceptance": {},
+            "alias": "project-d2c9e890f5",
+            "aliases": [
+              "project-d2c9e890f5"
+            ],
+            "approach": "",
+            "budget": null,
+            "custom": {},
+            "dependencies": [],
+            "documents": [],
+            "execution": null,
+            "external_action": null,
+            "gate": null,
+            "id": "project-9618088f4bcd9d9336d2c9e890f5",
+            "kind": "project",
+            "lifecycle": "pending",
+            "manager": null,
+            "metadata": {
+              "template_origin": {
+                "authority": "pack",
+                "id": "work.blank_project",
+                "kind": "work_template",
+                "revision": "pkg-03.v1"
+              }
+            },
+            "name": "Untitled project",
+            "outcome": "",
+            "parent": null,
+            "project_ref": null,
+            "protocol": null,
+            "provenance": {
+              "creator": {
+                "actor": "curator",
+                "authenticated": true,
+                "authority": "int03-c38",
+                "credential_ref": "credential"
+              },
+              "curator": {
+                "actor": "curator",
+                "authenticated": true,
+                "authority": "int03-c38",
+                "credential_ref": "credential"
+              }
+            },
+            "readiness": {
+              "dispatch": false,
+              "ready": false,
+              "status": "not-evaluated"
+            },
+            "schema_revision": "work.v1",
+            "scope": "",
+            "tasks": [],
+            "title": "Untitled project",
+            "worker": null
+          },
+          "project_ref": null,
+          "readiness": {
+            "dispatch": false,
+            "ready": false,
+            "status": "not-evaluated"
+          },
+          "ref": {
+            "authority": "int03-c38",
+            "id": "project-9618088f4bcd9d9336d2c9e890f5",
+            "kind": "work.project",
+            "revision": "rev-1"
+          },
+          "title": "Untitled project",
+          "version": 1
+        },
+        "close": {
+          "cleanup": {
+            "deleted": [
+              "project.json"
+            ],
+            "error": null,
+            "remaining": [],
+            "root": "/var/folders/0n/hj_vqrps2bz8pnbyvgd58k740000gn/T/int03-c38-wasy5w0o/blank-checkout",
+            "status": {}
+          },
+          "error": null,
+          "finish": {
+            "application": null,
+            "error": null,
+            "finish": {
+              "checkout": {
+                "actor": {
+                  "actor": "curator",
+                  "authenticated": true,
+                  "authority": "int03-c38",
+                  "credential_ref": "credential"
+                },
+                "allowed_fields": [],
+                "base_revision": "rev-1",
+                "cleanup": "pending",
+                "draft_snapshot_ref": {
+                  "authority": "int03-c38",
+                  "id": "draft-session-4b487e3c98d6f10af3af0c6b",
+                  "kind": "authoring-snapshot",
+                  "revision": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+                },
+                "fence": "fence-2fcff8acb1b636356584e761",
+                "final_snapshot_ref": null,
+                "finish_claim": {
+                  "claim_id": "claim-0d29dbf0c3258738cf642ce7",
+                  "finalization_identity": "finish-session-4b487e3c98d6f10af3af0c6b",
+                  "mode": "idle"
+                },
+                "session_id": "session-4b487e3c98d6f10af3af0c6b",
+                "state": "released",
+                "target_kind": "project-sheet",
+                "target_scope": {
+                  "authority": "int03-c38",
+                  "id": "project-9618088f4bcd9d9336d2c9e890f5",
+                  "kind": "work.project",
+                  "revision": "rev-1"
+                },
+                "token": "token-cbfeee17ba3f9370e399c89c",
+                "unmanaged_writers": false
+              },
+              "cleanup": {},
+              "error": null,
+              "final_snapshot": {
+                "data": "b'{}'",
+                "manifest": [],
+                "ref": {
+                  "authority": "int03-c38",
+                  "id": "draft-session-4b487e3c98d6f10af3af0c6b",
+                  "kind": "authoring-snapshot",
+                  "revision": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+                }
+              },
+              "receipt": {
+                "error_code": null,
+                "event_ids": [
+                  "event-97c81a97e7697adbe9c34e9c0e1ef042"
+                ],
+                "logical_request_key": "snew-idle-close",
+                "observed_revision": "rev-3",
+                "operation": "finish",
+                "replayed": false,
+                "request_digest": "449691d55291a872516c60f2724280a1bcb6fbbb6b64c516dccfe3ee20b4d553",
+                "result_ref": {
+                  "authority": "int03-c38",
+                  "id": "project-9618088f4bcd9d9336d2c9e890f5",
+                  "kind": "authoring-scope",
+                  "revision": "rev-3"
+                },
+                "status": "committed",
+                "target": {
+                  "authority": "int03-c38",
+                  "id": "project-9618088f4bcd9d9336d2c9e890f5",
+                  "kind": "authoring-scope",
+                  "revision": null
+                },
+                "transaction_id": "603ce300375222f5527b15c6e91528e6",
+                "unknown_reason": null
+              },
+              "recovery_pending": false,
+              "scope": {
+                "authority": "int03-c38",
+                "id": "project-9618088f4bcd9d9336d2c9e890f5",
+                "kind": "authoring-scope",
+                "revision": null
+              },
+              "session_id": "session-4b487e3c98d6f10af3af0c6b",
+              "status": "pending_released"
+            },
+            "recovery_pending": false,
+            "snapshot": {
+              "data": "b'{\"files\":[{\"bytes_b64\":\"e30=\",\"relative_path\":\"project.json\"}],\"format\":\"herzchen.edt-03.tree.v1\",\"manifest\":[{\"relative_path\":\"project.json\",\"sha256\":\"44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a\",\"size\":2}],\"tree_digest\":\"85ee6cffed306a19019805c3a4b819454bfc296d9a4ed4710efdd6d800317055\"}'",
+              "files": [
+                {
+                  "data": "b'{}'",
+                  "relative_path": "project.json",
+                  "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+                  "size": 2
+                }
+              ],
+              "ref": null,
+              "root": "/var/folders/0n/hj_vqrps2bz8pnbyvgd58k740000gn/T/int03-c38-wasy5w0o/blank-checkout",
+              "tree_digest": "85ee6cffed306a19019805c3a4b819454bfc296d9a4ed4710efdd6d800317055"
+            },
+            "status": "pending_released",
+            "validation": {
+              "diagnostics": null,
+              "valid": true
+            }
+          },
+          "idle_seconds": 10.0,
+          "last_content_edit": 0.0,
+          "recovery_pending": false,
+          "scope": {
+            "authority": "int03-c38",
+            "id": "project-9618088f4bcd9d9336d2c9e890f5",
+            "kind": "authoring-scope",
+            "revision": null
+          },
+          "session_id": "session-4b487e3c98d6f10af3af0c6b",
+          "status": "closed_cleaned"
+        },
+        "creation_receipts": [
+          {
+            "error_code": null,
+            "event_ids": [
+              "event-de4a971dfea1a494343b8e0b70f1877b"
+            ],
+            "logical_request_key": "snew-template:project",
+            "observed_revision": "rev-1",
+            "operation": "work.create",
+            "replayed": false,
+            "request_digest": "0a04bccd765578f607e3bed678b3a6ee51c93b0811babe8c5c059e12fbd59b88",
+            "result_ref": {
+              "authority": "int03-c38",
+              "id": "project-9618088f4bcd9d9336d2c9e890f5",
+              "kind": "work.project",
+              "revision": "rev-1"
+            },
+            "status": "committed",
+            "target": {
+              "authority": "int03-c38",
+              "id": "project-9618088f4bcd9d9336d2c9e890f5",
+              "kind": "work.project",
+              "revision": null
+            },
+            "transaction_id": "4a7534c62bbbf71bbb4aa64156b96223",
+            "unknown_reason": null
+          }
+        ],
+        "initial_content_bytes": 2,
+        "ok": true,
+        "open": {
+          "opened": {
+            "activity": "editing",
+            "checkout": {
+              "actor": {
+                "actor": "curator",
+                "authenticated": true,
+                "authority": "int03-c38",
+                "credential_ref": "credential"
+              },
+              "allowed_fields": [],
+              "base_revision": "rev-1",
+              "cleanup": "not_requested",
+              "draft_snapshot_ref": {
+                "authority": "int03-c38",
+                "id": "draft-session-4b487e3c98d6f10af3af0c6b",
+                "kind": "authoring-snapshot",
+                "revision": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+              },
+              "fence": "fence-2fcff8acb1b636356584e761",
+              "final_snapshot_ref": null,
+              "finish_claim": null,
+              "session_id": "session-4b487e3c98d6f10af3af0c6b",
+              "state": "open",
+              "target_kind": "project-sheet",
+              "target_scope": {
+                "authority": "int03-c38",
+                "id": "project-9618088f4bcd9d9336d2c9e890f5",
+                "kind": "work.project",
+                "revision": "rev-1"
+              },
+              "token": "token-cbfeee17ba3f9370e399c89c",
+              "unmanaged_writers": false
+            },
+            "error": null,
+            "handle": {
+              "actor": {
+                "actor": "curator",
+                "authenticated": true,
+                "authority": "int03-c38",
+                "credential_ref": "credential"
+              },
+              "base_revision": "rev-1",
+              "checkout_path": null,
+              "fence": "fence-2fcff8acb1b636356584e761",
+              "scope": {
+                "authority": "int03-c38",
+                "id": "project-9618088f4bcd9d9336d2c9e890f5",
+                "kind": "authoring-scope",
+                "revision": null
+              },
+              "session_id": "session-4b487e3c98d6f10af3af0c6b",
+              "target_kind": "project-sheet",
+              "target_scope": {
+                "authority": "int03-c38",
+                "id": "project-9618088f4bcd9d9336d2c9e890f5",
+                "kind": "work.project",
+                "revision": "rev-1"
+              },
+              "token": "token-cbfeee17ba3f9370e399c89c"
+            },
+            "project_ref": null,
+            "purpose": "authoring",
+            "scope": {
+              "authority": "int03-c38",
+              "id": "project-9618088f4bcd9d9336d2c9e890f5",
+              "kind": "work.project",
+              "revision": "rev-1"
+            },
+            "status": "opened",
+            "waitable": true
+          },
+          "scope": {
+            "authority": "int03-c38",
+            "id": "project-9618088f4bcd9d9336d2c9e890f5",
+            "kind": "work.project",
+            "revision": "rev-1"
+          },
+          "target": {
+            "authority": "int03-c38",
+            "id": "project-9618088f4bcd9d9336d2c9e890f5",
+            "kind": "work.project",
+            "revision": "rev-1"
+          }
+        },
+        "template": {
+          "parameters": {
+            "title": "Untitled project"
+          },
+          "seed": {
+            "criteria": [],
+            "documents": [],
+            "efforts": [],
+            "project": {
+              "fields": {},
+              "kind": "project",
+              "local_id": "project",
+              "outcome": "",
+              "title": "Untitled project"
+            },
+            "protocol": null,
+            "tasks": []
+          },
+          "template": {
+            "authority": "pack",
+            "id": "work.blank_project",
+            "kind": "work_template",
+            "revision": "pkg-03.v1"
+          }
+        }
+      },
+      "create_durable_receipt": {
+        "ok": true,
+        "payload": {
+          "acceptance": {},
+          "alias": "project-6d7d4bb300539f8f2b5b8f682ac8",
+          "aliases": [
+            "project-6d7d4bb300539f8f2b5b8f682ac8"
+          ],
+          "approach": "",
+          "budget": null,
+          "creation_request": "c38-create",
+          "custom": {},
+          "dependencies": [],
+          "documents": [],
+          "execution": null,
+          "external_action": null,
+          "gate": null,
+          "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+          "kind": "project",
+          "lifecycle": "pending",
+          "manager": null,
+          "metadata": {
+            "revisit": "when source changes",
+            "why_pending": "awaiting scope"
+          },
+          "name": "Untitled project",
+          "outcome": "",
+          "parent": null,
+          "project_ref": null,
+          "protocol": null,
+          "provenance": {
+            "creator": "creator-1",
+            "curator": "curator-1"
+          },
+          "readiness": {
+            "dispatch": false,
+            "ready": false,
+            "status": "not-evaluated"
+          },
+          "schema_revision": "work.v1",
+          "scope": "",
+          "tasks": [],
+          "title": "Untitled project",
+          "worker": null
+        },
+        "project": {
+          "authority": "int03-c38",
+          "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+          "kind": "work.project",
+          "revision": "rev-1"
+        },
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-c3433885113babffebc6037a2d979073"
+          ],
+          "logical_request_key": "c38-create",
+          "observed_revision": "rev-1",
+          "operation": "work.project.create",
+          "replayed": false,
+          "request_digest": "9b7ce757ce3bf9b28251d786f1b9401fd9403ffb46c29110c69e9742cf8c913e",
+          "result_ref": {
+            "authority": "int03-c38",
+            "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+            "kind": "work.project",
+            "revision": "rev-1"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "int03-c38",
+            "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+            "kind": "work.project",
+            "revision": null
+          },
+          "transaction_id": "1c037e6e205c28b76fe473647cf2c68f",
+          "unknown_reason": null
+        },
+        "sqlite_identity_count": 2
+      },
+      "explicit_admission_boundary": {
+        "ok": true,
+        "project": {
+          "acceptance": {},
+          "admitted": true,
+          "alias": "project-6d7d4bb300539f8f2b5b8f682ac8",
+          "aliases": [
+            "project-6d7d4bb300539f8f2b5b8f682ac8"
+          ],
+          "approach": "scope remains pending until evidence arrives",
+          "batch_history": [
+            {
+              "decision_ref": null,
+              "manager_action": null,
+              "mapping": {},
+              "task_keys": []
+            }
+          ],
+          "budget": null,
+          "creation_request": "c38-create",
+          "custom": {},
+          "dependencies": [],
+          "documents": [],
+          "execution": null,
+          "external_action": null,
+          "gate": null,
+          "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+          "kind": "project",
+          "last_batch": {
+            "decision_ref": null,
+            "manager_action": null,
+            "mapping": {},
+            "task_keys": []
+          },
+          "lifecycle": "active",
+          "manager": "manager-1",
+          "metadata": {
+            "revisit": "on source revision",
+            "why_pending": "awaiting source owner"
+          },
+          "name": "Untitled project",
+          "outcome": "",
+          "parent": null,
+          "project_ref": null,
+          "protocol": null,
+          "provenance": {
+            "creator": "creator-1",
+            "curator": "curator-1"
+          },
+          "readiness": {
+            "dispatch": false,
+            "ready": false,
+            "status": "not-evaluated"
+          },
+          "resources": {},
+          "schema_revision": "work.v1",
+          "scope": "",
+          "tasks": [],
+          "title": "Untitled project",
+          "worker": null
+        },
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-36308bfab0ad736e75e63db93a94fade"
+          ],
+          "logical_request_key": "c38-admit",
+          "observed_revision": "rev-3",
+          "operation": "work.project.activate",
+          "replayed": false,
+          "request_digest": "bcf2d423d3d91d09b22a77f0ee489b355907808d5cf871f3304cafa930e796f3",
+          "result_ref": {
+            "authority": "int03-c38",
+            "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+            "kind": "work.project",
+            "revision": "rev-3"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "int03-c38",
+            "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+            "kind": "work.project",
+            "revision": "rev-2"
+          },
+          "transaction_id": "92ae8ff2acdfaefdf74c402833f8b2d5",
+          "unknown_reason": null
+        }
+      },
+      "pending_edit_attach_query": {
+        "after": {
+          "events": 2,
+          "identities": 5
+        },
+        "before": {
+          "events": 1,
+          "identities": 2
+        },
+        "documents": [
+          {
+            "association": {
+              "authority": "int03-c38",
+              "id": "link-c33fd36c6aec37e981fe85c88c0a",
+              "kind": "dat.content.association",
+              "revision": "rev-1"
+            },
+            "binding": {
+              "mode": "pinned",
+              "ref": {
+                "authority": "int03-c38",
+                "id": "initial-spec",
+                "kind": "dat.content.document",
+                "revision": "spec-1"
+              }
+            },
+            "current_revision": {
+              "author": null,
+              "content": {
+                "status": "pending",
+                "title": "Initial specification"
+              },
+              "document": {
+                "authority": "int03-c38",
+                "id": "initial-spec",
+                "kind": "dat.content.document",
+                "revision": null
+              },
+              "initial": true,
+              "record_type": "dat.content.revision",
+              "revision": "spec-1"
+            },
+            "document": {
+              "current_revision": {
+                "authority": "int03-c38",
+                "id": "revision-6123a95d1e0137b73f8014cbfb05",
+                "kind": "dat.content.revision",
+                "revision": "spec-1"
+              },
+              "document": {
+                "authority": "int03-c38",
+                "id": "initial-spec",
+                "kind": "dat.content.document",
+                "revision": null
+              },
+              "record_type": "dat.content.document"
+            },
+            "read_only": true,
+            "subject": {
+              "authority": "int03-c38",
+              "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+              "kind": "work.project",
+              "revision": "rev-1"
+            }
+          }
+        ],
+        "ok": true,
+        "project": {
+          "acceptance": {},
+          "alias": "project-6d7d4bb300539f8f2b5b8f682ac8",
+          "aliases": [
+            "project-6d7d4bb300539f8f2b5b8f682ac8"
+          ],
+          "approach": "scope remains pending until evidence arrives",
+          "batch_history": [
+            {
+              "decision_ref": null,
+              "manager_action": null,
+              "mapping": {},
+              "task_keys": []
+            }
+          ],
+          "budget": null,
+          "creation_request": "c38-create",
+          "custom": {},
+          "dependencies": [],
+          "documents": [],
+          "execution": null,
+          "external_action": null,
+          "gate": null,
+          "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+          "kind": "project",
+          "last_batch": {
+            "decision_ref": null,
+            "manager_action": null,
+            "mapping": {},
+            "task_keys": []
+          },
+          "lifecycle": "pending",
+          "manager": null,
+          "metadata": {
+            "revisit": "on source revision",
+            "why_pending": "awaiting source owner"
+          },
+          "name": "Untitled project",
+          "outcome": "",
+          "parent": null,
+          "project_ref": null,
+          "protocol": null,
+          "provenance": {
+            "creator": "creator-1",
+            "curator": "curator-1"
+          },
+          "readiness": {
+            "dispatch": false,
+            "ready": false,
+            "status": "not-evaluated"
+          },
+          "schema_revision": "work.v1",
+          "scope": "",
+          "tasks": [],
+          "title": "Untitled project",
+          "worker": null
+        },
+        "receipt": {
+          "error_code": null,
+          "event_ids": [
+            "event-ed6e2c56afd9c2dedc59f0e4f1448800"
+          ],
+          "logical_request_key": "c38-edit",
+          "observed_revision": "rev-2",
+          "operation": "work.project-sheet.apply",
+          "replayed": false,
+          "request_digest": "72af9492135812880fc257fc26398b1466cf5b3548c91b5a8e9ce1b01030ccc0",
+          "result_ref": {
+            "authority": "int03-c38",
+            "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+            "kind": "work.project",
+            "revision": "rev-2"
+          },
+          "status": "committed",
+          "target": {
+            "authority": "int03-c38",
+            "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+            "kind": "work.project",
+            "revision": "rev-1"
+          },
+          "transaction_id": "b9bd853247532f106cb431620caa1b80",
+          "unknown_reason": null
+        }
+      },
+      "replay_and_invalid_create": {
+        "changed_request_error": {
+          "message": "logical request key was reused with a changed request digest",
+          "type": "ReplayConflictError"
+        },
+        "events_after_replay": 1,
+        "events_before": 1,
+        "ok": true,
+        "same_ref": {
+          "authority": "int03-c38",
+          "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+          "kind": "work.project",
+          "revision": "rev-1"
+        }
+      },
+      "revisit_attention_no_dispatch": {
+        "events": [
+          {
+            "actor": {
+              "actor": "curator",
+              "authenticated": true,
+              "authority": "int03-c38",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "int03-c38",
+                "id": "c38-wait",
+                "kind": "wrk.wait",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "int03-c38",
+                "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+                "kind": "work.project",
+                "revision": "rev-2"
+              },
+              {
+                "authority": "int03-c38",
+                "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+                "kind": "work.project",
+                "revision": "rev-2"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "attention_key": "attention-a9c7ec464bf42a27a554cbe72bac",
+              "attention_only": true,
+              "awaited_ref": {
+                "authority": "int03-c38",
+                "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+                "kind": "work.project",
+                "revision": "rev-2"
+              },
+              "current_revision": "rev-2",
+              "dispatch": false,
+              "missing_obligation": "source scope"
+            },
+            "event_id": "event-06646a30e3ea868449d8fa9d47a9d749",
+            "event_type": "work.wait.recorded",
+            "occurred_at": null,
+            "operation": "work.wait.record",
+            "recorded_at": "2026-09-14T02:36:50.681262Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "int03-c38",
+            "stream": "attention:project-6d7d4bb300539f8f2b5b8f682ac8",
+            "subject": {
+              "authority": "int03-c38",
+              "id": "c38-wait",
+              "kind": "wrk.wait",
+              "revision": "rev-1"
+            }
+          },
+          {
+            "actor": {
+              "actor": "curator",
+              "authenticated": true,
+              "authority": "int03-c38",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "int03-c38",
+                "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+                "kind": "work.project",
+                "revision": "rev-2"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "attention_only": true,
+              "dispatch": false
+            },
+            "event_id": "event-349fafc6c5c11510a6aa01bee3a88aa0",
+            "event_type": "work.readiness.observed",
+            "occurred_at": null,
+            "operation": "work.readiness.observe",
+            "recorded_at": "2026-09-14T02:36:50.682041Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "int03-c38",
+            "stream": "readiness:project-6d7d4bb300539f8f2b5b8f682ac8",
+            "subject": {
+              "authority": "int03-c38",
+              "id": "readiness-1dea78ea3194e6b24dd345c74d78",
+              "kind": "wrk.readiness",
+              "revision": "rev-1"
+            }
+          },
+          {
+            "actor": {
+              "actor": "curator",
+              "authenticated": true,
+              "authority": "int03-c38",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "int03-c38",
+                "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+                "kind": "work.project",
+                "revision": "rev-1"
+              }
+            ],
+            "before_refs": [],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "authoring_reservation": null,
+              "curator": "curator-1",
+              "pending": true,
+              "tasks": []
+            },
+            "event_id": "event-c3433885113babffebc6037a2d979073",
+            "event_type": "work.project.created",
+            "occurred_at": null,
+            "operation": "work.project.create",
+            "recorded_at": "2026-09-14T02:36:50.677158Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 1,
+            "store_authority": "int03-c38",
+            "stream": "work:project-6d7d4bb300539f8f2b5b8f682ac8",
+            "subject": {
+              "authority": "int03-c38",
+              "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+              "kind": "work.project",
+              "revision": "rev-1"
+            }
+          },
+          {
+            "actor": {
+              "actor": "curator",
+              "authenticated": true,
+              "authority": "int03-c38",
+              "credential_ref": "credential"
+            },
+            "after_refs": [
+              {
+                "authority": "int03-c38",
+                "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+                "kind": "work.project",
+                "revision": "rev-2"
+              }
+            ],
+            "before_refs": [
+              {
+                "authority": "int03-c38",
+                "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+                "kind": "work.project",
+                "revision": "rev-1"
+              }
+            ],
+            "causation_id": null,
+            "correlation_id": null,
+            "effects": {
+              "child_refs": [],
+              "document_refs": [
+                {
+                  "authority": "int03-c38",
+                  "id": "initial-spec",
+                  "kind": "dat.content.document",
+                  "revision": null
+                },
+                {
+                  "authority": "int03-c38",
+                  "id": "initial-spec",
+                  "kind": "dat.content.document",
+                  "revision": "spec-1"
+                },
+                {
+                  "authority": "int03-c38",
+                  "id": "initial-spec",
+                  "kind": "dat.content.document",
+                  "revision": null
+                }
+              ],
+              "logical_batch": true,
+              "mapping": {},
+              "next_action": null,
+              "parent": {
+                "authority": "int03-c38",
+                "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+                "kind": "work.project",
+                "revision": "rev-1"
+              }
+            },
+            "event_id": "event-ed6e2c56afd9c2dedc59f0e4f1448800",
+            "event_type": "work.project-sheet.applied",
+            "occurred_at": null,
+            "operation": "work.project-sheet.apply",
+            "recorded_at": "2026-09-14T02:36:50.679338Z",
+            "schema_revision": "fnd-03.event.v1",
+            "sequence": 2,
+            "store_authority": "int03-c38",
+            "stream": "work:project-6d7d4bb300539f8f2b5b8f682ac8",
+            "subject": {
+              "authority": "int03-c38",
+              "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+              "kind": "work.project",
+              "revision": "rev-2"
+            }
+          }
+        ],
+        "ok": true,
+        "project": {
+          "acceptance": {},
+          "alias": "project-6d7d4bb300539f8f2b5b8f682ac8",
+          "aliases": [
+            "project-6d7d4bb300539f8f2b5b8f682ac8"
+          ],
+          "approach": "scope remains pending until evidence arrives",
+          "batch_history": [
+            {
+              "decision_ref": null,
+              "manager_action": null,
+              "mapping": {},
+              "task_keys": []
+            }
+          ],
+          "budget": null,
+          "creation_request": "c38-create",
+          "custom": {},
+          "dependencies": [],
+          "documents": [],
+          "execution": null,
+          "external_action": null,
+          "gate": null,
+          "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+          "kind": "project",
+          "last_batch": {
+            "decision_ref": null,
+            "manager_action": null,
+            "mapping": {},
+            "task_keys": []
+          },
+          "lifecycle": "pending",
+          "manager": null,
+          "metadata": {
+            "revisit": "on source revision",
+            "why_pending": "awaiting source owner"
+          },
+          "name": "Untitled project",
+          "outcome": "",
+          "parent": null,
+          "project_ref": null,
+          "protocol": null,
+          "provenance": {
+            "creator": "creator-1",
+            "curator": "curator-1"
+          },
+          "readiness": {
+            "dispatch": false,
+            "ready": false,
+            "status": "not-evaluated"
+          },
+          "schema_revision": "work.v1",
+          "scope": "",
+          "tasks": [],
+          "title": "Untitled project",
+          "worker": null
+        },
+        "readiness_ref": {
+          "authority": "int03-c38",
+          "id": "readiness-1dea78ea3194e6b24dd345c74d78",
+          "kind": "wrk.readiness",
+          "revision": null
+        },
+        "wait": {
+          "attention_event_id": "event-06646a30e3ea868449d8fa9d47a9d749",
+          "attention_key": "attention-a9c7ec464bf42a27a554cbe72bac",
+          "awaited_ref": {
+            "authority": "int03-c38",
+            "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+            "kind": "work.project",
+            "revision": "rev-2"
+          },
+          "awaited_revision": "rev-2",
+          "cap_reached": false,
+          "current_revision": "rev-2",
+          "metadata": {
+            "curator": "curator-1",
+            "why_pending": "awaiting source owner"
+          },
+          "missing_obligation": "source scope",
+          "owner": "curator-1",
+          "owner_ref": null,
+          "payload": {
+            "allowance": null,
+            "attention_key": "attention-a9c7ec464bf42a27a554cbe72bac",
+            "awaited_ref": {
+              "authority": "int03-c38",
+              "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+              "kind": "work.project",
+              "revision": "rev-2"
+            },
+            "awaited_revision": "rev-2",
+            "cap_reached": false,
+            "current_revision": "rev-2",
+            "dispatch": false,
+            "launch": false,
+            "metadata": {
+              "curator": "curator-1",
+              "why_pending": "awaiting source owner"
+            },
+            "missing_obligation": "source scope",
+            "owner": "curator-1",
+            "owner_ref": null,
+            "record_type": "wrk.wait",
+            "required_decision_ref": null,
+            "reservation_ref": null,
+            "residual_risk": {
+              "why": "scope pending"
+            },
+            "revisit_condition": "when source revision or attention changes",
+            "schema_revision": "work.decisions.v1",
+            "subject_ref": {
+              "authority": "int03-c38",
+              "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+              "kind": "work.project",
+              "revision": "rev-2"
+            },
+            "verification_choice": null
+          },
+          "receipt": {
+            "error_code": null,
+            "event_ids": [
+              "event-06646a30e3ea868449d8fa9d47a9d749"
+            ],
+            "logical_request_key": "c38-wait",
+            "observed_revision": "rev-1",
+            "operation": "work.wait.record",
+            "replayed": false,
+            "request_digest": "119e10990edd9dc2b5a7588a7f0f4db1ca61a85a76274e150a62a7e846f423ae",
+            "result_ref": {
+              "authority": "int03-c38",
+              "id": "c38-wait",
+              "kind": "wrk.wait",
+              "revision": "rev-1"
+            },
+            "status": "committed",
+            "target": {
+              "authority": "int03-c38",
+              "id": "c38-wait",
+              "kind": "wrk.wait",
+              "revision": null
+            },
+            "transaction_id": "49f11ea698ce288ffe71d132fad7c788",
+            "unknown_reason": null
+          },
+          "ref": {
+            "authority": "int03-c38",
+            "id": "c38-wait",
+            "kind": "wrk.wait",
+            "revision": "rev-1"
+          },
+          "required_decision_ref": null,
+          "residual_risk": {
+            "why": "scope pending"
+          },
+          "revisit_condition": "when source revision or attention changes",
+          "subject_ref": {
+            "authority": "int03-c38",
+            "id": "project-6d7d4bb300539f8f2b5b8f682ac8",
+            "kind": "work.project",
+            "revision": "rev-2"
+          },
+          "verification_choice": null,
+          "version": 1
+        }
+      }
+    },
+    "db": "/var/folders/0n/hj_vqrps2bz8pnbyvgd58k740000gn/T/int03-c38-wasy5w0o/foundation.sqlite",
+    "overall_ok": true
+  },
+  "schema": "int03-c38-foundation-probe/v2",
+  "scope": [
+    "C38",
+    "S-NEW-01"
+  ],
+  "source_basis": {
+    "authoring": "src/herzchen/authoring/integration.py::AuthoringLifecycle.idle_close",
+    "criteria": "work/package/otto_herzchen_delivery_v11_2/projects/WRK/implementation-criteria.md#C38",
+    "implementation": "src/herzchen/domains/work/batches.py::ProjectBatches.create_pending_project/apply_project_sheet/observe_readiness/activate_project",
+    "sheet": "src/herzchen/domains/work/sheet.py::ProjectSheet.create_pending/apply/export",
+    "template": "src/herzchen/packs/templates.py::TemplateEngine.instantiate/work.blank_project",
+    "waiting": "src/herzchen/domains/work/decisions.py::DecisionsModule.record_wait/get_wait"
+  },
+  "state": "observed-installed-candidate"
+}
