@@ -601,6 +601,46 @@ class ManagedPackAuthoringHandler:
                 }
         raise PackAuthoringError(f"pinned managed pack revision is unavailable: {wanted!r}")
 
+    def lifecycle_handler(self, pack: ManagedPack, *, request_id: str) -> Any:
+        """Return PKG content hooks for EDT's shared finish boundary."""
+        from herzchen.authoring import CallableSemanticHandler, ValidationResult
+
+        def updates(snapshot: Any) -> dict[str, bytes]:
+            try:
+                data = snapshot.file_bytes("pack-content.json")
+            except (AttributeError, KeyError):
+                data = snapshot.data
+            payload = json.loads(data.decode("utf-8"))
+            values = payload.get("updates") if isinstance(payload, Mapping) else None
+            if not isinstance(values, Mapping):
+                raise PackContentError("updates must be an object")
+            declared = {item.path for item in pack.resources}
+            result: dict[str, bytes] = {}
+            for path, value in values.items():
+                _validate_relative_path(path)
+                if path not in declared:
+                    raise PackPathError(f"authoring update is not an admitted resource: {path!r}")
+                try:
+                    result[path] = base64.b64decode(value, validate=True)
+                except (TypeError, ValueError) as exc:
+                    raise PackContentError(f"invalid base64 content for {path!r}") from exc
+            return result
+
+        def validate(snapshot: Any, checkout: Any, checkout_root: str) -> Any:
+            try:
+                updates(snapshot)
+            except (PackAuthoringError, TypeError, ValueError, KeyError) as exc:
+                return ValidationResult(False, str(exc))
+            return ValidationResult(True)
+
+        def apply(snapshot: Any, checkout: Any, tx: Any, writer: Any) -> Any:
+            return self.author(
+                pack, updates(snapshot), logical_request_key=request_id,
+                actor=checkout.actor, transaction=tx,
+            )
+
+        return CallableSemanticHandler(validate, apply)
+
     def assign(self, pack: ManagedPack, *, logical_request_key: str, actor: AuthenticatedActor, transaction: Transaction | None = None) -> AuthoringResult:
         """Adopt the explicitly read revision while retaining prior pins."""
         return self.author(pack, logical_request_key=logical_request_key, actor=actor, transaction=transaction)

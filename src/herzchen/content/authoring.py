@@ -170,8 +170,6 @@ class DocumentAuthoringHandler:
             writer,
             scope_resolver=self._resolve_scope_for_session,
         )
-        if authoring is not None and getattr(authoring, "scope_resolver", None) is None:
-            authoring.scope_resolver = self._resolve_scope_for_session
 
     def _read_document(self, target: ResourceRef) -> Optional[ContentDocument]:
         read = self.content.read(_document_key(target))
@@ -358,6 +356,12 @@ class DocumentAuthoringHandler:
     ) -> DocumentMaterialisation:
         target_ref = _document_key(_target_ref(target))
         document = target if isinstance(target, ContentDocument) else self._read_document(target_ref)
+        if document is not None and (
+            not document.writable
+            or document.import_mode != "owned"
+            or document.access_mode not in {"write", "append"}
+        ):
+            raise ScopeAuthorizationError("read-only external attachments cannot be authored")
         scope = self.resolve_scope(target_ref, document=document, parent_scope=parent_scope)
         current = self._current_revision(target_ref) if document is not None else None
         if initial_content is None and current is not None:
@@ -378,6 +382,35 @@ class DocumentAuthoringHandler:
         return DocumentMaterialisation(target_ref, scope, opened, document, current)
 
     materialize = materialise
+
+    def lifecycle_handler(self, materialisation: DocumentMaterialisation, *, request_id: str) -> Any:
+        """Return the DAT semantic hooks for the shared EDT finish boundary."""
+        from herzchen.authoring import CallableSemanticHandler, ValidationResult
+
+        target = materialisation.target
+        handle = materialisation.handle
+        document = materialisation.document
+
+        def raw(snapshot: Any) -> bytes:
+            try:
+                return snapshot.file_bytes("document.json")
+            except (AttributeError, KeyError):
+                return snapshot.data
+
+        def validate(snapshot: Any, checkout: Any, checkout_root: str) -> Any:
+            try:
+                self.validate(raw(snapshot), target=target, document=document)
+            except SchemaValidationError as exc:
+                return ValidationResult(False, exc.errors)
+            return ValidationResult(True)
+
+        def apply(snapshot: Any, checkout: Any, tx: Any, writer: Any) -> Any:
+            return self.apply(
+                target, raw(snapshot), actor=checkout.actor, request_id=request_id,
+                handle=handle, expected_base_revision=checkout.base_revision,
+            )
+
+        return CallableSemanticHandler(validate, apply)
 
     def read(self, target: Union[ResourceRef, ContentDocument], actor: Optional[AuthenticatedActor] = None) -> Mapping[str, Any]:
         target_ref = _target_ref(target)

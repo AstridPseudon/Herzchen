@@ -118,10 +118,7 @@ class ProjectBatches:
             raise WorkValidationError("project sheet target must be a project")
         if base_revision is not None and base_revision != record.revision:
             raise VersionConflictError("sheet base revision is stale")
-        plan = self._prepare_sheet(record, sheet, decision_ref=decision_ref, next_action=next_action)
-        # Validate every child and dependency before the owner transaction is
-        # opened.  The same checks are repeated as state is written below.
-        self._validate_plan(record, plan)
+        plan = self.validate_project_sheet(record, sheet, decision_ref=decision_ref, next_action=next_action)
         parent_payload = plan["project_payload"]
         with self.store.transaction() as tx:
             prior = self.store.get_receipt(request_key)
@@ -163,6 +160,89 @@ class ProjectBatches:
 
     apply_sheet = apply_project_sheet
     apply_batch = apply_project_sheet
+
+    def validate_project_sheet(
+        self,
+        project: Any,
+        sheet: Mapping[str, Any],
+        *,
+        decision_ref: Optional[Any] = None,
+        next_action: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Run the owner validation path without opening a write transaction."""
+        if not isinstance(sheet, Mapping):
+            raise WorkValidationError("project sheet must be a mapping")
+        record = self.graph.get(project)
+        if record.kind is not WorkKind.PROJECT:
+            raise WorkValidationError("project sheet target must be a project")
+        plan = self._prepare_sheet(record, sheet, decision_ref=decision_ref, next_action=next_action)
+        self._validate_plan(record, plan)
+        return plan
+
+    def apply_authoring_command(
+        self,
+        project: Any,
+        sheet: Mapping[str, Any],
+        *,
+        authoring: Any,
+        handle: Any,
+        token: Optional[str] = None,
+        fence: Optional[str] = None,
+        base_revision: Optional[str] = None,
+        logical_request_key: Optional[str] = None,
+        actor: Optional[AuthenticatedActor] = None,
+        decision_ref: Optional[Any] = None,
+        next_action: Optional[str] = None,
+    ) -> BatchResult:
+        """Direct semantic command with the same gate and plan as a sheet."""
+        record = self.graph.get(project)
+        expected = base_revision or getattr(handle, "base_revision", None) or record.revision
+        authoring.authorize_mutation(
+            handle,
+            record.ref,
+            token=token or handle.token,
+            fence=fence or handle.fence,
+            expected_base_revision=expected,
+        )
+        return self.apply_project_sheet(
+            record,
+            sheet,
+            logical_request_key=logical_request_key,
+            actor=actor,
+            decision_ref=decision_ref,
+            base_revision=base_revision,
+            next_action=next_action,
+        )
+
+    def lifecycle_handler(self, project: Any, *, authoring: Any, handle: Any, request_id: str) -> Any:
+        """Return WRK hooks for EDT's shared capture/finish/cleanup boundary."""
+        import json
+        from herzchen.authoring import CallableSemanticHandler, ValidationResult
+
+        def decode(snapshot: Any) -> Mapping[str, Any]:
+            try:
+                data = snapshot.file_bytes("project.json")
+            except (AttributeError, KeyError):
+                data = snapshot.data
+            value = json.loads(data.decode("utf-8"))
+            if not isinstance(value, Mapping):
+                raise WorkValidationError("project sheet must be a mapping")
+            return value
+
+        def validate(snapshot: Any, checkout: Any, checkout_root: str) -> Any:
+            try:
+                self.validate_project_sheet(project, decode(snapshot))
+            except (TypeError, ValueError, WorkValidationError) as exc:
+                return ValidationResult(False, str(exc))
+            return ValidationResult(True)
+
+        def apply(snapshot: Any, checkout: Any, tx: Any, writer: Any) -> Any:
+            return self.apply_authoring_command(
+                project, decode(snapshot), authoring=authoring, handle=handle,
+                logical_request_key=request_id, actor=checkout.actor,
+            )
+
+        return CallableSemanticHandler(validate, apply)
 
     # Existing single-record commands remain available through their original
     # WRK-02 semantic path; a caller need not manufacture a one-row sheet.
