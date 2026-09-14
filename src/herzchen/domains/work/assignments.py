@@ -8,16 +8,13 @@ principal, reporter and physical launcher can be inspected and reassigned.
 
 from __future__ import annotations
 
-import weakref
-
-_COMMAND_PORTS = weakref.WeakKeyDictionary()
-
 from dataclasses import dataclass
 from enum import Enum
 import hashlib
 import json
 import uuid
 from typing import Any, Mapping, Optional, Sequence, Tuple
+from herzchen.command_ports import command_facade
 
 from herzchen.contracts import AuthenticatedActor, CommandEnvelope, DomainContribution, ResourceRef, TransactionContext, canonical_json
 
@@ -139,15 +136,15 @@ def _json_safe(value: Any) -> Any:
     return value
 
 
-class ResponsibilityAssignments:
+class _ResponsibilityAssignmentsEngine:
     """The shared generic responsibility/assignment command surface."""
 
     def __init__(self, store: Any, *, actor: Optional[AuthenticatedActor] = None) -> None:
         if not hasattr(store, "transaction") or not hasattr(store, "mutate"):
             raise TypeError("store must be the supplied FND writer")
         from .module import work_handler
-        _COMMAND_PORTS[self] = work_handler(store)
-        self.reader = _COMMAND_PORTS[self].consumer()
+        self.__writer = work_handler(store)
+        self.reader = self.__writer.consumer()
         self.default_actor = actor
 
     def assign(
@@ -169,9 +166,9 @@ class ResponsibilityAssignments:
         request_key = self._request_key(logical_request_key)
         scope_ref = self._as_ref(scope)
         normalized_pins = tuple(self._pin_reference(value) for value in pins)
-        assignment_id = "assignment-" + hashlib.sha256((_COMMAND_PORTS[self].authority + ":" + request_key).encode()).hexdigest()[:28]
-        ref = ResourceRef(_COMMAND_PORTS[self].authority, ASSIGNMENT_KIND, assignment_id)
-        responsibility_ref = ResourceRef(_COMMAND_PORTS[self].authority, RESPONSIBILITY_KIND, assignment_id)
+        assignment_id = "assignment-" + hashlib.sha256((self.__writer.authority + ":" + request_key).encode()).hexdigest()[:28]
+        ref = ResourceRef(self.__writer.authority, ASSIGNMENT_KIND, assignment_id)
+        responsibility_ref = ResourceRef(self.__writer.authority, RESPONSIBILITY_KIND, assignment_id)
         payload = {
             "record_type": "work.responsibility-assignment",
             "schema_revision": ASSIGNMENT_SCHEMA_REVISION,
@@ -189,13 +186,13 @@ class ResponsibilityAssignments:
             "history": [{"generation": 1, "principal": _json_safe(principal), "agent": _json_safe(agent), "session": _json_safe(session), "reason": "initial"}],
             "responsibility_ref": _json_safe(responsibility_ref),
         }
-        with _COMMAND_PORTS[self].transaction() as tx:
+        with self.__writer.transaction() as tx:
             envelope = self._envelope("work.assignment.create", ref, payload, request_key, actor, expected_version=0)
-            prior = _COMMAND_PORTS[self].get_receipt(request_key)
-            receipt = _COMMAND_PORTS[self].mutate(envelope, event_type="work.assignment.created", result_ref=ResourceRef(ref.authority, ref.kind, ref.id, "rev-1"), effects={"responsibility": responsibility_ref, "generation": 1}, stream="assignment:" + assignment_id, transaction=tx)
+            prior = self.__writer.get_receipt(request_key)
+            receipt = self.__writer.mutate(envelope, event_type="work.assignment.created", result_ref=ResourceRef(ref.authority, ref.kind, ref.id, "rev-1"), effects={"responsibility": responsibility_ref, "generation": 1}, stream="assignment:" + assignment_id, transaction=tx)
             if prior is None:
-                _COMMAND_PORTS[self].put_identity(responsibility_ref, {"record_type": "work.responsibility", "assignment": ref, "role": role, "principal": _json_safe(principal)}, version=0, transaction=tx)
-                _COMMAND_PORTS[self].put_reference(responsibility_ref, transaction=tx)
+                self.__writer.put_identity(responsibility_ref, {"record_type": "work.responsibility", "assignment": ref, "role": role, "principal": _json_safe(principal)}, version=0, transaction=tx)
+                self.__writer.put_reference(responsibility_ref, transaction=tx)
         return self.get(ref)
 
     create = assign
@@ -203,7 +200,7 @@ class ResponsibilityAssignments:
 
     def get(self, target: Any) -> ResponsibilityAssignment:
         ref = self._resolve_ref(target)
-        identity = _COMMAND_PORTS[self].get_identity(ref) if ref is not None else None
+        identity = self.__writer.get_identity(ref) if ref is not None else None
         if identity is None or identity.ref.kind != ASSIGNMENT_KIND:
             raise WorkNotFoundError(f"assignment not found: {target!r}")
         payload = dict(identity.payload)
@@ -251,9 +248,9 @@ class ResponsibilityAssignments:
         history.append({"generation": next_generation, "principal": payload["principal"], "agent": payload["agent"], "session": payload["session"], "reason": _opaque(reason, "reason")})
         payload["history"] = history
         key = self._request_key(logical_request_key)
-        with _COMMAND_PORTS[self].transaction() as tx:
+        with self.__writer.transaction() as tx:
             envelope = self._envelope("work.assignment.reassign", current.ref, payload, key, actor, expected_version=current.version, expected_revision=current.revision)
-            _COMMAND_PORTS[self].mutate(envelope, event_type="work.assignment.reassigned", effects={"from_generation": current.generation, "to_generation": next_generation, "history_length": len(history)}, stream="assignment:" + current.id, transaction=tx)
+            self.__writer.mutate(envelope, event_type="work.assignment.reassigned", effects={"from_generation": current.generation, "to_generation": next_generation, "history_length": len(history)}, stream="assignment:" + current.id, transaction=tx)
         return self.get(current.ref)
 
     def fence(self, target: Any, generation: int) -> ResponsibilityAssignment:
@@ -288,19 +285,19 @@ class ResponsibilityAssignments:
         pins = tuple(self._pin_reference(value) for value in (input_refs or assignment.pins))
         key = self._request_key(logical_request_key)
         dispatch_id = "dispatch-" + hashlib.sha256((assignment.id + ":" + key).encode()).hexdigest()[:28]
-        ref = ResourceRef(_COMMAND_PORTS[self].authority, DISPATCH_KIND, dispatch_id)
+        ref = ResourceRef(self.__writer.authority, DISPATCH_KIND, dispatch_id)
         payload = {"record_type": "work.dispatch", "assignment": assignment.ref, "generation": assignment.generation, "inputs": pins, "action": action_value, "status": "dispatched"}
-        with _COMMAND_PORTS[self].transaction() as tx:
+        with self.__writer.transaction() as tx:
             envelope = self._envelope("work.assignment.dispatch", ref, payload, key, actor, expected_version=0)
-            _COMMAND_PORTS[self].mutate(envelope, event_type="work.assignment.dispatched", result_ref=ResourceRef(ref.authority, ref.kind, ref.id, "rev-1"), after_refs=pins + (assignment.ref,), effects={"assignment": assignment.ref, "generation": assignment.generation, "pinned_inputs": pins, "action": action_value}, stream="dispatch:" + assignment.id, transaction=tx)
+            self.__writer.mutate(envelope, event_type="work.assignment.dispatched", result_ref=ResourceRef(ref.authority, ref.kind, ref.id, "rev-1"), after_refs=pins + (assignment.ref,), effects={"assignment": assignment.ref, "generation": assignment.generation, "pinned_inputs": pins, "action": action_value}, stream="dispatch:" + assignment.id, transaction=tx)
         return DispatchRecord(ref, assignment.ref, assignment.generation, pins, "dispatched", action_value)
 
     def list_observations(self, target: Any, *, kind: Optional[str] = None) -> Tuple[ObservationRecord, ...]:
         assignment = self.get(target)
-        rows = _COMMAND_PORTS[self].connection.execute("SELECT * FROM identities WHERE authority = ? AND kind IN (?, ?) ORDER BY id", (_COMMAND_PORTS[self].authority, RESULT_KIND, REPORT_KIND)).fetchall()
+        rows = self.__writer.connection.execute("SELECT * FROM identities WHERE authority = ? AND kind IN (?, ?) ORDER BY id", (self.__writer.authority, RESULT_KIND, REPORT_KIND)).fetchall()
         result = []
         for row in rows:
-            identity = _COMMAND_PORTS[self].get_identity(ResourceRef(row["authority"], row["kind"], row["id"], row["current_revision"]))
+            identity = self.__writer.get_identity(ResourceRef(row["authority"], row["kind"], row["id"], row["current_revision"]))
             if identity is None or identity.payload.get("assignment") != assignment.ref.to_dict():
                 continue
             if kind is not None and identity.payload.get("observation_kind") != kind:
@@ -314,24 +311,24 @@ class ResponsibilityAssignments:
         key = self._request_key(logical_request_key)
         identity_kind = RESULT_KIND if kind == "result" else REPORT_KIND
         ident = identity_kind.split(".")[-1] + "-" + hashlib.sha256((assignment.id + ":" + key).encode()).hexdigest()[:28]
-        ref = ResourceRef(_COMMAND_PORTS[self].authority, identity_kind, ident)
+        ref = ResourceRef(self.__writer.authority, identity_kind, ident)
         payload = {"record_type": "work.observation", "observation_kind": kind, "assignment": assignment.ref, "generation": assignment.generation, "value": value}
-        with _COMMAND_PORTS[self].transaction() as tx:
+        with self.__writer.transaction() as tx:
             envelope = self._envelope("work." + kind + ".append", ref, payload, key, actor, expected_version=0)
-            _COMMAND_PORTS[self].mutate(envelope, event_type="work." + kind + ".appended", result_ref=ResourceRef(ref.authority, ref.kind, ref.id, "rev-1"), after_refs=(assignment.ref,), effects={"assignment": assignment.ref, "generation": assignment.generation, "append_only": True}, stream=kind + ":" + assignment.id, transaction=tx)
-        identity = _COMMAND_PORTS[self].get_identity(ref)
+            self.__writer.mutate(envelope, event_type="work." + kind + ".appended", result_ref=ResourceRef(ref.authority, ref.kind, ref.id, "rev-1"), after_refs=(assignment.ref,), effects={"assignment": assignment.ref, "generation": assignment.generation, "append_only": True}, stream=kind + ":" + assignment.id, transaction=tx)
+        identity = self.__writer.get_identity(ref)
         assert identity is not None
         return ObservationRecord(identity.ref, assignment.ref, kind, assignment.generation, value, identity.version)
 
     def _pin_reference(self, value: Any) -> ResourceRef:
         ref = self._as_ref(value)
         if ref.revision is not None:
-            retained = _COMMAND_PORTS[self].get_reference(ref)
-            current = _COMMAND_PORTS[self].get_identity(ResourceRef(ref.authority, ref.kind, ref.id))
+            retained = self.__writer.get_reference(ref)
+            current = self.__writer.get_identity(ResourceRef(ref.authority, ref.kind, ref.id))
             if retained is None and (current is None or current.ref.revision != ref.revision):
                 raise WorkValidationError("pinned input revision is not retained")
             return ref
-        current = _COMMAND_PORTS[self].get_identity(ref)
+        current = self.__writer.get_identity(ref)
         if current is None:
             raise WorkNotFoundError(f"input reference not found: {ref!r}")
         return current.ref
@@ -344,16 +341,16 @@ class ResponsibilityAssignments:
         if isinstance(target, ResponsibilityAssignment):
             return target.ref
         if hasattr(target, "ref") and hasattr(target, "kind"):
-            return ResourceRef(_COMMAND_PORTS[self].authority, ASSIGNMENT_KIND, target.ref.id)
+            return ResourceRef(self.__writer.authority, ASSIGNMENT_KIND, target.ref.id)
         if isinstance(target, ResourceRef):
             return ResourceRef(target.authority, ASSIGNMENT_KIND, target.id, target.revision)
         if isinstance(target, Mapping):
             if target.get("ref") is not None:
                 return self._resolve_ref(target["ref"])
             if target.get("id") is not None:
-                return ResourceRef(_COMMAND_PORTS[self].authority, ASSIGNMENT_KIND, str(target["id"]))
+                return ResourceRef(self.__writer.authority, ASSIGNMENT_KIND, str(target["id"]))
         if isinstance(target, str):
-            return ResourceRef(_COMMAND_PORTS[self].authority, ASSIGNMENT_KIND, target)
+            return ResourceRef(self.__writer.authority, ASSIGNMENT_KIND, target)
         return None
 
     def _as_ref(self, value: Any) -> ResourceRef:
@@ -369,7 +366,7 @@ class ResponsibilityAssignments:
             except (TypeError, ValueError) as exc:
                 raise WorkValidationError("reference is malformed") from exc
         if isinstance(value, str):
-            return ResourceRef(_COMMAND_PORTS[self].authority, "work.external", _opaque(value, "reference"))
+            return ResourceRef(self.__writer.authority, "work.external", _opaque(value, "reference"))
         raise WorkValidationError("reference is required")
 
     def _request_key(self, value: Optional[str]) -> str:
@@ -382,6 +379,7 @@ class ResponsibilityAssignments:
         return CommandEnvelope(operation, ASSIGNMENT_SCHEMA_REVISION, target, TransactionContext(selected, key, _digest({"operation": operation, "target": target, "payload": payload}), expected_revision=expected_revision, expected_version=expected_version), payload)
 
 
+ResponsibilityAssignments = command_facade(_ResponsibilityAssignmentsEngine, DOMAIN_ID)
 Assignments = ResponsibilityAssignments
 AssignmentService = ResponsibilityAssignments
 ResponsibilityService = ResponsibilityAssignments

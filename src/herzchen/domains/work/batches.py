@@ -8,15 +8,12 @@ parent event effects.  Child rows never receive a hidden request key.
 
 from __future__ import annotations
 
-import weakref
-
-_COMMAND_PORTS = weakref.WeakKeyDictionary()
-
 from dataclasses import dataclass
 import hashlib
 import json
 import uuid
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from herzchen.command_ports import command_facade
 
 from herzchen.contracts import AuthenticatedActor, CommandEnvelope, DomainContribution, ReferenceBinding, ResourceRef, TransactionContext, canonical_json, canonical_request_digest, ReplayConflictError
 from herzchen.kernel import VersionConflictError
@@ -115,15 +112,15 @@ def _safe(value: Any) -> Any:
     return value
 
 
-class ProjectBatches:
+class _ProjectBatchesEngine:
     """Semantic batch and pending-project operations for one work scope."""
 
     def __init__(self, store: Any, *, actor: Optional[AuthenticatedActor] = None) -> None:
         if not hasattr(store, "transaction") or not hasattr(store, "mutate"):
             raise TypeError("store must be the supplied FND writer")
         from .module import work_handler
-        _COMMAND_PORTS[self] = work_handler(store)
-        self.reader = _COMMAND_PORTS[self].consumer()
+        self.__writer = work_handler(store)
+        self.reader = self.__writer.consumer()
         self.default_actor = actor
         self.graph = WorkGraph(store, actor=actor)
 
@@ -148,8 +145,8 @@ class ProjectBatches:
             raise VersionConflictError("sheet base revision is stale")
         plan = self.validate_project_sheet(record, sheet, decision_ref=decision_ref, next_action=next_action)
         parent_payload = plan["project_payload"]
-        with _COMMAND_PORTS[self].transaction() as tx:
-            prior = _COMMAND_PORTS[self].get_receipt(request_key)
+        with self.__writer.transaction() as tx:
+            prior = self.__writer.get_receipt(request_key)
             replay_target = prior.target if prior is not None else record.ref
             if prior is not None and prior.target.revision is not None and prior.target.revision.startswith("rev-"):
                 try:
@@ -169,7 +166,7 @@ class ProjectBatches:
                 "work.project-sheet.apply", replay_target, command_payload, request_key, actor,
                 expected_version=replay_version, expected_revision=replay_revision,
             )
-            receipt = _COMMAND_PORTS[self].mutate(
+            receipt = self.__writer.mutate(
                 envelope,
                 identity_payload=parent_payload,
                 event_type="work.project-sheet.applied",
@@ -314,8 +311,8 @@ class ProjectBatches:
     ) -> BatchResult:
         request_key = self._request_key(logical_request_key)
         selected_actor = actor or self.default_actor
-        project_id = "project-" + hashlib.sha256((_COMMAND_PORTS[self].authority + ":" + request_key).encode()).hexdigest()[:28]
-        project_ref = ResourceRef(_COMMAND_PORTS[self].authority, KIND_PREFIX[WorkKind.PROJECT], project_id)
+        project_id = "project-" + hashlib.sha256((self.__writer.authority + ":" + request_key).encode()).hexdigest()[:28]
+        project_ref = ResourceRef(self.__writer.authority, KIND_PREFIX[WorkKind.PROJECT], project_id)
         initial = self._new_project_payload(project_id, title, outcome, curator, creator, metadata)
         if sheet is not None:
             if not isinstance(sheet, Mapping):
@@ -325,19 +322,19 @@ class ProjectBatches:
         if reserve_authoring:
             # A same-key retry must resolve the saved request first; the
             # caller's own durable reservation is expected to be present.
-            if _COMMAND_PORTS[self].get_receipt(request_key) is None:
+            if self.__writer.get_receipt(request_key) is None:
                 self._preflight_reservation(project_ref, selected_actor)
-            reservation_ref = ResourceRef(_COMMAND_PORTS[self].authority, RESERVATION_KIND, "reservation-" + project_id)
+            reservation_ref = ResourceRef(self.__writer.authority, RESERVATION_KIND, "reservation-" + project_id)
             initial["authoring_reservation"] = reservation_ref
         initial["creation_request"] = request_key
-        with _COMMAND_PORTS[self].transaction() as tx:
-            existing_receipt = _COMMAND_PORTS[self].get_receipt(request_key)
+        with self.__writer.transaction() as tx:
+            existing_receipt = self.__writer.get_receipt(request_key)
             if existing_receipt is not None:
                 # The normal mutate path below performs the authoritative
                 # digest comparison.  It is still useful to avoid a duplicate
                 # reservation preflight on a safe same-request retry.
                 pass
-            receipt = _COMMAND_PORTS[self].mutate(
+            receipt = self.__writer.mutate(
                 self._envelope("work.project.create", project_ref, initial, request_key, actor, expected_version=0),
                 event_type="work.project.created",
                 result_ref=ResourceRef(project_ref.authority, project_ref.kind, project_ref.id, "rev-1"),
@@ -351,8 +348,8 @@ class ProjectBatches:
                 return BatchResult(existing, receipt, {}, project_id=existing.id, materialisation=existing.payload.get("materialisation"))
             if reservation_ref is not None:
                 reservation_payload = {"record_type": "work.authoring-reservation", "project": project_ref, "actor": _safe(selected_actor), "status": "held", "request_key": request_key, "token": "token-" + uuid.uuid4().hex}
-                _COMMAND_PORTS[self].put_identity(ResourceRef(reservation_ref.authority, reservation_ref.kind, reservation_ref.id, "rev-1"), reservation_payload, version=1, transaction=tx)
-                _COMMAND_PORTS[self].put_reference(reservation_ref, transaction=tx)
+                self.__writer.put_identity(ResourceRef(reservation_ref.authority, reservation_ref.kind, reservation_ref.id, "rev-1"), reservation_payload, version=1, transaction=tx)
+                self.__writer.put_reference(reservation_ref, transaction=tx)
         project = self.graph.get(project_ref)
         result = BatchResult(project, receipt, {}, project_id=project.id, materialisation=project.payload.get("materialisation"))
         if materializer is not None:
@@ -368,7 +365,7 @@ class ProjectBatches:
         if not request_key:
             raise WorkValidationError("saved project has no creation request ID")
         reservation = self._as_ref(project.payload.get("authoring_reservation")) if project.payload.get("authoring_reservation") else None
-        return self._materialize(BatchResult(project, _COMMAND_PORTS[self].get_receipt(request_key), {}, project_id=project.id), materializer, request_key, reservation)  # type: ignore[arg-type]
+        return self._materialize(BatchResult(project, self.__writer.get_receipt(request_key), {}, project_id=project.id), materializer, request_key, reservation)  # type: ignore[arg-type]
 
     def activate_project(
         self, project: Any, *, manager: Any, logical_request_key: Optional[str] = None,
@@ -386,8 +383,8 @@ class ProjectBatches:
         payload["admitted"] = True
         payload["readiness"] = dict(payload.get("readiness", {}), dispatch=False)
         key = self._request_key(logical_request_key)
-        with _COMMAND_PORTS[self].transaction() as tx:
-            _COMMAND_PORTS[self].mutate(self._envelope("work.project.activate", record.ref, payload, key, actor, expected_version=record.version, expected_revision=record.revision), event_type="work.project.activated", effects={"explicit": True, "dispatch": False, "manager": _safe(manager)}, stream="work:" + record.id, transaction=tx)
+        with self.__writer.transaction() as tx:
+            self.__writer.mutate(self._envelope("work.project.activate", record.ref, payload, key, actor, expected_version=record.version, expected_revision=record.revision), event_type="work.project.activated", effects={"explicit": True, "dispatch": False, "manager": _safe(manager)}, stream="work:" + record.id, transaction=tx)
         return self.graph.get(record.ref)
 
     activate = activate_project
@@ -397,10 +394,10 @@ class ProjectBatches:
         if not isinstance(observation, Mapping):
             raise WorkValidationError("readiness observation must be a mapping")
         key = self._request_key(logical_request_key)
-        ident = ResourceRef(_COMMAND_PORTS[self].authority, READINESS_KIND, "readiness-" + hashlib.sha256((record.id + ":" + key).encode()).hexdigest()[:28])
+        ident = ResourceRef(self.__writer.authority, READINESS_KIND, "readiness-" + hashlib.sha256((record.id + ":" + key).encode()).hexdigest()[:28])
         payload = {"record_type": "work.readiness", "project": record.ref, "observation": dict(observation), "dispatch": False}
-        with _COMMAND_PORTS[self].transaction() as tx:
-            _COMMAND_PORTS[self].mutate(self._envelope("work.readiness.observe", ident, payload, key, actor, expected_version=0), event_type="work.readiness.observed", result_ref=ResourceRef(ident.authority, ident.kind, ident.id, "rev-1"), after_refs=(record.ref,), effects={"attention_only": True, "dispatch": False}, stream="readiness:" + record.id, transaction=tx)
+        with self.__writer.transaction() as tx:
+            self.__writer.mutate(self._envelope("work.readiness.observe", ident, payload, key, actor, expected_version=0), event_type="work.readiness.observed", result_ref=ResourceRef(ident.authority, ident.kind, ident.id, "rev-1"), after_refs=(record.ref,), effects={"attention_only": True, "dispatch": False}, stream="readiness:" + record.id, transaction=tx)
         return ident
 
     set_readiness = observe_readiness
@@ -408,10 +405,10 @@ class ProjectBatches:
     def append_report(self, project: Any, value: Any, *, logical_request_key: Optional[str] = None, actor: Optional[AuthenticatedActor] = None) -> ResourceRef:
         record = self.graph.get(project)
         key = self._request_key(logical_request_key)
-        ident = ResourceRef(_COMMAND_PORTS[self].authority, "wrk.report", "report-" + hashlib.sha256((record.id + ":" + key).encode()).hexdigest()[:28])
+        ident = ResourceRef(self.__writer.authority, "wrk.report", "report-" + hashlib.sha256((record.id + ":" + key).encode()).hexdigest()[:28])
         payload = {"record_type": "work.report", "project": record.ref, "value": value, "append_only": True}
-        with _COMMAND_PORTS[self].transaction() as tx:
-            _COMMAND_PORTS[self].mutate(self._envelope("work.project-report.append", ident, payload, key, actor, expected_version=0), event_type="work.project-report.appended", result_ref=ResourceRef(ident.authority, ident.kind, ident.id, "rev-1"), after_refs=(record.ref,), effects={"append_only": True, "authoring_lock": False}, stream="report:" + record.id, transaction=tx)
+        with self.__writer.transaction() as tx:
+            self.__writer.mutate(self._envelope("work.project-report.append", ident, payload, key, actor, expected_version=0), event_type="work.project-report.appended", result_ref=ResourceRef(ident.authority, ident.kind, ident.id, "rev-1"), after_refs=(record.ref,), effects={"append_only": True, "authoring_lock": False}, stream="report:" + record.id, transaction=tx)
         return ident
 
     report = append_report
@@ -436,10 +433,10 @@ class ProjectBatches:
             # The link is an explicit, separately receipted amendment record;
             # it never claims that two scopes committed atomically.
             link_id = "amendment-" + hashlib.sha256(first_key.encode()).hexdigest()[:28]
-            link_ref = ResourceRef(_COMMAND_PORTS[self].authority, AMENDMENT_KIND, link_id)
+            link_ref = ResourceRef(self.__writer.authority, AMENDMENT_KIND, link_id)
             payload = {"record_type": "work.amendment", "status": status, "first_scope": first.project.ref, "second_scope": self._as_ref(second_scope), "linked_receipts": [first.receipt.logical_request_key], "error": type(exc).__name__}
-            with _COMMAND_PORTS[self].transaction() as tx:
-                linked = _COMMAND_PORTS[self].mutate(self._envelope("work.amendment.link", link_ref, payload, first_key + "-partial", actor, expected_version=0), event_type="work.amendment.partially-linked", result_ref=ResourceRef(link_ref.authority, link_ref.kind, link_ref.id, "rev-1"), after_refs=(first.project.ref,), effects={"status": status, "separate_scope": True}, stream="amendment:" + link_id, transaction=tx)
+            with self.__writer.transaction() as tx:
+                linked = self.__writer.mutate(self._envelope("work.amendment.link", link_ref, payload, first_key + "-partial", actor, expected_version=0), event_type="work.amendment.partially-linked", result_ref=ResourceRef(link_ref.authority, link_ref.kind, link_ref.id, "rev-1"), after_refs=(first.project.ref,), effects={"status": status, "separate_scope": True}, stream="amendment:" + link_id, transaction=tx)
             receipts.append(linked)
             links.append(link_ref)
         return CrossScopeResult(status, tuple(receipts), tuple(results), tuple(links))
@@ -484,7 +481,7 @@ class ProjectBatches:
                 raise WorkValidationError(f"{local_key!r} is not a task")
             if current is None:
                 task_id = "task-" + hashlib.sha256((project.id + ":" + local_key).encode()).hexdigest()[:28]
-                ref = ResourceRef(_COMMAND_PORTS[self].authority, KIND_PREFIX[WorkKind.TASK], task_id)
+                ref = ResourceRef(self.__writer.authority, KIND_PREFIX[WorkKind.TASK], task_id)
                 payload = self._new_task_payload(project, task_id, raw, index)
                 version = 0
             else:
@@ -578,10 +575,10 @@ class ProjectBatches:
             ref = item["ref"]
             payload = item["payload"]
             if item["existing"]:
-                current = _COMMAND_PORTS[self].get_identity(ResourceRef(ref.authority, ref.kind, ref.id))
+                current = self.__writer.get_identity(ResourceRef(ref.authority, ref.kind, ref.id))
                 if current is None:
                     raise WorkNotFoundError(f"task identity disappeared: {ref!r}")
-                revised = _COMMAND_PORTS[self].revise_identity(
+                revised = self.__writer.revise_identity(
                     current.ref,
                     payload,
                     revision=self._next_identity_revision(current),
@@ -593,20 +590,20 @@ class ProjectBatches:
                 next_ref = revised.ref
             else:
                 next_ref = ResourceRef(ref.authority, ref.kind, ref.id, "rev-1")
-                _COMMAND_PORTS[self].put_identity(next_ref, payload, version=1, transaction=tx)
-                _COMMAND_PORTS[self].put_reference(next_ref, transaction=tx)
+                self.__writer.put_identity(next_ref, payload, version=1, transaction=tx)
+                self.__writer.put_reference(next_ref, transaction=tx)
             for value in payload.get("dependencies", ()):
-                _COMMAND_PORTS[self].put_reference(self._as_ref(value), transaction=tx)
+                self.__writer.put_reference(self._as_ref(value), transaction=tx)
         for doc in plan["documents"]["changes"]:
             self._write_document_change(tx, doc)
         for link in plan["documents"]["links"]:
             link_ref = link["ref"]
-            if _COMMAND_PORTS[self].get_identity(link_ref) is None:
-                _COMMAND_PORTS[self].put_identity(ResourceRef(link_ref.authority, link_ref.kind, link_ref.id, "rev-1"), link["payload"], version=1, transaction=tx)
+            if self.__writer.get_identity(link_ref) is None:
+                self.__writer.put_identity(ResourceRef(link_ref.authority, link_ref.kind, link_ref.id, "rev-1"), link["payload"], version=1, transaction=tx)
             else:
-                current = _COMMAND_PORTS[self].get_identity(link_ref)
+                current = self.__writer.get_identity(link_ref)
                 assert current is not None
-                revised = _COMMAND_PORTS[self].revise_identity(
+                revised = self.__writer.revise_identity(
                     current.ref,
                     link["payload"],
                     revision=self._next_identity_revision(current),
@@ -616,20 +613,20 @@ class ProjectBatches:
                     transaction=tx,
                 )
                 link_ref = revised.ref
-            _COMMAND_PORTS[self].put_reference(link_ref, transaction=tx)
+            self.__writer.put_reference(link_ref, transaction=tx)
 
     def _write_document_change(self, tx: Any, change: Mapping[str, Any]) -> None:
         document = change["document"]
-        current = _COMMAND_PORTS[self].get_identity(document)
+        current = self.__writer.get_identity(document)
         revision = change["revision"]
         revision_ref = ResourceRef(document.authority, "dat.content.revision", "revision-" + hashlib.sha256((document.id + ":" + revision).encode()).hexdigest()[:28], revision)
         revision_payload = {"record_type": "dat.content.revision", "document": document, "revision": revision, "content": change["content"], "author": change.get("author"), "initial": current is None}
-        _COMMAND_PORTS[self].put_identity(revision_ref, revision_payload, version=0, transaction=tx)
+        self.__writer.put_identity(revision_ref, revision_payload, version=0, transaction=tx)
         head_payload = {"record_type": "dat.content.document", "document": document, "current_revision": revision_ref}
         if current is None:
-            _COMMAND_PORTS[self].put_identity(ResourceRef(document.authority, document.kind, document.id, revision), head_payload, version=1, transaction=tx)
+            self.__writer.put_identity(ResourceRef(document.authority, document.kind, document.id, revision), head_payload, version=1, transaction=tx)
         else:
-            next_ref = _COMMAND_PORTS[self].revise_identity(
+            next_ref = self.__writer.revise_identity(
                 current.ref,
                 head_payload,
                 revision=self._next_identity_revision(current),
@@ -638,7 +635,7 @@ class ProjectBatches:
                 expected_edit_token=current.edit_token,
                 transaction=tx,
             ).ref
-        _COMMAND_PORTS[self].put_reference(revision_ref, transaction=tx)
+        self.__writer.put_reference(revision_ref, transaction=tx)
 
     @staticmethod
     def _next_identity_revision(identity: Any) -> str:
@@ -678,7 +675,7 @@ class ProjectBatches:
                 if mode not in ("current", "pinned"):
                     raise WorkValidationError("document binding must be current or pinned")
                 if mode == "current":
-                    current = _COMMAND_PORTS[self].get_identity(ResourceRef(document.authority, document.kind, document.id))
+                    current = self.__writer.get_identity(ResourceRef(document.authority, document.kind, document.id))
                     binding = ResourceRef(document.authority, document.kind, document.id, current.ref.revision if current else None)
                 else:
                     revision_value = raw.get("revision_ref")
@@ -687,11 +684,11 @@ class ProjectBatches:
                     binding = self._document_ref(revision_value)
                     if binding.revision is None:
                         raise WorkValidationError("pinned document links require a revision")
-                    if _COMMAND_PORTS[self].get_reference(binding) is None and _COMMAND_PORTS[self].get_identity(ResourceRef(binding.authority, binding.kind, binding.id)) is None and binding.id not in changed_document_ids:
+                    if self.__writer.get_reference(binding) is None and self.__writer.get_identity(ResourceRef(binding.authority, binding.kind, binding.id)) is None and binding.id not in changed_document_ids:
                         raise WorkValidationError("pinned document revision is not retained")
                 namespace = _opaque(raw.get("namespace", "work"), "document namespace")
                 key = _opaque(raw.get("key", "document"), "document link key")
-                ident = ResourceRef(_COMMAND_PORTS[self].authority, "dat.content.association", "link-" + hashlib.sha256(canonical_json({"subject": owner, "namespace": namespace, "key": key}).encode()).hexdigest()[:28])
+                ident = ResourceRef(self.__writer.authority, "dat.content.association", "link-" + hashlib.sha256(canonical_json({"subject": owner, "namespace": namespace, "key": key}).encode()).hexdigest()[:28])
                 payload = {"record_type": "dat.content.association", "subject": owner, "namespace": namespace, "key": key, "document": ReferenceBinding(ResourceRef(binding.authority, binding.kind, binding.id, binding.revision), "pinned" if binding.revision else "current"), "active": True}
                 links.append({"ref": ident, "payload": payload})
                 refs.extend((document, binding))
@@ -770,7 +767,7 @@ class ProjectBatches:
             if found is None or found.project_ref is None or found.project_ref.id != project.id:
                 raise WorkNotFoundError(f"task dependency not found in project: {value!r}")
             return ResourceRef(found.ref.authority, found.ref.kind, found.ref.id)
-        if _COMMAND_PORTS[self].get_identity(ResourceRef(ref.authority, ref.kind, ref.id)) is None:
+        if self.__writer.get_identity(ResourceRef(ref.authority, ref.kind, ref.id)) is None:
             raise WorkNotFoundError(f"task dependency not found: {value!r}")
         return ResourceRef(ref.authority, ref.kind, ref.id)
 
@@ -796,9 +793,9 @@ class ProjectBatches:
         if actor is None:
             return
         actor_json = canonical_json(_safe(actor))
-        rows = _COMMAND_PORTS[self].connection.execute("SELECT * FROM identities WHERE authority = ? AND kind = ?", (_COMMAND_PORTS[self].authority, RESERVATION_KIND)).fetchall()
+        rows = self.__writer.connection.execute("SELECT * FROM identities WHERE authority = ? AND kind = ?", (self.__writer.authority, RESERVATION_KIND)).fetchall()
         for row in rows:
-            identity = _COMMAND_PORTS[self].get_identity(ResourceRef(row["authority"], row["kind"], row["id"], row["current_revision"]))
+            identity = self.__writer.get_identity(ResourceRef(row["authority"], row["kind"], row["id"], row["current_revision"]))
             if identity is not None and identity.payload.get("status") == "held" and canonical_json(identity.payload.get("actor")) == actor_json:
                 raise AssignmentBusyError("actor already holds an authoring reservation")
 
@@ -816,14 +813,14 @@ class ProjectBatches:
         return BatchResult(self.graph.get(result.project.ref), result.receipt, result.mappings, "editable", result.project.id, status)
 
     def _reconcile_reservation(self, reservation: ResourceRef, status: Mapping[str, Any], key: str) -> None:
-        identity = _COMMAND_PORTS[self].get_identity(reservation)
+        identity = self.__writer.get_identity(reservation)
         if identity is None:
             return
         payload = dict(identity.payload)
         payload["status"] = status["status"]
         payload["materialisation"] = dict(status)
-        with _COMMAND_PORTS[self].transaction() as tx:
-            _COMMAND_PORTS[self].mutate(self._envelope("work.authoring.reconcile", identity.ref, payload, key, None, expected_version=identity.version, expected_revision=identity.ref.revision), event_type="work.authoring.reconciled", effects=dict(status), stream="authoring:" + reservation.id, transaction=tx)
+        with self.__writer.transaction() as tx:
+            self.__writer.mutate(self._envelope("work.authoring.reconcile", identity.ref, payload, key, None, expected_version=identity.version, expected_revision=identity.ref.revision), event_type="work.authoring.reconciled", effects=dict(status), stream="authoring:" + reservation.id, transaction=tx)
 
     def _result_from_replay(self, receipt: Any, original: WorkRecord) -> BatchResult:
         project = self.graph.get(receipt.result_ref or original.ref)
@@ -837,7 +834,7 @@ class ProjectBatches:
         if isinstance(value, Mapping):
             return ResourceRef.from_dict(value)
         if isinstance(value, str):
-            return ResourceRef(_COMMAND_PORTS[self].authority, "dat.content.document", _opaque(value, "document_ref"))
+            return ResourceRef(self.__writer.authority, "dat.content.document", _opaque(value, "document_ref"))
         raise WorkValidationError("document reference is required")
 
     def _as_ref(self, value: Any) -> ResourceRef:
@@ -855,7 +852,7 @@ class ProjectBatches:
             except (TypeError, ValueError) as exc:
                 raise WorkValidationError("reference is malformed") from exc
         if isinstance(value, str):
-            return ResourceRef(_COMMAND_PORTS[self].authority, "work.external", _opaque(value, "reference"))
+            return ResourceRef(self.__writer.authority, "work.external", _opaque(value, "reference"))
         raise WorkValidationError("reference is required")
 
     def _request_key(self, value: Optional[str]) -> str:
@@ -901,6 +898,7 @@ class ProjectBatches:
         return datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
 
 
+ProjectBatches = command_facade(_ProjectBatchesEngine, DOMAIN_ID)
 ProjectBatchService = ProjectBatches
 Batches = ProjectBatches
 BatchService = ProjectBatches

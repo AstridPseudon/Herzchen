@@ -13,18 +13,15 @@ the editable authored projection and are never accepted as sheet input.
 
 from __future__ import annotations
 
-import weakref
-
-_COMMAND_PORTS = weakref.WeakKeyDictionary()
-
 from dataclasses import dataclass
 from typing import Any, Iterator, Mapping, Optional, Sequence, Tuple
+from herzchen.command_ports import command_facade
 
 from herzchen.contracts import AuthenticatedActor, DomainContribution, ReferenceBinding, ResourceRef, canonical_json
 from herzchen.kernel import VersionConflictError
 
 from .assignments import ASSIGNMENT_KIND, DISPATCH_KIND, RESULT_KIND, REPORT_KIND, ResponsibilityAssignments
-from .batches import BatchResult, ProjectBatches
+from .batches import BatchResult, ProjectBatches, _ProjectBatchesEngine
 from .decisions import DECISION_KIND, WAIT_KIND, DecisionError, DecisionsModule
 from .model import Lifecycle, WorkKind, WorkRecord, WorkValidationError
 
@@ -193,7 +190,7 @@ def _same_identity(left: Any, right: Any) -> bool:
     return a is not None and b is not None and (a.authority, a.kind, a.id) == (b.authority, b.kind, b.id)
 
 
-class _SheetBatches(ProjectBatches):
+class _SheetBatchesEngine(_ProjectBatchesEngine):
     """ProjectBatches with one DAT binding-shape adapter for sheet callers."""
 
     def _prepare_documents(self, project: WorkRecord, sheet: Mapping[str, Any], planned: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
@@ -222,7 +219,10 @@ class _SheetBatches(ProjectBatches):
         return prepared
 
 
-class ProjectSheet:
+_SheetBatches = command_facade(_SheetBatchesEngine, "herzchen.work.sheet-batches")
+
+
+class _ProjectSheetEngine:
     """Project-sheet interpretation over one supplied FND Store."""
 
     definitions = SheetDefinitions()
@@ -239,13 +239,13 @@ class ProjectSheet:
         if not hasattr(store, "transaction") or not hasattr(store, "get_identity"):
             raise TypeError("store must be the supplied FND writer")
         from .module import work_handler
-        _COMMAND_PORTS[self] = work_handler(store)
-        self.reader = _COMMAND_PORTS[self].consumer()
+        self.__writer = work_handler(store)
+        self.reader = self.__writer.consumer()
         self.actor = actor
-        self.batches = batches or _SheetBatches(_COMMAND_PORTS[self], actor=actor)
+        self.batches = batches or _SheetBatches(self.__writer, actor=actor)
         self.graph = self.batches.graph
-        self.decisions = decisions or DecisionsModule(_COMMAND_PORTS[self], actor=actor)
-        self.assignments = assignments or ResponsibilityAssignments(_COMMAND_PORTS[self], actor=actor)
+        self.decisions = decisions or DecisionsModule(self.__writer, actor=actor)
+        self.assignments = assignments or ResponsibilityAssignments(self.__writer, actor=actor)
 
     # ---- common sheet commands -------------------------------------------------
 
@@ -391,8 +391,8 @@ class ProjectSheet:
             "work.assignment.route-pin", current.ref, payload, key, actor or self.actor,
             expected_version=current.version, expected_revision=current.revision,
         )
-        with _COMMAND_PORTS[self].transaction() as tx:
-            receipt = _COMMAND_PORTS[self].mutate(
+        with self.__writer.transaction() as tx:
+            receipt = self.__writer.mutate(
                 envelope, event_type="work.assignment.route-pinned", result_ref=ResourceRef(current.ref.authority, current.ref.kind, current.ref.id, "rev-" + str(current.version + 1)),
                 before_refs=(current.ref,), after_refs=(current.ref,),
                 effects={"assignment": current.ref, "route_binding": _safe(route), "dispatch": False},
@@ -493,7 +493,7 @@ class ProjectSheet:
             rendered = render_template(template, parameters)
             template_id = template.id
         else:
-            engine = TemplateEngine(_COMMAND_PORTS[self], graph=self.graph, actor=actor or self.actor)
+            engine = TemplateEngine(self.__writer, graph=self.graph, actor=actor or self.actor)
             rendered = engine.render(template, parameters)
             template_id = str(template)
         seed = rendered.seed
@@ -681,7 +681,7 @@ class ProjectSheet:
         payload = project.payload
         fields = ("lifecycle", "readiness", "manager", "budget", "worker", "execution", "external_action", "admitted", "batch_history", "last_batch")
         result = {key: _safe(payload[key]) for key in fields if key in payload}
-        result["receipts"] = [event.event_id for event in _COMMAND_PORTS[self].list_events(stream="work:" + project.id)]
+        result["receipts"] = [event.event_id for event in self.__writer.list_events(stream="work:" + project.id)]
         return result
 
     def _task_view(self, task: WorkRecord) -> Mapping[str, Any]:
@@ -694,10 +694,10 @@ class ProjectSheet:
 
     def _assignment_observations(self, task_ref: ResourceRef) -> dict[str, Any]:
         assignments, dispatches, results, reports = [], [], [], []
-        rows = _COMMAND_PORTS[self].connection.execute("SELECT authority, kind, id, current_revision FROM identities WHERE authority = ? AND kind IN (?, ?, ?, ?) ORDER BY kind, id", (_COMMAND_PORTS[self].authority, ASSIGNMENT_KIND, DISPATCH_KIND, RESULT_KIND, REPORT_KIND)).fetchall()
+        rows = self.__writer.connection.execute("SELECT authority, kind, id, current_revision FROM identities WHERE authority = ? AND kind IN (?, ?, ?, ?) ORDER BY kind, id", (self.__writer.authority, ASSIGNMENT_KIND, DISPATCH_KIND, RESULT_KIND, REPORT_KIND)).fetchall()
         assignment_ids = set()
         for row in rows:
-            identity = _COMMAND_PORTS[self].get_identity(ResourceRef(row["authority"], row["kind"], row["id"], row["current_revision"]))
+            identity = self.__writer.get_identity(ResourceRef(row["authority"], row["kind"], row["id"], row["current_revision"]))
             if identity is None:
                 continue
             payload = identity.payload
@@ -708,7 +708,7 @@ class ProjectSheet:
         # Assignment observations point at the assignment, not the task.
         if assignment_ids:
             for row in rows:
-                identity = _COMMAND_PORTS[self].get_identity(ResourceRef(row["authority"], row["kind"], row["id"], row["current_revision"]))
+                identity = self.__writer.get_identity(ResourceRef(row["authority"], row["kind"], row["id"], row["current_revision"]))
                 if identity is None or identity.ref.kind not in {DISPATCH_KIND, RESULT_KIND, REPORT_KIND}:
                     continue
                 assignment_ref = _ref(identity.payload.get("assignment"))
@@ -721,10 +721,10 @@ class ProjectSheet:
         # Decisions intentionally retain the exact historical subject pin.
         # Match identity while ignoring revision, then ask the accepted
         # decision port to decode each record.
-        rows = _COMMAND_PORTS[self].connection.execute("SELECT authority, kind, id, current_revision FROM identities WHERE authority = ? AND kind = ? ORDER BY id", (_COMMAND_PORTS[self].authority, DECISION_KIND)).fetchall()
+        rows = self.__writer.connection.execute("SELECT authority, kind, id, current_revision FROM identities WHERE authority = ? AND kind = ? ORDER BY id", (self.__writer.authority, DECISION_KIND)).fetchall()
         subject = ResourceRef(task.ref.authority, task.ref.kind, task.ref.id)
         for row in rows:
-            identity = _COMMAND_PORTS[self].get_identity(ResourceRef(row["authority"], row["kind"], row["id"], row["current_revision"]))
+            identity = self.__writer.get_identity(ResourceRef(row["authority"], row["kind"], row["id"], row["current_revision"]))
             if identity is None or not _same_identity(identity.payload.get("subject_ref"), subject):
                 continue
             try:
@@ -750,9 +750,9 @@ class ProjectSheet:
             }
             decisions_entry["assessment_result_ref"] = decision.assessment_result_ref
             decision_views.append(decisions_entry)
-        rows = _COMMAND_PORTS[self].connection.execute("SELECT authority, kind, id, current_revision FROM identities WHERE authority = ? AND kind = ? ORDER BY id", (_COMMAND_PORTS[self].authority, WAIT_KIND)).fetchall()
+        rows = self.__writer.connection.execute("SELECT authority, kind, id, current_revision FROM identities WHERE authority = ? AND kind = ? ORDER BY id", (self.__writer.authority, WAIT_KIND)).fetchall()
         for row in rows:
-            identity = _COMMAND_PORTS[self].get_identity(ResourceRef(row["authority"], row["kind"], row["id"], row["current_revision"]))
+            identity = self.__writer.get_identity(ResourceRef(row["authority"], row["kind"], row["id"], row["current_revision"]))
             if identity is not None and _same_identity(identity.payload.get("subject_ref"), task.ref):
                 waits.append({"ref": identity.ref, "missing_obligation": identity.payload.get("missing_obligation"), "owner": identity.payload.get("owner"), "owner_ref": identity.payload.get("owner_ref"), "awaited_ref": identity.payload.get("awaited_ref"), "current_revision": identity.payload.get("current_revision"), "revisit_condition": identity.payload.get("revisit_condition"), "dispatch": False, "read_only": True})
         return {"subject": task.ref, "candidates": _safe(candidates), "decisions": _safe(decision_views), "waiting": _safe(waits), "read_only": True}
@@ -760,9 +760,9 @@ class ProjectSheet:
     def _documents(self, project: WorkRecord, task_ids: set[str], selected: Optional[Sequence[Any]]) -> Tuple[Mapping[str, Any], ...]:
         wanted = None if selected is None else {_ref(value).id if _ref(value) is not None else str(value) for value in selected}
         output = []
-        rows = _COMMAND_PORTS[self].connection.execute("SELECT authority, kind, id, current_revision FROM identities WHERE authority = ? AND kind = 'dat.content.association' ORDER BY id", (_COMMAND_PORTS[self].authority,)).fetchall()
+        rows = self.__writer.connection.execute("SELECT authority, kind, id, current_revision FROM identities WHERE authority = ? AND kind = 'dat.content.association' ORDER BY id", (self.__writer.authority,)).fetchall()
         for row in rows:
-            identity = _COMMAND_PORTS[self].get_identity(ResourceRef(row["authority"], row["kind"], row["id"], row["current_revision"]))
+            identity = self.__writer.get_identity(ResourceRef(row["authority"], row["kind"], row["id"], row["current_revision"]))
             if identity is None:
                 continue
             payload = identity.payload
@@ -774,19 +774,20 @@ class ProjectSheet:
             binding_ref = _ref(binding.get("ref")) if isinstance(binding, Mapping) else None
             if binding_ref is None or (wanted is not None and binding_ref.id not in wanted):
                 continue
-            document = _COMMAND_PORTS[self].get_identity(ResourceRef(binding_ref.authority, binding_ref.kind, binding_ref.id))
+            document = self.__writer.get_identity(ResourceRef(binding_ref.authority, binding_ref.kind, binding_ref.id))
             entry: dict[str, Any] = {"association": identity.ref, "subject": subject_ref, "binding": binding, "read_only": True}
             if document is not None:
                 entry["document"] = document.payload
                 current = _ref(document.payload.get("current_revision"))
                 if current is not None:
-                    revision = _COMMAND_PORTS[self].get_identity(ResourceRef(current.authority, current.kind, current.id, current.revision))
+                    revision = self.__writer.get_identity(ResourceRef(current.authority, current.kind, current.id, current.revision))
                     if revision is not None:
                         entry["current_revision"] = revision.payload
             output.append(entry)
         return tuple(_safe(item) for item in output)
 
 
+ProjectSheet = command_facade(_ProjectSheetEngine, DOMAIN_ID)
 ProjectSheetService = ProjectSheet
 SheetService = ProjectSheet
 

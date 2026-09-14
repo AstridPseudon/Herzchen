@@ -14,13 +14,10 @@ digests are only evidence attached to those references.
 
 from __future__ import annotations
 
-import weakref
-
-_COMMAND_PORTS = weakref.WeakKeyDictionary()
-
 from dataclasses import dataclass
 from hashlib import sha256
 from typing import Any, Iterable, Mapping, Optional, Protocol, Sequence, Tuple, Union
+from herzchen.command_ports import command_facade
 
 from herzchen.contracts import (
     AuthenticatedActor,
@@ -268,20 +265,20 @@ def _same_identity(left: ResourceRef, right: ResourceRef) -> bool:
     return (left.authority, left.kind, left.id) == (right.authority, right.kind, right.id)
 
 
-class ContextPacketService:
+class _ContextPacketServiceEngine:
     """Fresh, permission-filtered reads and FND-backed packet mutations."""
 
     def __init__(self, writer: Optional[FNDPacketWriter]) -> None:
         if writer is not None and hasattr(writer, "domain_handler"):
             writer = writer.domain_handler((content_domain_contribution(), domain_contribution()))
-        _COMMAND_PORTS[self] = writer
+        self.__writer = writer
         self.reader = None if writer is None else writer.consumer()
         self._content = ContentCommandHandler(writer)
 
     def _require_writer(self) -> FNDPacketWriter:
-        if _COMMAND_PORTS[self] is None:
+        if self.__writer is None:
             raise PacketError("FND-03 Store is required")
-        return _COMMAND_PORTS[self]
+        return self.__writer
 
     @staticmethod
     def _context(context: Optional[VisibilityContext], actor: Any = None, roles: Iterable[str] = (), scopes: Iterable[ResourceRef] = ()) -> VisibilityContext:
@@ -655,6 +652,7 @@ class ContextPacketService:
     resolve_responsibility = responsibility_view
 
 
+ContextPacketService = command_facade(_ContextPacketServiceEngine, "herzchen.content.packets")
 PacketService = ContextPacketService
 ContextPackets = ContextPacketService
 

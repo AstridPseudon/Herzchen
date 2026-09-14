@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-import weakref
-
-_COMMAND_PORTS = weakref.WeakKeyDictionary()
-
 from copy import deepcopy
 from typing import Any, ContextManager, Iterable, Mapping, Optional, Protocol, Sequence
+from herzchen.command_ports import command_facade
 
 from herzchen.contracts import (
     CommandEnvelope,
@@ -59,7 +56,7 @@ class SubjectNotFoundError(ExtensionError):
     """Metadata requires an already admitted FND subject identity."""
 
 
-class ExtensionCommandService:
+class _ExtensionCommandServiceEngine:
     """One public read/query/describe/write surface over an FND Store.
 
     The service has no cache and no persistence of its own.  Every operation
@@ -69,7 +66,7 @@ class ExtensionCommandService:
     """
 
     def __init__(self, writer: Optional[FNDExtensionWriter], catalog: DefinitionCatalog = DEFAULT_CATALOG, *, register: bool = True) -> None:
-        _COMMAND_PORTS[self] = writer
+        self.__writer = writer
         self.reader = None if writer is None else writer.consumer()
         self.catalog = catalog
         self._catalog_digest = catalog.digest
@@ -80,12 +77,12 @@ class ExtensionCommandService:
         elif writer is not None:
             self._verify_registered()
         if writer is not None and hasattr(writer, "domain_handler"):
-            _COMMAND_PORTS[self] = writer.domain_handler((domain_contribution(),))
+            self.__writer = writer.domain_handler((domain_contribution(),))
 
     def _require_writer(self) -> FNDExtensionWriter:
-        if _COMMAND_PORTS[self] is None:
+        if self.__writer is None:
             raise ExtensionError("FND-03 writer is required for extension commands")
-        return _COMMAND_PORTS[self]
+        return self.__writer
 
     def _require_catalog_admitted(self) -> None:
         if self.catalog.digest != self._catalog_digest or self._catalog_digest != DEFAULT_CATALOG_DIGEST:
@@ -362,6 +359,8 @@ class ExtensionCommandService:
     remove_metadata = remove
     remove_namespace = remove
 
+
+ExtensionCommandService = command_facade(_ExtensionCommandServiceEngine, "dat.extensions")
 
 __all__ = [
     "ExtensionCommandService", "FNDExtensionWriter", "SubjectNotFoundError",

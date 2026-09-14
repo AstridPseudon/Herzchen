@@ -8,15 +8,12 @@ finish both enter :meth:`DocumentAuthoringHandler._apply_parsed`.
 
 from __future__ import annotations
 
-import weakref
-
-_COMMAND_PORTS = weakref.WeakKeyDictionary()
-
 from dataclasses import dataclass
 import hashlib
 import json
 from pathlib import Path
 from typing import Any, Callable, Mapping, Optional, Sequence, Tuple, Union
+from herzchen.command_ports import command_facade
 
 from herzchen.authoring.sessions import (
     AuthoringSessionService,
@@ -155,7 +152,7 @@ def _bytes(value: Any) -> bytes:
     return canonical_json(value).encode("utf-8")
 
 
-class DocumentAuthoringHandler:
+class _DocumentAuthoringHandlerEngine:
     """Common materialise/interpret/validate/apply document handler."""
 
     def __init__(
@@ -166,7 +163,7 @@ class DocumentAuthoringHandler:
         scope_resolver: Optional[Callable[..., ResourceRef]] = None,
         temporary_cleanup: Optional[Callable[..., Any]] = None,
     ) -> None:
-        _COMMAND_PORTS[self] = writer
+        self.__writer = writer
         self.reader = writer.consumer()
         self.content = ContentCommandHandler(writer)
         self.scope_resolver = scope_resolver
@@ -543,11 +540,11 @@ class DocumentAuthoringHandler:
             payload=document_payload,
         )
         request_digest = context.request_digest
-        prior = _COMMAND_PORTS[self].get_receipt(request_id + ":document")
+        prior = self.__writer.get_receipt(request_id + ":document")
         if prior is not None:
             if prior.request_digest != request_digest:
                 raise ReplayConflictError("logical request key was reused with a changed request digest")
-            link_receipts = tuple(_COMMAND_PORTS[self].get_receipt(request_id + ":link:" + str(index)) for index in range(len(all_links)))
+            link_receipts = tuple(self.__writer.get_receipt(request_id + ":link:" + str(index)) for index in range(len(all_links)))
             if all(receipt is not None for receipt in link_receipts):
                 stored = self.content.read(prior.result_ref) if prior.result_ref is not None else {}
                 payload = stored
@@ -585,7 +582,7 @@ class DocumentAuthoringHandler:
                 receipts.append(self.content.execute(self.content.build_link(link_context, link)))
 
         if transaction is None:
-            with _COMMAND_PORTS[self].transaction() as tx:
+            with self.__writer.transaction() as tx:
                 run(tx)
         else:
             run(transaction)
@@ -703,10 +700,11 @@ class DocumentAuthoringHandler:
             target=association_target,
             payload={"association": association, "preserve_document": True, "preserve_revisions": True},
         )
-        with _COMMAND_PORTS[self].transaction():
+        with self.__writer.transaction():
             return self.content.execute(self.content.build_unlink(context, association))
 
 
+DocumentAuthoringHandler = command_facade(_DocumentAuthoringHandlerEngine, "dat.content.authoring")
 DocumentAuthoring = DocumentAuthoringHandler
 SchemaError = SchemaValidationError
 

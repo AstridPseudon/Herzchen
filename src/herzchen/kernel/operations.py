@@ -9,10 +9,6 @@ one product-specific authority.
 
 from __future__ import annotations
 
-import weakref
-
-_COMMAND_PORTS = weakref.WeakKeyDictionary()
-
 from dataclasses import dataclass, replace
 from enum import Enum
 import hashlib
@@ -29,6 +25,7 @@ from herzchen.contracts import (
     validate_replay,
 )
 
+from herzchen.command_ports import command_facade
 from .store import Store, StoreError, TargetMismatchError, Transaction
 
 
@@ -262,17 +259,17 @@ def _ref(value: Optional[Mapping[str, Any]]) -> Optional[ResourceRef]:
     return None if value is None else ResourceRef.from_dict(value)
 
 
-class OperationManager:
+class _OperationManagerEngine:
     """Record operation requests and explicit outcomes; never invoke them."""
 
     def __init__(self, store: Store) -> None:
         if not isinstance(store, Store):
             raise TypeError("store must be a Store")
-        _COMMAND_PORTS[self] = store
+        self.__writer = store
         self.reader = store.consumer()
 
     def _target(self, logical_request_key: str) -> ResourceRef:
-        return ResourceRef(_COMMAND_PORTS[self].authority, OPERATION_KIND, logical_request_key)
+        return ResourceRef(self.__writer.authority, OPERATION_KIND, logical_request_key)
 
     def _payload(self, request: OperationRequest, state: OperationState, result: Mapping[str, Any]) -> dict[str, Any]:
         return {
@@ -320,7 +317,7 @@ class OperationManager:
         if not receipt.event_ids:
             return {"state": OperationState.PREPARED.value, "result": {}, "version": 1}
         wanted = set(receipt.event_ids)
-        for event in _COMMAND_PORTS[self].list_events(stream=OPERATION_STREAM):
+        for event in self.__writer.list_events(stream=OPERATION_STREAM):
             if event.event_id in wanted:
                 return event.effects
         raise OperationError("receipt event is not visible in the admitted store")
@@ -365,16 +362,16 @@ class OperationManager:
             "request_payload": dict(request.payload),
             "version": 1,
         }
-        receipt = _COMMAND_PORTS[self].mutate(
+        receipt = self.__writer.mutate(
             envelope,
             event_type="operation.prepared",
-            result_ref=ResourceRef(_COMMAND_PORTS[self].authority, OPERATION_KIND, request.logical_request_key, "rev-1"),
+            result_ref=ResourceRef(self.__writer.authority, OPERATION_KIND, request.logical_request_key, "rev-1"),
             effects=effects,
             stream=OPERATION_STREAM,
             transaction=transaction,
         )
         event_effects = self._event_for_receipt(receipt)
-        identity = _COMMAND_PORTS[self].get_identity(target)
+        identity = self.__writer.get_identity(target)
         version = int(event_effects.get("version", identity.version if identity else 1))
         operation_ref = receipt.result_ref or (identity.ref if identity else target)
         return self._record_from_event(receipt, event_effects, request, operation_ref, version)
@@ -433,7 +430,7 @@ class OperationManager:
             expected_version=record.version,
             payload=self._payload(identity_request, state, result),
         )
-        prior = _COMMAND_PORTS[self].get_receipt(next_request_key)
+        prior = self.__writer.get_receipt(next_request_key)
         if prior is not None:
             validate_replay(prior, envelope)
             event_effects = self._event_for_receipt(prior)
@@ -452,7 +449,7 @@ class OperationManager:
             "request_payload": dict(record.request.payload),
             "version": record.version + 1,
         }
-        receipt = _COMMAND_PORTS[self].mutate(
+        receipt = self.__writer.mutate(
             envelope,
             event_type="operation.outcome",
             result_ref=ResourceRef(target.authority, target.kind, target.id, "rev-{}".format(record.version + 1)),
@@ -480,13 +477,13 @@ class OperationManager:
 
     def get(self, logical_request_key: str) -> Optional[OperationRecord]:
         target = self._target(logical_request_key)
-        identity = _COMMAND_PORTS[self].get_identity(target)
+        identity = self.__writer.get_identity(target)
         if identity is None or identity.payload.get("record_type") != OPERATION_KIND:
             return None
         lineage_actor = next(
             (
                 event.actor
-                for event in _COMMAND_PORTS[self].list_events(stream=OPERATION_STREAM)
+                for event in self.__writer.list_events(stream=OPERATION_STREAM)
                 if event.subject.authority == identity.ref.authority
                 and event.subject.kind == identity.ref.kind
                 and event.subject.id == identity.ref.id
@@ -495,10 +492,11 @@ class OperationManager:
             None,
         )
         request = self._request_from_identity(identity.payload, actor=lineage_actor)
-        receipt = _COMMAND_PORTS[self].get_receipt(request.logical_request_key)
+        receipt = self.__writer.get_receipt(request.logical_request_key)
         return OperationRecord(identity.ref, request, OperationState(identity.payload["state"]), dict(identity.payload.get("result", {})), receipt, identity.version)
 
 
+OperationManager = command_facade(_OperationManagerEngine, "herzchen.kernel.operations")
 OperationAdapter = OperationManager
 
 

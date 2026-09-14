@@ -9,16 +9,12 @@ which never accept or dispatch their parent obligation.
 
 from __future__ import annotations
 
-import weakref
-
-_COMMAND_PORTS = weakref.WeakKeyDictionary()
-_KERNEL_PORTS = weakref.WeakKeyDictionary()
-
 from dataclasses import dataclass
 from enum import Enum
 import hashlib
 import uuid
 from typing import Any, Callable, Mapping, Optional, Sequence, Tuple
+from herzchen.command_ports import command_facade
 
 from herzchen.contracts import (
     AuthenticatedActor,
@@ -346,16 +342,16 @@ def contribution() -> DomainContribution:
     )
 
 
-class DecisionsModule:
+class _DecisionsModuleEngine:
     """Typed candidate/decision/waiting operations over one FND Store."""
 
     def __init__(self, store: Store, *, assessment: Any = None, actor: Optional[AuthenticatedActor] = None) -> None:
         if not hasattr(store, "transaction") or not hasattr(store, "mutate"):
             raise TypeError("store must be the supplied FND writer")
         from .module import work_handler
-        _COMMAND_PORTS[self] = work_handler(store)
-        self.reader = _COMMAND_PORTS[self].consumer()
-        _KERNEL_PORTS[self] = getattr(_COMMAND_PORTS[self], "_owner", store)
+        self.__writer = work_handler(store)
+        self.reader = self.__writer.consumer()
+        self.__kernel = getattr(self.__writer, "_owner", store)
         self.assessment = assessment
         self.default_actor = actor
 
@@ -411,8 +407,8 @@ class DecisionsModule:
             "provenance": _safe(dict(provenance or {})), "annotations": {},
             "pin_digest": _digest(pin.to_dict()), "accepts_obligation": False,
         }
-        with _COMMAND_PORTS[self].transaction() as tx:
-            receipt = _COMMAND_PORTS[self].mutate(
+        with self.__writer.transaction() as tx:
+            receipt = self.__writer.mutate(
                 self._envelope("work.candidate.create", target, payload, key, actor, expected_version=0,
                                digest_payload={"candidate": target, "payload": payload}),
                 event_type="work.candidate.created", result_ref=self._rev(target, 1),
@@ -455,8 +451,8 @@ class DecisionsModule:
         target = self._new_target(key, CANDIDATE_ANNOTATION_KIND)
         payload = {"record_type": CANDIDATE_ANNOTATION_KIND, "schema_revision": SCHEMA_REVISION,
                    "candidate_ref": current.ref, "annotation": _safe(dict(annotation))}
-        with _COMMAND_PORTS[self].transaction() as tx:
-            receipt = _COMMAND_PORTS[self].mutate(self._envelope("work.candidate.annotate", target, payload, key, actor, expected_version=0),
+        with self.__writer.transaction() as tx:
+            receipt = self.__writer.mutate(self._envelope("work.candidate.annotate", target, payload, key, actor, expected_version=0),
                                         event_type="work.candidate.annotated", result_ref=self._rev(target, 1),
                                         before_refs=(current.ref,), effects={"candidate_ref": current.ref, "annotation_only": True, "invalidates": ()},
                                         stream="candidate:" + current.ref.id, transaction=tx)
@@ -469,7 +465,7 @@ class DecisionsModule:
         current = self.get_candidate(candidate)
         affected: list[ResourceRef] = []
         for pinned in current.pin.all_refs:
-            identity = _COMMAND_PORTS[self].get_identity(ResourceRef(pinned.authority, pinned.kind, pinned.id))
+            identity = self.__writer.get_identity(ResourceRef(pinned.authority, pinned.kind, pinned.id))
             if identity is None or identity.ref.revision != pinned.revision:
                 affected.append(pinned)
         ignored = tuple(_ref(value, "annotation") for value in annotation_refs)
@@ -570,8 +566,8 @@ class DecisionsModule:
             "completion_contract": _safe(dict(completion_contract or {})), "required_decision_refs": required_decisions,
             "accepted": False, "accepts_obligation": False, "obligation_closed": False,
         }
-        with _COMMAND_PORTS[self].transaction() as tx:
-            receipt = _COMMAND_PORTS[self].mutate(self._envelope("work.decision.record", target, payload, key, selected_actor, expected_version=0,
+        with self.__writer.transaction() as tx:
+            receipt = self.__writer.mutate(self._envelope("work.decision.record", target, payload, key, selected_actor, expected_version=0,
                                                        digest_payload={"subject": subject_ref, "candidate": candidate_ref, "criterion": criterion_ref,
                                                                        "payload": payload}),
                                         event_type="work.decision.recorded", result_ref=self._rev(target, 1),
@@ -602,8 +598,8 @@ class DecisionsModule:
     read_decision = get_decision
 
     def list_decisions(self, *, subject: Any = None) -> Tuple[DecisionRecord, ...]:
-        rows = _COMMAND_PORTS[self].connection.execute("SELECT authority, kind, id FROM identities WHERE authority = ? AND kind = ? ORDER BY id",
-                                             (_COMMAND_PORTS[self].authority, DECISION_KIND)).fetchall()
+        rows = self.__writer.connection.execute("SELECT authority, kind, id FROM identities WHERE authority = ? AND kind = ? ORDER BY id",
+                                             (self.__writer.authority, DECISION_KIND)).fetchall()
         values = tuple(self.get_decision(ResourceRef(row["authority"], row["kind"], row["id"])) for row in rows)
         if subject is None:
             return values
@@ -634,7 +630,7 @@ class DecisionsModule:
             raise WaitingError("a cap must wait for the real decision, not an equivalent renamed review")
         subject_ref = self._current_ref(_ref(subject, "subject"), "subject")
         awaited = self._pin_reference(awaited_ref, "awaited_ref")
-        awaited_identity = _COMMAND_PORTS[self].get_identity(ResourceRef(awaited.authority, awaited.kind, awaited.id))
+        awaited_identity = self.__writer.get_identity(ResourceRef(awaited.authority, awaited.kind, awaited.id))
         current_revision = awaited_identity.ref.revision if awaited_identity is not None else awaited.revision
         required = None if required_decision_ref is None else self._current_ref(_ref(required_decision_ref, "required_decision_ref"), "required_decision_ref")
         if cap_reached and required is None:
@@ -663,8 +659,8 @@ class DecisionsModule:
             "verification_choice": _safe(verification_choice), "metadata": _safe(meta),
             "dispatch": False, "allowance": None, "reservation_ref": None, "launch": False,
         }
-        with _COMMAND_PORTS[self].transaction() as tx:
-            receipt = _COMMAND_PORTS[self].mutate(self._envelope("work.wait.record", target, payload, key, actor, expected_version=0),
+        with self.__writer.transaction() as tx:
+            receipt = self.__writer.mutate(self._envelope("work.wait.record", target, payload, key, actor, expected_version=0),
                                         event_type="work.wait.recorded", result_ref=self._rev(target, 1),
                                         before_refs=(subject_ref, awaited) + ((required,) if required else ()),
                                         effects={"attention_key": attention_key, "attention_only": True, "dispatch": False,
@@ -696,7 +692,7 @@ class DecisionsModule:
     def reconcile_notifications(
         self, stream: str, *, cursor: Optional[str] = None, event_filter: Optional[EventFilter] = None, limit: int = 100,
     ) -> AttentionReconciliation:
-        page = EventCursorReader(_KERNEL_PORTS[self]).catch_up(stream, cursor=cursor, event_filter=event_filter, limit=limit)
+        page = EventCursorReader(self.__kernel).catch_up(stream, cursor=cursor, event_filter=event_filter, limit=limit)
         return AttentionReconciliation(page, page.cursor, False, False, page.status == "gap")
 
     reconcile_attention = reconcile_notifications
@@ -712,9 +708,9 @@ class DecisionsModule:
         self, interval: Any, *, interval_seconds: int, now: Any = None, actor: Optional[AuthenticatedActor] = None,
     ) -> IntervalDecision:
         ref = _ref(interval, "interval")
-        if ref.authority != _COMMAND_PORTS[self].authority or ref.kind != INTERVAL_KIND or ref.revision is not None:
+        if ref.authority != self.__writer.authority or ref.kind != INTERVAL_KIND or ref.revision is not None:
             raise WaitingError("interval must be an unpinned attention-interval identity in this Store")
-        controller = IntervalController(_KERNEL_PORTS[self], ref, interval_seconds, actor=actor or self.default_actor)
+        controller = IntervalController(self.__kernel, ref, interval_seconds, actor=actor or self.default_actor)
         return controller.poll(now=now)
 
     # ---- explicit manager action ---------------------------------------------
@@ -738,8 +734,8 @@ class DecisionsModule:
                    "manager": manager, "action": action, "available_actions": actions, "context": _safe(ctx),
                    "residual_risk": _safe(residual_risk), "verification_choice": _safe(verification_choice),
                    "automatic_dispatch": False, "next_task": None, "workflow_score": None}
-        with _COMMAND_PORTS[self].transaction() as tx:
-            receipt = _COMMAND_PORTS[self].mutate(self._envelope("work.manager-choice.record", target, payload, key, selected_actor, expected_version=0),
+        with self.__writer.transaction() as tx:
+            receipt = self.__writer.mutate(self._envelope("work.manager-choice.record", target, payload, key, selected_actor, expected_version=0),
                                         event_type="work.manager-choice.recorded", result_ref=self._rev(target, 1),
                                         before_refs=(subject_ref,), effects={"manager": manager, "action": action, "automatic_dispatch": False,
                                                                               "next_task": None}, stream="manager-choice:" + subject_ref.id, transaction=tx)
@@ -769,16 +765,16 @@ class DecisionsModule:
         return _opaque(value or prefix + "-" + uuid.uuid4().hex, "logical_request_key")
 
     def _new_target(self, ident: Any, kind: str) -> ResourceRef:
-        return ResourceRef(_COMMAND_PORTS[self].authority, kind, _opaque(ident, kind + " id"))
+        return ResourceRef(self.__writer.authority, kind, _opaque(ident, kind + " id"))
 
     @staticmethod
     def _rev(ref: ResourceRef, version: int) -> ResourceRef:
         return ResourceRef(ref.authority, ref.kind, ref.id, "rev-" + str(version))
 
     def _current_ref(self, ref: ResourceRef, field: str) -> ResourceRef:
-        if ref.authority != _COMMAND_PORTS[self].authority:
+        if ref.authority != self.__writer.authority:
             raise TargetMismatchError(f"{field} authority does not belong to this Store")
-        identity = _COMMAND_PORTS[self].get_identity(ResourceRef(ref.authority, ref.kind, ref.id))
+        identity = self.__writer.get_identity(ResourceRef(ref.authority, ref.kind, ref.id))
         if identity is None:
             raise DecisionError(f"{field} identity is not admitted")
         if ref.revision is not None and ref.revision != identity.ref.revision:
@@ -787,13 +783,13 @@ class DecisionsModule:
 
     def _pin_reference(self, value: Any, field: str) -> ResourceRef:
         ref = _ref(value, field)
-        if ref.authority != _COMMAND_PORTS[self].authority:
+        if ref.authority != self.__writer.authority:
             raise TargetMismatchError(f"{field} authority does not belong to this Store")
-        identity = _COMMAND_PORTS[self].get_identity(ResourceRef(ref.authority, ref.kind, ref.id))
+        identity = self.__writer.get_identity(ResourceRef(ref.authority, ref.kind, ref.id))
         if identity is None:
             raise DecisionError(f"{field} identity is not admitted")
         if ref.revision is not None:
-            if _COMMAND_PORTS[self].get_reference(ref) is None and identity.ref.revision != ref.revision:
+            if self.__writer.get_reference(ref) is None and identity.ref.revision != ref.revision:
                 raise DecisionError(f"{field} pinned revision is not retained")
             return ref
         return identity.ref
@@ -806,7 +802,7 @@ class DecisionsModule:
 
     def _identity(self, target: Any, kind: str, error: type[Exception]) -> Any:
         ref = _ref(target, kind)
-        identity = _COMMAND_PORTS[self].get_identity(ResourceRef(ref.authority, ref.kind, ref.id))
+        identity = self.__writer.get_identity(ResourceRef(ref.authority, ref.kind, ref.id))
         if identity is None or identity.ref.kind != kind:
             raise error(f"{kind} not found: {target!r}")
         if ref.revision is not None and ref.revision != identity.ref.revision:
@@ -827,15 +823,16 @@ class DecisionsModule:
                                dict(payload))
 
     def _receipt_for_target(self, target: ResourceRef) -> Any:
-        rows = _COMMAND_PORTS[self].connection.execute("SELECT logical_request_key FROM command_receipts WHERE target_authority = ? AND target_kind = ? AND target_id = ? ORDER BY rowid DESC LIMIT 1",
+        rows = self.__writer.connection.execute("SELECT logical_request_key FROM command_receipts WHERE target_authority = ? AND target_kind = ? AND target_id = ? ORDER BY rowid DESC LIMIT 1",
                                              (target.authority, target.kind, target.id)).fetchall()
-        return None if not rows else _COMMAND_PORTS[self].get_receipt(rows[0]["logical_request_key"])
+        return None if not rows else self.__writer.get_receipt(rows[0]["logical_request_key"])
 
     @staticmethod
     def _approval(value: str) -> bool:
         return str(value).strip().lower() in {"approve", "approved", "accept", "accepted", "accept-with-risk"}
 
 
+DecisionsModule = command_facade(_DecisionsModuleEngine, DOMAIN_ID)
 DecisionStore = DecisionsModule
 DecisionModule = DecisionsModule
 WorkDecisions = DecisionsModule

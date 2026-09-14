@@ -8,14 +8,11 @@ receipts, operation identity, and reservation together.
 
 from __future__ import annotations
 
-import weakref
-
-_COMMAND_PORTS = weakref.WeakKeyDictionary()
-
 from dataclasses import replace
 import hashlib
 import uuid
 from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Sequence, Tuple
+from herzchen.command_ports import command_facade
 
 from herzchen.contracts import (
     AuthenticatedActor,
@@ -158,25 +155,25 @@ def contribution() -> DomainContribution:
     )
 
 
-class AssessmentModule:
+class _AssessmentModuleEngine:
     """One shared assessment surface for Megado and creative protocols."""
 
     def __init__(self, store: Store, *, actor: Optional[AuthenticatedActor] = None) -> None:
         if not isinstance(store, Store):
             raise TypeError("store must be the supplied FND Store")
         try:
-            _COMMAND_PORTS[self] = store.domain_handler((contribution(),))
+            self.__writer = store.domain_handler((contribution(),))
         except Exception:
-            _COMMAND_PORTS[self] = store
-        self.reader = _COMMAND_PORTS[self].consumer()
+            self.__writer = store
+        self.reader = self.__writer.consumer()
         self.default_actor = actor
         self.limits = LimitService(store)
         self.operations = OperationManager(store)
 
     def register(self) -> DomainContribution:
         descriptor = contribution()
-        _COMMAND_PORTS[self] = _COMMAND_PORTS[self].register_domain_handler((descriptor,))
-        self.reader = _COMMAND_PORTS[self].consumer()
+        self.__writer = self.__writer.register_domain_handler((descriptor,))
+        self.reader = self.__writer.consumer()
         return descriptor
 
     # ---- scope and frozen input -------------------------------------------------
@@ -211,7 +208,7 @@ class AssessmentModule:
                 criterion_refs.append(self._current_ref(_ref(value, "criterion"), "criterion"))
             elif isinstance(value, Mapping):
                 criterion_id = _opaque(value.get("id", f"{request_key}-criterion-{index}"), "criterion id")
-                criterion_ref = ResourceRef(_COMMAND_PORTS[self].authority, CRITERION_KIND, criterion_id, "rev-1")
+                criterion_ref = ResourceRef(self.__writer.authority, CRITERION_KIND, criterion_id, "rev-1")
                 criterion_refs.append(criterion_ref)
                 child_specs.append((criterion_ref, {"record_type": CRITERION_KIND, "id": criterion_id, "definition": _safe(dict(value)), "schema_revision": SCHEMA_REVISION}))
             else:
@@ -228,14 +225,14 @@ class AssessmentModule:
             "authority": authority,
             "policy": dict(policy or {}),
         }
-        with _COMMAND_PORTS[self].transaction() as tx:
+        with self.__writer.transaction() as tx:
             envelope = self._envelope("assessment.scope.declare", scope_ref, payload, request_key, selected_actor, expected_version=0)
-            prior = _COMMAND_PORTS[self].get_receipt(request_key)
-            receipt = _COMMAND_PORTS[self].mutate(envelope, event_type="assessment.scope.declared", result_ref=ResourceRef(scope_ref.authority, scope_ref.kind, scope_ref.id, "rev-1"), before_refs=(parent_ref,), effects={"criterion_refs": tuple(criterion_refs), "protocol": protocol, "logical_parent": True}, stream=ASSESSMENT_STREAM, transaction=tx)
+            prior = self.__writer.get_receipt(request_key)
+            receipt = self.__writer.mutate(envelope, event_type="assessment.scope.declared", result_ref=ResourceRef(scope_ref.authority, scope_ref.kind, scope_ref.id, "rev-1"), before_refs=(parent_ref,), effects={"criterion_refs": tuple(criterion_refs), "protocol": protocol, "logical_parent": True}, stream=ASSESSMENT_STREAM, transaction=tx)
             if prior is None:
                 for child_ref, child_payload in child_specs:
-                    _COMMAND_PORTS[self].put_identity(child_ref, child_payload, version=1, transaction=tx)
-                    _COMMAND_PORTS[self].put_reference(child_ref, transaction=tx)
+                    self.__writer.put_identity(child_ref, child_payload, version=1, transaction=tx)
+                    self.__writer.put_reference(child_ref, transaction=tx)
         return self.get_scope(scope_ref)
 
     create_scope = declare_scope
@@ -257,8 +254,8 @@ class AssessmentModule:
         request_key = self._key(logical_request_key, "input")
         ref = self._stable_local(input_ref or request_key, INPUT_KIND)
         payload = {"record_type": INPUT_KIND, "schema_revision": SCHEMA_REVISION, "scope_ref": scope_record.ref, "consumed_refs": consumed, "packet": _safe(dict(packet)), "packet_digest": _digest(packet)}
-        with _COMMAND_PORTS[self].transaction() as tx:
-            receipt = _COMMAND_PORTS[self].mutate(self._envelope("assessment.input.freeze", ref, payload, request_key, self._actor(actor), expected_version=0), event_type="assessment.input.frozen", result_ref=ResourceRef(ref.authority, ref.kind, ref.id, "rev-1"), before_refs=(scope_record.ref,), effects={"scope_ref": scope_record.ref, "consumed_refs": consumed}, stream=ASSESSMENT_STREAM, transaction=tx)
+        with self.__writer.transaction() as tx:
+            receipt = self.__writer.mutate(self._envelope("assessment.input.freeze", ref, payload, request_key, self._actor(actor), expected_version=0), event_type="assessment.input.frozen", result_ref=ResourceRef(ref.authority, ref.kind, ref.id, "rev-1"), before_refs=(scope_record.ref,), effects={"scope_ref": scope_record.ref, "consumed_refs": consumed}, stream=ASSESSMENT_STREAM, transaction=tx)
         return self.get_input(receipt.result_ref or ref)
 
     create_input_packet = freeze_input
@@ -277,7 +274,7 @@ class AssessmentModule:
     ) -> CandidateSelection:
         scope_record = self.get_scope(scope)
         candidate_ref = self._current_ref(_ref(candidate, "candidate"), "candidate")
-        candidate_identity = _COMMAND_PORTS[self].get_identity(candidate_ref)
+        candidate_identity = self.__writer.get_identity(candidate_ref)
         if candidate_identity is None:  # pragma: no cover - guarded by _current_ref
             raise AssessmentNotFoundError("candidate identity is not admitted")
         self._validate_candidate(candidate_identity.payload)
@@ -286,8 +283,8 @@ class AssessmentModule:
         request_key = self._key(logical_request_key, "selection")
         ref = self._stable_local(request_key, SELECTION_KIND)
         payload = {"record_type": SELECTION_KIND, "schema_revision": SCHEMA_REVISION, "scope_ref": scope_record.ref, "candidate_ref": candidate_ref, "criterion_ref": criterion_ref, "rationale": _opaque(rationale, "rationale"), "author": self._actor(actor).actor, "accepts": False}
-        with _COMMAND_PORTS[self].transaction() as tx:
-            receipt = _COMMAND_PORTS[self].mutate(self._envelope("assessment.candidate.select", ref, payload, request_key, self._actor(actor), expected_version=0), event_type="assessment.candidate.selected", result_ref=ResourceRef(ref.authority, ref.kind, ref.id, "rev-1"), before_refs=(scope_record.ref, candidate_ref, criterion_ref), effects={"selection_only": True, "accepts": False}, stream=ASSESSMENT_STREAM, transaction=tx)
+        with self.__writer.transaction() as tx:
+            receipt = self.__writer.mutate(self._envelope("assessment.candidate.select", ref, payload, request_key, self._actor(actor), expected_version=0), event_type="assessment.candidate.selected", result_ref=ResourceRef(ref.authority, ref.kind, ref.id, "rev-1"), before_refs=(scope_record.ref, candidate_ref, criterion_ref), effects={"selection_only": True, "accepts": False}, stream=ASSESSMENT_STREAM, transaction=tx)
         return self.get_selection(receipt.result_ref or ref)
 
     choose_candidate = select_candidate
@@ -315,7 +312,7 @@ class AssessmentModule:
     ) -> AssessmentResult:
         scope_record = self.get_scope(scope)
         candidate_ref = self._current_ref(_ref(candidate, "candidate"), "candidate")
-        candidate_identity = _COMMAND_PORTS[self].get_identity(candidate_ref)
+        candidate_identity = self.__writer.get_identity(candidate_ref)
         if candidate_identity is None:  # pragma: no cover - guarded by _current_ref
             raise AssessmentNotFoundError("candidate identity is not admitted")
         self._validate_candidate(candidate_identity.payload)
@@ -327,24 +324,24 @@ class AssessmentModule:
         route = _opaque(route, "route")
         role = _opaque(role, "role")
         request_key = self._key(logical_request_key, "assessment")
-        result_ref = ResourceRef(_COMMAND_PORTS[self].authority, RESULT_KIND, request_key)
+        result_ref = ResourceRef(self.__writer.authority, RESULT_KIND, request_key)
         parent_ref = scope_record.parent_obligation_ref
         pool_ref = self._stable_local(limit_pool, "limit") if isinstance(limit_pool, str) else _ref(limit_pool, "limit pool")
         pool_ref = ResourceRef(pool_ref.authority, pool_ref.kind, pool_ref.id)
-        reservation_ref = ResourceRef(_COMMAND_PORTS[self].authority, "reservation", request_key + "-reservation")
+        reservation_ref = ResourceRef(self.__writer.authority, "reservation", request_key + "-reservation")
         operation_key = request_key + "-invocation"
-        invocation_ref = ResourceRef(_COMMAND_PORTS[self].authority, INVOCATION_KIND, request_key)
+        invocation_ref = ResourceRef(self.__writer.authority, INVOCATION_KIND, request_key)
         body_for_digest = {"scope": scope_record.ref, "candidate": candidate_ref, "criterion": criterion_ref, "input": packet.ref, "verdict": selected_verdict.value, "guidance": dict(guidance or {}), "protocol_result": dict(protocol_result or {}), "findings": [_safe(item) for item in findings], "pool": pool_ref, "declared_units": declared_units, "actual_units": actual_units, "route": route, "role": role, "operation_payload": dict(operation_payload or {})}
         selected_actor = self._actor(actor)
         parent_payload = {"record_type": RESULT_KIND, "schema_revision": SCHEMA_REVISION, "scope_ref": scope_record.ref, "parent_obligation_ref": parent_ref, "criterion_ref": criterion_ref, "candidate_ref": candidate_ref, "input_packet_ref": packet.ref, "verdict": selected_verdict.value, "guidance": _safe(dict(guidance or {})), "protocol_result": _safe(dict(protocol_result or {})), "route": route, "role": role, "invocation_ref": invocation_ref, "reservation_ref": reservation_ref, "finding_refs": (), "correction_refs": (), "accepted": False}
-        with _COMMAND_PORTS[self].transaction() as tx:
+        with self.__writer.transaction() as tx:
             envelope = self._envelope("assessment.run", result_ref, body_for_digest, request_key, selected_actor, expected_version=0)
-            prior = _COMMAND_PORTS[self].get_receipt(request_key)
+            prior = self.__writer.get_receipt(request_key)
             if prior is not None:
                 validate_replay(prior, envelope)
                 return self.get_result(prior.result_ref or result_ref)
             reservation = self.limits.reserve(pool_ref, reservation_ref, declared_units, logical_request_key=request_key + "-reserve", actor=selected_actor, transaction=tx)
-            request = OperationRequest("assessment.invocation", "assessment.invocation.v1", ResourceRef(_COMMAND_PORTS[self].authority, "assessment-adapter", route), selected_actor, operation_key, _digest({"operation": operation_key, "payload": body_for_digest}), {"assessment_ref": result_ref, "route": route, "role": role, **dict(operation_payload or {})}, invocation_ref, parent_ref)
+            request = OperationRequest("assessment.invocation", "assessment.invocation.v1", ResourceRef(self.__writer.authority, "assessment-adapter", route), selected_actor, operation_key, _digest({"operation": operation_key, "payload": body_for_digest}), {"assessment_ref": result_ref, "route": route, "role": role, **dict(operation_payload or {})}, invocation_ref, parent_ref)
             operation = self.operations.prepare(request, transaction=tx)
             state = OperationState.UNKNOWN if selected_verdict is Verdict.UNKNOWN else (OperationState.FAILED if selected_verdict is Verdict.REWORK and bool((protocol_result or {}).get("invocation_failed")) else OperationState.COMMITTED)
             if state is OperationState.UNKNOWN:
@@ -353,10 +350,10 @@ class AssessmentModule:
                 operation = self.operations.record_outcome(operation, state, {"verdict": selected_verdict.value, "protocol_result": dict(protocol_result or {})}, transition_key=operation_key + "-outcome", transaction=tx)
             charged = declared_units if actual_units is None else actual_units
             settled = self.limits.settle(reservation, charged, logical_request_key=request_key + "-settle", actor=selected_actor, transaction=tx)
-            reservation_stable = ResourceRef(_COMMAND_PORTS[self].authority, "reservation", reservation_ref.id)
+            reservation_stable = ResourceRef(self.__writer.authority, "reservation", reservation_ref.id)
             invocation_payload = {"record_type": INVOCATION_KIND, "schema_revision": SCHEMA_REVISION, "operation_ref": operation.operation_ref, "reservation_ref": reservation_stable, "route": route, "role": role, "state": operation.state.value, "declared_units": declared_units, "actual_units": charged, "result": _safe(operation.result), "parent_obligation_ref": parent_ref}
-            _COMMAND_PORTS[self].put_identity(invocation_ref, invocation_payload, version=1, transaction=tx)
-            _COMMAND_PORTS[self].put_reference(invocation_ref, transaction=tx)
+            self.__writer.put_identity(invocation_ref, invocation_payload, version=1, transaction=tx)
+            self.__writer.put_reference(invocation_ref, transaction=tx)
             if failure_injector is not None:
                 failure_injector("after-invocation")
             finding_refs: list[ResourceRef] = []
@@ -370,7 +367,7 @@ class AssessmentModule:
             # copies its payload, so a pre-child envelope would lose the
             # finding links even though the transaction remained atomic.
             envelope = self._envelope("assessment.run", result_ref, body_for_digest, request_key, selected_actor, expected_version=0)
-            receipt = _COMMAND_PORTS[self].mutate(envelope, identity_payload=parent_payload, event_type="assessment.completed", result_ref=ResourceRef(_COMMAND_PORTS[self].authority, RESULT_KIND, result_ref.id, "rev-1"), before_refs=(scope_record.ref, parent_ref, candidate_ref, criterion_ref, packet.ref), effects={"logical_parent": True, "invocation_ref": invocation_ref, "reservation_ref": reservation_stable, "finding_refs": tuple(finding_refs), "verdict": selected_verdict.value, "protocol": scope_record.protocol}, stream=ASSESSMENT_STREAM, transaction=tx)
+            receipt = self.__writer.mutate(envelope, identity_payload=parent_payload, event_type="assessment.completed", result_ref=ResourceRef(self.__writer.authority, RESULT_KIND, result_ref.id, "rev-1"), before_refs=(scope_record.ref, parent_ref, candidate_ref, criterion_ref, packet.ref), effects={"logical_parent": True, "invocation_ref": invocation_ref, "reservation_ref": reservation_stable, "finding_refs": tuple(finding_refs), "verdict": selected_verdict.value, "protocol": scope_record.protocol}, stream=ASSESSMENT_STREAM, transaction=tx)
             if failure_injector is not None:
                 failure_injector("after-parent")
         return self.get_result(receipt.result_ref or result_ref)
@@ -399,13 +396,13 @@ class AssessmentModule:
             if finding.result_ref.id != current.ref.id:
                 raise AssessmentError("correction finding belongs to another result")
         key = self._key(logical_request_key, "correction")
-        correction_ref = ResourceRef(_COMMAND_PORTS[self].authority, CORRECTION_KIND, key)
+        correction_ref = ResourceRef(self.__writer.authority, CORRECTION_KIND, key)
         payload = {"record_type": CORRECTION_KIND, "schema_revision": SCHEMA_REVISION, "result_ref": current.ref, "parent_obligation_ref": current.parent_obligation_ref, "finding_refs": refs, "instruction": _opaque(instruction, "instruction"), "status": "open"}
         result_payload = dict(current.payload)
         result_payload["correction_refs"] = tuple(list(result_payload.get("correction_refs", ())) + [correction_ref])
-        with _COMMAND_PORTS[self].transaction() as tx:
-            receipt = _COMMAND_PORTS[self].mutate(self._envelope("assessment.correction.create", correction_ref, payload, key, self._actor(actor), expected_version=0), event_type="assessment.correction.created", result_ref=ResourceRef(_COMMAND_PORTS[self].authority, CORRECTION_KIND, key, "rev-1"), before_refs=(current.ref, current.parent_obligation_ref), effects={"result_ref": current.ref, "finding_refs": refs, "parent_obligation_ref": current.parent_obligation_ref}, stream=ASSESSMENT_STREAM, transaction=tx)
-            _COMMAND_PORTS[self].mutate(self._envelope("assessment.result.link-correction", current.ref, result_payload, key + "-result", self._actor(actor), expected_version=current.version, expected_revision=current.ref.revision), event_type="assessment.result.correction-linked", effects={"correction_ref": correction_ref, "parent_obligation_ref": current.parent_obligation_ref}, stream=ASSESSMENT_STREAM, transaction=tx)
+        with self.__writer.transaction() as tx:
+            receipt = self.__writer.mutate(self._envelope("assessment.correction.create", correction_ref, payload, key, self._actor(actor), expected_version=0), event_type="assessment.correction.created", result_ref=ResourceRef(self.__writer.authority, CORRECTION_KIND, key, "rev-1"), before_refs=(current.ref, current.parent_obligation_ref), effects={"result_ref": current.ref, "finding_refs": refs, "parent_obligation_ref": current.parent_obligation_ref}, stream=ASSESSMENT_STREAM, transaction=tx)
+            self.__writer.mutate(self._envelope("assessment.result.link-correction", current.ref, result_payload, key + "-result", self._actor(actor), expected_version=current.version, expected_revision=current.ref.revision), event_type="assessment.result.correction-linked", effects={"correction_ref": correction_ref, "parent_obligation_ref": current.parent_obligation_ref}, stream=ASSESSMENT_STREAM, transaction=tx)
         return self.get_correction(receipt.result_ref or correction_ref)
 
     request_correction = create_correction
@@ -430,8 +427,8 @@ class AssessmentModule:
         payload = dict(current.payload)
         payload.update({"status": "closed", "evidence_refs": refs, "closure_rationale": rationale, "closure_test_only": bool(test_only)})
         key = self._key(logical_request_key, "finding-close")
-        with _COMMAND_PORTS[self].transaction() as tx:
-            receipt = _COMMAND_PORTS[self].mutate(self._envelope("assessment.finding.close", current.ref, payload, key, self._actor(actor), expected_version=current.version, expected_revision=current.ref.revision), event_type="assessment.finding.closed", effects={"finding_ref": current.ref, "evidence_refs": refs, "test_only": bool(test_only)}, stream=ASSESSMENT_STREAM, transaction=tx)
+        with self.__writer.transaction() as tx:
+            receipt = self.__writer.mutate(self._envelope("assessment.finding.close", current.ref, payload, key, self._actor(actor), expected_version=current.version, expected_revision=current.ref.revision), event_type="assessment.finding.closed", effects={"finding_ref": current.ref, "evidence_refs": refs, "test_only": bool(test_only)}, stream=ASSESSMENT_STREAM, transaction=tx)
         return self.get_finding(receipt.result_ref or current.ref)
 
     resolve_finding = close_finding
@@ -473,11 +470,11 @@ class AssessmentModule:
             raise AssessmentAuthorityError("test-only evidence cannot clear subjective or unresolved findings")
         decision_value = disposition if isinstance(disposition, Disposition) else Disposition(str(disposition))
         key = self._key(logical_request_key, "accept")
-        decision_ref = ResourceRef(_COMMAND_PORTS[self].authority, DECISION_KIND, key)
+        decision_ref = ResourceRef(self.__writer.authority, DECISION_KIND, key)
         evidence = tuple(self._current_ref(_ref(value, "evidence"), "evidence") for value in evidence_refs)
         payload = {"record_type": DECISION_KIND, "schema_revision": SCHEMA_REVISION, "parent_obligation_ref": current.parent_obligation_ref, "result_ref": current.ref, "candidate_ref": current.candidate_ref, "criterion_ref": current.criterion_ref, "author": approver, "authority": authority or selected_actor.authority, "rationale": _opaque(rationale, "rationale"), "disposition": decision_value.value, "evidence_refs": evidence, "review_evidence": review_refs, "return_condition": return_condition}
-        with _COMMAND_PORTS[self].transaction() as tx:
-            receipt = _COMMAND_PORTS[self].mutate(self._envelope("assessment.accept", decision_ref, payload, key, selected_actor, expected_version=0), event_type="assessment.accepted", before_refs=(current.ref, current.parent_obligation_ref, current.candidate_ref, current.criterion_ref), effects={"accepted": decision_value in (Disposition.ACCEPT, Disposition.ACCEPT_WITH_RISK), "candidate_ref": current.candidate_ref, "criterion_ref": current.criterion_ref, "authority": authority or selected_actor.authority}, stream=ASSESSMENT_STREAM, transaction=tx)
+        with self.__writer.transaction() as tx:
+            receipt = self.__writer.mutate(self._envelope("assessment.accept", decision_ref, payload, key, selected_actor, expected_version=0), event_type="assessment.accepted", before_refs=(current.ref, current.parent_obligation_ref, current.candidate_ref, current.criterion_ref), effects={"accepted": decision_value in (Disposition.ACCEPT, Disposition.ACCEPT_WITH_RISK), "candidate_ref": current.candidate_ref, "criterion_ref": current.criterion_ref, "authority": authority or selected_actor.authority}, stream=ASSESSMENT_STREAM, transaction=tx)
         return self.get_decision(receipt.result_ref or decision_ref)
 
     approve = accept
@@ -506,11 +503,11 @@ class AssessmentModule:
         approver = author or selected_actor.actor
         self._check_approver(scope_record, approver, authority or selected_actor.authority)
         key = self._key(logical_request_key, "no-review-accept")
-        decision_ref = ResourceRef(_COMMAND_PORTS[self].authority, DECISION_KIND, key)
+        decision_ref = ResourceRef(self.__writer.authority, DECISION_KIND, key)
         evidence = tuple(self._current_ref(_ref(value, "evidence"), "evidence") for value in evidence_refs)
         payload = {"record_type": DECISION_KIND, "schema_revision": SCHEMA_REVISION, "parent_obligation_ref": scope_record.parent_obligation_ref, "result_ref": None, "candidate_ref": candidate_ref, "criterion_ref": criterion_ref, "author": approver, "authority": authority or selected_actor.authority, "rationale": _opaque(rationale, "rationale"), "disposition": Disposition.ACCEPT.value, "evidence_refs": evidence, "review_evidence": (), "return_condition": return_condition, "no_review": True}
-        with _COMMAND_PORTS[self].transaction() as tx:
-            receipt = _COMMAND_PORTS[self].mutate(self._envelope("assessment.accept", decision_ref, payload, key, selected_actor, expected_version=0), event_type="assessment.accepted", before_refs=(scope_record.parent_obligation_ref, candidate_ref, criterion_ref), effects={"accepted": True, "no_review": True, "candidate_ref": candidate_ref, "criterion_ref": criterion_ref}, stream=ASSESSMENT_STREAM, transaction=tx)
+        with self.__writer.transaction() as tx:
+            receipt = self.__writer.mutate(self._envelope("assessment.accept", decision_ref, payload, key, selected_actor, expected_version=0), event_type="assessment.accepted", before_refs=(scope_record.parent_obligation_ref, candidate_ref, criterion_ref), effects={"accepted": True, "no_review": True, "candidate_ref": candidate_ref, "criterion_ref": criterion_ref}, stream=ASSESSMENT_STREAM, transaction=tx)
         return self.get_decision(receipt.result_ref or decision_ref)
 
     def dispose_unknown(
@@ -532,10 +529,10 @@ class AssessmentModule:
         self._check_approver(scope, selected_actor.actor, authority)
         value = disposition if isinstance(disposition, Disposition) else Disposition(str(disposition))
         key = self._key(logical_request_key, "unknown-disposition")
-        decision_ref = ResourceRef(_COMMAND_PORTS[self].authority, DECISION_KIND, key)
+        decision_ref = ResourceRef(self.__writer.authority, DECISION_KIND, key)
         payload = {"record_type": DECISION_KIND, "schema_revision": SCHEMA_REVISION, "parent_obligation_ref": current.parent_obligation_ref, "result_ref": current.ref, "candidate_ref": current.candidate_ref, "criterion_ref": current.criterion_ref, "author": selected_actor.actor, "authority": authority, "rationale": _opaque(rationale, "rationale"), "disposition": value.value, "evidence_refs": (), "review_evidence": (), "return_condition": return_condition, "unknown_disposition": True}
-        with _COMMAND_PORTS[self].transaction() as tx:
-            receipt = _COMMAND_PORTS[self].mutate(self._envelope("assessment.unknown.disposition", decision_ref, payload, key, selected_actor, expected_version=0), event_type="assessment.unknown.disposed", before_refs=(current.ref, current.parent_obligation_ref, current.candidate_ref, current.criterion_ref), effects={"unknown": True, "disposition": value.value, "authority": authority}, stream=ASSESSMENT_STREAM, transaction=tx)
+        with self.__writer.transaction() as tx:
+            receipt = self.__writer.mutate(self._envelope("assessment.unknown.disposition", decision_ref, payload, key, selected_actor, expected_version=0), event_type="assessment.unknown.disposed", before_refs=(current.ref, current.parent_obligation_ref, current.candidate_ref, current.criterion_ref), effects={"unknown": True, "disposition": value.value, "authority": authority}, stream=ASSESSMENT_STREAM, transaction=tx)
         return self.get_decision(receipt.result_ref or decision_ref)
 
     resolve_unknown = dispose_unknown
@@ -555,10 +552,10 @@ class AssessmentModule:
             raise AssessmentError("loop facts counts must be non-negative")
         parent = self._current_ref(_ref(parent_obligation, "parent_obligation"), "parent_obligation")
         key = self._key(logical_request_key, "loop-facts")
-        target = ResourceRef(_COMMAND_PORTS[self].authority, LOOP_FACTS_KIND, key)
+        target = ResourceRef(self.__writer.authority, LOOP_FACTS_KIND, key)
         payload = {"record_type": LOOP_FACTS_KIND, "schema_revision": SCHEMA_REVISION, "parent_obligation_ref": parent, "attempt_count": attempt_count, "unresolved_findings": unresolved_findings, "exhausted_allowance": bool(exhausted_allowance), "required_approver": required_approver, "inference": None}
-        with _COMMAND_PORTS[self].transaction() as tx:
-            receipt = _COMMAND_PORTS[self].mutate(self._envelope("assessment.loop-facts.record", target, payload, key, self._actor(actor), expected_version=0), event_type="assessment.loop-facts.recorded", before_refs=(parent,), effects={"facts_only": True, "inference": None}, stream=ASSESSMENT_STREAM, transaction=tx)
+        with self.__writer.transaction() as tx:
+            receipt = self.__writer.mutate(self._envelope("assessment.loop-facts.record", target, payload, key, self._actor(actor), expected_version=0), event_type="assessment.loop-facts.recorded", before_refs=(parent,), effects={"facts_only": True, "inference": None}, stream=ASSESSMENT_STREAM, transaction=tx)
         return receipt.result_ref or target
 
     # ---- typed reads -------------------------------------------------------------
@@ -608,7 +605,7 @@ class AssessmentModule:
 
     def list_decisions(self, *, parent_obligation: Any = None) -> Tuple[Decision, ...]:
         parent_id = None if parent_obligation is None else self._current_ref(_ref(parent_obligation, "parent_obligation"), "parent_obligation").id
-        rows = _COMMAND_PORTS[self].connection.execute("SELECT * FROM identities WHERE authority = ? AND kind = ? ORDER BY id", (_COMMAND_PORTS[self].authority, DECISION_KIND)).fetchall()
+        rows = self.__writer.connection.execute("SELECT * FROM identities WHERE authority = ? AND kind = ? ORDER BY id", (self.__writer.authority, DECISION_KIND)).fetchall()
         decisions = tuple(self.get_decision(ResourceRef(row["authority"], row["kind"], row["id"])) for row in rows)
         if parent_id is not None:
             decisions = tuple(item for item in decisions if item.parent_obligation_ref.id == parent_id)
@@ -624,10 +621,10 @@ class AssessmentModule:
         # Findings are stable child identities.  Their current revision is
         # read through the unpinned identity ref so closing a finding does not
         # make the parent result's child link stale.
-        finding_ref = ResourceRef(_COMMAND_PORTS[self].authority, FINDING_KIND, finding_id)
+        finding_ref = ResourceRef(self.__writer.authority, FINDING_KIND, finding_id)
         payload = {"record_type": FINDING_KIND, "schema_revision": SCHEMA_REVISION, "result_ref": result_ref, "parent_obligation_ref": parent_ref, "summary": summary, "severity": _opaque(spec.get("severity", "normal"), "finding severity"), "subjective": bool(spec.get("subjective", False)), "status": "open", "correction_ref": None, "evidence_refs": (), "verdict": verdict.value}
-        _COMMAND_PORTS[self].put_identity(finding_ref, payload, version=1, transaction=tx)
-        _COMMAND_PORTS[self].put_reference(finding_ref, transaction=tx)
+        self.__writer.put_identity(finding_ref, payload, version=1, transaction=tx)
+        self.__writer.put_reference(finding_ref, transaction=tx)
         return finding_ref
 
     def _envelope(self, operation: str, target: ResourceRef, payload: Mapping[str, Any], key: str, actor: AuthenticatedActor, *, expected_version: Optional[int] = None, expected_revision: Optional[str] = None, digest_payload: Optional[Mapping[str, Any]] = None) -> CommandEnvelope:
@@ -656,16 +653,16 @@ class AssessmentModule:
 
     def _stable_local(self, value: Any, kind: str) -> ResourceRef:
         if isinstance(value, ResourceRef):
-            if value.authority != _COMMAND_PORTS[self].authority or value.kind != kind or value.revision is not None:
+            if value.authority != self.__writer.authority or value.kind != kind or value.revision is not None:
                 raise AssessmentError(f"{kind} target must be an unpinned local ResourceRef")
             return value
         if isinstance(value, str):
-            return ResourceRef(_COMMAND_PORTS[self].authority, kind, _opaque(value, kind + " id"))
+            return ResourceRef(self.__writer.authority, kind, _opaque(value, kind + " id"))
         raise AssessmentError(f"{kind} target must be an unpinned local ResourceRef")
 
     def _identity(self, target: Any, kind: str) -> Any:
         ref = _ref(target, kind)
-        identity = _COMMAND_PORTS[self].get_identity(ref)
+        identity = self.__writer.get_identity(ref)
         if identity is None or identity.ref.kind != kind:
             raise AssessmentNotFoundError(f"{kind} not found: {target!r}")
         if ref.revision is not None and identity.ref.revision != ref.revision:
@@ -673,7 +670,7 @@ class AssessmentModule:
         return identity
 
     def _current_ref(self, ref: ResourceRef, field: str) -> ResourceRef:
-        identity = _COMMAND_PORTS[self].get_identity(ref)
+        identity = self.__writer.get_identity(ref)
         if identity is None:
             raise AssessmentNotFoundError(f"{field} identity is not admitted")
         if ref.revision is not None and identity.ref.revision != ref.revision:
@@ -713,6 +710,7 @@ class AssessmentModule:
             raise AssessmentAuthorityError("approval authority is not the designated authority")
 
 
+AssessmentModule = command_facade(_AssessmentModuleEngine, DOMAIN_ID)
 AssessmentStore = AssessmentModule
 Assessment = AssessmentModule
 

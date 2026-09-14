@@ -7,14 +7,12 @@ checkout, assessment ledger, candidate/decision store, or Runtime job.
 
 from __future__ import annotations
 
-import weakref
-
-_COMMAND_PORTS = weakref.WeakKeyDictionary()
-
 import hashlib
 import json
 import uuid
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+
+from herzchen.command_ports import command_facade
 
 from .model import (
     GraphCycleError,
@@ -143,24 +141,27 @@ def work_handler(store: Any) -> Any:
     return store.domain_handler(contributions())
 
 
-class WorkGraph:
+class _WorkGraphEngine:
     """Structural work command surface backed by a supplied FND store."""
 
     def __init__(self, store: Any, *, actor: Any = None) -> None:
         if not hasattr(store, "transaction") or not hasattr(store, "mutate"):
             raise TypeError("store must be the supplied FND writer")
         try:
-            _COMMAND_PORTS[self] = work_handler(store)
+            self.__writer = work_handler(store)
         except Exception:
-            _COMMAND_PORTS[self] = store
-        self.reader = _COMMAND_PORTS[self].consumer()
+            from herzchen.kernel.store import DomainHandler, Store
+            if not isinstance(store, Store) or isinstance(store, DomainHandler):
+                raise
+            self.__writer = store
+        self.reader = self.__writer.consumer()
         self.default_actor = actor
 
     def register(self) -> Any:
         """Register this domain through FND's existing registry port."""
 
-        _COMMAND_PORTS[self] = register_work(_COMMAND_PORTS[self])
-        self.reader = _COMMAND_PORTS[self].consumer()
+        self.__writer = register_work(self.__writer)
+        self.reader = self.__writer.consumer()
         return contribution()
 
     # ---- public creation commands -------------------------------------------------
@@ -217,7 +218,7 @@ class WorkGraph:
                 "metadata": dict(metadata or {}),
             }
         )
-        with _COMMAND_PORTS[self].transaction() as tx:
+        with self.__writer.transaction() as tx:
             self._validate_payload(payload)
             self._write_create(tx, WorkKind.PROJECT, project_id, payload, logical_request_key, actor, "work.created")
         return self.get(project_id)
@@ -268,7 +269,7 @@ class WorkGraph:
         )
         payload["fields"] = dict(fields or {})
         self._validate_new_graph(payload, parent_record, dep_records)
-        with _COMMAND_PORTS[self].transaction() as tx:
+        with self.__writer.transaction() as tx:
             self._write_create(tx, work_kind, record_id, payload, logical_request_key, actor, "work.created")
             self._retain_links(tx, parent_ref, tuple(record.ref for record in dep_records))
         return self.get(record_id)
@@ -308,7 +309,7 @@ class WorkGraph:
         changes = self._revision_changes(record, title=title, name=name, outcome=outcome, add_alias=add_alias, aliases=aliases, fields=fields, lifecycle=lifecycle)
         self._validate_payload(changes)
         request_key = self._request_key(logical_request_key)
-        with _COMMAND_PORTS[self].transaction() as tx:
+        with self.__writer.transaction() as tx:
             self._write_revision(tx, record, changes, request_key, actor, "work.revised")
         return self.get(record.ref)
 
@@ -322,7 +323,7 @@ class WorkGraph:
         payload["parent"] = self._ref_dict(parent_record.ref)
         if child_record.kind is not WorkKind.PROJECT and not payload.get("project_ref"):
             payload["project_ref"] = self._ref_dict(self._project_ref(parent_record))
-        with _COMMAND_PORTS[self].transaction() as tx:
+        with self.__writer.transaction() as tx:
             self._write_revision(tx, child_record, payload, self._request_key(logical_request_key), actor, "work.parent-linked")
             self._retain_links(tx, parent_record.ref, ())
         return self.get(child_record.ref)
@@ -336,7 +337,7 @@ class WorkGraph:
         proposed = dict(record_value.payload)
         proposed["dependencies"] = [self._ref_dict(ref) for ref in dependencies] + [self._ref_dict(prerequisite_value.ref)]
         self._validate_dependency_graph(record_value.ref, prerequisite_value.ref)
-        with _COMMAND_PORTS[self].transaction() as tx:
+        with self.__writer.transaction() as tx:
             self._write_revision(tx, record_value, proposed, self._request_key(logical_request_key), actor, "work.dependency-linked")
             self._retain_links(tx, None, (prerequisite_value.ref,))
         return self.get(record_value.ref)
@@ -355,7 +356,7 @@ class WorkGraph:
         readiness["dispatch"] = False
         payload = dict(record.payload)
         payload["readiness"] = readiness
-        with _COMMAND_PORTS[self].transaction() as tx:
+        with self.__writer.transaction() as tx:
             self._write_revision(tx, record, payload, self._request_key(logical_request_key), actor, "work.state-changed")
         return self.get(record.ref)
 
@@ -391,13 +392,13 @@ class WorkGraph:
     def _write_create(self, tx: Any, kind: WorkKind, record_id: str, payload: Mapping[str, Any], request_key: str, actor: Any, event_type: str) -> Any:
         ref = self._ref(kind, record_id)
         envelope = self._envelope("work.create", ref, payload, request_key, actor, expected_version=0)
-        receipt = _COMMAND_PORTS[self].mutate(envelope, event_type=event_type, result_ref=self._pinned(ref, 1), effects={"kind": kind.value, "id": record_id}, stream="work:" + record_id, transaction=tx)
+        receipt = self.__writer.mutate(envelope, event_type=event_type, result_ref=self._pinned(ref, 1), effects={"kind": kind.value, "id": record_id}, stream="work:" + record_id, transaction=tx)
         self._retain_links(tx, self._payload_ref(payload.get("parent")), tuple(self._payload_ref(value) for value in payload.get("dependencies", ())))
         return receipt
 
     def _write_revision(self, tx: Any, record: WorkRecord, payload: Mapping[str, Any], request_key: str, actor: Any, event_type: str) -> Any:
         envelope = self._envelope("work.revise", record.ref, payload, request_key, actor, expected_version=record.version, expected_revision=record.revision)
-        return _COMMAND_PORTS[self].mutate(envelope, event_type=event_type, effects={"kind": record.kind.value, "id": record.id}, stream="work:" + record.id, transaction=tx)
+        return self.__writer.mutate(envelope, event_type=event_type, effects={"kind": record.kind.value, "id": record.id}, stream="work:" + record.id, transaction=tx)
 
     def _envelope(self, operation: str, ref: Any, payload: Mapping[str, Any], request_key: str, actor: Any, *, expected_version: Optional[int] = None, expected_revision: Optional[str] = None) -> Any:
         AuthenticatedActor, CommandEnvelope, _, _, TransactionContext, _ = _contract_types()
@@ -420,17 +421,17 @@ class WorkGraph:
 
     def _retain_links(self, tx: Any, parent: Any, dependencies: Sequence[Any]) -> None:
         for ref in tuple([parent] if parent is not None else []) + tuple(ref for ref in dependencies if ref is not None):
-            _COMMAND_PORTS[self].put_reference(ref, transaction=tx)
+            self.__writer.put_reference(ref, transaction=tx)
 
     # ---- validation and conversion ------------------------------------------------
 
     def _all_records(self) -> Tuple[WorkRecord, ...]:
-        rows = _COMMAND_PORTS[self].connection.execute("SELECT * FROM identities WHERE authority = ? AND kind LIKE 'work.%' ORDER BY kind, id", (_COMMAND_PORTS[self].authority,)).fetchall()
+        rows = self.__writer.connection.execute("SELECT * FROM identities WHERE authority = ? AND kind LIKE 'work.%' ORDER BY kind, id", (self.__writer.authority,)).fetchall()
         ResourceRef = _contract_types()[3]
         records = []
         for row in rows:
             ref = ResourceRef(row["authority"], row["kind"], row["id"], row["current_revision"])
-            identity = _COMMAND_PORTS[self].get_identity(ref)
+            identity = self.__writer.get_identity(ref)
             if identity is not None:
                 records.append(self._from_identity(identity))
         return tuple(records)
@@ -455,7 +456,7 @@ class WorkGraph:
             # another operation in the same work graph has committed.
             return self._resolve(target.ref)
         if isinstance(target, ResourceRef):
-            identity = _COMMAND_PORTS[self].get_record(target)
+            identity = self.__writer.get_record(target)
             return None if identity is None else self._from_identity(identity)
         if isinstance(target, Mapping):
             if "id" in target:
@@ -487,7 +488,7 @@ class WorkGraph:
         raise WorkValidationError(f"unknown work kind: {kind!r}")
 
     def _ref(self, kind: WorkKind, record_id: str) -> Any:
-        return _contract_types()[3](_COMMAND_PORTS[self].authority, KIND_PREFIX[kind], record_id)
+        return _contract_types()[3](self.__writer.authority, KIND_PREFIX[kind], record_id)
 
     def _pinned(self, ref: Any, version: int) -> Any:
         return _contract_types()[3](ref.authority, ref.kind, ref.id, "rev-" + str(version))
@@ -666,6 +667,7 @@ class WorkGraph:
 
 
 # Names used by early consumers and worker handoff examples.
+WorkGraph = command_facade(_WorkGraphEngine, DOMAIN_ID)
 WorkModule = WorkGraph
 WorkStore = WorkGraph
 

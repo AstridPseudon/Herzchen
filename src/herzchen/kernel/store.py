@@ -7,6 +7,7 @@ from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 import fcntl
 import hashlib
+import inspect
 import json
 import os
 import re
@@ -32,6 +33,7 @@ from herzchen.contracts import (
     validate_replay,
 )
 
+from herzchen.command_ports import command_facade
 from .schema import COMPOSITION, DDL, SCHEMA_FINGERPRINT, SCHEMA_REVISION
 
 
@@ -92,7 +94,86 @@ DOMAIN_DESCRIPTOR_DIGEST_KEY = "domain_descriptor_digest"
 EMPTY_DOMAIN_DESCRIPTOR_DIGEST = hashlib.sha256(b"[]").hexdigest()
 _OWNER_CONSTRUCTION_TOKEN = object()
 _HANDLER_CONSTRUCTION_TOKEN = object()
+_COMMAND_PORT_CONSTRUCTION_TOKEN = object()
 
+
+class DomainCommandPort:
+    """Finite command adapter issued by trusted Store composition.
+
+    The port deliberately has no Store-shaped API.  It exposes only the exact
+    command endpoints declared by one adapter engine, validates every call
+    against that endpoint's Python signature, and keeps the trusted engine in
+    a slot that is outside the supported consumer surface.  Ordinary callers
+    therefore receive the same domain methods as the command object, never a
+    connection, transaction factory, generic mutation operation, or direct
+    identity/reference writer.
+    """
+
+    __slots__ = ("__engine", "__endpoints", "__reader", "__domain_id")
+
+    _FORBIDDEN = frozenset({
+        "connection", "transaction", "mutate", "put_identity",
+        "revise_identity", "put_reference", "append_event",
+        "register_domain", "register_domain_handler", "domain_handler",
+    })
+
+    def __init__(
+        self,
+        engine: Any,
+        domain_id: str,
+        endpoints: Sequence[str],
+        reader: Optional["ConsumerStore"],
+        *,
+        _construction_token: object = None,
+    ) -> None:
+        if _construction_token is not _COMMAND_PORT_CONSTRUCTION_TOKEN:
+            raise StoreAdmissionError("domain command ports are issued only by trusted Store composition")
+        if not isinstance(domain_id, str) or not domain_id.strip():
+            raise TypeError("domain_id must be a non-blank string")
+        exact = tuple(dict.fromkeys(endpoints))
+        if not exact or any(not isinstance(name, str) or not name for name in exact):
+            raise TypeError("command endpoints must be non-empty names")
+        if self._FORBIDDEN.intersection(exact):
+            raise StoreAdmissionError("a narrow command port cannot expose a broad writer endpoint")
+        if reader is not None and not isinstance(reader, ConsumerStore):
+            raise TypeError("command reader must be a ConsumerStore")
+        self.__engine = engine
+        self.__endpoints = frozenset(exact)
+        self.__reader = reader
+        self.__domain_id = domain_id
+
+    @property
+    def domain_id(self) -> str:
+        return self.__domain_id
+
+    @property
+    def endpoints(self) -> Tuple[str, ...]:
+        return tuple(sorted(name for name in self.__endpoints if not name.startswith("_")))
+
+    @property
+    def reader(self) -> Optional["ConsumerStore"]:
+        return self.__reader
+
+    def __dir__(self) -> list[str]:
+        return sorted({"domain_id", "endpoints", "reader"} | set(self.endpoints))
+
+    def __getattr__(self, name: str) -> Any:
+        if name.startswith("_") or name not in self.__endpoints or name in self._FORBIDDEN:
+            raise AttributeError(name)
+        value = getattr(self.__engine, name)
+        if not callable(value):
+            return value
+
+        signature = inspect.signature(value)
+
+        def exact_endpoint(*args: Any, **kwargs: Any) -> Any:
+            signature.bind(*args, **kwargs)
+            return value(*args, **kwargs)
+
+        exact_endpoint.__name__ = name
+        exact_endpoint.__qualname__ = "{}.{}".format(type(self).__name__, name)
+        exact_endpoint.__doc__ = getattr(value, "__doc__", None)
+        return exact_endpoint
 
 def _authority_root(value: str) -> str:
     """Return the stable authority namespace used by admission bindings."""
@@ -746,6 +827,22 @@ class Store:
         self._issued_handlers.add(handler)
         return handler
 
+    def issue_command_port(
+        self,
+        engine: Any,
+        domain_id: str,
+        endpoints: Sequence[str],
+        *,
+        reader: Optional["ConsumerStore"] = None,
+    ) -> DomainCommandPort:
+        """Issue one authenticated finite port during trusted composition."""
+        self._require_open()
+        selected_reader = self.consumer() if reader is None else reader
+        return DomainCommandPort(
+            engine, domain_id, endpoints, selected_reader,
+            _construction_token=_COMMAND_PORT_CONSTRUCTION_TOKEN,
+        )
+
     def _validated_domain_candidate(
         self,
         contribution: DomainContribution,
@@ -1261,6 +1358,18 @@ class DomainHandler:
     def consumer(self) -> "ConsumerStore":
         return self._owner.consumer()
 
+    def issue_command_port(
+        self,
+        engine: Any,
+        domain_id: str,
+        endpoints: Sequence[str],
+        *,
+        reader: Optional["ConsumerStore"] = None,
+    ) -> DomainCommandPort:
+        if self not in self._owner._issued_handlers:
+            raise StoreAdmissionError("domain handler is not an issued owner capability")
+        return self._owner.issue_command_port(engine, domain_id, endpoints, reader=reader)
+
 
 class ConsumerStore:
     """Concrete read-only Store view safe to give to an ordinary consumer.
@@ -1324,7 +1433,8 @@ RealmStore = Store
 
 
 __all__ = [
-    "Store", "SQLiteStore", "RealmStore", "ConsumerStore", "DomainHandler", "Transaction", "IdentityRecord",
+    "Store", "SQLiteStore", "RealmStore", "ConsumerStore", "DomainHandler", "DomainCommandPort",
+    "Transaction", "IdentityRecord", "command_facade",
     "StoreError", "StoreAdmissionError", "StoreExistsError", "SchemaMismatchError",
     "CompositionMismatchError", "WriterBusyError", "ClosedStoreError",
     "TargetMismatchError", "VersionConflictError", "DescriptorDigestMismatchError",

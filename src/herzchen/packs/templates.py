@@ -16,15 +16,12 @@ shell fragment, import, or network lookup is evaluated.
 
 from __future__ import annotations
 
-import weakref
-
-_COMMAND_PORTS = weakref.WeakKeyDictionary()
-
 from dataclasses import dataclass, field
 from copy import deepcopy
 import hashlib
 import uuid
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
+from herzchen.command_ports import command_facade
 
 from herzchen.content import ContentCommandHandler, ContentDocument, ContentRevision, DocumentAssociation
 from herzchen.contracts import AuthenticatedActor, ReferenceBinding, ResourceRef, TransactionContext, canonical_json
@@ -711,13 +708,13 @@ class TemplateCatalog:
             raise TemplateError(f"unknown work protocol: {value}") from exc
 
 
-class TemplateEngine:
+class _TemplateEngineEngine:
     """Instantiate resolved resources through a supplied store and WRK API."""
 
     def __init__(self, store: Any, *, graph: Any = None, actor: Any = None, resources: Iterable[Union[WorkTemplate, WorkProtocol]] = ()) -> None:
         if not hasattr(store, "get_identity") or not hasattr(store, "transaction"):
             raise TypeError("store must be the supplied FND Store")
-        _COMMAND_PORTS[self] = store
+        self.__writer = store
         self.reader = store.consumer()
         if graph is None:
             from herzchen.domains.work import WorkGraph
@@ -793,7 +790,7 @@ class TemplateEngine:
         receipts: list[Any] = []
         local_refs: dict[str, ResourceRef] = {}
         records: list[WorkRecord] = []
-        with _COMMAND_PORTS[self].transaction():
+        with self.__writer.transaction():
             if owner_record is None:
                 title = project_seed.get("title") if project_seed else None
                 outcome = project_seed.get("outcome", "") if project_seed else ""
@@ -801,7 +798,7 @@ class TemplateEngine:
                 metadata["template_origin"] = _origin(resource)
                 owner_record = self.graph.create_project(title=title, outcome=outcome, metadata=metadata,
                                                          logical_request_key=request + ":project", actor=actor)
-                receipts.append(_COMMAND_PORTS[self].get_receipt(request + ":project"))
+                receipts.append(self.__writer.get_receipt(request + ":project"))
             if project_local_name is not None:
                 local_refs[project_local_name] = owner_record.ref
 
@@ -845,12 +842,12 @@ class TemplateEngine:
                 record = self.graph.create(work_kind, project=owner_record, **kwargs)
                 local_refs[name] = record.ref
                 records.append(record)
-                receipts.append(_COMMAND_PORTS[self].get_receipt(request + ":" + name))
+                receipts.append(self.__writer.get_receipt(request + ":" + name))
 
             # DAT's command handler uses nested FND savepoints here.  The
             # outer TemplateEngine transaction remains the single durable
             # boundary for work, document, and association mutations.
-            content = ContentCommandHandler(_COMMAND_PORTS[self])
+            content = ContentCommandHandler(self.__writer)
             content_actor = self._content_actor(actor)
             document_refs: dict[str, ResourceRef] = {}
             association_refs: dict[str, ResourceRef] = {}
@@ -859,7 +856,7 @@ class TemplateEngine:
                     continue
                 local_id = document["local_id"]
                 document_ref = ResourceRef(
-                    _COMMAND_PORTS[self].authority,
+                    self.__writer.authority,
                     "dat.content.document",
                     self._document_identity(request, resource, rendered, document),
                 )
@@ -1107,7 +1104,7 @@ class TemplateEngine:
     def _content_actor(self, actor: Any) -> AuthenticatedActor:
         selected = actor or self.actor or getattr(self.graph, "default_actor", None)
         if selected is None:
-            return AuthenticatedActor(_COMMAND_PORTS[self].authority, "pkg-template-engine", "pkg-template-engine")
+            return AuthenticatedActor(self.__writer.authority, "pkg-template-engine", "pkg-template-engine")
         if not isinstance(selected, AuthenticatedActor):
             raise TemplateValidationError("template DAT writes require an authenticated actor")
         return selected
@@ -1196,15 +1193,15 @@ class TemplateEngine:
             raise TemplateReferenceError(f"{field} is not a supported work reference")
 
     def _resolve_external(self, reference: ResourceRef, field: str) -> ResourceRef:
-        if reference.authority != _COMMAND_PORTS[self].authority:
+        if reference.authority != self.__writer.authority:
             raise TemplateReferenceError(f"{field} crosses store authority")
-        if _COMMAND_PORTS[self].get_identity(reference) is None:
+        if self.__writer.get_identity(reference) is None:
             raise TemplateReferenceError(f"missing {field}: {reference.to_json()}")
         return reference
 
     def _resolve_document_external(self, reference: ResourceRef, field: str) -> ResourceRef:
         self._resolve_external(reference, field)
-        if not ContentCommandHandler(_COMMAND_PORTS[self]).read(reference):
+        if not ContentCommandHandler(self.__writer).read(reference):
             raise TemplateReferenceError(f"missing DAT document: {reference.to_json()}")
         return reference
 
@@ -1233,6 +1230,7 @@ class TemplateEngine:
         return ordered
 
 
+TemplateEngine = command_facade(_TemplateEngineEngine, "herzchen.packs.templates")
 TemplateManager = TemplateEngine
 WorkTemplateEngine = TemplateEngine
 
