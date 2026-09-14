@@ -628,10 +628,17 @@ def _call_authoring(row: Mapping[str, Any], store: Store, key: str, tmp_path: Pa
         action = lambda: service.finish(handle, request_id=key, mode="manual", capture=b"final")
         changed = lambda: service.finish(handle, request_id=key, mode="manual", capture=b"changed")
     elif operation == "finish.recovery":
-        def failing_capture() -> bytes:
+        capture_calls = {"count": 0}
+        def failing_capture(*_args: Any, **_kwargs: Any) -> bytes:
+            capture_calls["count"] += 1
             raise RuntimeError("c33 capture failure")
         action = lambda: service.finish(handle, request_id=key, mode="manual", capture=failing_capture)
         changed = lambda: service.finish(handle, request_id=key, mode="manual", capture=lambda: b"changed")
+        action.c33_metadata = {
+            "expected_recovery_receipt_key": key + ":capture-failure",
+            "public_retry": "AuthoringSessionService.finish",
+            "capture_calls": capture_calls,
+        }
     elif operation in {"actor.release", "release"}:
         action = lambda: service.release(handle, request_id=key)
         changed = lambda: service.release(handle, request_id=key)
@@ -856,6 +863,13 @@ def test_persisted_port_public_handler_conformance(tmp_path: Path, row: Mapping[
             assert replay_receipt == receipt
             assert replay_counts == action_after_counts
             assert replay_events == action_after_events
+            if row["operation"] == "finish.recovery":
+                assert receipt.logical_request_key == key + ":capture-failure"
+                assert action_result.receipt == receipt
+                assert replay.receipt == receipt
+                assert replay == action_result
+                assert action_result.status == replay.status == "recovery_pending"
+                assert scenario_metadata["capture_calls"]["count"] == 1
         except Exception as exc:
             failure("reproduced_owner_defect", "exact_replay", exc, first_action_valid=True, fixture_after_counts=action_before_counts, fixture_after_events=action_before_events, action_before_counts=action_before_counts, action_before_events=action_before_events, action_after_counts=action_after_counts, action_after_events=action_after_events, metadata=scenario_metadata)
             return

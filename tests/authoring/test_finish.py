@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 import tempfile
 import threading
@@ -165,6 +166,82 @@ class FinishTests(unittest.TestCase):
         self.assertEqual(recovery_receipt.operation, "finish.recovery")
         self.assertIsNone(self.store.get_receipt("direct-fails"))
         self.assertTrue(any(event.event_id in recovery_receipt.event_ids and event.operation == "finish.recovery" for event in self.store.list_events()))
+
+    def test_direct_capture_failure_exact_public_retry_returns_bound_recovery_without_mutation(self) -> None:
+        opened = self.service.open(
+            self.scope, self.actor, request_id="recovery-open",
+            target_kind="project", base_revision="base-1",
+            initial_content=b"original draft",
+        )
+        capture_calls = 0
+
+        def fail_capture(*_args, **_kwargs):
+            nonlocal capture_calls
+            capture_calls += 1
+            raise RuntimeError("bounded capture failure")
+
+        first = self.service.finish(
+            opened.handle, request_id="recovery-finish", mode="manual",
+            capture=fail_capture,
+        )
+        recovery_key = "recovery-finish:capture-failure"
+        receipt = self.store.get_receipt(recovery_key)
+        self.assertEqual(first.receipt, receipt)
+        self.assertIsNone(self.store.get_receipt("recovery-finish"))
+        self.assertEqual(self.service.read(self.scope).status, "available")
+        recovery = self.store.get_identity(opened.handle.scope).payload["finish_recovery"]
+        self.assertEqual(recovery["source_request"]["logical_request_key"], "recovery-finish")
+        self.assertEqual(recovery["source_request"]["target"], opened.handle.scope.to_dict())
+        self.assertEqual(recovery["source_request"]["target_scope"], opened.handle.target_scope.to_dict())
+        self.assertEqual(recovery["source_request"]["actor"], self.actor.to_dict())
+        self.assertEqual(recovery["source_request"]["owner"], "edt")
+        def durable_counts():
+            return tuple(
+                self.store.connection.execute("SELECT COUNT(*) FROM " + table).fetchone()[0]
+                for table in ("identities", "record_references", "command_receipts", "events")
+            )
+        before = (
+            durable_counts(),
+            tuple(self.store.list_events()),
+            self.store.get_identity(opened.handle.scope),
+        )
+
+        replay = self.service.finish(
+            opened.handle, request_id="recovery-finish", mode="manual",
+            capture=fail_capture,
+        )
+        self.assertEqual(replay.status, "recovery_pending")
+        self.assertTrue(replay.recovery_pending)
+        self.assertEqual(replay, first)
+        self.assertEqual(replay.receipt, receipt)
+        self.assertEqual(replay.final_snapshot, first.final_snapshot)
+        self.assertEqual(replay.error, first.error)
+        self.assertEqual(capture_calls, 1)
+        self.assertEqual((
+            durable_counts(),
+            tuple(self.store.list_events()),
+            self.store.get_identity(opened.handle.scope),
+        ), before)
+
+        with self.assertRaises(ReplayConflictError):
+            self.service.finish(
+                opened.handle, request_id="recovery-finish", mode="idle",
+                capture=lambda: b"changed",
+            )
+        foreign_actor = replace(
+            opened.handle,
+            actor=AuthenticatedActor("auth", "foreign-actor", "credential"),
+        )
+        with self.assertRaises(ReplayConflictError):
+            self.service.finish(
+                foreign_actor, request_id="recovery-finish", mode="manual",
+                capture=lambda: b"changed",
+            )
+        self.assertEqual((
+            durable_counts(),
+            tuple(self.store.list_events()),
+            self.store.get_identity(opened.handle.scope),
+        ), before)
 
     def test_cleanup_refresh_replays_without_hashing_projection_or_fence(self) -> None:
         opened = self.service.open(self.scope, self.actor, request_id="refresh-open", target_kind="project", base_revision="base-1", initial_content=b"initial")

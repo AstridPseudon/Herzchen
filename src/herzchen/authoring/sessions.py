@@ -808,6 +808,117 @@ class _AuthoringSessionServiceEngine:
             _call_flexible(self.snapshot_store, snap, snapshot=snap)
         return snap
 
+    @staticmethod
+    def _finish_request_binding(
+        handle: SessionHandle, request_id: str, request_digest: str,
+    ) -> Mapping[str, Any]:
+        """Describe the original public finish request behind a recovery.
+
+        The recovery command has a deliberately different logical key and
+        operation.  Persisting this complete binding lets a later public
+        ``finish`` retry prove which failed request created that recovery
+        without inventing a receipt under the caller's key.
+        """
+        return {
+            "logical_request_key": request_id,
+            "request_digest": request_digest,
+            "operation": "finish",
+            "target": handle.scope.to_dict(),
+            "target_scope": handle.target_scope.to_dict(),
+            "actor": handle.actor.to_dict(),
+            "owner": domain_contribution().owner,
+            "session_id": handle.session_id,
+        }
+
+    def _capture_failure_replay(
+        self,
+        handle: SessionHandle,
+        *,
+        request_id: str,
+        request_digest: str,
+    ) -> Optional[FinishResult]:
+        """Validate and return a prior capture-failure recovery outcome.
+
+        This path is intentionally read-only.  The suffixed recovery receipt
+        is not enough on its own: its canonical digest, source finish binding,
+        event actor, released capability, and durable snapshot must all agree.
+        """
+        recovery_key = request_id + ":capture-failure"
+        receipt = self.__writer.get_receipt(recovery_key)
+        if receipt is None:
+            return None
+
+        expected_source = self._finish_request_binding(handle, request_id, request_digest)
+        if receipt.operation != "finish.recovery" or receipt.target != handle.scope:
+            raise ReplayConflictError("capture-failure receipt is not bound to this finish target")
+        record = _as_record(self.__writer.get_identity(receipt.target))
+        if record is None:
+            raise ReplayConflictError("capture-failure receipt has no durable recovery result")
+        recovery = record.payload.get("finish_recovery")
+        if not isinstance(recovery, Mapping) or recovery.get("source_request") != expected_source:
+            raise ReplayConflictError("logical request key was reused with a changed finish request")
+        if recovery.get("recovery_request_key") != recovery_key or recovery.get("rejected") is not False:
+            raise ReplayConflictError("capture-failure recovery binding is inconsistent")
+
+        error = recovery.get("error")
+        snapshot_digest = recovery.get("snapshot_digest")
+        raw_snapshot_ref = recovery.get("snapshot_ref")
+        manifest = recovery.get("manifest")
+        if (
+            not isinstance(error, str)
+            or not isinstance(snapshot_digest, str)
+            or not isinstance(raw_snapshot_ref, Mapping)
+            or not isinstance(manifest, (list, tuple))
+        ):
+            raise ReplayConflictError("capture-failure recovery result is incomplete")
+        recovery_request_payload = {
+            "session": handle.session_id,
+            "error": error,
+            "snapshot": snapshot_digest,
+            "rejected": False,
+            "source_request": expected_source,
+        }
+        expected_recovery_digest = self._request_digest(
+            "finish.recovery", recovery_key, recovery_request_payload,
+            target=handle.scope, actor=handle.actor,
+        )
+        if receipt.request_digest != expected_recovery_digest:
+            raise ReplayConflictError("capture-failure receipt digest does not match its source request")
+
+        checkout = self._validate_record(handle, record, require_open=False)
+        if checkout.state != AuthoringState.RELEASED or not record.payload.get("recovery_pending"):
+            raise ReplayConflictError("capture-failure recovery is not the released pending result")
+        snapshot_ref = ResourceRef.from_dict(raw_snapshot_ref)
+        if (
+            record.payload.get("final_digest") != snapshot_digest
+            or record.payload.get("final_snapshot_ref") != snapshot_ref.to_dict()
+        ):
+            raise ReplayConflictError("capture-failure snapshot binding is inconsistent")
+        data = self.read_snapshot(snapshot_ref)
+        snapshot = Snapshot(snapshot_ref, data, tuple(manifest))
+        if snapshot.digest != snapshot_digest:
+            raise ReplayConflictError("capture-failure snapshot digest does not match its bytes")
+
+        events = {
+            event.event_id: event
+            for event in self.__writer.list_events(stream="authoring:" + handle.scope.id)
+            if event.event_id in receipt.event_ids
+        }
+        if set(events) != set(receipt.event_ids) or not events:
+            raise ReplayConflictError("capture-failure receipt event lineage is incomplete")
+        if any(
+            event.operation != "finish.recovery"
+            or event.actor != handle.actor
+            or event.effects.get("source_request") != expected_source
+            or event.effects.get("owner") != domain_contribution().owner
+            for event in events.values()
+        ):
+            raise ReplayConflictError("capture-failure receipt event binding is inconsistent")
+        return FinishResult(
+            "recovery_pending", handle.scope, handle.session_id, receipt,
+            checkout, snapshot, True, checkout.cleanup, error,
+        )
+
     def read_snapshot(self, ref: ResourceRef) -> bytes:
         """Read exact snapshot bytes through the supplied FND identity port."""
         record = _as_record(self.__writer.get_identity(ref))
@@ -856,9 +967,6 @@ class _AuthoringSessionServiceEngine:
         if mode not in {"manual", "idle"}:
             raise ValueError("finish mode must be manual or idle")
         with self._finish_lock:
-            record = _as_record(self.__writer.get_identity(handle.scope))
-            if record is None:
-                raise InvalidSessionError("scope is not admitted")
             request_payload = {"session": handle.session_id, "mode": mode, "expected_base_revision": expected_base_revision, "pending": pending}
             digest = self._request_digest("finish", request_id, request_payload, target=handle.scope, actor=handle.actor)
             prior = self._prior_receipt(request_id, digest)
@@ -866,6 +974,14 @@ class _AuthoringSessionServiceEngine:
                 current = _as_record(self.__writer.get_identity(handle.scope))
                 current_checkout = None if current is None else self._payload_checkout(current.payload)
                 return FinishResult("replayed", handle.scope, handle.session_id, prior, current_checkout, recovery_pending=bool(current and current.payload.get("recovery_pending")), cleanup=current_checkout.cleanup if current_checkout else CleanupStatus.NOT_REQUESTED)
+            recovered = self._capture_failure_replay(
+                handle, request_id=request_id, request_digest=digest,
+            )
+            if recovered is not None:
+                return recovered
+            record = _as_record(self.__writer.get_identity(handle.scope))
+            if record is None:
+                raise InvalidSessionError("scope is not admitted")
             closed_checkout = self._payload_checkout(record.payload)
             if closed_checkout is not None and closed_checkout.session_id == handle.session_id and closed_checkout.token == handle.token and closed_checkout.fence == handle.fence and closed_checkout.state != AuthoringState.OPEN and closed_checkout.finish_claim is not None and closed_checkout.finish_claim.finalization_identity == "finish-" + closed_checkout.session_id:
                 last_request = record.payload.get("finish_request_id")
@@ -876,8 +992,17 @@ class _AuthoringSessionServiceEngine:
                 snap = self._capture(checkout, capture)
             except BaseException as exc:
                 draft = Snapshot(checkout.draft_snapshot_ref, b64decode(record.payload.get("draft_bytes_b64", "")))
-                recovery_receipt = self._transition_recovery(handle, request_id + ":capture-failure", draft, str(exc), retirement_guard=retirement_guard)
-                return FinishResult("recovery_pending", handle.scope, handle.session_id, recovery_receipt, final_snapshot=draft, recovery_pending=True, cleanup=CleanupStatus.PENDING, error=str(exc))
+                source_request = self._finish_request_binding(handle, request_id, digest)
+                recovery_receipt = self._transition_recovery(
+                    handle, request_id + ":capture-failure", draft, str(exc),
+                    retirement_guard=retirement_guard, source_request=source_request,
+                )
+                recovered = self._capture_failure_replay(
+                    handle, request_id=request_id, request_digest=digest,
+                )
+                if recovered is None or recovered.receipt != recovery_receipt:
+                    raise InvalidSessionError("capture-failure recovery result was not durably bound")
+                return recovered
             base_expected = expected_base_revision or checkout.base_revision
             if base_expected != checkout.base_revision:
                 return self._reject_finish(handle, request_id, digest, checkout, snap, "base revision mismatch", BaseRevisionMismatchError, retirement_guard=retirement_guard)
@@ -976,7 +1101,11 @@ class _AuthoringSessionServiceEngine:
             retirement_guard=retirement_guard,
         )
 
-    def _transition_recovery(self, handle: SessionHandle, request_id: str, snap: Snapshot, error: str, *, rejected: bool = False, retirement_guard: Optional[object] = None) -> Optional[CommandReceipt]:
+    def _transition_recovery(
+        self, handle: SessionHandle, request_id: str, snap: Snapshot, error: str,
+        *, rejected: bool = False, retirement_guard: Optional[object] = None,
+        source_request: Optional[Mapping[str, Any]] = None,
+    ) -> Optional[CommandReceipt]:
         record = _as_record(self.__writer.get_identity(handle.scope))
         if record is None:
             return None
@@ -1002,13 +1131,43 @@ class _AuthoringSessionServiceEngine:
             payload["retirement_fence"] = dict(issuer(handle, manifest, snapshot_digest=snap.digest))
         payload["recovery_pending"] = not rejected
         payload["error"] = error
+        request_payload = None
+        effects: dict[str, Any] = {"recovery_pending": not rejected, "error": error}
+        if source_request is not None:
+            source = dict(source_request)
+            request_payload = {
+                "session": handle.session_id,
+                "error": error,
+                "snapshot": snap.digest,
+                "rejected": rejected,
+                "source_request": source,
+            }
+            payload["finish_recovery"] = {
+                "source_request": source,
+                "recovery_request_key": request_id,
+                "snapshot_ref": snap.ref.to_dict(),
+                "snapshot_digest": snap.digest,
+                "manifest": list(manifest),
+                "error": error,
+                "rejected": rejected,
+            }
+            effects.update({
+                "source_request": source,
+                "snapshot_digest": snap.digest,
+                "owner": domain_contribution().owner,
+            })
         actor_ref = _actor_key(handle.actor, getattr(self.__writer, "authority", handle.scope.authority))
         digest = _digest({"session": handle.session_id, "error": error, "snapshot": snap.digest, "rejected": rejected})
         with self.__writer.transaction() as tx:
             current = _as_record(self.__writer.get_identity(handle.scope))
             if current is None:
                 return
-            recovery_receipt = self._mutate(tx, actor=handle.actor, operation="finish.recovery", request_id=request_id, target=handle.scope, digest=digest, record=current, payload=payload, effects={"recovery_pending": not rejected, "error": error})
+            recovery_receipt = self._mutate(
+                tx, actor=handle.actor, operation="finish.recovery",
+                request_id=request_id, target=handle.scope, digest=digest,
+                record=current, payload=payload, effects=effects,
+                request_payload=request_payload,
+            )
             actor_record = _as_record(self.__writer.get_identity(actor_ref))
             if actor_record is not None:
                 self._mutate(tx, actor=handle.actor, operation="actor.release", request_id=request_id + ":actor", target=actor_ref, digest=digest, record=actor_record, payload={"type": "authoring_actor", "active": False, "scope": handle.scope.to_dict(), "session_id": handle.session_id}, effects={"session_id": handle.session_id})
