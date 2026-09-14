@@ -1,0 +1,102 @@
+{
+  "work_item": "FND-07",
+  "status": "bounded-candidate-evidence",
+  "verdict": null,
+  "pwd": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-fnd07-worker",
+  "invoking_root": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20",
+  "control_root": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery",
+  "worktree": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-fnd07-worker",
+  "route": {
+    "worker": "normal substantive worker",
+    "model": "gpt-5.6-luna",
+    "reasoning": "high",
+    "cli": "codex-cli 0.150.1",
+    "command": "codex exec --ephemeral --json --sandbox read-only -C /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/repos/Herzchen-fnd07-worker -m gpt-5.6-luna -c model_reasoning_effort=\"high\"",
+    "session_id": "01a09d7b-94f5-7011-ae0d-4938923c2217",
+    "launch_time_utc": "2026-09-14T01:15:17.165700Z",
+    "exit": 0,
+    "route_ack": "ROUTE-ACK"
+  },
+  "baseline": {
+    "commit": "37292c6c855e1712ad619b05244eba683f24e836",
+    "tree": "3d1aa21a8c04e658e7730227f61cd2a86f51bf45",
+    "clean_before_edits": true
+  },
+  "immutable_inputs": {
+    "source_manifest": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/source-set-int01-refresh-20260913.json",
+    "source_manifest_sha256": "742fed428923c7702001865407d3d8897ba9685b5fcfd473076fc7edb3ee563a",
+    "traceback": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/wrk-05-edt04-race-traceback-20260914.txt",
+    "traceback_sha256": "f96f4067625e20079e74eede66380903f9e0a181f6bb003f850b3a1da44c72bf"
+  },
+  "named_tests": [
+    "tests/authoring/test_finish.py::FinishTests::test_concurrent_manual_idle_race_has_one_application",
+    "tests/authoring/test_failure_matrix.py::FailureMatrixTests::test_cross_service_finish_loser_reconciles_durable_winner"
+  ],
+  "baseline_reproduction": {
+    "python311_uninstalled_attempt": {
+      "command": "PYTHONPATH unset; python3.11 -m pytest <named test>",
+      "exit": 2,
+      "result": "setup-only failure: ModuleNotFoundError: herzchen"
+    },
+    "python312_authoring_suite": {
+      "command": "PYTHONPATH=src /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/.venvs/int-02/bin/python -m pytest -q tests/authoring",
+      "exit": 1,
+      "result": "1 failed, 26 passed; first named test returned ['failed', 'finished']"
+    },
+    "python312_cross_service_exact": {
+      "command": "PYTHONPATH=src /Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/.venvs/int-02/bin/python -m pytest -q tests/authoring/test_failure_matrix.py::FailureMatrixTests::test_cross_service_finish_loser_reconciles_durable_winner",
+      "exit": 1,
+      "result": "1 failed, 1 warning; shared-row decode reached Store.get_identity and produced invalid kind/authority"
+    }
+  },
+  "implementation": {
+    "commit": "cec510615fa7a3c619a0c7e73d4d5a4dae851748",
+    "tree": "732b5054f09bf657011383180aef791f77b73062",
+    "changed_paths": [
+      "src/herzchen/kernel/store.py",
+      "src/herzchen/authoring/finish.py",
+      "tests/kernel/test_transactions.py"
+    ],
+    "scope": "Store-owned public read serialization with the existing re-entrant transaction lock; existing durable-winner reconciliation path covers the authorization-loss edge; no schema/API/receipt/event engine change"
+  },
+  "source_validation": {
+    "python311": {
+      "interpreter": "/opt/homebrew/bin/python3.11",
+      "named_tests_repeated": "50 each, exit 0, all passed",
+      "affected_suite": "75 passed, 10 subtests passed in 0.60s"
+    },
+    "python312": {
+      "interpreter": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/work/.venvs/int-02/bin/python",
+      "named_tests_repeated": "50 each, exit 0, all passed",
+      "affected_suite": "75 passed, 10 subtests passed in 0.52s"
+    }
+  },
+  "fresh_wheel_validation": {
+    "candidate_commit": "cec510615fa7a3c619a0c7e73d4d5a4dae851748",
+    "wheel": "/tmp/fnd07-wheel.m8Lw7K/wheel/herzchen_contracts-0.1.0-py3-none-any.whl",
+    "wheel_sha256": "27d6fa6829e7b53a8c83430903637498f38878f22a17e002c1a1ac9810425c80",
+    "environment": "/tmp/fnd07-wheel.m8Lw7K/venv",
+    "python": "/private/tmp/fnd07-wheel.m8Lw7K/venv/bin/python",
+    "python_version": "3.11.16",
+    "PYTHONPATH": null,
+    "PYTHONHOME": null,
+    "site_packages": "/private/tmp/fnd07-wheel.m8Lw7K/venv/lib/python3.11/site-packages",
+    "origins": {
+      "herzchen": "/private/tmp/fnd07-wheel.m8Lw7K/venv/lib/python3.11/site-packages/herzchen/__init__.py",
+      "herzchen.authoring.finish": "/private/tmp/fnd07-wheel.m8Lw7K/venv/lib/python3.11/site-packages/herzchen/authoring/finish.py",
+      "herzchen.kernel.store": "/private/tmp/fnd07-wheel.m8Lw7K/venv/lib/python3.11/site-packages/herzchen/kernel/store.py"
+    },
+    "focused_tests": "2 passed in 0.13s",
+    "named_tests_repeated": "20 each, exit 0, all passed",
+    "affected_suite": "75 passed, 10 subtests passed in 0.47s"
+  },
+  "evidence": {
+    "result_commit": "e0d42e676f740478724b68a29ca5d56c8ffd3146",
+    "result_tree": "7cc9dd2509b09d040eb772f2378dced49ff972a0",
+    "result_path": "work/fnd-07-result.md",
+    "receipt_commit": null,
+    "receipt_tree": null,
+    "worktree_clean_before_receipt": true
+  },
+  "downstream_obligation": "Root integration owns review, ledger/gate decisions, merge/integration, and any Astrid/Runtime/public cutover claim."
+}
