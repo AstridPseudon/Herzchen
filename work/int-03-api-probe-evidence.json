@@ -42,7 +42,6 @@
     "C03": [
       "tests/kernel/test_transactions.py::StoreTests::test_mutation_is_atomic_and_replay_is_exact",
       "tests/kernel/test_recovery.py",
-      "INT03-FND-002",
       "INT03-CURSOR-001"
     ],
     "C04": [
@@ -58,8 +57,7 @@
       "INT03-DAT-003"
     ],
     "C10": [
-      "tests/content/test_context_visibility.py::ContextVisibilityTests::test_private_visibility_and_inherited_backlink_never_leak_hidden_ground_truth",
-      "INT03-DAT-002"
+      "tests/content/test_context_visibility.py::ContextVisibilityTests::test_private_visibility_and_inherited_backlink_never_leak_hidden_ground_truth"
     ],
     "C11": [
       "tests/packs/test_composition.py::test_allowed_composition_delegates_to_one_fnd_writer",
@@ -72,8 +70,7 @@
     ],
     "C13": [
       "tests/work/test_assignments.py::test_one_generic_assignment_separates_reporter_launcher_and_fences_stale_writer",
-      "tests/assessment/test_accounting.py",
-      "INT03-WRK-002"
+      "tests/assessment/test_accounting.py::test_exact_pins_changed_consumed_input_invalidates_but_annotation_change_does_not"
     ],
     "C14": [
       "tests/work/test_batches.py::test_parent_sheet_is_atomic_replay_safe_and_retains_observations",
@@ -81,8 +78,8 @@
       "INT03-WRK-001"
     ],
     "C15": [
-      "tests/assessment/test_accounting.py",
-      "INT03-WRK-002"
+      "tests/assessment/test_accounting.py::test_megado_and_creative_lenses_share_scope_input_invocation_result_primitives",
+      "tests/assessment/test_accounting.py::test_route_change_resume_unknown_and_overrun_do_not_refill_allowance"
     ],
     "C16": [
       "tests/work/test_identity_graph.py::test_aliases_and_revisions_preserve_identity_and_omission_does_not_delete",
@@ -93,13 +90,13 @@
       "INT03-PKG-003"
     ],
     "C31": [
-      "tests/assessment/test_accounting.py",
-      "INT03-WRK-002"
+      "tests/assessment/test_accounting.py::test_unknown_is_distinct_charged_and_explicitly_disposed",
+      "tests/assessment/test_accounting.py::test_route_change_resume_unknown_and_overrun_do_not_refill_allowance"
     ],
     "C33": [
-      "tests/kernel/test_transactions.py",
+      "tests/kernel/test_transactions.py::StoreTests::test_mutation_is_atomic_and_replay_is_exact",
+      "tests/kernel/test_transactions.py::StoreTests::test_concurrent_public_reads_serialize_with_store_transaction",
       "tests/content/test_documents.py",
-      "INT03-FND-002",
       "INT03-DAT-001"
     ],
     "C34": [
@@ -113,6 +110,29 @@
       "INT03-PKG-001",
       "INT03-WRK-001"
     ]
+  },
+  "metadata_repair": {
+    "actual_observation_ids": [
+      "INT03-FND-001",
+      "INT03-CURSOR-001",
+      "INT03-LIMIT-001",
+      "INT03-PKG-001",
+      "INT03-DAT-001",
+      "INT03-DAT-003",
+      "INT03-PKG-002",
+      "INT03-PKG-003",
+      "INT03-WRK-001",
+      "INT03-REOPEN-001",
+      "INT03-LINK-001"
+    ],
+    "historical_receipt_preserved": true,
+    "removed_dangling_observation_count": 3,
+    "removed_dangling_observation_families": [
+      "FND-002",
+      "DAT-002",
+      "WRK-002"
+    ],
+    "repair_note": "The prior map cited three observation IDs absent from the 11-observation array. Criterion rows now point to exact installed tests and the actual observation INT03-DAT-001/INT03-CURSOR-001 where applicable; no new observation or product claim was invented."
   },
   "observations": [
     {
