@@ -19,6 +19,7 @@ from herzchen.kernel.store import Store
 
 
 SOURCE_ROOT = Path(__file__).resolve().parents[2] / "src"
+CONSUMER_IMPORT_ROOT = os.environ.get("GF01_CONSUMER_IMPORT_ROOT", str(SOURCE_ROOT))
 ACTOR = AuthenticatedActor("consumer-auth", "worker-1", "credential-1")
 FORBIDDEN = (
     "connection", "transaction", "mutate", "put_identity", "revise_identity",
@@ -29,7 +30,8 @@ FORBIDDEN = (
 def _fresh_consumer(transport, action: str) -> subprocess.CompletedProcess[str]:
     program = r'''
 import json, os, sys
-sys.path.insert(0, sys.argv[1])
+if sys.argv[1]:
+    sys.path.insert(0, sys.argv[1])
 from herzchen.command_ports import connect_consumer_facade, WriterAuthorityDenied
 from herzchen.contracts import AuthenticatedActor, ResourceRef
 spec = json.loads(sys.stdin.read())
@@ -72,7 +74,7 @@ print(json.dumps(result, sort_keys=True))
 '''
     env = {key: value for key, value in os.environ.items() if key not in {"PYTHONPATH", "PYTHONHOME"}}
     return subprocess.run(
-        [sys.executable, "-I", "-c", program, str(SOURCE_ROOT), action],
+        [sys.executable, "-I", "-c", program, CONSUMER_IMPORT_ROOT, action],
         input=json.dumps(transport.to_dict()), text=True, capture_output=True,
         check=False, close_fds=True, env=env,
     )
