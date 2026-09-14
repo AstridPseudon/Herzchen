@@ -16,9 +16,9 @@ import inspect
 import time
 from typing import Any, Callable, Iterable, Mapping, Optional, Union
 
-from herzchen.contracts import AuthoringState, CleanupStatus
+from herzchen.contracts import AuthoringState, CleanupStatus, canonical_json
 
-from .cleanup import CleanupObservation, cleanup_registered_files
+from .cleanup import CleanupObservation, cleanup_registered_files, registered_files_from_manifest
 from .finish import SemanticFinishAdapter, SemanticFinishResult, ValidationResult
 from .sessions import AuthoringSessionService, InvalidSessionError, SessionHandle, Snapshot
 from .snapshots import DurableSnapshotAdapter
@@ -214,7 +214,17 @@ class IdleCloseService:
         value = _call(self._finish, handle, **kwargs)
         return value
 
-    def _untouched_pending_finish(self, handle: SessionHandle, checkout_root: Any, files: Iterable[Any], *, request_id: str, pending: Optional[bool]) -> Optional[SemanticFinishResult]:
+    def _untouched_pending_finish(
+        self,
+        handle: SessionHandle,
+        checkout_root: Any,
+        files: Iterable[Any],
+        *,
+        request_id: str,
+        pending: Optional[bool],
+        quiesce: Optional[Callable[..., Any]] = None,
+        writer_check: Optional[Callable[[], Any]] = None,
+    ) -> Optional[SemanticFinishResult]:
         """Use the common finish boundary without inventing a blank revision.
 
         EDT-02 stores the opening bytes as a scalar draft.  EDT-03's normal
@@ -230,7 +240,11 @@ class IdleCloseService:
         if record is None or not bool(record.payload.get("pending")):
             return None
         try:
+            files = tuple(files)
             tree = self.finish_adapter.snapshots.capture(checkout_root, files, settled=True)
+            if quiesce is not None:
+                SemanticFinishAdapter._writer_is_quiescent(quiesce, writer_check)
+            self.finish_adapter.snapshots.verify_manifest(tree, checkout_root, files)
             initial = b64decode(record.payload.get("draft_bytes_b64", ""))
             if len(tree.files) != 1 or tree.files[0].data != initial:
                 return None
@@ -242,6 +256,7 @@ class IdleCloseService:
                 request_id=request_id,
                 mode="idle",
                 capture=Snapshot(checkout.draft_snapshot_ref, initial),
+                retirement_manifest=tuple(canonical_json(entry.to_dict()) for entry in tree.manifest),
                 expected_base_revision=None,
                 apply=None,
                 pending=True,
@@ -252,9 +267,55 @@ class IdleCloseService:
             # remains an EDT-03 recovery outcome with exact bytes.
             return None
 
-    def _cleanup_after_release(self, handle: SessionHandle, checkout_root: Any, files: Iterable[Any], *, request_id: str, writer_check: Optional[Callable[[], Any]]) -> IdleCloseResult:
+    def _cleanup_after_release(
+        self,
+        handle: SessionHandle,
+        checkout_root: Any,
+        files: Iterable[Any],
+        *,
+        request_id: str,
+        writer_check: Optional[Callable[[], Any]],
+        quiesce: Optional[Callable[..., Any]] = None,
+        settled: Any = True,
+        fresh_capture: bool = False,
+        capture_barrier: Optional[Callable[..., Any]] = None,
+    ) -> IdleCloseResult:
+        exact_files = tuple(files)
+        record = self._record(handle)
+        manifest = None if record is None else record.payload.get("retirement_manifest")
+        if manifest and not fresh_capture:
+            exact_files = registered_files_from_manifest(manifest)
+        if fresh_capture:
+            try:
+                self._quiesce(quiesce, writer_check)
+                paths = tuple(item.relative_path if hasattr(item, "relative_path") else item for item in exact_files)
+                if not paths and manifest:
+                    paths = tuple(item.relative_path for item in registered_files_from_manifest(manifest))
+                if self.service is None:
+                    raise WriterQuiescenceError("fresh cleanup capture needs the shared session service")
+                adapter = DurableSnapshotAdapter(self.service)
+                tree = adapter.capture(checkout_root, paths, settled=settled)
+                if capture_barrier is not None:
+                    _call(capture_barrier, tree, snapshot=tree, checkout_root=str(checkout_root), registered_files=paths)
+                self._quiesce(quiesce, writer_check)
+                adapter.verify_manifest(tree, checkout_root, paths)
+                self.service.refresh_final_snapshot(
+                    handle, request_id=request_id + ":refresh",
+                    snapshot=tree.as_session_snapshot(adapter._ref(handle, "final", tree.tree_digest)),
+                )
+                exact_files = registered_files_from_manifest(tree.manifest)
+            except BaseException as exc:
+                observation = CleanupObservation(CleanupStatus.UNSAFE, str(checkout_root), error=str(exc) or "fresh cleanup capture was unsafe")
+                if self.service is not None:
+                    self.service.cleanup(handle, request_id=request_id + ":cleanup", status=observation.status)
+                return IdleCloseResult("cleanup_pending", handle.scope, handle.session_id, cleanup=observation, recovery_pending=True, error=observation.error)
+        cleanup_check = writer_check
+        if quiesce is not None:
+            def cleanup_check() -> bool:
+                self._quiesce(quiesce, writer_check)
+                return True
         try:
-            observation = self._cleanup(checkout_root, files, writer_check=writer_check)
+            observation = self._cleanup(checkout_root, exact_files, writer_check=cleanup_check)
         except BaseException as exc:
             observation = CleanupObservation(CleanupStatus.PENDING, str(checkout_root), error=str(exc))
         if self.service is not None:
@@ -277,6 +338,9 @@ class IdleCloseService:
         now: Optional[Any] = None,
         quiesce: Optional[Callable[..., Any]] = None,
         writer_check: Optional[Callable[[], Any]] = None,
+        settled: Any = True,
+        capture_barrier: Optional[Callable[..., Any]] = None,
+        fresh_capture: bool = False,
         pending: Optional[bool] = None,
         expected_base_revision: Optional[str] = None,
         hook_kwargs: Optional[Mapping[str, Any]] = None,
@@ -290,7 +354,11 @@ class IdleCloseService:
             if isinstance(checkout, Mapping) and checkout.get("state") != AuthoringState.OPEN.value:
                 current_files = registered_files if registered_files is not None else current.payload.get("registered_files", ())
                 if checkout.get("cleanup") != CleanupStatus.COMPLETE.value:
-                    return self._cleanup_after_release(handle, checkout_root, current_files or (), request_id=request_id, writer_check=writer_check)
+                    return self._cleanup_after_release(
+                        handle, checkout_root, current_files or (), request_id=request_id,
+                        writer_check=writer_check, quiesce=quiesce, settled=settled,
+                        fresh_capture=fresh_capture, capture_barrier=capture_barrier,
+                    )
                 return IdleCloseResult("already_closed", handle.scope, handle.session_id, error="authoring session is already closed")
         edit = self.last_content_edit(handle, last_content_edit)
         observed = self._clock() if now is None else _epoch(now)
@@ -307,18 +375,26 @@ class IdleCloseService:
         files = registered_files
         if files is None and current is not None:
             files = current.payload.get("registered_files", ())
+        files = tuple(files or ())
         try:
-            finish = self._untouched_pending_finish(handle, checkout_root, files or (), request_id=request_id, pending=pending)
+            finish = None if capture_barrier is not None else self._untouched_pending_finish(
+                handle, checkout_root, files or (), request_id=request_id, pending=pending,
+                quiesce=quiesce, writer_check=writer_check,
+            )
             if finish is None:
                 finish = self._finish_call(
                     handle,
                     request_id=request_id,
                     mode="idle",
                     checkout_root=checkout_root,
-                    registered_files=files or (),
+                    registered_files=files,
                     handler=handler or _PendingHandler(),
                     expected_base_revision=expected_base_revision,
                     pending=pending,
+                    settled=settled,
+                    quiesce=quiesce,
+                    writer_check=writer_check,
+                    capture_barrier=capture_barrier,
                     **dict(hook_kwargs or {}),
                 )
         except BaseException as exc:
@@ -331,8 +407,21 @@ class IdleCloseService:
             return IdleCloseResult("recovery_pending", handle.scope, handle.session_id, idle_for, edit, finish, recovery_pending=True, error=finish.error)
         if finish.status not in {"finished", "pending_released", "rejected", "already_finished", "replayed"} or finish.finish is None:
             return result
+        exact_files = files
+        if finish.snapshot is not None:
+            exact_files = registered_files_from_manifest(finish.snapshot.manifest)
+        else:
+            record = self._record(handle)
+            manifest = None if record is None else record.payload.get("retirement_manifest")
+            if manifest:
+                exact_files = registered_files_from_manifest(manifest)
+        cleanup_check = writer_check
+        if quiesce is not None:
+            def cleanup_check() -> bool:
+                self._quiesce(quiesce, writer_check)
+                return True
         try:
-            observation = self._cleanup(checkout_root, files or (), writer_check=writer_check)
+            observation = self._cleanup(checkout_root, exact_files, writer_check=cleanup_check)
         except BaseException as exc:
             observation = CleanupObservation(CleanupStatus.PENDING, str(checkout_root), error=str(exc))
         if self.service is not None:

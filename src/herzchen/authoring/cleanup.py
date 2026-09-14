@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
+import json
 import os
 from pathlib import Path
 import stat
@@ -41,9 +42,10 @@ class CleanupWriterError(CleanupUnsafeError):
 class RegisteredFile:
     """A disposable file registered by an authoring session.
 
-    ``sha256`` and ``size`` are optional for compatibility with EDT-02
-    metadata.  When omitted, they are captured immediately before deletion
-    and checked again immediately before the unlink.
+    ``sha256`` and ``size`` are optional for compatibility with direct
+    cleanup callers.  The shared authoring lifecycle always supplies both
+    from the immutable final-capture manifest; a bare path is therefore never
+    used as the retirement baseline by that lifecycle.
     """
 
     relative_path: str
@@ -109,6 +111,35 @@ def _entries(values: Iterable[Union[str, os.PathLike[str], RegisteredFile, Mappi
             raise CleanupIdentityError("registered cleanup size is invalid: " + path)
         result.append(RegisteredFile(path, item.sha256, item.size))
     return tuple(result)
+
+
+def registered_files_from_manifest(manifest: Iterable[object]) -> Tuple[RegisteredFile, ...]:
+    """Convert an exact snapshot manifest to cleanup entries.
+
+    Session snapshots carry manifest entries as canonical JSON strings across
+    the existing FND boundary; durable tree snapshots expose mappings.  Both
+    forms are accepted, but no form may omit its digest or size here.
+    """
+    converted = []
+    for value in manifest:
+        item = value
+        if isinstance(value, str):
+            try:
+                item = json.loads(value)
+            except ValueError as exc:
+                raise CleanupIdentityError("retirement manifest is not canonical JSON") from exc
+        if isinstance(item, Mapping):
+            path = item.get("relative_path", item.get("path"))
+            digest = item.get("sha256", item.get("digest"))
+            size = item.get("size")
+        else:
+            path = getattr(item, "relative_path", None)
+            digest = getattr(item, "sha256", None)
+            size = getattr(item, "size", None)
+        if not isinstance(path, (str, os.PathLike)) or not isinstance(digest, str) or not isinstance(size, int) or isinstance(size, bool):
+            raise CleanupIdentityError("retirement manifest entry lacks exact path, digest, or size")
+        converted.append(RegisteredFile(path, digest, size))
+    return _entries(converted)
 
 
 def _writer_is_quiescent(writer_check: Optional[Callable[[], object]]) -> None:
@@ -274,16 +305,26 @@ def cleanup_registered_files(
             except CleanupError:
                 raise
             try:
-                expected_identity, _, _ = _read_identity_and_digest(parent_fd, name, item)
+                expected_identity, expected_size, expected_digest = _read_identity_and_digest(parent_fd, name, item)
                 if before_delete is not None:
                     result = before_delete(item.relative_path)
                     if result is False:
                         raise CleanupWriterError("cleanup deletion was not authorised")
                 _writer_is_quiescent(writer_check)
                 _validate_root(path, root_identity, parent_identity)
-                current_identity, _, _ = _read_identity_and_digest(parent_fd, name, RegisteredFile(item.relative_path, None, None))
+                current_identity, current_size, current_digest = _read_identity_and_digest(
+                    parent_fd, name, RegisteredFile(item.relative_path, None, None)
+                )
                 if current_identity != expected_identity:
                     raise CleanupIdentityError("registered cleanup file identity changed: " + item.relative_path)
+                # The second read must still equal the first exact capture,
+                # not merely retain the same inode.  In-place late writes do
+                # not change inode identity but must never be deleted as a
+                # just-in-time cleanup baseline.
+                if current_size != expected_size:
+                    raise CleanupIdentityError("registered cleanup file size changed: " + item.relative_path)
+                if current_digest != expected_digest:
+                    raise CleanupIdentityError("registered cleanup file digest changed: " + item.relative_path)
                 os.unlink(name, dir_fd=parent_fd)
             except FileNotFoundError as exc:
                 raise CleanupIdentityError("registered cleanup file disappeared: " + item.relative_path) from exc
@@ -317,5 +358,5 @@ safe_cleanup = cleanup_registered_files
 
 __all__ = [
     "CleanupError", "CleanupUnsafeError", "CleanupPathError", "CleanupIdentityError", "CleanupWriterError",
-    "RegisteredFile", "CleanupObservation", "cleanup_registered_files", "cleanup_status", "CleanupManager", "safe_cleanup",
+    "RegisteredFile", "CleanupObservation", "registered_files_from_manifest", "cleanup_registered_files", "cleanup_status", "CleanupManager", "safe_cleanup",
 ]

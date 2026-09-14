@@ -15,12 +15,13 @@ import time
 from pathlib import Path
 from typing import Any, Callable, Iterable, Optional, Protocol, Union
 
-from herzchen.contracts import AuthoringState, AuthenticatedActor, ResourceRef
+from herzchen.contracts import AuthoringState, AuthenticatedActor, CleanupStatus, ResourceRef
 
-from .cleanup import CleanupObservation, cleanup_registered_files
+from .cleanup import CleanupObservation, cleanup_registered_files, registered_files_from_manifest
 from .finish import SemanticFinishAdapter, SemanticFinishResult
 from .idle import IdleCloseResult, IdleCloseService
 from .sessions import AuthoringSessionService, CleanupResult, FinishResult, OpenResult, SessionHandle
+from .snapshots import DurableSnapshotAdapter
 
 
 class SemanticHandler(Protocol):
@@ -189,7 +190,9 @@ class AuthoringLifecycle:
         pending: Optional[bool] = None,
         settled: Any = True,
         cleanup: bool = True,
+        quiesce: Optional[Callable[..., Any]] = None,
         writer_check: Optional[Callable[[], Any]] = None,
+        capture_barrier: Optional[Callable[..., Any]] = None,
         **hook_kwargs: Any,
     ) -> LifecycleFinishResult:
         handle = target.handle if isinstance(target, AuthoringTarget) else target
@@ -197,11 +200,18 @@ class AuthoringLifecycle:
             handle, request_id=request_id, mode=mode, checkout_root=checkout_root,
             registered_files=registered_files, handler=handler,
             expected_base_revision=expected_base_revision, pending=pending,
-            settled=settled, **hook_kwargs,
+            settled=settled, quiesce=quiesce, writer_check=writer_check,
+            capture_barrier=capture_barrier, **hook_kwargs,
         )
         if not cleanup or not self._released(result):
             return LifecycleFinishResult(result)
-        observation = self.cleanup(checkout_root, registered_files, writer_check=writer_check)
+        exact_files = self._retirement_files(result, registered_files)
+        cleanup_check = writer_check
+        if quiesce is not None:
+            def cleanup_check() -> bool:
+                SemanticFinishAdapter._writer_is_quiescent(quiesce, writer_check)
+                return True
+        observation = self.cleanup(checkout_root, exact_files, writer_check=cleanup_check)
         durable = self.service.cleanup(handle, request_id=request_id + ":cleanup", status=observation.status)
         return LifecycleFinishResult(result, observation, durable)
 
@@ -233,11 +243,64 @@ class AuthoringLifecycle:
         checkout_root: Union[str, Path],
         registered_files: Any,
         writer_check: Optional[Callable[[], Any]] = None,
+        quiesce: Optional[Callable[..., Any]] = None,
+        settled: Any = True,
+        fresh_capture: bool = False,
+        capture_barrier: Optional[Callable[..., Any]] = None,
     ) -> CleanupObservation:
         handle = target.handle if isinstance(target, AuthoringTarget) else target
-        observation = self.cleanup(checkout_root, registered_files, writer_check=writer_check)
+        record = self.service.writer.get_identity(handle.scope)
+        payload = {} if record is None else record.payload
+        manifest = payload.get("retirement_manifest")
+        exact_files = registered_files
+        if manifest and not fresh_capture:
+            exact_files = registered_files_from_manifest(manifest)
+
+        if fresh_capture:
+            try:
+                SemanticFinishAdapter._writer_is_quiescent(quiesce, writer_check)
+                paths = tuple(
+                    item.relative_path if hasattr(item, "relative_path") else item
+                    for item in (registered_files or ())
+                )
+                if not paths and manifest:
+                    paths = tuple(item.relative_path for item in registered_files_from_manifest(manifest))
+                adapter = DurableSnapshotAdapter(self.service)
+                tree = adapter.capture(checkout_root, paths, settled=settled)
+                if capture_barrier is not None:
+                    _call(capture_barrier, tree, snapshot=tree, checkout_root=str(checkout_root), registered_files=paths)
+                SemanticFinishAdapter._writer_is_quiescent(quiesce, writer_check)
+                adapter.verify_manifest(tree, checkout_root, paths)
+                self.service.refresh_final_snapshot(
+                    handle, request_id=request_id + ":refresh", snapshot=tree.as_session_snapshot(adapter._ref(handle, "final", tree.tree_digest))
+                )
+                exact_files = registered_files_from_manifest(tree.manifest)
+            except BaseException as exc:
+                observation = CleanupObservation(
+                    CleanupStatus.UNSAFE,
+                    str(checkout_root), error=str(exc) or "fresh cleanup capture was unsafe",
+                )
+                self.service.cleanup(handle, request_id=request_id, status=observation.status)
+                return observation
+
+        def fenced_check() -> Any:
+            if quiesce is not None:
+                SemanticFinishAdapter._writer_is_quiescent(quiesce, writer_check)
+                return True
+            if writer_check is None:
+                return None
+            return writer_check()
+
+        observation = self.cleanup(checkout_root, exact_files, writer_check=fenced_check if (quiesce is not None or writer_check is not None) else None)
         self.service.cleanup(handle, request_id=request_id, status=observation.status)
         return observation
+
+    def _retirement_files(self, result: SemanticFinishResult, fallback: Any) -> Any:
+        if result.snapshot is not None:
+            return registered_files_from_manifest(result.snapshot.manifest)
+        record = self.service.writer.get_identity(result.finish.scope) if result.finish is not None else None
+        manifest = None if record is None else record.payload.get("retirement_manifest")
+        return registered_files_from_manifest(manifest) if manifest else fallback
 
     @staticmethod
     def _released(result: SemanticFinishResult) -> bool:

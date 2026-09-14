@@ -12,7 +12,7 @@ import inspect
 from pathlib import Path
 from typing import Any, Callable, Mapping, Optional, Protocol, Union
 
-from herzchen.contracts import AuthoringCheckout, AuthoringState, ResourceRef
+from herzchen.contracts import AuthoringCheckout, AuthoringState, CleanupStatus, ResourceRef
 
 from .sessions import AuthoringSessionService, FinishResult, SessionHandle
 from .snapshots import DurableSnapshot, DurableSnapshotAdapter, SnapshotError
@@ -86,6 +86,54 @@ class SemanticFinishAdapter:
     def __init__(self, service: AuthoringSessionService, snapshot_adapter: Optional[DurableSnapshotAdapter] = None) -> None:
         self.service = service
         self.snapshots = snapshot_adapter or DurableSnapshotAdapter(service)
+
+    @staticmethod
+    def _writer_is_quiescent(
+        quiesce: Optional[Callable[..., Any]],
+        writer_check: Optional[Callable[..., Any]],
+    ) -> None:
+        """Require the host's managed-writer fence at each lifecycle edge."""
+        if quiesce is not None:
+            try:
+                value = _call_hook(quiesce)
+            except BaseException as exc:
+                raise SnapshotError("managed writer could not be quiesced") from exc
+            if value is False or value is None or (isinstance(value, str) and value in {"active", "open", "writing", "unknown"}):
+                raise SnapshotError("managed writer did not acknowledge quiescence")
+        if writer_check is not None:
+            try:
+                value = _call_hook(writer_check)
+            except BaseException as exc:
+                raise SnapshotError("managed writer state is unknown") from exc
+            if value is not True and not (isinstance(value, str) and value in {"quiescent", "idle", "stopped"}):
+                raise SnapshotError("managed writer state is active or unknown")
+
+    def _late_write_recovery(
+        self,
+        handle: SessionHandle,
+        tree: DurableSnapshot,
+        *,
+        mode: str,
+        request_id: str,
+        error: str,
+    ) -> SemanticFinishResult:
+        """Durably retain the pre-late-write capture and release for retry."""
+        session_snapshot = tree.as_session_snapshot(self.snapshots._ref(handle, "final", tree.tree_digest))
+        self.service._transition_recovery(handle, request_id + ":late-write", session_snapshot, error)
+        record = self.service.writer.get_identity(handle.scope)
+        checkout = None
+        if record is not None:
+            try:
+                checkout = self.service._payload_checkout(record.payload)
+            except (TypeError, ValueError, KeyError):
+                checkout = None
+        finish = FinishResult(
+            "recovery_pending", handle.scope, handle.session_id,
+            checkout=checkout, final_snapshot=session_snapshot,
+            recovery_pending=True, cleanup=checkout.cleanup if checkout is not None else CleanupStatus.PENDING,
+            error=error,
+        )
+        return SemanticFinishResult("recovery_pending", finish, tree, recovery_pending=True, error=error)
 
     def _reconcile_completed_finish(
         self,
@@ -168,9 +216,15 @@ class SemanticFinishAdapter:
         expected_base_revision: Optional[str] = None,
         pending: Optional[bool] = None,
         settled: Any = True,
+        quiesce: Optional[Callable[..., Any]] = None,
+        writer_check: Optional[Callable[..., Any]] = None,
+        capture_barrier: Optional[Callable[..., Any]] = None,
         **hook_kwargs: Any,
     ) -> SemanticFinishResult:
         """Capture and validate outside the short common writer transaction."""
+        # Capture and the post-barrier verification must inspect the same
+        # registered set even when a host supplied a one-shot iterator.
+        registered_files = tuple(registered_files)
         # Exact request replay is deliberately delegated unchanged.  The
         # session service checks the request receipt before invoking capture,
         # so a lost response cannot cause a second handler application.
@@ -217,7 +271,27 @@ class SemanticFinishAdapter:
                 return SemanticFinishResult("failed", recovery_pending=True, error=str(exc))
 
         try:
+            # ``settled`` remains a capture hint for legacy callers; a host
+            # with a managed writer must also provide the real quiescence
+            # check.  The check is repeated after the deterministic barrier.
+            if quiesce is not None:
+                self._writer_is_quiescent(quiesce, writer_check)
             tree = self.snapshots.capture(checkout_root, registered_files, settled=settled)
+            if capture_barrier is not None:
+                _call_hook(
+                    capture_barrier, tree,
+                    snapshot=tree, checkout_root=str(checkout_root),
+                    registered_files=registered_files,
+                )
+            try:
+                if quiesce is not None:
+                    self._writer_is_quiescent(quiesce, writer_check)
+                self.snapshots.verify_manifest(tree, checkout_root, registered_files)
+            except BaseException as exc:
+                return self._late_write_recovery(
+                    handle, tree, mode=mode, request_id=request_id,
+                    error=str(exc) or "checkout changed after final capture",
+                )
             # Token, fence, and base admission are checked before the handler
             # is allowed to inspect/apply semantic changes.
             expected = expected_base_revision or handle.base_revision

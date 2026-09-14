@@ -683,6 +683,7 @@ class AuthoringSessionService:
         expected_base_revision: Optional[str] = None,
         apply: Optional[Callable[..., Any]] = None,
         pending: Optional[bool] = None,
+        retirement_manifest: Optional[Sequence[str]] = None,
     ) -> FinishResult:
         if mode not in {"manual", "idle"}:
             raise ValueError("finish mode must be manual or idle")
@@ -747,6 +748,16 @@ class AuthoringSessionService:
                     final_payload["recovery_pending"] = False
                     final_payload["pending"] = is_pending
                     final_payload["finish_request_id"] = request_id
+                    # This is the immutable retirement handoff.  Cleanup may
+                    # only use these exact per-file bytes, sizes and digests;
+                    # it must not derive a new baseline from the checkout.
+                    final_payload["retirement_manifest"] = list(retirement_manifest if retirement_manifest is not None else snap.manifest)
+                    final_payload["retirement_fence"] = {
+                        "session_id": claimed.session_id,
+                        "token": claimed.token,
+                        "fence": claimed.fence,
+                        "manifest_digest": _digest(list(retirement_manifest if retirement_manifest is not None else snap.manifest)),
+                    }
                     receipt = self._mutate(tx, actor=handle.actor, operation="finish", request_id=request_id, target=scope_ref, digest=digest, record=_as_record(self.writer.get_identity(scope_ref)), payload=final_payload, effects={"mode": mode, "final_digest": snap.digest, "pending": is_pending})
                     actor_record = _as_record(self.writer.get_identity(actor_ref))
                     if actor_record is not None:
@@ -777,6 +788,13 @@ class AuthoringSessionService:
         payload["final_bytes_b64"] = b64encode(snap.data).decode("ascii")
         payload["final_digest"] = snap.digest
         payload["final_snapshot_ref"] = snap.ref.to_dict()
+        payload["retirement_manifest"] = list(snap.manifest)
+        payload["retirement_fence"] = {
+            "session_id": checkout.session_id,
+            "token": checkout.token,
+            "fence": checkout.fence,
+            "manifest_digest": _digest(list(snap.manifest)),
+        }
         payload["recovery_pending"] = not rejected
         payload["error"] = error
         actor_ref = _actor_key(handle.actor, getattr(self.writer, "authority", handle.scope.authority))
@@ -791,6 +809,55 @@ class AuthoringSessionService:
                 self._mutate(tx, actor=handle.actor, operation="actor.release", request_id=request_id + ":actor", target=actor_ref, digest=digest, record=actor_record, payload={"type": "authoring_actor", "active": False, "scope": handle.scope.to_dict(), "session_id": handle.session_id}, effects={"session_id": handle.session_id})
             self._put_snapshot(tx, snap)
             self._put_refs(tx, snap.ref)
+
+    def refresh_final_snapshot(self, handle: SessionHandle, *, request_id: str, snapshot: Snapshot) -> Snapshot:
+        """Durably replace a released finish with a fresh retry capture.
+
+        This is only used after unsafe cleanup.  The caller must have made a
+        new stable capture/fence first; the resulting exact manifest is then
+        persisted before physical deletion is attempted.
+        """
+        record = _as_record(self.writer.get_identity(handle.scope))
+        if record is None:
+            raise InvalidSessionError("scope is not admitted")
+        checkout = self._validate_record(handle, record, require_open=False)
+        if checkout.state == AuthoringState.OPEN:
+            raise InvalidSessionError("fresh cleanup capture requires a released checkout")
+        updated_checkout = AuthoringCheckout(
+            checkout.target_scope, checkout.target_kind, checkout.actor,
+            checkout.session_id, checkout.token, checkout.fence,
+            checkout.base_revision, checkout.draft_snapshot_ref, snapshot.ref,
+            checkout.allowed_fields, checkout.state, CleanupStatus.PENDING,
+            checkout.finish_claim, checkout.unmanaged_writers,
+        )
+        payload = dict(record.payload)
+        payload["checkout"] = updated_checkout.to_dict()
+        payload["final_bytes_b64"] = b64encode(snapshot.data).decode("ascii")
+        payload["final_digest"] = snapshot.digest
+        payload["final_snapshot_ref"] = snapshot.ref.to_dict()
+        payload["retirement_manifest"] = list(snapshot.manifest)
+        payload["retirement_fence"] = {
+            "session_id": updated_checkout.session_id,
+            "token": updated_checkout.token,
+            "fence": updated_checkout.fence,
+            "manifest_digest": _digest(list(snapshot.manifest)),
+        }
+        payload["recovery_pending"] = False
+        payload.pop("error", None)
+        digest = self._request_digest("cleanup.refresh", request_id, {"session": handle.session_id, "snapshot": snapshot.digest})
+        with self.writer.transaction() as tx:
+            current = _as_record(self.writer.get_identity(handle.scope))
+            if current is None:
+                raise InvalidSessionError("scope is not admitted")
+            self._validate_record(handle, current, require_open=False)
+            self._mutate(
+                tx, actor=handle.actor, operation="cleanup.refresh", request_id=request_id,
+                target=handle.scope, digest=digest, record=current, payload=payload,
+                effects={"final_digest": snapshot.digest},
+            )
+            self._put_snapshot(tx, snapshot)
+            self._put_refs(tx, snapshot.ref)
+        return snapshot
 
     def _transition_release(self, handle: SessionHandle, request_id: str, *, status: str, project: Any = None, error: Optional[str] = None) -> None:
         record = _as_record(self.writer.get_identity(handle.scope))
@@ -829,6 +896,18 @@ class AuthoringSessionService:
         checkout = self._payload_checkout(record.payload)
         if checkout is None or checkout.session_id != handle.session_id:
             raise InvalidSessionError("session is not current")
+        if checkout.token != handle.token or checkout.fence != handle.fence or checkout.target_scope != handle.target_scope or checkout.actor != handle.actor:
+            raise InvalidSessionError("stale authoring token or fence")
+        retirement_fence = record.payload.get("retirement_fence")
+        retirement_manifest = record.payload.get("retirement_manifest")
+        if isinstance(retirement_fence, Mapping) and isinstance(retirement_manifest, list):
+            if (
+                retirement_fence.get("session_id") != checkout.session_id
+                or retirement_fence.get("token") != checkout.token
+                or retirement_fence.get("fence") != checkout.fence
+                or retirement_fence.get("manifest_digest") != _digest(retirement_manifest)
+            ):
+                raise InvalidSessionError("retirement fence does not match the captured manifest")
         if checkout.state == AuthoringState.OPEN:
             raise InvalidSessionError("release must precede cleanup")
         if status == CleanupStatus.COMPLETE and checkout.unmanaged_writers:

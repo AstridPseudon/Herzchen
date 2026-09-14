@@ -46,6 +46,10 @@ class UnstableFileError(SnapshotError):
     """A writer changed a file while it was being captured."""
 
 
+class LateWriteError(SnapshotError):
+    """The checkout changed after the stable capture and before retirement."""
+
+
 class UnsettledWriteError(SnapshotError):
     """The host has not declared the checkout write settled."""
 
@@ -319,6 +323,24 @@ class DurableSnapshotAdapter:
     def capture(self, checkout_root: Union[str, os.PathLike[str]], registered_files: Iterable[Union[str, os.PathLike[str]]], *, settled: Union[bool, Callable[[], bool]] = True) -> DurableSnapshot:
         return capture_tree(checkout_root, registered_files, settled=settled)
 
+    def verify_manifest(
+        self,
+        snapshot: DurableSnapshot,
+        checkout_root: Union[str, os.PathLike[str]],
+        registered_files: Iterable[Union[str, os.PathLike[str]]],
+    ) -> None:
+        """Prove the captured bytes still describe the checkout.
+
+        This is deliberately a fresh stable read for verification, not a
+        cleanup baseline.  Cleanup receives ``snapshot.manifest`` itself.
+        """
+        try:
+            current = self.capture(checkout_root, registered_files, settled=True)
+        except BaseException as exc:
+            raise LateWriteError("checkout changed after final capture") from exc
+        if current.manifest != snapshot.manifest:
+            raise LateWriteError("checkout changed after final capture")
+
     def autosave(
         self,
         handle: SessionHandle,
@@ -358,7 +380,7 @@ class DurableSnapshotAdapter:
 
 __all__ = [
     "SnapshotError", "InvalidSnapshotPath", "SnapshotPathEscape", "UnregisteredFileError",
-    "MissingRegisteredFileError", "UnstableFileError", "UnsettledWriteError", "SnapshotPersistenceError",
+    "MissingRegisteredFileError", "UnstableFileError", "LateWriteError", "UnsettledWriteError", "SnapshotPersistenceError",
     "SnapshotManifestEntry", "SnapshotFile", "DurableSnapshot", "SnapshotSaveResult",
     "capture_tree", "durable_snapshot_from_bytes", "DurableSnapshotAdapter",
 ]
