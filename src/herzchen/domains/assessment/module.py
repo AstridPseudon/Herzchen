@@ -632,9 +632,16 @@ class AssessmentModule:
 
     def _envelope(self, operation: str, target: ResourceRef, payload: Mapping[str, Any], key: str, actor: AuthenticatedActor, *, expected_version: Optional[int] = None, expected_revision: Optional[str] = None, digest_payload: Optional[Mapping[str, Any]] = None) -> CommandEnvelope:
         envelope_payload = dict(payload)
+        context = TransactionContext(
+            actor,
+            key,
+            "0" * 64,
+            expected_revision=expected_revision,
+            expected_version=expected_version,
+        )
         digest = canonical_request_digest(
             logical_request_key=key, operation=operation, schema_revision=SCHEMA_REVISION,
-            target=target, actor=actor, payload=envelope_payload,
+            target=target, actor=actor, payload=envelope_payload, context=context,
         )
         return CommandEnvelope(operation, SCHEMA_REVISION, target, TransactionContext(actor, key, digest, expected_revision=expected_revision, expected_version=expected_version), envelope_payload)
 

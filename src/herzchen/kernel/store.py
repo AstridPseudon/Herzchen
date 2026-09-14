@@ -889,6 +889,7 @@ class Store:
             target=envelope.target,
             actor=envelope.context.actor,
             payload=envelope.payload,
+            context=envelope.context,
         )
         envelope = replace(
             envelope,

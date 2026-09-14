@@ -460,8 +460,41 @@ class DocumentAuthoringHandler:
         )
         return scope
 
-    def _context(self, actor: AuthenticatedActor, request_id: str, values: Any, *, expected_revision: Optional[str], expected_version: Optional[int] = None) -> TransactionContext:
-        return TransactionContext(actor, request_id, _digest(values), expected_revision=expected_revision, expected_version=expected_version)
+    def _context(
+        self,
+        actor: AuthenticatedActor,
+        request_id: str,
+        values: Any,
+        *,
+        expected_revision: Optional[str],
+        expected_version: Optional[int] = None,
+        operation: str,
+        target: ResourceRef,
+        payload: Mapping[str, Any],
+    ) -> TransactionContext:
+        context = TransactionContext(
+            actor,
+            request_id,
+            "0" * 64,
+            expected_revision=expected_revision,
+            expected_version=expected_version,
+        )
+        digest = canonical_request_digest(
+            logical_request_key=request_id,
+            operation=operation,
+            schema_revision="dat-content.v1",
+            target=target,
+            actor=actor,
+            payload=payload,
+            context=context,
+        )
+        return TransactionContext(
+            actor,
+            request_id,
+            digest,
+            expected_revision=expected_revision,
+            expected_version=expected_version,
+        )
 
     def _apply_parsed(
         self,
@@ -498,11 +531,18 @@ class DocumentAuthoringHandler:
             initial=current_revision_ref is None,
         )
         replay_operation = "dat.content.document.create" if current_revision_ref is None else "dat.content.revision.append"
-        request_digest = canonical_request_digest(
-            logical_request_key=request_id + ":document", operation=replay_operation,
-            schema_revision="dat-content.v1", target=document.ref, actor=actor,
-            payload={"document": document, "revision": replay_revision},
+        document_payload = {"document": document, "revision": replay_revision}
+        context = self._context(
+            actor,
+            request_id + ":document",
+            values,
+            expected_revision=(handle.base_revision if current_revision_ref is not None and handle is not None else None),
+            expected_version=None,
+            operation=replay_operation,
+            target=document.ref,
+            payload=document_payload,
         )
+        request_digest = context.request_digest
         prior = _COMMAND_PORTS[self].get_receipt(request_id + ":document")
         if prior is not None:
             if prior.request_digest != request_digest:
@@ -528,11 +568,20 @@ class DocumentAuthoringHandler:
         receipts: list[Any] = []
 
         def run(tx: Any) -> None:
-            context = self._context(actor, request_id + ":document", values, expected_revision=current_revision_ref.revision if current_revision_ref else None, expected_version=current_version if current_revision_ref else 0)
             envelope = self.content.build_create_document(context, document, revision) if current_revision_ref is None else self.content.build_append_revision(context, document, revision)
             receipts.append(self.content.execute(envelope))
             for index, link in enumerate(all_links):
-                link_context = self._context(actor, request_id + ":link:" + str(index), values, expected_revision=None, expected_version=0)
+                link_target = ResourceRef(link.subject.authority, "document-association", link.identity)
+                link_context = self._context(
+                    actor,
+                    request_id + ":link:" + str(index),
+                    values,
+                    expected_revision=None,
+                    expected_version=None,
+                    operation="dat.content.link",
+                    target=link_target,
+                    payload={"association": link},
+                )
                 receipts.append(self.content.execute(self.content.build_link(link_context, link)))
 
         if transaction is None:
@@ -643,7 +692,17 @@ class DocumentAuthoringHandler:
         self._authorize(association.document.ref, actor, handle, token=token, fence=fence, base_revision=expected_base_revision, document=document)
         association_ref = ResourceRef(association.subject.authority, "document-association", association.identity)
         association_read = self.content.read(association_ref)
-        context = self._context(actor, request_id, association, expected_revision=None, expected_version=association_read.get("version", 0))
+        association_target = ResourceRef(association.subject.authority, "document-association", association.identity)
+        context = self._context(
+            actor,
+            request_id,
+            association,
+            expected_revision=None,
+            expected_version=None,
+            operation="dat.content.unlink",
+            target=association_target,
+            payload={"association": association, "preserve_document": True, "preserve_revisions": True},
+        )
         with _COMMAND_PORTS[self].transaction():
             return self.content.execute(self.content.build_unlink(context, association))
 

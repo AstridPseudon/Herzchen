@@ -381,10 +381,11 @@ class AuthoringSessionService:
         self, operation: str, request_id: str, values: Mapping[str, Any],
         *, target: ResourceRef, actor: AuthenticatedActor,
     ) -> str:
+        context = TransactionContext(actor, request_id, "0" * 64)
         return canonical_request_digest(
             logical_request_key=request_id, operation=operation,
             schema_revision=AUTHORING_SCHEMA_REVISION, target=target,
-            actor=actor, payload=values,
+            actor=actor, payload=values, context=context,
         )
 
     def _envelope(
@@ -398,14 +399,33 @@ class AuthoringSessionService:
         revision: Optional[str],
         version: Optional[int],
         edit_token: Optional[str] = None,
+        correlation_id: Optional[str] = None,
+        causation_id: Optional[str] = None,
         payload: Optional[Mapping[str, Any]] = None,
     ) -> CommandEnvelope:
+        envelope_payload = dict(payload or {})
+        context = TransactionContext(
+            actor, request_id, digest, revision, version, edit_token,
+            correlation_id, causation_id,
+        )
+        canonical = canonical_request_digest(
+            logical_request_key=request_id,
+            operation=operation,
+            schema_revision=AUTHORING_SCHEMA_REVISION,
+            target=target,
+            actor=actor,
+            payload=envelope_payload,
+            context=context,
+        )
         return CommandEnvelope(
             operation,
             AUTHORING_SCHEMA_REVISION,
             target,
-            TransactionContext(actor, request_id, digest, revision, version, edit_token),
-            dict(payload or {}),
+            TransactionContext(
+                actor, request_id, canonical, revision, version, edit_token,
+                correlation_id, causation_id,
+            ),
+            envelope_payload,
         )
 
     def _mutate(
@@ -425,9 +445,13 @@ class AuthoringSessionService:
     ) -> CommandReceipt:
         envelope = self._envelope(
             actor, operation, request_id, target, digest,
-            revision=None if record is None else record.ref.revision,
-            version=0 if record is None else record.version,
-            edit_token=None if record is None else record.edit_token,
+            # EDT performs the capability/base-revision checks above its FND
+            # port.  Keep the durable request context stable across an exact
+            # replay rather than deriving a new digest from the post-mutation
+            # identity revision/version.
+            revision=None,
+            version=None,
+            edit_token=None,
             payload=payload if request_payload is None else request_payload,
         )
         return _COMMAND_PORTS[self].mutate(

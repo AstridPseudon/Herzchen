@@ -163,6 +163,7 @@ def test_store_replaces_caller_digest_and_rejects_changed_replay_semantics_witho
             target=original.target,
             actor=original.context.actor,
             payload=original.payload,
+            context=original.context,
         )
         assert receipt.request_digest != original.context.request_digest
 
