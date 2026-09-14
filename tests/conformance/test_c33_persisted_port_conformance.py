@@ -7,7 +7,7 @@ surface, and the common harness checks the durable boundary around that call.
 
 from __future__ import annotations
 
-from dataclasses import fields, is_dataclass
+from dataclasses import fields, is_dataclass, replace
 from enum import Enum
 import hashlib
 import json
@@ -621,19 +621,28 @@ def _call_authoring(row: Mapping[str, Any], store: Store, key: str, tmp_path: Pa
     opened = open_session(key + ":setup")
     assert opened.handle is not None
     handle = opened.handle
+    # These five authoring rows have no independently mutable payload argument
+    # beyond the capability and finish mode.  Their previous ``changed``
+    # callbacks repeated the valid request, which made the harness label a
+    # successful exact replay as a rejection.  Keep the first action and
+    # replay unchanged, but make the changed request a real same-key logical
+    # conflict with a foreign actor, changed finish mode, and stale capability
+    # token.  The production API must reject it without a durable delta.
+    changed_actor = AuthenticatedActor(store.authority, "changed-actor", "credential")
+    changed_handle = replace(handle, actor=changed_actor, token=handle.token + "-changed")
     if operation == "autosave":
         action = lambda: service.autosave(handle, request_id=key, snapshot=b"autosave")
         changed = lambda: service.autosave(handle, request_id=key, snapshot=b"changed")
     elif operation in {"finish.claim", "finish"}:
         action = lambda: service.finish(handle, request_id=key, mode="manual", capture=b"final")
-        changed = lambda: service.finish(handle, request_id=key, mode="manual", capture=b"changed")
+        changed = lambda: service.finish(changed_handle, request_id=key, mode="idle", capture=b"changed")
     elif operation == "finish.recovery":
         capture_calls = {"count": 0}
         def failing_capture(*_args: Any, **_kwargs: Any) -> bytes:
             capture_calls["count"] += 1
             raise RuntimeError("c33 capture failure")
         action = lambda: service.finish(handle, request_id=key, mode="manual", capture=failing_capture)
-        changed = lambda: service.finish(handle, request_id=key, mode="manual", capture=lambda: b"changed")
+        changed = lambda: service.finish(changed_handle, request_id=key, mode="idle", capture=lambda: b"changed")
         action.c33_metadata = {
             "expected_recovery_receipt_key": key + ":capture-failure",
             "public_retry": "AuthoringSessionService.finish",
@@ -641,7 +650,7 @@ def _call_authoring(row: Mapping[str, Any], store: Store, key: str, tmp_path: Pa
         }
     elif operation in {"actor.release", "release"}:
         action = lambda: service.release(handle, request_id=key)
-        changed = lambda: service.release(handle, request_id=key)
+        changed = lambda: service.release(changed_handle, request_id=key)
     elif operation in {"cleanup", "cleanup.refresh"}:
         root = tmp_path / "lease-root"
         root.mkdir(exist_ok=True)
