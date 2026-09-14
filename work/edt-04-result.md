@@ -95,3 +95,75 @@ f3aed208d4b90c67d35a7e8cfbad81d3d561207002b5a716c74bcdfb5da98dae  src/herzchen/a
 
 - JSON handoff: `handoffs/EDT.json`
 - Receipt: `work/edt-04-receipt.json`
+
+## Correction supplement — cross-service finish loser reconciliation
+
+This is an owner-authorized EDT-04 continuation. The original candidate,
+launch receipt, JSONL, and original report sections above are retained
+unchanged as lineage. The correction started from the exact recorded baseline
+commit/tree `4d654b086a8da7cd0d8b5b36acf7ca4e49d1f0a3` /
+`739ec55cdefb820e4806c6b75438628d3c467e39` and preserves implementation
+parent `61bbedd1f682e2a7cd511b4081b1a89d4da16e6d` /
+`5c59ff7ece86b21a90c4e2bf274056b05479f09e`.
+
+The new correction commit is `4769c1153fd3177271b4d849cb7a3fceb450273b`
+with tree `95a492ac07adbb33ab1f384d1b25b82d7485b06f`. It changes only
+`src/herzchen/authoring/finish.py` and the focused
+`tests/authoring/test_failure_matrix.py` regression. The adapter now uses the
+supplied Store transaction around the existing common `AuthoringSessionService.finish`
+boundary, allowing separate services to serialize on the shared durable writer
+without an EDT lock, retry loop, second store, SQL, or receipt engine. It then
+reconciles only a finished/released checkout with the same session/token/fence,
+target/actor/base/pending semantics, shared `finish-<session>` claim, matching
+packed snapshot digest, and committed durable `finish` receipt. A changed or
+foreign/stale capability remains a recovery-safe non-success; genuine capture
+and application failures have no committed finish receipt and remain
+`recovery_pending`.
+
+The focused regression is `tests/authoring/test_failure_matrix.py:138-232`.
+It constructs two `AuthoringSessionService` and two `SemanticFinishAdapter`
+instances over one supplied Store, gates both validations with a barrier, and
+asserts one `finished` plus one `already_finished`, one handler application,
+one finish receipt/event, coherent finished claim/state, exact replay as
+`replayed`, changed-input non-success, and stale-token non-success. Existing
+manual/idle, rejected-draft, capture/application failure, blank-project,
+cleanup-safety, and EDT-02/03 tests remain in the source suite.
+
+### Correction proof commands and exits
+
+All proof used `/opt/homebrew/bin/python3.11` (Python `3.11.16`). Installed
+proof unset both `PYTHONPATH` and `PYTHONHOME`.
+
+1. `env -u PYTHONHOME PYTHONPATH="$PWD/src" /opt/homebrew/bin/python3.11 -m pytest -q tests/authoring/test_failure_matrix.py::FailureMatrixTests::test_cross_service_finish_loser_reconciles_durable_winner` — initial exit `1` (`finished` + `recovery_pending` before the post-recovery reconciliation adjustment); rerun after correction exit `0`, `1 passed`.
+2. `env -u PYTHONHOME PYTHONPATH="$PWD/src" /opt/homebrew/bin/python3.11 -m pytest -q tests/authoring/test_failure_matrix.py tests/authoring/test_exclusivity.py tests/authoring/test_finish.py tests/authoring/test_snapshots.py` — exit `0`, `27 passed`.
+3. `/opt/homebrew/bin/python3.11 -m pip wheel . --no-deps --wheel-dir /tmp/herzchen-edt04-correction.55AJdU/dist` — exit `0`; new wheel `/tmp/herzchen-edt04-correction.55AJdU/dist/herzchen_contracts-0.1.0-py3-none-any.whl`, SHA-256 `fb39f36bd5ec2b35d22fccde16f497469eb8e9012366954f039cf9baf4d3dd3e`.
+4. `/opt/homebrew/bin/python3.11 -m venv /tmp/herzchen-edt04-correction.55AJdU/venv` — exit `0`; pip installation of pytest and the wheel (`/tmp/herzchen-edt04-correction.55AJdU/venv/bin/python -m pip install pytest && ... -m pip install --no-deps <wheel>`) — exit `0`.
+5. `env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-edt04-correction.55AJdU/venv/bin/python -c 'import herzchen, herzchen.authoring.finish, herzchen.authoring.sessions, sys; ...'` — exit `0`; origins were `/private/tmp/herzchen-edt04-correction.55AJdU/venv/lib/python3.11/site-packages/herzchen/__init__.py`, `/private/tmp/herzchen-edt04-correction.55AJdU/venv/lib/python3.11/site-packages/herzchen/authoring/finish.py`, and corresponding `sessions.py`; site-packages was `/private/tmp/herzchen-edt04-correction.55AJdU/venv/lib/python3.11/site-packages`.
+6. `env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-edt04-correction.55AJdU/venv/bin/python -m pytest -q tests/authoring/test_failure_matrix.py tests/authoring/test_exclusivity.py tests/authoring/test_finish.py tests/authoring/test_snapshots.py` — exit `0`, `27 passed` from installed package origins.
+7. First fresh persisted-state probe using a nested document without its canonical parent — exit `1`, setup-only `ScopeResolutionError`; no code assertion ran and it is not counted as proof.
+8. Corrected fresh persisted-state probe using a new SQLite file, new project scope, real checkout file, close/reopen, receipt/event readback, and exact replay — exit `0`; `first finished`, persisted state `finished`, receipt `finish committed 1`, one `authoring.finish` event, replay `replayed`.
+9. Final `git diff --check`, changed-path hash, and clean-worktree audit — exit `0`.
+
+### Correction hashes, retained evidence, and residual gaps
+
+Correction changed-path SHA-256 values:
+
+```text
+0e450e9126dad0657161c080f5312830384f52b34d84c4383002a1edc659c8c7  src/herzchen/authoring/finish.py
+e157cd8308c454c66bf285cd7044f4e8a2780f7c9e2cfb184264bce1c16ae267  tests/authoring/test_failure_matrix.py
+```
+
+The source manifest remains
+`/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20/.otto/portfolios/otto-herzchen-delivery/local/source-set-int01-refresh-20260913.json`
+with SHA-256
+`742fed428923c7702001865407d3d8897ba9685b5fcfd473076fc7edb3ee563a`.
+`EX-EDIT` remains `plan/extraction-map.json:1293-1455`; the retained Runtime
+dirfd/CAS and test blobs are the exact lineage listed above. The correction
+reuses EDT-03 `finish.py`/`sessions.py` claim, transaction, release, receipt,
+event, and replay contracts and adds only EDT-owned adapter reconciliation;
+`sessions.py`, FND, schema, package metadata, control artifacts, and other
+owners remain untouched.
+
+EDT-05 target-handler unification and EDT-06 consumer handoff remain open.
+No product/Astrid cutover is claimed. No upstream push/merge or control-ledger
+write occurred.

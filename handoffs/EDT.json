@@ -42,6 +42,45 @@
     "fresh_persisted_state": {"exit": 0, "result": "untouched pending_released; edited finished; cleanup complete; events/receipts persisted; restart ok"}
   },
   "gaps": {"EDT05": "not implemented", "EDT06": "not implemented", "product_or_astrid_cutover": "not claimed", "cross_service_finish_loser": "baseline EDT-03 sessions.py behavior; no out-of-scope edit"},
-  "artifacts": {"result": "work/edt-04-result.md", "receipt": "work/edt-04-receipt.json", "source_tests": ["src/herzchen/authoring/idle.py", "src/herzchen/authoring/cleanup.py", "src/herzchen/authoring/__init__.py", "tests/authoring/test_failure_matrix.py"]},
+  "correction": {
+    "kind": "owner-authorized cross-service finish loser reconciliation continuation",
+    "original_candidate_immutable": true,
+    "baseline": {"commit": "4d654b086a8da7cd0d8b5b36acf7ca4e49d1f0a3", "tree": "739ec55cdefb820e4806c6b75438628d3c467e39"},
+    "implementation_parent": {"commit": "61bbedd1f682e2a7cd511b4081b1a89d4da16e6d", "tree": "5c59ff7ece86b21a90c4e2bf274056b05479f09e"},
+    "commit": "4769c1153fd3177271b4d849cb7a3fceb450273b",
+    "tree": "95a492ac07adbb33ab1f384d1b25b82d7485b06f",
+    "source_paths": ["src/herzchen/authoring/finish.py", "tests/authoring/test_failure_matrix.py"],
+    "source_sha256": {
+      "src/herzchen/authoring/finish.py": "0e450e9126dad0657161c080f5312830384f52b34d84c4383002a1edc659c8c7",
+      "tests/authoring/test_failure_matrix.py": "e157cd8308c454c66bf285cd7044f4e8a2780f7c9e2cfb184264bce1c16ae267"
+    },
+    "candidate": {
+      "python": "/opt/homebrew/bin/python3.11",
+      "wheel": "/tmp/herzchen-edt04-correction.55AJdU/dist/herzchen_contracts-0.1.0-py3-none-any.whl",
+      "wheel_sha256": "fb39f36bd5ec2b35d22fccde16f497469eb8e9012366954f039cf9baf4d3dd3e",
+      "venv": "/tmp/herzchen-edt04-correction.55AJdU/venv",
+      "environment": "PYTHONPATH and PYTHONHOME unset",
+      "origins": {
+        "herzchen": "/private/tmp/herzchen-edt04-correction.55AJdU/venv/lib/python3.11/site-packages/herzchen/__init__.py",
+        "finish": "/private/tmp/herzchen-edt04-correction.55AJdU/venv/lib/python3.11/site-packages/herzchen/authoring/finish.py",
+        "sessions": "/private/tmp/herzchen-edt04-correction.55AJdU/venv/lib/python3.11/site-packages/herzchen/authoring/sessions.py"
+      }
+    },
+    "tests": {
+      "source_command": "env -u PYTHONHOME PYTHONPATH=\"$PWD/src\" /opt/homebrew/bin/python3.11 -m pytest -q tests/authoring/test_failure_matrix.py tests/authoring/test_exclusivity.py tests/authoring/test_finish.py tests/authoring/test_snapshots.py",
+      "source_exit": 0,
+      "source_result": "27 passed",
+      "installed_command": "env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-edt04-correction.55AJdU/venv/bin/python -m pytest -q tests/authoring/test_failure_matrix.py tests/authoring/test_exclusivity.py tests/authoring/test_finish.py tests/authoring/test_snapshots.py",
+      "installed_exit": 0,
+      "installed_result": "27 passed",
+      "first_setup_attempt_exit": 1,
+      "first_setup_attempt": "nested document scope without canonical parent; setup-only ScopeResolutionError, not proof",
+      "fresh_persisted_state_exit": 0,
+      "fresh_persisted_state_result": "new DB finished; committed finish receipt/event persisted; exact replay replayed",
+      "race_evidence": "tests/authoring/test_failure_matrix.py:138-232; one finished, one already_finished, one application, one finish receipt/event, coherent claim/state, changed-input and stale-token non-success"
+    },
+    "residual_gaps": {"EDT05": "not implemented", "EDT06": "not implemented", "product_or_astrid_cutover": "not claimed"}
+  },
+  "artifacts": {"result": "work/edt-04-result.md", "receipt": "work/edt-04-receipt.json", "source_tests": ["src/herzchen/authoring/idle.py", "src/herzchen/authoring/cleanup.py", "src/herzchen/authoring/__init__.py", "src/herzchen/authoring/finish.py", "tests/authoring/test_failure_matrix.py"]},
   "upstream_push_merge_or_control_ledger_write": false
 }

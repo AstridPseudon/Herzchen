@@ -1,6 +1,53 @@
 {
   "task": "EDT-04",
-  "status": "implemented_with_explicit_cross_service_finish_gap",
+  "status": "corrected_ready_for_root_acceptance",
+  "continuation": {
+    "kind": "owner-authorized EDT-04 correction continuation",
+    "original_candidate_immutable": true,
+    "baseline_commit": "4d654b086a8da7cd0d8b5b36acf7ca4e49d1f0a3",
+    "baseline_tree": "739ec55cdefb820e4806c6b75438628d3c467e39",
+    "implementation_parent_commit": "61bbedd1f682e2a7cd511b4081b1a89d4da16e6d",
+    "implementation_parent_tree": "5c59ff7ece86b21a90c4e2bf274056b05479f09e",
+    "correction_commit": "4769c1153fd3177271b4d849cb7a3fceb450273b",
+    "correction_tree": "95a492ac07adbb33ab1f384d1b25b82d7485b06f",
+    "changed_paths": {
+      "src/herzchen/authoring/finish.py": "0e450e9126dad0657161c080f5312830384f52b34d84c4383002a1edc659c8c7",
+      "tests/authoring/test_failure_matrix.py": "e157cd8308c454c66bf285cd7044f4e8a2780f7c9e2cfb184264bce1c16ae267"
+    },
+    "candidate": {
+      "python": "/opt/homebrew/bin/python3.11",
+      "version": "3.11.16",
+      "wheel": "/tmp/herzchen-edt04-correction.55AJdU/dist/herzchen_contracts-0.1.0-py3-none-any.whl",
+      "wheel_sha256": "fb39f36bd5ec2b35d22fccde16f497469eb8e9012366954f039cf9baf4d3dd3e",
+      "venv": "/tmp/herzchen-edt04-correction.55AJdU/venv",
+      "proof_environment": "PYTHONPATH and PYTHONHOME unset",
+      "installed_origins": {
+        "herzchen": "/private/tmp/herzchen-edt04-correction.55AJdU/venv/lib/python3.11/site-packages/herzchen/__init__.py",
+        "finish": "/private/tmp/herzchen-edt04-correction.55AJdU/venv/lib/python3.11/site-packages/herzchen/authoring/finish.py",
+        "sessions": "/private/tmp/herzchen-edt04-correction.55AJdU/venv/lib/python3.11/site-packages/herzchen/authoring/sessions.py"
+      }
+    },
+    "commands": [
+      {"name": "initial_focused_regression_before_final_adjustment", "exit": 1, "result": "observed finished plus recovery_pending; led to correction of post-recovery reconciliation"},
+      {"name": "source_focused_and_edt02_edt03_regressions", "command": "env -u PYTHONHOME PYTHONPATH=\"$PWD/src\" /opt/homebrew/bin/python3.11 -m pytest -q tests/authoring/test_failure_matrix.py tests/authoring/test_exclusivity.py tests/authoring/test_finish.py tests/authoring/test_snapshots.py", "exit": 0, "result": "27 passed"},
+      {"name": "candidate_wheel_build", "command": "/opt/homebrew/bin/python3.11 -m pip wheel . --no-deps --wheel-dir /tmp/herzchen-edt04-correction.55AJdU/dist", "exit": 0},
+      {"name": "venv_create", "command": "/opt/homebrew/bin/python3.11 -m venv /tmp/herzchen-edt04-correction.55AJdU/venv", "exit": 0},
+      {"name": "venv_install", "exit": 0, "result": "pytest and new wheel installed"},
+      {"name": "installed_origin", "command": "env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-edt04-correction.55AJdU/venv/bin/python -c 'import herzchen, herzchen.authoring.finish, herzchen.authoring.sessions, sys; ...'", "exit": 0, "result": "all origins from disposable site-packages"},
+      {"name": "installed_failure_matrix_and_regressions", "command": "env -u PYTHONPATH -u PYTHONHOME /tmp/herzchen-edt04-correction.55AJdU/venv/bin/python -m pytest -q tests/authoring/test_failure_matrix.py tests/authoring/test_exclusivity.py tests/authoring/test_finish.py tests/authoring/test_snapshots.py", "exit": 0, "result": "27 passed"},
+      {"name": "fresh_persisted_state_first_setup", "exit": 1, "result": "setup-only ScopeResolutionError for nested document without canonical parent; not code proof"},
+      {"name": "fresh_persisted_state", "exit": 0, "result": "new DB: first finished; persisted finished; one committed finish receipt and one authoring.finish event; exact replay replayed"},
+      {"name": "final_clean_audit", "exit": 0, "result": "git diff --check and clean worktree"}
+    ],
+    "evidence": {
+      "cross_service_race": "tests/authoring/test_failure_matrix.py:138-232; two services/adapters over one Store, barrier, one finished plus already_finished, one application, one finish receipt/event",
+      "changed_input_and_stale_token": "tests/authoring/test_failure_matrix.py:208-231; neither attempt succeeds and handler application count remains one",
+      "retained_failure_matrix": "tests/authoring/test_failure_matrix.py:59-136 and 234-329",
+      "retained_edt02_edt03": "tests/authoring/test_exclusivity.py:103-169;237-275 and tests/authoring/test_finish.py:49-158",
+      "fresh_persistence": "installed probe: new SQLite state finished, committed receipt/event, restart readback and replayed exact request"
+    },
+    "residual_gaps": ["EDT-05 target-handler unification", "EDT-06 consumer handoff", "no product/Astrid cutover verdict"]
+  },
   "route": {"class": "normal", "model": "gpt-5.6-luna", "reasoning": "high"},
   "roots": {
     "invoking": "/Users/hannahomalley/Documents/Codex/2026-09-13/can-x20",
