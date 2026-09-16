@@ -787,17 +787,30 @@ class _ProjectSheetEngine:
     def _documents(self, project: WorkRecord, task_ids: set[str], selected: Optional[Sequence[Any]]) -> Tuple[Mapping[str, Any], ...]:
         wanted = None if selected is None else {_ref(value).id if _ref(value) is not None else str(value) for value in selected}
         output = []
-        rows = self.__writer.connection.execute("SELECT authority, kind, id, current_revision FROM identities WHERE authority = ? AND kind = 'dat.content.association' ORDER BY id", (self.__writer.authority,)).fetchall()
+        rows = self.__writer.connection.execute(
+            "SELECT authority, kind, id, current_revision FROM identities "
+            "WHERE authority = ? AND kind IN ('dat.content.association', 'document-association') ORDER BY id",
+            (self.__writer.authority,),
+        ).fetchall()
         for row in rows:
             identity = self.__writer.get_identity(ResourceRef(row["authority"], row["kind"], row["id"], row["current_revision"]))
             if identity is None:
                 continue
             payload = identity.payload
-            subject = payload.get("subject")
+            # DAT's canonical public link command wraps the association in
+            # ``payload.association``.  Older WRK-created records kept the
+            # association fields at the payload root; accept both wire
+            # shapes while retaining one durable association identity.
+            association = payload.get("association")
+            if not isinstance(association, Mapping):
+                association = payload
+            if payload.get("active") is False or association.get("active") is False:
+                continue
+            subject = association.get("subject")
             subject_ref = _ref(subject)
             if subject_ref is None or (subject_ref.id != project.id and subject_ref.id not in task_ids):
                 continue
-            binding = payload.get("document")
+            binding = association.get("document")
             binding_ref = _ref(binding.get("ref")) if isinstance(binding, Mapping) else None
             if binding_ref is None or (wanted is not None and binding_ref.id not in wanted):
                 continue

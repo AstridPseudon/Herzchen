@@ -76,7 +76,7 @@ def _reject_authority(value: Any) -> None:
         raise WriterAuthorityDenied("SQLite connections cannot cross the consumer boundary")
     kind = type(value)
     if kind.__module__ == "herzchen.kernel.store" and kind.__name__ in {
-        "Store", "DomainHandler", "DomainCommandPort", "Transaction", "ConsumerStore",
+        "Store", "DomainHandler", "DomainCommandPort", "OperationOwnerCapability", "DomainOwnerCapability", "RuntimeDomainOwner", "RuntimeOperationReader", "Transaction", "ConsumerStore",
     }:
         raise WriterAuthorityDenied(kind.__name__ + " cannot cross the consumer boundary")
     if callable(value) and not isinstance(value, type):
@@ -421,10 +421,11 @@ def _activate_transport(transport: SerializedFacadeTransport) -> SerializedFacad
     return transport
 
 
-def _reader_client(reader: Any) -> SerializedReaderClient:
+def _reader_client(reader: Any, *, authority: Optional[str] = None) -> SerializedReaderClient:
     transport = _start_service(reader, "herzchen.kernel.reader", "herzchen.kernel.store.ConsumerStore",
                                _READER_ENDPOINTS, SERIALIZED_COMMAND_REVISION)
-    return SerializedReaderClient(SerializedCommandClient(transport), reader.authority, reader.domain_descriptor_digest)
+    reader_authority = authority if authority is not None else reader.authority
+    return SerializedReaderClient(SerializedCommandClient(transport), reader_authority, reader.domain_descriptor_digest)
 
 
 def _schema_revision(engine_type: type[Any]) -> Optional[str]:
@@ -506,18 +507,44 @@ def command_facade(engine_type: type[Any], domain_id: str) -> type[Any]:
 
     class CommandFacade:
         def __init__(self, *args: Any, **kwargs: Any) -> None:
-            from herzchen.kernel.store import ConsumerStore, DomainCommandPort, DomainHandler, Store, StoreAdmissionError, _COMMAND_PORT_CONSTRUCTION_TOKEN
+            from herzchen.kernel.store import ConsumerStore, DomainCommandPort, DomainHandler, DomainOwnerCapability, OperationOwnerCapability, RuntimeDomainOwner, RuntimeOperationOwner, RuntimeOperationReader, Store, StoreAdmissionError, _COMMAND_PORT_CONSTRUCTION_TOKEN
+            constructor_args, constructor_kwargs = args, kwargs
+            issuer = (args[0] if args else kwargs.get("store", kwargs.get("writer")))
+            if isinstance(issuer, OperationOwnerCapability) and domain_id != "herzchen.kernel.operations":
+                raise StoreAdmissionError("OperationOwnerCapability is scoped to the kernel operations domain")
+            if isinstance(issuer, RuntimeDomainOwner):
+                scoped = DomainOwnerCapability.issue_runtime(issuer, domain_id)
+                if args:
+                    constructor_args = (scoped,) + args[1:]
+                else:
+                    constructor_kwargs = dict(kwargs)
+                    if "store" in constructor_kwargs:
+                        constructor_kwargs["store"] = scoped
+                    elif "writer" in constructor_kwargs:
+                        constructor_kwargs["writer"] = scoped
+                    else:
+                        raise StoreAdmissionError("RuntimeDomainOwner must be supplied as the command writer")
+                issuer = scoped
             depth = getattr(_COMPOSITION, "depth", 0)
             _COMPOSITION.depth = depth + 1
             try:
-                engine = engine_type(*args, **kwargs)
+                engine = engine_type(*constructor_args, **constructor_kwargs)
             finally:
                 _COMPOSITION.depth = depth
-            issuer, reader = (args[0] if args else kwargs.get("store", kwargs.get("writer"))), getattr(engine, "reader", None)
-            if reader is not None and not isinstance(reader, ConsumerStore):
-                raise StoreAdmissionError("public command readers must be ConsumerStore instances")
+            issuer, reader = (constructor_args[0] if constructor_args else constructor_kwargs.get("store", constructor_kwargs.get("writer"))), getattr(engine, "reader", None)
+            if reader is not None and not isinstance(reader, (ConsumerStore, RuntimeOperationReader)):
+                raise StoreAdmissionError("public command readers must be finite ConsumerStore or RuntimeOperationReader instances")
             if issuer is None:
                 port = DomainCommandPort(engine, domain_id, endpoints, reader, _construction_token=_COMMAND_PORT_CONSTRUCTION_TOKEN)
+            elif isinstance(issuer, DomainOwnerCapability):
+                port = issuer.issue_command_port(engine, domain_id, endpoints, reader=reader)
+            elif isinstance(issuer, RuntimeOperationOwner):
+                issuer = OperationOwnerCapability.issue_runtime(issuer)
+                port = issuer.issue_command_port(engine, domain_id, endpoints, reader=reader)
+            elif isinstance(issuer, OperationOwnerCapability):
+                if domain_id != "herzchen.kernel.operations":
+                    raise StoreAdmissionError("OperationOwnerCapability is scoped to the kernel operations domain")
+                port = issuer.issue_command_port(engine, domain_id, endpoints, reader=reader)
             elif isinstance(issuer, (Store, DomainHandler)):
                 port = issuer.issue_command_port(engine, domain_id, endpoints, reader=reader)
             else: raise StoreAdmissionError("public commands require a Store-issued owner capability")
@@ -533,6 +560,8 @@ def command_facade(engine_type: type[Any], domain_id: str) -> type[Any]:
                 if name.startswith("_") or callable(value): continue
                 if isinstance(value, ConsumerStore):
                     safe[name] = _reader_client(value)
+                elif isinstance(value, RuntimeOperationReader):
+                    safe[name] = _reader_client(value, authority=getattr(issuer, "authority", None))
                 elif hasattr(value, "command_port"):
                     nested_port = value.command_port
                     nested_transport = _start_service(nested_port, nested_port.domain_id,
@@ -561,7 +590,7 @@ def command_facade(engine_type: type[Any], domain_id: str) -> type[Any]:
             return serve_consumer_facade(self, schema_revision=schema_revision or _schema_revision(engine_type))
 
         def __getattr__(self, name: str) -> Any:
-            from herzchen.kernel.store import DomainCommandPort, DomainHandler, Store, Transaction
+            from herzchen.kernel.store import DomainCommandPort, DomainHandler, DomainOwnerCapability, OperationOwnerCapability, RuntimeOperationReader, Store, Transaction
             if name.startswith("_") or name in DomainCommandPort._FORBIDDEN: raise AttributeError(name)
             try: port = object.__getattribute__(self, "_CommandFacade__owner_port")
             except AttributeError:
@@ -569,7 +598,7 @@ def command_facade(engine_type: type[Any], domain_id: str) -> type[Any]:
                 if name in attributes: return attributes[name]
                 raise AttributeError(name)
             engine = object.__getattribute__(port, "_DomainCommandPort__engine"); value = getattr(engine, name)
-            if isinstance(value, (Store, DomainHandler, Transaction)): raise AttributeError(name)
+            if isinstance(value, (Store, DomainHandler, DomainOwnerCapability, OperationOwnerCapability, Transaction)): raise AttributeError(name)
             return value
 
         def __setattr__(self, name: str, value: Any) -> None:

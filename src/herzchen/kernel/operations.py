@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from enum import Enum
 import hashlib
-from typing import Any, Mapping, Optional
+from typing import Any, ContextManager, Mapping, Optional, Protocol, Sequence, runtime_checkable
 
 from herzchen.contracts import (
     AuthenticatedActor,
@@ -26,7 +26,7 @@ from herzchen.contracts import (
 )
 
 from herzchen.command_ports import command_facade
-from .store import Store, StoreError, TargetMismatchError, Transaction
+from .store import StoreError, TargetMismatchError, Transaction, coerce_operation_owner
 
 
 OPERATION_SCHEMA_REVISION = "fnd-04.operation.v1"
@@ -49,6 +49,34 @@ class OperationState(str, Enum):
 
 class UnknownOutcomeError(OperationError):
     """An unknown operation requires an explicit resolution."""
+
+
+@runtime_checkable
+class OperationOwner(Protocol):
+    """Typed trusted-owner seam required by the operation manager.
+
+    Implementations are issued by FND Store composition.  The protocol is
+    deliberately limited to transaction/savepoint admission, durable reads,
+    exact descriptor lookup, and the common mutation writer; it is not a
+    consumer-facing Store substitute.
+    """
+
+    authority: str
+    reader: Any
+    domain_descriptor_digest: str
+
+    def registered_domains(self) -> Sequence[Any]: ...
+    def transaction(self) -> ContextManager[Transaction]: ...
+    def mutate(self, envelope: CommandEnvelope, *, event_type: str, result_ref: Optional[ResourceRef] = None,
+               before_refs: Sequence[ResourceRef] = (), after_refs: Sequence[ResourceRef] = (),
+               effects: Optional[Mapping[str, Any]] = None, stream: Optional[str] = None,
+               event_schema_revision: str = "fnd-03.event.v1", occurred_at: Optional[str] = None,
+               no_op: bool = False, transaction: Optional[Transaction] = None) -> CommandReceipt: ...
+    def get_identity(self, ref: ResourceRef) -> Any: ...
+    def get_receipt(self, logical_request_key: str) -> Optional[CommandReceipt]: ...
+    def list_events(self, *, stream: Optional[str] = None) -> Sequence[Any]: ...
+    def lookup_replay(self, envelope: CommandEnvelope) -> Optional[CommandReceipt]: ...
+    def event_lineage(self, receipt: CommandReceipt) -> Sequence[Any]: ...
 
 
 @dataclass(frozen=True)
@@ -262,14 +290,15 @@ def _ref(value: Optional[Mapping[str, Any]]) -> Optional[ResourceRef]:
 class _OperationManagerEngine:
     """Record operation requests and explicit outcomes; never invoke them."""
 
-    def __init__(self, store: Store) -> None:
-        if not isinstance(store, Store):
-            raise TypeError("store must be a Store")
-        self.__writer = store
-        self.reader = store.consumer()
+    def __init__(self, owner: OperationOwner) -> None:
+        # Existing trusted constructors pass Store for compatibility. Convert
+        # it once at the bootstrap boundary; the operation engine retains only
+        # the typed capability and never a concrete writer/handler graph.
+        self.__owner: OperationOwner = coerce_operation_owner(owner)
+        self.reader = self.__owner.reader
 
     def _target(self, logical_request_key: str) -> ResourceRef:
-        return ResourceRef(self.__writer.authority, OPERATION_KIND, logical_request_key)
+        return ResourceRef(self.__owner.authority, OPERATION_KIND, logical_request_key)
 
     def _payload(self, request: OperationRequest, state: OperationState, result: Mapping[str, Any]) -> dict[str, Any]:
         return {
@@ -316,9 +345,8 @@ class _OperationManagerEngine:
     def _event_for_receipt(self, receipt: CommandReceipt) -> Mapping[str, Any]:
         if not receipt.event_ids:
             return {"state": OperationState.PREPARED.value, "result": {}, "version": 1}
-        wanted = set(receipt.event_ids)
-        for event in self.__writer.list_events(stream=OPERATION_STREAM):
-            if event.event_id in wanted:
+        for event in self.__owner.event_lineage(receipt):
+            if event.stream == OPERATION_STREAM:
                 return event.effects
         raise OperationError("receipt event is not visible in the admitted store")
 
@@ -377,16 +405,16 @@ class _OperationManagerEngine:
             "causation_id": request.causation_id,
             "version": 1,
         }
-        receipt = self.__writer.mutate(
+        receipt = self.__owner.mutate(
             envelope,
             event_type="operation.prepared",
-            result_ref=ResourceRef(self.__writer.authority, OPERATION_KIND, request.logical_request_key, "rev-1"),
+            result_ref=ResourceRef(self.__owner.authority, OPERATION_KIND, request.logical_request_key, "rev-1"),
             effects=effects,
             stream=OPERATION_STREAM,
             transaction=transaction,
         )
         event_effects = self._event_for_receipt(receipt)
-        identity = self.__writer.get_identity(target)
+        identity = self.__owner.get_identity(target)
         version = int(event_effects.get("version", identity.version if identity else 1))
         operation_ref = receipt.result_ref or (identity.ref if identity else target)
         return self._record_from_event(receipt, event_effects, request, operation_ref, version)
@@ -456,9 +484,8 @@ class _OperationManagerEngine:
             edit_token=None,
             payload=self._payload(identity_request, state, result),
         )
-        prior = self.__writer.get_receipt(next_request_key)
+        prior = self.__owner.lookup_replay(envelope)
         if prior is not None:
-            validate_replay(prior, envelope)
             event_effects = self._event_for_receipt(prior)
             return self._record_from_event(prior, event_effects, record.request, prior.result_ref or target, int(event_effects.get("version", record.version + 1)))
         if record.state in (OperationState.UNKNOWN, OperationState.UNCERTAIN) and not allow_unknown_resolution:
@@ -481,7 +508,7 @@ class _OperationManagerEngine:
             "causation_id": record.request.causation_id,
             "version": record.version + 1,
         }
-        receipt = self.__writer.mutate(
+        receipt = self.__owner.mutate(
             envelope,
             event_type="operation.outcome",
             result_ref=ResourceRef(target.authority, target.kind, target.id, "rev-{}".format(record.version + 1)),
@@ -509,13 +536,13 @@ class _OperationManagerEngine:
 
     def get(self, logical_request_key: str) -> Optional[OperationRecord]:
         target = self._target(logical_request_key)
-        identity = self.__writer.get_identity(target)
+        identity = self.__owner.get_identity(target)
         if identity is None or identity.payload.get("record_type") != OPERATION_KIND:
             return None
         lineage_actor = next(
             (
                 event.actor
-                for event in self.__writer.list_events(stream=OPERATION_STREAM)
+                for event in self.__owner.list_events(stream=OPERATION_STREAM)
                 if event.subject.authority == identity.ref.authority
                 and event.subject.kind == identity.ref.kind
                 and event.subject.id == identity.ref.id
@@ -524,7 +551,7 @@ class _OperationManagerEngine:
             None,
         )
         request = self._request_from_identity(identity.payload, actor=lineage_actor)
-        receipt = self.__writer.get_receipt(request.logical_request_key)
+        receipt = self.__owner.get_receipt(request.logical_request_key)
         return OperationRecord(identity.ref, request, OperationState(identity.payload["state"]), dict(identity.payload.get("result", {})), receipt, identity.version)
 
 
@@ -534,6 +561,6 @@ OperationAdapter = OperationManager
 
 __all__ = [
     "OPERATION_KIND", "OPERATION_SCHEMA_REVISION", "OperationError", "UnknownOutcomeError",
-    "OperationState", "OperationRequest", "OperationContext", "OperationRecord",
+    "OperationOwner", "OperationState", "OperationRequest", "OperationContext", "OperationRecord",
     "OperationManager", "OperationAdapter", "request_digest",
 ]

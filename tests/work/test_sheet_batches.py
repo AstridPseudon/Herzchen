@@ -105,6 +105,76 @@ def test_aliases_dependencies_order_custom_values_and_documents_round_trip_atomi
     assert len([event for event in store.list_events() if event.event_type == "work.project-sheet.applied"]) == 2
 
 
+def test_public_nested_document_association_projects_into_fresh_sheet_and_detaches_without_loss(environment):
+    """DAT's public association payload remains visible through ProjectSheet."""
+    from hashlib import sha256
+
+    from herzchen.content import ContentCommandHandler, ContentDocument, ContentRevision, DocumentAssociation, domain_contribution
+    from herzchen.contracts import ReferenceBinding, TransactionContext
+
+    store, actor, graph, project, service = environment
+    task = graph.create_task(project, title="Pinned task", logical_request_key="gf01-task")
+    assignments = ResponsibilityAssignments(store, actor=actor)
+    assignment = assignments.assign(
+        task,
+        role="execution",
+        principal="worker",
+        pins=(task.ref,),
+        logical_request_key="gf01-assignment",
+    )
+    assignment_before = dict(assignments.get(assignment.ref).payload)
+
+    store.register_domain_handler((domain_contribution(),))
+    content = ContentCommandHandler(store)
+    document = ContentDocument(
+        ResourceRef(store.authority, "document", "gf01-document"),
+        "evidence",
+        "shared",
+        "append",
+        "manager",
+        project.ref,
+    )
+    revision = ContentRevision(
+        document.ref,
+        "gf01-revision-1",
+        {"body": "public Otto evidence", "n": 1},
+        actor,
+        initial=True,
+    )
+    create_context = TransactionContext(actor, "gf01-create", sha256(b"gf01-create").hexdigest())
+    content.execute(content.build_create_document(create_context, document, revision))
+    association = DocumentAssociation(
+        project.ref,
+        "project.documents",
+        "evidence",
+        ReferenceBinding(revision.ref, "pinned"),
+    )
+    link_context = TransactionContext(actor, "gf01-link", sha256(b"gf01-link").hexdigest())
+    linked = content.build_link(link_context, association)
+    first_link = content.execute(linked)
+    replay_link = content.execute(linked)
+    assert first_link.to_dict() == replay_link.to_dict()
+
+    fresh = service.export(project)
+    assert len(fresh.documents) == 1
+    assert fresh.documents[0]["association"]["id"] == association.identity
+    assert fresh.documents[0]["binding"]["ref"]["id"] == document.ref.id
+    assert fresh.documents[0]["binding"]["mode"] == "pinned"
+    assert fresh.documents[0]["binding"]["ref"]["revision"] == revision.ref.revision
+    assert content.read(revision.ref)["content"] == {"body": "public Otto evidence", "n": 1}
+
+    unlink_context = TransactionContext(actor, "gf01-unlink", sha256(b"gf01-unlink").hexdigest())
+    unlink = content.build_unlink(unlink_context, association)
+    first_unlink = content.execute(unlink)
+    replay_unlink = content.execute(unlink)
+    assert first_unlink.to_dict() == replay_unlink.to_dict()
+    detached = service.export(project)
+    assert detached.documents == ()
+    assert store.get_identity(ResourceRef(store.authority, "document-association", association.identity)) is not None
+    assert store.get_identity(document.ref).payload["current_revision"]["revision"] == revision.ref.revision
+    assert assignments.get(assignment.ref).payload == assignment_before
+
+
 def test_omission_preserves_task_documents_namespace_result_and_inflight_assignment(environment):
     store, actor, graph, project, service = environment
     task = graph.create_task(project, title="Keep", logical_request_key="keep")

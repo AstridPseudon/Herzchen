@@ -95,6 +95,47 @@ EMPTY_DOMAIN_DESCRIPTOR_DIGEST = hashlib.sha256(b"[]").hexdigest()
 _OWNER_CONSTRUCTION_TOKEN = object()
 _HANDLER_CONSTRUCTION_TOKEN = object()
 _COMMAND_PORT_CONSTRUCTION_TOKEN = object()
+_OPERATION_OWNER_CONSTRUCTION_TOKEN = object()
+_RUNTIME_OWNER_CONSTRUCTION_TOKEN = object()
+_RUNTIME_DOMAIN_OWNER_CONSTRUCTION_TOKEN = object()
+
+
+class RuntimeOperationReader:
+    """Nominal finite read surface supplied by a foreign Runtime owner.
+
+    Runtime composition may keep its own storage and transaction implementation,
+    but the operation kernel receives this explicitly typed reader only.  The
+    class intentionally has no fallback attribute forwarding; a Runtime
+    adapter implements the listed read methods and nothing writer-shaped is
+    admitted through this boundary.
+    """
+
+    __slots__ = ()
+    _fnd_runtime_reader_marker = _RUNTIME_OWNER_CONSTRUCTION_TOKEN
+
+
+class RuntimeOperationOwner:
+    """Nominal foreign owner bridge for one already-open Runtime owner.
+
+    A Runtime adapter subclasses this type and supplies the OperationOwner
+    protocol methods.  Nominal admission prevents an arbitrary consumer object
+    with Store-shaped attributes from being treated as an owner capability.
+    """
+
+    __slots__ = ()
+    _fnd_runtime_owner_marker = _RUNTIME_OWNER_CONSTRUCTION_TOKEN
+
+
+class RuntimeDomainOwner:
+    """Nominal foreign owner bridge for one registered domain contribution.
+
+    This is deliberately distinct from ``RuntimeOperationOwner``: domain
+    services receive a scoped capability for their exact registered domain,
+    while the kernel operation capability remains a separate seam.
+    """
+
+    __slots__ = ()
+    _fnd_runtime_domain_owner_marker = _RUNTIME_DOMAIN_OWNER_CONSTRUCTION_TOKEN
 
 
 class DomainCommandPort:
@@ -135,8 +176,8 @@ class DomainCommandPort:
             raise TypeError("command endpoints must be non-empty names")
         if self._FORBIDDEN.intersection(exact) or any(name.startswith("_") for name in exact):
             raise StoreAdmissionError("a narrow command port cannot expose a broad writer endpoint")
-        if reader is not None and not isinstance(reader, ConsumerStore):
-            raise TypeError("command reader must be a ConsumerStore")
+        if reader is not None and not isinstance(reader, (ConsumerStore, RuntimeOperationReader)):
+            raise TypeError("command reader must be a finite ConsumerStore or RuntimeOperationReader")
         self.__engine = engine
         self.__endpoints = frozenset(exact)
         self.__reader = reader
@@ -174,6 +215,235 @@ class DomainCommandPort:
         exact_endpoint.__qualname__ = "{}.{}".format(type(self).__name__, name)
         exact_endpoint.__doc__ = getattr(value, "__doc__", None)
         return exact_endpoint
+
+
+class OperationOwnerCapability:
+    """Trusted owner-side operation capability over the common Store.
+
+    This is intentionally smaller than :class:`DomainHandler`: it contains
+    only the operation manager's transaction, admission, durable-read and
+    event-lineage seams.  It is issued by an admitted Store and is consumed
+    by trusted kernel composition; serialized consumers receive the operation
+    command client, never this object or its backing writer.
+    """
+
+    __slots__ = ("__owner",)
+
+    def __init__(self, owner: Union["Store", RuntimeOperationOwner], *, _construction_token: object = None) -> None:
+        admitted_foreign = (
+            isinstance(owner, RuntimeOperationOwner)
+            and getattr(type(owner), "_fnd_runtime_owner_marker", None) is _RUNTIME_OWNER_CONSTRUCTION_TOKEN
+            and isinstance(getattr(owner, "reader", None), RuntimeOperationReader)
+        )
+        if _construction_token is not _OPERATION_OWNER_CONSTRUCTION_TOKEN or not (isinstance(owner, Store) or admitted_foreign):
+            raise StoreAdmissionError("operation owner capabilities require an admitted Store or nominal RuntimeOperationOwner")
+        if admitted_foreign:
+            _validate_runtime_owner(owner)
+        self.__owner = owner
+
+    @classmethod
+    def issue_runtime(cls, owner: RuntimeOperationOwner) -> "OperationOwnerCapability":
+        """Issue one capability for an already-open foreign Runtime owner.
+
+        This is the trusted composition boundary used by AST.  It never opens
+        a Store; the supplied owner remains responsible for its transaction,
+        descriptor admission, and durable reads/writes.
+        """
+        return cls(owner, _construction_token=_OPERATION_OWNER_CONSTRUCTION_TOKEN)
+
+    @property
+    def authority(self) -> str:
+        return self.__owner.authority
+
+    @property
+    def reader(self) -> Union["ConsumerStore", RuntimeOperationReader]:
+        return self.__owner.consumer() if isinstance(self.__owner, Store) else self.__owner.reader
+
+    @property
+    def domain_descriptor_digest(self) -> str:
+        return self.__owner.domain_descriptor_digest
+
+    def registered_domains(self) -> Tuple[DomainContribution, ...]:
+        return self.__owner.registered_domains()
+
+    def transaction(self) -> Any:
+        """Return the owner's re-entrant transaction/savepoint context."""
+        return self.__owner.transaction()
+
+    def mutate(
+        self,
+        envelope: CommandEnvelope,
+        *,
+        event_type: str,
+        result_ref: Optional[ResourceRef] = None,
+        before_refs: Sequence[ResourceRef] = (),
+        after_refs: Sequence[ResourceRef] = (),
+        effects: Optional[Mapping[str, Any]] = None,
+        stream: Optional[str] = None,
+        event_schema_revision: str = "fnd-03.event.v1",
+        occurred_at: Optional[str] = None,
+        no_op: bool = False,
+        transaction: Optional[Transaction] = None,
+    ) -> CommandReceipt:
+        return self.__owner.mutate(
+            envelope,
+            event_type=event_type,
+            result_ref=result_ref,
+            before_refs=before_refs,
+            after_refs=after_refs,
+            effects=effects,
+            stream=stream,
+            event_schema_revision=event_schema_revision,
+            occurred_at=occurred_at,
+            no_op=no_op,
+            transaction=transaction,
+        )
+
+    def get_identity(self, ref: ResourceRef) -> Optional[IdentityRecord]:
+        return self.__owner.get_identity(ref)
+
+    def get_receipt(self, logical_request_key: str) -> Optional[CommandReceipt]:
+        return self.__owner.get_receipt(logical_request_key)
+
+    def list_events(self, *, stream: Optional[str] = None) -> Tuple[EventEnvelope, ...]:
+        return self.__owner.list_events(stream=stream)
+
+    def lookup_replay(self, envelope: CommandEnvelope) -> Optional[CommandReceipt]:
+        """Return the exact prior receipt or raise on changed request input."""
+        prior = self.__owner.get_receipt(envelope.context.logical_request_key)
+        if prior is not None:
+            validate_replay(prior, envelope)
+        return prior
+
+    def event_lineage(self, receipt: CommandReceipt) -> Tuple[EventEnvelope, ...]:
+        """Return receipt-linked events in the store's durable order."""
+        wanted = set(receipt.event_ids)
+        return tuple(event for event in self.__owner.list_events() if event.event_id in wanted)
+
+    def issue_command_port(
+        self,
+        engine: Any,
+        domain_id: str,
+        endpoints: Sequence[str],
+        *,
+        reader: Optional[Union["ConsumerStore", RuntimeOperationReader]] = None,
+    ) -> DomainCommandPort:
+        if domain_id != "herzchen.kernel.operations":
+            raise StoreAdmissionError("operation owner capability cannot issue another domain port")
+        if isinstance(self.__owner, Store):
+            return self.__owner.issue_command_port(engine, domain_id, endpoints, reader=reader or self.reader)
+        return DomainCommandPort(
+            engine,
+            domain_id,
+            endpoints,
+            reader or self.reader,
+            _construction_token=_COMMAND_PORT_CONSTRUCTION_TOKEN,
+        )
+
+
+class DomainOwnerCapability:
+    """Trusted capability scoped to one exact registered domain descriptor."""
+
+    __slots__ = ("__owner", "__domain", "__reader")
+
+    def __init__(self, owner: RuntimeDomainOwner, domain: DomainContribution, *, _construction_token: object = None) -> None:
+        admitted = (
+            isinstance(owner, RuntimeDomainOwner)
+            and getattr(type(owner), "_fnd_runtime_domain_owner_marker", None) is _RUNTIME_DOMAIN_OWNER_CONSTRUCTION_TOKEN
+        )
+        if _construction_token is not _RUNTIME_DOMAIN_OWNER_CONSTRUCTION_TOKEN or not admitted:
+            raise StoreAdmissionError("domain owner capabilities require a nominal RuntimeDomainOwner")
+        if not isinstance(domain, DomainContribution):
+            raise StoreAdmissionError("domain owner capability requires a DomainContribution")
+        _validate_runtime_domain_owner(owner, domain.domain_id)
+        self.__owner = owner
+        self.__domain = domain
+        self.__reader = owner.consumer()
+
+    @classmethod
+    def issue_runtime(cls, owner: RuntimeDomainOwner, domain_id: str) -> "DomainOwnerCapability":
+        """Issue one finite capability for a previously admitted domain."""
+        if not (
+            isinstance(owner, RuntimeDomainOwner)
+            and getattr(type(owner), "_fnd_runtime_domain_owner_marker", None) is _RUNTIME_DOMAIN_OWNER_CONSTRUCTION_TOKEN
+        ):
+            raise StoreAdmissionError("domain owner capabilities require a nominal RuntimeDomainOwner")
+        descriptors = tuple(owner.registered_domains())
+        selected = next((item for item in descriptors if item.domain_id == domain_id), None)
+        if selected is None:
+            raise StoreAdmissionError("domain is not an exactly registered Runtime domain: {!r}".format(domain_id))
+        return cls(owner, selected, _construction_token=_RUNTIME_DOMAIN_OWNER_CONSTRUCTION_TOKEN)
+
+    @property
+    def authority(self) -> str:
+        return self.__owner.authority
+
+    @property
+    def reader(self) -> RuntimeOperationReader:
+        return self.__reader
+
+    @property
+    def domain_descriptor_digest(self) -> str:
+        return self.__owner.domain_descriptor_digest
+
+    @property
+    def domain_id(self) -> str:
+        return self.__domain.domain_id
+
+    def consumer(self) -> RuntimeOperationReader:
+        return self.reader
+
+    def transaction(self) -> Any:
+        return self.__owner.transaction()
+
+    def mutate(self, envelope: CommandEnvelope, **kwargs: Any) -> CommandReceipt:
+        return self.__owner.mutate(envelope, **kwargs)
+
+    def put_identity(self, *args: Any, **kwargs: Any) -> Any:
+        return self.__owner.put_identity(*args, **kwargs)
+
+    def put_reference(self, ref: ResourceRef, *, transaction: Any = None) -> ResourceRef:
+        """Retain one owner-authorized reference in the same transaction."""
+        if not isinstance(ref, ResourceRef):
+            raise TypeError("ref must be a ResourceRef")
+        if ref.authority != self.authority:
+            raise TargetMismatchError("reference authority does not belong to this Runtime owner")
+        return self.__owner.put_reference(ref, transaction=transaction)
+
+    def get_identity(self, ref: ResourceRef) -> Any:
+        return self.__owner.get_identity(ref)
+
+    def get_receipt(self, logical_request_key: str) -> Optional[CommandReceipt]:
+        return self.__owner.get_receipt(logical_request_key)
+
+    def list_events(self, *, stream: Optional[str] = None) -> Sequence[EventEnvelope]:
+        return self.__owner.list_events(stream=stream)
+
+    def register_domain(self, contribution: DomainContribution, **kwargs: Any) -> DomainContribution:
+        if contribution != self.__domain:
+            raise StoreAdmissionError("domain owner capability cannot register a different descriptor")
+        return self.__owner.register_domain(contribution, **kwargs)
+
+    def registered_domains(self) -> Sequence[DomainContribution]:
+        return self.__owner.registered_domains()
+
+    def issue_command_port(
+        self,
+        engine: Any,
+        domain_id: str,
+        endpoints: Sequence[str],
+        *,
+        reader: Optional[RuntimeOperationReader] = None,
+    ) -> DomainCommandPort:
+        if domain_id != self.__domain.domain_id:
+            raise StoreAdmissionError("domain owner capability cannot issue an unregistered or different domain port")
+        return DomainCommandPort(
+            engine,
+            domain_id,
+            endpoints,
+            reader or self.reader,
+            _construction_token=_COMMAND_PORT_CONSTRUCTION_TOKEN,
+        )
 
 def _authority_root(value: str) -> str:
     """Return the stable authority namespace used by admission bindings."""
@@ -232,6 +502,87 @@ def _ref_key(ref: ResourceRef) -> str:
 def _descriptor_digest(descriptors: Sequence[DomainContribution]) -> str:
     ordered = sorted(descriptors, key=lambda descriptor: descriptor.domain_id)
     return hashlib.sha256(canonical_json([descriptor.to_dict() for descriptor in ordered]).encode("utf-8")).hexdigest()
+
+
+def _validate_runtime_owner(owner: RuntimeOperationOwner) -> None:
+    """Validate the finite descriptor contract before issuing a foreign owner."""
+    authority = getattr(owner, "authority", None)
+    if not isinstance(authority, str) or not authority.strip():
+        raise StoreAdmissionError("RuntimeOperationOwner authority must be non-blank")
+    try:
+        descriptors = tuple(owner.registered_domains())
+        reader = owner.reader
+        owner_digest = owner.domain_descriptor_digest
+        reader_digest = reader.domain_descriptor_digest
+    except AttributeError as exc:
+        raise StoreAdmissionError("RuntimeOperationOwner is missing its finite descriptor/read contract") from exc
+    required_owner_methods = (
+        "registered_domains", "transaction", "mutate", "get_identity", "get_receipt",
+        "list_events", "lookup_replay", "event_lineage",
+    )
+    required_reader_methods = ("registered_domains", "get_identity", "get_receipt", "list_events")
+    if any(not callable(getattr(owner, name, None)) for name in required_owner_methods):
+        raise StoreAdmissionError("RuntimeOperationOwner does not implement the complete typed writer contract")
+    if any(not callable(getattr(reader, name, None)) for name in required_reader_methods):
+        raise StoreAdmissionError("RuntimeOperationReader does not implement the finite read contract")
+    forbidden_reader_members = (
+        "connection", "transaction", "mutate", "put_identity", "revise_identity",
+        "put_reference", "append_event", "register_domain", "execute", "cursor",
+    )
+    if any(hasattr(reader, name) for name in forbidden_reader_members):
+        raise StoreAdmissionError("RuntimeOperationReader exposes a broad writer member")
+    if any(not isinstance(item, DomainContribution) for item in descriptors):
+        raise StoreAdmissionError("RuntimeOperationOwner descriptors must be DomainContribution values")
+    registry = DomainRegistry()
+    for descriptor in descriptors:
+        registry.register(descriptor)
+    canonical = tuple(sorted(descriptors, key=lambda descriptor: descriptor.domain_id))
+    if descriptors != canonical:
+        raise DescriptorExpectationMismatchError("RuntimeOperationOwner descriptors must be in canonical domain-id order")
+    expected = _descriptor_digest(canonical)
+    if owner_digest != expected or reader_digest != expected:
+        raise DescriptorExpectationMismatchError("RuntimeOperationOwner descriptor digest does not match its admitted set")
+
+
+def _validate_runtime_domain_owner(owner: RuntimeDomainOwner, domain_id: str) -> None:
+    """Validate the exact domain-owner bridge before issuing a scoped port."""
+    authority = getattr(owner, "authority", None)
+    if not isinstance(authority, str) or not authority.strip():
+        raise StoreAdmissionError("RuntimeDomainOwner authority must be non-blank")
+    required_owner_methods = (
+        "transaction", "mutate", "put_identity", "put_reference", "get_identity", "get_receipt",
+        "register_domain", "registered_domains", "consumer", "list_events",
+    )
+    if any(not callable(getattr(owner, name, None)) for name in required_owner_methods):
+        raise StoreAdmissionError("RuntimeDomainOwner does not implement the required domain writer contract")
+    descriptors = tuple(owner.registered_domains())
+    if any(not isinstance(item, DomainContribution) for item in descriptors):
+        raise StoreAdmissionError("RuntimeDomainOwner descriptors must be DomainContribution values")
+    registry = DomainRegistry()
+    for descriptor in descriptors:
+        registry.register(descriptor)
+    canonical = tuple(sorted(descriptors, key=lambda descriptor: descriptor.domain_id))
+    if descriptors != canonical:
+        raise DescriptorExpectationMismatchError("RuntimeDomainOwner descriptors must be canonical")
+    expected = _descriptor_digest(canonical)
+    if getattr(owner, "domain_descriptor_digest", None) != expected:
+        raise DescriptorExpectationMismatchError("RuntimeDomainOwner descriptor digest does not match its admitted set")
+    selected = next((item for item in descriptors if item.domain_id == domain_id), None)
+    if selected is None:
+        raise StoreAdmissionError("RuntimeDomainOwner has no exact descriptor for {!r}".format(domain_id))
+    reader = owner.consumer()
+    if not isinstance(reader, RuntimeOperationReader):
+        raise StoreAdmissionError("RuntimeDomainOwner consumer must be a finite RuntimeOperationReader")
+    required_reader_methods = ("registered_domains", "get_identity", "get_receipt", "list_events")
+    if any(not callable(getattr(reader, name, None)) for name in required_reader_methods):
+        raise StoreAdmissionError("RuntimeDomainOwner consumer lacks the finite read contract")
+    if any(hasattr(reader, name) for name in (
+        "connection", "transaction", "mutate", "put_identity", "revise_identity",
+        "put_reference", "append_event", "register_domain", "execute", "cursor",
+    )):
+        raise StoreAdmissionError("RuntimeDomainOwner consumer exposes a broad writer member")
+    if getattr(reader, "domain_descriptor_digest", None) != expected:
+        raise DescriptorExpectationMismatchError("RuntimeDomainOwner consumer digest does not match its admitted set")
 
 
 def _descriptor_expectation(
@@ -781,6 +1132,11 @@ class Store:
         self._require_open()
         return tuple(self._domain_descriptors[key] for key in sorted(self._domain_descriptors))
 
+    def issue_operation_owner(self) -> OperationOwnerCapability:
+        """Issue the narrow trusted capability used by operation composition."""
+        self._require_open()
+        return OperationOwnerCapability(self, _construction_token=_OPERATION_OWNER_CONSTRUCTION_TOKEN)
+
     def register_domain(
         self,
         contribution: DomainContribution,
@@ -1299,6 +1655,33 @@ class Store:
         )
 
 
+def coerce_operation_owner(value: Any) -> OperationOwnerCapability:
+    """Convert only an admitted Store, Runtime owner, or issued capability.
+
+    The compatibility conversion is centralized at the trusted bootstrap
+    boundary. Operation engines retain the resulting capability, never the
+    supplied Store/handler or an arbitrary duck-typed writer.
+    """
+    if isinstance(value, OperationOwnerCapability):
+        return value
+    if isinstance(value, Store):
+        return value.issue_operation_owner()
+    if isinstance(value, RuntimeOperationOwner):
+        return OperationOwnerCapability.issue_runtime(value)
+    raise StoreAdmissionError("operation commands require an admitted Store or RuntimeOperationOwner")
+
+
+def issue_operation_owner(owner: Any) -> OperationOwnerCapability:
+    """Issue one operation capability at trusted Runtime composition.
+
+    ``owner`` may be the already-open Runtime owner implementing the nominal
+    ``RuntimeOperationOwner`` bridge.  This function never opens a Store or
+    creates a second connection; it is deliberately separate from the
+    serialized consumer facade.
+    """
+    return coerce_operation_owner(owner)
+
+
 class DomainHandler:
     """Sealed trusted-domain writer; the command actor remains provenance."""
 
@@ -1434,6 +1817,9 @@ RealmStore = Store
 
 __all__ = [
     "Store", "SQLiteStore", "RealmStore", "ConsumerStore", "DomainHandler", "DomainCommandPort",
+    "RuntimeOperationOwner", "RuntimeOperationReader", "RuntimeDomainOwner", "DomainOwnerCapability",
+    "OperationOwnerCapability",
+    "coerce_operation_owner", "issue_operation_owner",
     "Transaction", "IdentityRecord", "command_facade",
     "StoreError", "StoreAdmissionError", "StoreExistsError", "SchemaMismatchError",
     "CompositionMismatchError", "WriterBusyError", "ClosedStoreError",
