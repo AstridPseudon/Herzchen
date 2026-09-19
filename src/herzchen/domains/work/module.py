@@ -121,10 +121,11 @@ def contributions() -> Tuple[Any, ...]:
     from .batches import contribution as batches_contribution
     from .decisions import contribution as decisions_contribution
     from .sheet import contribution as sheet_contribution
+    from .lifecycle import contribution as lifecycle_contribution
 
     return (
         contribution(), assignments_contribution(), batches_contribution(),
-        sheet_contribution(), decisions_contribution(),
+        sheet_contribution(), decisions_contribution(), lifecycle_contribution(),
     )
 
 

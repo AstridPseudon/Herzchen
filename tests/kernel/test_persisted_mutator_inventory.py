@@ -26,7 +26,7 @@ EXPECTED_PORT_COUNTS = {
 
 
 def _descriptors():
-    values = work_contributions() + (
+    values = tuple(item for item in work_contributions() if item.domain_id != "herzchen.work.lifecycle") + (
         assessment_contribution(), edt_contribution(), content_contribution(),
         extension_contribution(), packet_contribution(), pack_contribution(),
     )

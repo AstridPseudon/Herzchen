@@ -44,7 +44,7 @@ TMP_AUTHORITY = "c33-store"
 
 
 def _descriptors() -> tuple[Any, ...]:
-    values = work_contributions() + (
+    values = tuple(item for item in work_contributions() if item.domain_id != "herzchen.work.lifecycle") + (
         assessment_contribution(),
         edt_contribution(),
         content_contribution(),

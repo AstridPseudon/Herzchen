@@ -26,6 +26,14 @@ from .module import (
     register_work,
     work_handler,
 )
+from .lifecycle import (
+    LIFECYCLE_DOMAIN_ID,
+    LIFECYCLE_EVENT,
+    LIFECYCLE_OPERATION,
+    LIFECYCLE_SCHEMA_REVISION,
+    ProjectLifecycle,
+    ProjectLifecycleError,
+)
 
 __all__ = [
     "DEFAULT_TITLE",
@@ -35,6 +43,10 @@ __all__ = [
     "GraphCycleError",
     "InvalidDependencyError",
     "InvalidParentError",
+    "LIFECYCLE_DOMAIN_ID",
+    "LIFECYCLE_EVENT",
+    "LIFECYCLE_OPERATION",
+    "LIFECYCLE_SCHEMA_REVISION",
     "Lifecycle",
     "SCHEMA_REVISION",
     "WorkError",
@@ -46,6 +58,8 @@ __all__ = [
     "WorkStateView",
     "WorkStore",
     "WorkValidationError",
+    "ProjectLifecycle",
+    "ProjectLifecycleError",
     "contribution",
     "contributions",
     "register_work",
