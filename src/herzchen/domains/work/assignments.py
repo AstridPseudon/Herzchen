@@ -66,6 +66,12 @@ class AssignmentBusyError(WorkValidationError):
     """An actor already has an authoring reservation in the requested scope."""
 
 
+_COMPLETION_DISPOSITIONS = frozenset({
+    "accept", "accepted", "accepted-for-task", "approved", "complete",
+    "completed", "verified",
+})
+
+
 @dataclass(frozen=True)
 class ResponsibilityAssignment:
     ref: ResourceRef
@@ -308,6 +314,222 @@ class _ResponsibilityAssignmentsEngine:
 
     report = append_report
 
+    def complete(
+        self,
+        target: Any,
+        *,
+        project: Any,
+        assignment: Any,
+        expected_generation: int,
+        expected_project_revision: str,
+        expected_task_revision: str,
+        disposition: str,
+        evidence_refs: Sequence[Any],
+        evidence_hashes: Any,
+        gate_refs: Sequence[Any],
+        candidate_ref: Any = None,
+        result_ref: Any = None,
+        attempt_ref: Any = None,
+        source_set_digest: Optional[str] = None,
+        logical_request_key: Optional[str] = None,
+        actor: Optional[AuthenticatedActor] = None,
+    ) -> Mapping[str, Any]:
+        """Atomically record manager completion evidence and close one task.
+
+        The operation is intentionally owned by the existing assignment/work
+        writer.  It appends the ordinary ``wrk.report`` observation and CAS
+        revises the task in one transaction; no completion ledger or alternate
+        writer is introduced.
+        """
+
+        key = self._request_key(logical_request_key)
+        if not isinstance(expected_generation, int) or isinstance(expected_generation, bool) or expected_generation < 1:
+            raise WorkValidationError("expected_generation must be a positive integer")
+        if not isinstance(expected_project_revision, str) or not expected_project_revision.strip():
+            raise WorkValidationError("expected_project_revision is required")
+        if not isinstance(expected_task_revision, str) or not expected_task_revision.strip():
+            raise WorkValidationError("expected_task_revision is required")
+        disposition = _opaque(disposition, "disposition")
+
+        def refs(values: Any, field: str) -> list[ResourceRef]:
+            if not isinstance(values, Sequence) or isinstance(values, (str, bytes)) or not values:
+                raise WorkValidationError(field + " must be a non-empty list")
+            result: list[ResourceRef] = []
+            for value in values:
+                ref = self._as_ref(value)
+                if ref.authority != self.__writer.authority:
+                    raise WorkValidationError(field + " must remain in the owner authority")
+                result.append(ref)
+            return result
+
+        evidence_values = refs(evidence_refs, "evidence_refs")
+        gate_values = refs(gate_refs, "gate_refs")
+        if isinstance(evidence_hashes, Mapping):
+            hash_values = {str(ref): _opaque(value, "evidence_hash") for ref, value in evidence_hashes.items()}
+        elif isinstance(evidence_hashes, Sequence) and not isinstance(evidence_hashes, (str, bytes)):
+            hash_values = [_opaque(value, "evidence_hash") for value in evidence_hashes]
+        else:
+            raise WorkValidationError("evidence_hashes must be a non-empty mapping or list")
+        if not hash_values:
+            raise WorkValidationError("evidence_hashes must be a non-empty mapping or list")
+
+        assignment_ref = self._as_ref(assignment)
+        project_ref = self._as_ref(project)
+        task_ref = self._as_ref(target)
+        request_payload = {
+            "task_ref": task_ref,
+            "project_ref": project_ref,
+            "assignment_ref": assignment_ref,
+            "expected_generation": expected_generation,
+            "expected_project_revision": expected_project_revision,
+            "expected_task_revision": expected_task_revision,
+            "disposition": disposition,
+            "evidence_refs": evidence_values,
+            "evidence_hashes": hash_values,
+            "gate_refs": gate_values,
+            "candidate_ref": self._as_ref(candidate_ref) if candidate_ref is not None else None,
+            "result_ref": self._as_ref(result_ref) if result_ref is not None else None,
+            "attempt_ref": self._as_ref(attempt_ref) if attempt_ref is not None else None,
+            "source_set_digest": source_set_digest,
+        }
+        prior = self.__writer.get_receipt(key)
+        with self.__writer.transaction() as tx:
+            if prior is not None:
+                envelope = self._envelope(
+                    "work.revise", prior.target, request_payload, key, actor,
+                    expected_revision=prior.target.revision,
+                    expected_version=self._revision_version(prior.target.revision),
+                    schema_revision="work.v1",
+                )
+                receipt = self.__writer.mutate(
+                    envelope,
+                    event_type="work.revised",
+                    result_ref=prior.result_ref,
+                    stream="work:" + prior.target.id,
+                    transaction=tx,
+                )
+                event = next((item for item in self.__writer.list_events(stream="work:" + prior.target.id) if item.event_id in prior.event_ids), None)
+                effects = {} if event is None else dict(event.effects)
+                current = self.__writer.get_identity(task_ref)
+                return {
+                    "outcome": "replayed",
+                    "replayed": True,
+                    "task_ref": _json_safe(getattr(current, "ref", prior.result_ref or prior.target)),
+                    "assignment_ref": _json_safe(assignment_ref),
+                    "generation": expected_generation,
+                    "completion": _json_safe(effects.get("completion", {})),
+                    "observation": _json_safe(effects.get("completion_observation")),
+                    "receipt": receipt.to_dict(),
+                    "event_ids": list(receipt.event_ids),
+                }
+
+            current_assignment = self.get(assignment_ref)
+            self._fence(current_assignment, expected_generation)
+            if disposition not in _COMPLETION_DISPOSITIONS:
+                raise WorkValidationError("completion disposition must explicitly accept the task")
+            if current_assignment.ref.revision != assignment_ref.revision and assignment_ref.revision is not None:
+                raise StaleAssignmentError("assignment revision is stale")
+            if current_assignment.role != "manager":
+                raise WorkValidationError("only the manager assignment may complete a governed task")
+            selected_actor = actor or self.default_actor
+            if not isinstance(selected_actor, AuthenticatedActor):
+                raise TypeError("actor must be an FND AuthenticatedActor")
+            if current_assignment.principal != selected_actor.actor:
+                raise WorkValidationError("completion actor is not the assigned manager")
+
+            for ref in tuple(evidence_values) + tuple(gate_values):
+                if self.__writer.get_identity(ref) is None and self.__writer.get_reference(ref) is None:
+                    raise WorkValidationError("completion evidence or gate reference is not retained")
+
+            task_identity = self.__writer.get_identity(task_ref)
+            project_identity = self.__writer.get_identity(project_ref)
+            if task_identity is None or task_identity.ref.kind != "work.task":
+                raise WorkNotFoundError("task not found")
+            if project_identity is None or project_identity.ref.kind != "work.project":
+                raise WorkNotFoundError("project not found")
+            if task_ref.revision != task_identity.ref.revision or task_identity.ref.revision != expected_task_revision:
+                raise StaleAssignmentError("task revision is stale")
+            if project_ref.revision != project_identity.ref.revision or project_identity.ref.revision != expected_project_revision:
+                raise StaleAssignmentError("project revision is stale")
+            task_payload = dict(task_identity.payload)
+            task_project = task_payload.get("project_ref") or task_payload.get("parent")
+            if not isinstance(task_project, Mapping) or (task_project.get("authority"), task_project.get("kind"), task_project.get("id")) != (project_ref.authority, project_ref.kind, project_ref.id):
+                raise WorkValidationError("task is outside the requested project")
+            assignment_scope = current_assignment.scope
+            if assignment_scope is None or (assignment_scope.authority, assignment_scope.kind, assignment_scope.id) not in {
+                (project_ref.authority, project_ref.kind, project_ref.id),
+                (task_ref.authority, task_ref.kind, task_ref.id),
+            }:
+                raise WorkValidationError("manager assignment is outside the requested task/project scope")
+            if task_payload.get("lifecycle") == "completed":
+                raise WorkValidationError("task is already completed")
+
+            completion = {
+                "manager": selected_actor.actor,
+                "assignment_ref": assignment_ref,
+                "generation": expected_generation,
+                "project_ref": project_ref,
+                "project_revision": expected_project_revision,
+                "task_ref": task_ref,
+                "task_revision": expected_task_revision,
+                "disposition": disposition,
+                "evidence_refs": evidence_values,
+                "evidence_hashes": hash_values,
+                "gate_refs": gate_values,
+                "candidate_ref": request_payload["candidate_ref"],
+                "result_ref": request_payload["result_ref"],
+                "attempt_ref": request_payload["attempt_ref"],
+                "source_set_digest": source_set_digest,
+                "logical_request_key": key,
+            }
+            observation_ref = ResourceRef(
+                self.__writer.authority, REPORT_KIND,
+                "report-" + hashlib.sha256((current_assignment.id + ":" + key + ":completion").encode()).hexdigest()[:28],
+            )
+            observation_payload = {
+                "record_type": "work.observation",
+                "observation_kind": "report",
+                "assignment": current_assignment.ref,
+                "generation": current_assignment.generation,
+                "value": {"kind": "manager-completion", "completion": completion},
+            }
+            observation_receipt = self.__writer.mutate(
+                self._envelope("work.report.append", observation_ref, observation_payload, key + ":completion-observation", actor, expected_version=0),
+                identity_payload=observation_payload,
+                event_type="work.report.appended",
+                result_ref=ResourceRef(observation_ref.authority, observation_ref.kind, observation_ref.id, "rev-1"),
+                after_refs=(current_assignment.ref, task_ref, project_ref),
+                effects={"assignment": current_assignment.ref, "generation": current_assignment.generation, "completion": True},
+                stream="report:" + current_assignment.id,
+                transaction=tx,
+            )
+            task_payload["lifecycle"] = "completed"
+            task_payload["completion"] = completion
+            task_payload["readiness"] = dict(task_payload.get("readiness", {}), ready=False, dispatch=False, status="completed")
+            task_receipt = self.__writer.mutate(
+                self._envelope("work.revise", task_identity.ref, request_payload, key, actor, expected_version=task_identity.version, expected_revision=task_identity.ref.revision, schema_revision="work.v1"),
+                identity_payload=task_payload,
+                event_type="work.revised",
+                result_ref=ResourceRef(task_identity.ref.authority, task_identity.ref.kind, task_identity.ref.id, "rev-" + str(task_identity.version + 1)),
+                before_refs=(task_identity.ref,),
+                after_refs=(project_ref, observation_ref, *gate_values, *evidence_values),
+                effects={"task": task_identity.ref, "assignment": current_assignment.ref, "generation": current_assignment.generation, "completion": completion, "completion_observation": observation_ref},
+                stream="work:" + task_identity.ref.id,
+                transaction=tx,
+            )
+        return {
+            "outcome": "completed",
+            "replayed": False,
+            "task_ref": _json_safe(task_receipt.result_ref),
+            "assignment_ref": _json_safe(current_assignment.ref),
+            "generation": current_assignment.generation,
+            "completion": _json_safe(completion),
+            "observation": _json_safe(observation_ref),
+            "receipt": task_receipt.to_dict(),
+            "observation_receipt": observation_receipt.to_dict(),
+            "event_ids": list(observation_receipt.event_ids) + [item for item in task_receipt.event_ids if item not in observation_receipt.event_ids],
+        }
+
     def dispatch(
         self, target: Any, *, input_refs: Sequence[Any] = (), action: Optional[str] = None,
         expected_generation: Optional[int] = None, logical_request_key: Optional[str] = None,
@@ -422,11 +644,11 @@ class _ResponsibilityAssignmentsEngine:
         except ValueError:
             return 0
 
-    def _envelope(self, operation: str, target: ResourceRef, payload: Mapping[str, Any], key: str, actor: Optional[AuthenticatedActor], *, expected_version: Optional[int] = None, expected_revision: Optional[str] = None) -> CommandEnvelope:
+    def _envelope(self, operation: str, target: ResourceRef, payload: Mapping[str, Any], key: str, actor: Optional[AuthenticatedActor], *, expected_version: Optional[int] = None, expected_revision: Optional[str] = None, schema_revision: str = ASSIGNMENT_SCHEMA_REVISION) -> CommandEnvelope:
         selected = actor or self.default_actor or AuthenticatedActor("herzchen.work", "work-assignment", "herzchen.work")
         if not isinstance(selected, AuthenticatedActor):
             raise TypeError("actor must be an FND AuthenticatedActor")
-        return CommandEnvelope(operation, ASSIGNMENT_SCHEMA_REVISION, target, TransactionContext(selected, key, _digest({"operation": operation, "target": target, "payload": payload}), expected_revision=expected_revision, expected_version=expected_version), payload)
+        return CommandEnvelope(operation, schema_revision, target, TransactionContext(selected, key, _digest({"operation": operation, "target": target, "payload": payload}), expected_revision=expected_revision, expected_version=expected_version), payload)
 
 
 ResponsibilityAssignments = command_facade(_ResponsibilityAssignmentsEngine, DOMAIN_ID)

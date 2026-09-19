@@ -149,6 +149,9 @@ class HerzchenHostAdapter:
                  launcher: str, requested_model: str = "gpt-5.6-luna",
                  requested_reasoning: str = "high") -> None:
         self.port = port
+        # Otto uses this finite capability marker to require the owner-bound
+        # attempt gate before invoking this host transport.
+        self.owner_bound = True
         self.owner, self.source, self.worktree, self.launcher = owner, source, worktree, launcher
         self.requested_model, self.requested_reasoning = requested_model, requested_reasoning
 

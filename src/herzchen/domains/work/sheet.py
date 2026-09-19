@@ -297,6 +297,13 @@ class _ProjectSheetEngine:
             return SheetApplication(batch, self.export(batch.project))
         return batch
 
+    def complete_managed_task(self, target: Any, **kwargs: Any) -> Mapping[str, Any]:
+        """Use the shared owner completion guard for sheet-governed tasks."""
+
+        return self.assignments.complete(target, **kwargs)
+
+    complete_task = complete_managed_task
+
     apply_sheet = apply
     apply_project_sheet = apply
     finish = apply
@@ -614,6 +621,10 @@ class _ProjectSheetEngine:
                     Lifecycle(task["lifecycle"])
                 except (TypeError, ValueError) as exc:
                     raise SheetError(f"task[{index}].lifecycle is invalid") from exc
+                if task["lifecycle"] == Lifecycle.COMPLETED.value:
+                    raise WorkValidationError(
+                        "completed lifecycle requires complete_managed_task"
+                    )
             if "metadata_namespace" in task:
                 for namespace, data in task["metadata_namespace"].items():
                     if not isinstance(data, Mapping):
@@ -708,6 +719,11 @@ class _ProjectSheetEngine:
         payload = project.payload
         fields = ("lifecycle", "readiness", "manager", "budget", "worker", "execution", "external_action", "admitted", "batch_history", "last_batch")
         result = {key: _safe(payload[key]) for key in fields if key in payload}
+        # Project-scoped assignments are the accountable manager binding.  Keep
+        # them in the same read-only projection as task observations so a
+        # consumer can reconcile ownership without reaching into the Store.
+        result.update(self._assignment_observations(project.ref))
+        result["decision_context"] = self._decision_context(project)
         result["receipts"] = [event.event_id for event in self.__writer.list_events(stream="work:" + project.id)]
         return result
 
@@ -798,9 +814,8 @@ class _ProjectSheetEngine:
                 continue
             payload = identity.payload
             # DAT's canonical public link command wraps the association in
-            # ``payload.association``.  Older WRK-created records kept the
-            # association fields at the payload root; accept both wire
-            # shapes while retaining one durable association identity.
+            # ``payload.association``. Older WRK records kept the association
+            # fields at the payload root; accept both wire shapes.
             association = payload.get("association")
             if not isinstance(association, Mapping):
                 association = payload
