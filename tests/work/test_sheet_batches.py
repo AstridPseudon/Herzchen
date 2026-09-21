@@ -6,7 +6,7 @@ import pytest
 
 from herzchen.contracts import AuthenticatedActor, ResourceRef
 from herzchen.domains.assessment import AssessmentModule
-from herzchen.domains.work import WorkGraph, WorkNotFoundError
+from herzchen.domains.work import WorkGraph, WorkNotFoundError, WorkValidationError
 from herzchen.domains.work.assignments import ResponsibilityAssignments
 from herzchen.domains.work.decisions import DecisionsModule
 from herzchen.domains.work.sheet import (
@@ -215,6 +215,43 @@ def test_stale_base_rejects_sheet_and_direct_surface_without_partial_mutation(en
     assert graph.get(project.ref).payload == before[1]
     with pytest.raises(WorkNotFoundError):
         graph.resolve("new")
+
+
+def test_completed_task_protection_covers_direct_and_sheet_owner_paths(environment):
+    store, actor, graph, project, service = environment
+    task = graph.create_task(project, title="Completed input", logical_request_key="completed")
+    completed = graph.revise(task, lifecycle="completed", logical_request_key="complete")
+    before = graph.get(completed.ref)
+
+    with pytest.raises(WorkValidationError, match="completed task"):
+        graph.revise(completed, title="rewritten", logical_request_key="direct-edit")
+    with pytest.raises(WorkValidationError, match="completed task"):
+        service.apply(project, {"tasks": [{"id": completed.id, "body": {"changed": True}}]}, logical_request_key="sheet-edit")
+
+    after = graph.get(completed.ref)
+    assert after.ref == before.ref
+    assert after.payload == before.payload
+
+
+def test_completed_task_round_trip_preserves_parent_and_revision(environment):
+    store, actor, graph, project, service = environment
+    parent = graph.create_task(project, title="Parent", logical_request_key="nested-parent")
+    child = graph.create_task(project, parent=parent, title="Completed child", logical_request_key="nested-child")
+    completed = graph.revise(child, lifecycle="completed", logical_request_key="nested-complete")
+    sibling = graph.create_task(project, title="Sibling", logical_request_key="nested-sibling")
+    before = graph.get(completed.ref)
+
+    applied = service.apply(
+        project,
+        {"tasks": [{"id": completed.id}, {"id": sibling.id, "title": "Sibling revised"}]},
+        logical_request_key="nested-round-trip",
+    )
+
+    retained = graph.get(completed.ref)
+    assert retained.ref == before.ref
+    assert retained.parent.id == parent.id
+    assert graph.get(sibling.ref).title == "Sibling revised"
+    assert applied.project.payload["tasks"]
 
 
 def test_withdraw_and_assignment_route_are_explicit_and_per_assignment(environment):

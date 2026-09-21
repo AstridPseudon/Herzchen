@@ -19,7 +19,7 @@ from herzchen.contracts import AuthenticatedActor, CommandEnvelope, DomainContri
 from herzchen.kernel import VersionConflictError
 
 from .model import Lifecycle, WorkKind, WorkNotFoundError, WorkRecord, WorkValidationError
-from .module import KIND_PREFIX, SCHEMA_REVISION, WorkGraph
+from .module import KIND_PREFIX, SCHEMA_REVISION, WorkGraph, ensure_completed_task_unchanged
 
 
 BATCH_SCHEMA_REVISION = "work.batch.v1"
@@ -255,6 +255,7 @@ class _ProjectBatchesEngine:
         token: Optional[str] = None,
         fence: Optional[str] = None,
         base_revision: Optional[str] = None,
+        base_task_revisions: Optional[Mapping[str, Optional[str]]] = None,
         logical_request_key: Optional[str] = None,
         actor: Optional[AuthenticatedActor] = None,
         decision_ref: Optional[Any] = None,
@@ -263,20 +264,24 @@ class _ProjectBatchesEngine:
         """Direct semantic command with the same gate and plan as a sheet."""
         record = self.graph.get(project)
         expected = base_revision or getattr(handle, "base_revision", None) or record.revision
-        authoring.authorize_mutation(
+        checkout = authoring.authorize_mutation(
             handle,
             record.ref,
             token=token or handle.token,
             fence=fence or handle.fence,
             expected_base_revision=expected,
         )
+        if base_task_revisions is not None:
+            self._validate_task_bases(record, base_task_revisions)
         return self.apply_project_sheet(
             record,
             sheet,
             logical_request_key=logical_request_key,
             actor=actor,
             decision_ref=decision_ref,
-            base_revision=base_revision,
+            # The checkout's original base is the owner CAS boundary. A
+            # caller cannot omit it and silently rebase over current state.
+            base_revision=checkout.base_revision,
             next_action=next_action,
         )
 
@@ -284,6 +289,13 @@ class _ProjectBatchesEngine:
         """Return WRK hooks for EDT's shared capture/finish/cleanup boundary."""
         import json
         from herzchen.authoring import CallableSemanticHandler, ValidationResult
+
+        # Capture child identity pins when the semantic handler is bound to a
+        # checkout. Project revision alone does not advance for child-only
+        # edits, so finish must retain these per-task CAS bases as well.
+        base_task_revisions = {
+            item.id: item.revision for item in self.graph.list(project=project)
+        }
 
         def decode(snapshot: Any) -> Mapping[str, Any]:
             try:
@@ -297,18 +309,27 @@ class _ProjectBatchesEngine:
 
         def validate(snapshot: Any, checkout: Any, checkout_root: str) -> Any:
             try:
+                self._validate_task_bases(self.graph.get(project), base_task_revisions)
                 self.validate_project_sheet(project, decode(snapshot))
-            except (TypeError, ValueError, WorkValidationError) as exc:
+            except (TypeError, ValueError, WorkValidationError, VersionConflictError) as exc:
                 return ValidationResult(False, str(exc))
             return ValidationResult(True)
 
         def apply(snapshot: Any, checkout: Any, tx: Any, writer: Any) -> Any:
             return self.apply_authoring_command(
                 project, decode(snapshot), authoring=authoring, handle=handle,
+                base_task_revisions=base_task_revisions,
                 logical_request_key=request_id, actor=checkout.actor,
             )
 
         return CallableSemanticHandler(validate, apply)
+
+    def _validate_task_bases(self, project: WorkRecord, expected: Mapping[str, Optional[str]]) -> None:
+        """Reject child-only edits made after a project checkout was opened."""
+
+        current = {item.id: item.revision for item in self.graph.list(project=project)}
+        if current != dict(expected):
+            raise VersionConflictError("project task bases are stale")
 
     # Existing single-record commands remain available through their original
     # WRK-02 semantic path; a caller need not manufacture a one-row sheet.
@@ -557,7 +578,7 @@ class _ProjectBatchesEngine:
                     raise WorkValidationError(f"observed field {forbidden!r} cannot be authored by a sheet")
             self._apply_task_fields(payload, raw, project, index)
             mappings[local_key] = ref
-            planned.append({"local_key": local_key, "raw": raw, "ref": ref, "payload": payload, "version": version, "existing": current is not None})
+            planned.append({"local_key": local_key, "raw": raw, "ref": ref, "payload": payload, "version": version, "existing": current is not None, "record": current})
         # Resolve dependencies after all local identities exist, allowing a
         # single sheet to refer forward to a later task.
         local_refs = dict(mappings)
@@ -572,8 +593,18 @@ class _ProjectBatchesEngine:
                 if dep_ref not in resolved:
                     resolved.append(dep_ref)
             item["payload"]["dependencies"] = [_safe(ref) for ref in resolved]
-            item["payload"]["project_ref"] = _safe(project.ref)
-            item["payload"]["parent"] = _safe(project.ref)
+            if item["existing"]:
+                # Omission means retention. Preserve nested hierarchy instead
+                # of flattening every existing task under the project.
+                if "parent" in raw:
+                    item["payload"]["parent"] = _safe(self._resolve_parent_ref(raw["parent"], project))
+                else:
+                    item["payload"]["parent"] = item["payload"].get("parent")
+                item["payload"]["project_ref"] = item["payload"].get("project_ref", _safe(project.ref))
+                ensure_completed_task_unchanged(item["record"], item["payload"])
+            else:
+                item["payload"]["project_ref"] = _safe(project.ref)
+                item["payload"]["parent"] = _safe(project.ref)
         project_payload = dict(project.payload)
         for field in ("title", "name", "outcome", "scope", "approach", "acceptance", "protocol", "resources"):
             if field in sheet:
@@ -646,6 +677,11 @@ class _ProjectBatchesEngine:
                 current = self.__writer.get_identity(ResourceRef(ref.authority, ref.kind, ref.id))
                 if current is None:
                     raise WorkNotFoundError(f"task identity disappeared: {ref!r}")
+                # A full-project round trip may include an unchanged task.
+                # Retain its exact identity revision and history rather than
+                # manufacturing a no-op child revision.
+                if current.payload == payload:
+                    continue
                 revised = self.__writer.revise_identity(
                     current.ref,
                     payload,
@@ -841,6 +877,17 @@ class _ProjectBatchesEngine:
         if self.__writer.get_identity(ResourceRef(ref.authority, ref.kind, ref.id)) is None:
             raise WorkNotFoundError(f"task dependency not found: {value!r}")
         return ResourceRef(ref.authority, ref.kind, ref.id)
+
+    def _resolve_parent_ref(self, value: Any, project: WorkRecord) -> ResourceRef:
+        """Resolve an explicit parent and keep hierarchy within the project."""
+
+        parent = self.graph.get(value) if isinstance(value, str) else self.graph.get(self._as_ref(value))
+        if parent.kind is WorkKind.PROJECT:
+            if parent.id != project.id:
+                raise WorkValidationError("task parent must remain in the project scope")
+        elif parent.project_ref is None or parent.project_ref.id != project.id:
+            raise WorkValidationError("task parent must remain in the project scope")
+        return ResourceRef(parent.ref.authority, parent.ref.kind, parent.ref.id)
 
     def _pending_projection(self, sheet: Mapping[str, Any]) -> Dict[str, Any]:
         allowed = {"outcome", "scope", "approach", "acceptance", "protocol", "custom", "metadata", "metadata_namespace", "documents"}

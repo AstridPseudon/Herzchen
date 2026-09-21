@@ -36,6 +36,28 @@ WORK_KINDS = {kind.value: kind for kind in WorkKind}
 KIND_PREFIX = {kind: "work." + kind.value for kind in WorkKind}
 
 
+# Ordinary commands cannot rewrite authored state after completion. Explicit
+# completion/correction remains owned by the assignments port.
+_COMPLETED_TASK_FIELDS = (
+    "title", "name", "body", "instructions", "outcome", "acceptance",
+    "fields", "metadata", "metadata_namespaces", "custom", "order",
+    "aliases", "alias", "dependencies", "parent", "project_ref",
+    "lifecycle", "withdraw",
+)
+
+
+def ensure_completed_task_unchanged(record: WorkRecord, proposed: Mapping[str, Any]) -> None:
+    """Reject ordinary edits that would change an already completed task."""
+
+    if record.kind is not WorkKind.TASK or record.lifecycle is not Lifecycle.COMPLETED:
+        return
+    for field in _COMPLETED_TASK_FIELDS:
+        if record.payload.get(field) != proposed.get(field):
+            raise WorkValidationError(
+                f"completed task {record.id!r} cannot change authored field {field!r}"
+            )
+
+
 def _contract_types() -> Tuple[Any, ...]:
     """Load the sibling-supplied FND contracts lazily.
 
@@ -338,6 +360,7 @@ class _WorkGraphEngine:
             return self._replay_result(replay)
         record = self._require(target)
         changes = self._revision_changes(record, title=title, name=name, outcome=outcome, add_alias=add_alias, aliases=aliases, fields=fields, lifecycle=lifecycle)
+        ensure_completed_task_unchanged(record, changes)
         self._validate_payload(changes)
         with self.__writer.transaction() as tx:
             self._write_revision(tx, record, changes, request_key, actor, "work.revised", request_payload=request_payload)
@@ -358,6 +381,7 @@ class _WorkGraphEngine:
         payload["parent"] = self._ref_dict(parent_record.ref)
         if child_record.kind is not WorkKind.PROJECT and not payload.get("project_ref"):
             payload["project_ref"] = self._ref_dict(self._project_ref(parent_record))
+        ensure_completed_task_unchanged(child_record, payload)
         with self.__writer.transaction() as tx:
             self._write_revision(tx, child_record, payload, request_key, actor, "work.parent-linked", request_payload=request_payload)
             self._retain_links(tx, parent_record.ref, ())
@@ -376,6 +400,7 @@ class _WorkGraphEngine:
             return record_value
         proposed = dict(record_value.payload)
         proposed["dependencies"] = [self._ref_dict(ref) for ref in dependencies] + [self._ref_dict(prerequisite_value.ref)]
+        ensure_completed_task_unchanged(record_value, proposed)
         self._validate_dependency_graph(record_value.ref, prerequisite_value.ref)
         with self.__writer.transaction() as tx:
             self._write_revision(tx, record_value, proposed, request_key, actor, "work.dependency-linked", request_payload=request_payload)

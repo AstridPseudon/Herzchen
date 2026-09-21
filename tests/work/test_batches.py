@@ -1,6 +1,7 @@
 """Focused WRK-03 whole-project batch and pending-project proof."""
 
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -8,7 +9,7 @@ from herzchen.contracts import AuthenticatedActor, ReplayConflictError, Resource
 from herzchen.domains.work import Lifecycle, WorkGraph, WorkNotFoundError
 from herzchen.domains.work.batches import ProjectBatches
 from herzchen.domains.work.assignments import ResponsibilityAssignments
-from herzchen.kernel import Store
+from herzchen.kernel import Store, VersionConflictError
 
 
 @pytest.fixture
@@ -94,6 +95,50 @@ def test_sheet_replay_precedes_stale_base_after_advance_and_changed_base_has_no_
         )
     assert store.consumer().snapshot_counts() == before
     assert store.get_receipt("advance-replay") == applied.receipt
+
+
+def test_semantic_authoring_uses_original_checkout_base_for_project_cas(environment):
+    store, actor, graph, project = environment
+    batches = ProjectBatches(store, actor=actor)
+    base = project.ref.revision
+    handle = SimpleNamespace(base_revision=base, token="token", fence="fence")
+
+    class Authoring:
+        def authorize_mutation(self, *_args, **_kwargs):
+            return SimpleNamespace(base_revision=base)
+
+    graph.revise(project, outcome="concurrent owner edit", logical_request_key="concurrent-project")
+    before = graph.get(project.ref)
+    with pytest.raises(VersionConflictError, match="stale"):
+        batches.apply_authoring_command(
+            project,
+            {"approach": "must reject"},
+            authoring=Authoring(),
+            handle=handle,
+            logical_request_key="stale-semantic-finish",
+        )
+    assert graph.get(project.ref).payload == before.payload
+
+
+def test_semantic_authoring_rejects_child_only_revision_after_checkout(environment):
+    store, actor, graph, project = environment
+    batches = ProjectBatches(store, actor=actor)
+    task = graph.create_task(project, title="Pinned child", logical_request_key="pinned-child")
+    base_tasks = {task.id: task.revision}
+    handle = SimpleNamespace(base_revision=project.ref.revision, token="token", fence="fence")
+
+    class Authoring:
+        def authorize_mutation(self, *_args, **_kwargs):
+            return SimpleNamespace(base_revision=project.ref.revision)
+
+    graph.revise(task, title="Concurrent child edit", logical_request_key="concurrent-child")
+    before = graph.get(task.ref)
+    with pytest.raises(VersionConflictError, match="task bases"):
+        batches.apply_authoring_command(
+            project, {"approach": "must reject"}, authoring=Authoring(), handle=handle,
+            base_task_revisions=base_tasks, logical_request_key="stale-child-finish",
+        )
+    assert graph.get(task.ref).payload == before.payload
 
 
 def test_invalid_child_rolls_back_all_rows_events_and_receipt(environment):
