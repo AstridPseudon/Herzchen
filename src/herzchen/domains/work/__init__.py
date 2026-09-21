@@ -23,6 +23,7 @@ from .module import (
     WorkStore,
     contribution,
     contributions,
+    register_orchestration,
     register_work,
     work_handler,
 )
@@ -68,6 +69,7 @@ __all__ = [
     "ProjectLifecycleError",
     "contribution",
     "contributions",
+    "register_orchestration",
     "register_work",
     "work_handler",
     "DEFAULT_KIND",

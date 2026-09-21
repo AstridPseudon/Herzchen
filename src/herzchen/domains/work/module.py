@@ -115,33 +115,47 @@ def contribution() -> Any:
     )
 
 
-def contributions() -> Tuple[Any, ...]:
-    """Return every exact descriptor admitted by the WRK handler."""
+def contributions(*, include_orchestration: bool = False) -> Tuple[Any, ...]:
+    """Return the core WRK descriptors, optionally including orchestration."""
     from .assignments import contribution as assignments_contribution
     from .batches import contribution as batches_contribution
     from .decisions import contribution as decisions_contribution
     from .sheet import contribution as sheet_contribution
     from .lifecycle import contribution as lifecycle_contribution
-    from .orchestration import contribution as orchestration_contribution
-
-    return (
+    core = (
         contribution(), assignments_contribution(), batches_contribution(),
-        sheet_contribution(), decisions_contribution(), lifecycle_contribution(), orchestration_contribution(),
+        sheet_contribution(), decisions_contribution(), lifecycle_contribution(),
     )
+    if not include_orchestration:
+        return core
+    from .orchestration import contribution as orchestration_contribution
+    return core + (orchestration_contribution(),)
 
 
 def register_work(store: Any) -> Any:
-    """Register the complete WRK definition and return its sealed handler."""
+    """Register the stable core WRK definition and return its sealed handler."""
     return store.register_domain_handler(contributions())
+
+
+def register_orchestration(store: Any) -> Any:
+    """Explicitly late-register the optional atomic orchestration descriptor."""
+    from .orchestration import contribution as orchestration_contribution
+    descriptor = orchestration_contribution()
+    registered = {item.domain_id: item for item in store.registered_domains()}
+    if registered.get(descriptor.domain_id) == descriptor:
+        return store.domain_handler(contributions(include_orchestration=True))
+    return store.register_domain_handler((descriptor,))
 
 
 def work_handler(store: Any) -> Any:
     """Acquire the WRK handler only after the exact definition is registered."""
+    registered = {item.domain_id: item for item in store.registered_domains()} if hasattr(store, "registered_domains") else {}
+    expected = contributions(include_orchestration="herzchen.work.orchestration" in registered)
     if hasattr(store, "domain_ids"):
-        required = {item.domain_id for item in contributions()}
+        required = {item.domain_id for item in expected}
         if required.issubset(set(store.domain_ids)):
             return store
-    return store.domain_handler(contributions())
+    return store.domain_handler(expected)
 
 
 class _WorkGraphEngine:
