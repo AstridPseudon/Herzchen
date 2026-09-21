@@ -34,6 +34,12 @@ from .lifecycle import (
     ProjectLifecycle,
     ProjectLifecycleError,
 )
+from .orchestration import (
+    DEFAULT_KIND,
+    ORCHESTRATION_DOMAIN_ID,
+    ORCHESTRATION_SCHEMA_REVISION,
+    Orchestration,
+)
 
 __all__ = [
     "DEFAULT_TITLE",
@@ -64,4 +70,8 @@ __all__ = [
     "contributions",
     "register_work",
     "work_handler",
+    "DEFAULT_KIND",
+    "ORCHESTRATION_DOMAIN_ID",
+    "ORCHESTRATION_SCHEMA_REVISION",
+    "Orchestration",
 ]

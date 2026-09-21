@@ -334,16 +334,28 @@ class _ProjectBatchesEngine:
         actor: Optional[AuthenticatedActor] = None,
         reserve_authoring: bool = False,
         materializer: Optional[Callable[[WorkRecord], Any]] = None,
+        _owner_supervision: Optional[Mapping[str, Any]] = None,
     ) -> BatchResult:
         request_key = self._request_key(logical_request_key)
         selected_actor = actor or self.default_actor
         project_id = "project-" + hashlib.sha256((self.__writer.authority + ":" + request_key).encode()).hexdigest()[:28]
         project_ref = ResourceRef(self.__writer.authority, KIND_PREFIX[WorkKind.PROJECT], project_id)
+        if isinstance(metadata, Mapping) and "otto_orchestrator" in metadata:
+            raise WorkValidationError("otto_orchestrator supervision is owner-controlled")
+        if _owner_supervision is not None and not isinstance(_owner_supervision, Mapping):
+            raise WorkValidationError("owner supervision must be a mapping")
         initial = self._new_project_payload(project_id, title, outcome, curator, creator, metadata)
         if sheet is not None:
             if not isinstance(sheet, Mapping):
                 raise WorkValidationError("project sheet must be a mapping")
             initial.update(self._pending_projection(sheet))
+        if _owner_supervision is None and isinstance(initial.get("metadata"), Mapping) and "otto_orchestrator" in initial["metadata"]:
+            raise WorkValidationError("otto_orchestrator supervision is owner-controlled")
+        if _owner_supervision is not None:
+            sheet_metadata = initial.get("metadata", {})
+            if isinstance(sheet_metadata, Mapping) and "otto_orchestrator" in sheet_metadata:
+                raise WorkValidationError("otto_orchestrator supervision is owner-controlled")
+            initial["metadata"] = dict(sheet_metadata, otto_orchestrator=_safe(dict(_owner_supervision)))
         reservation_ref = None
         if reserve_authoring:
             # A same-key retry must resolve the saved request first; the
@@ -571,6 +583,10 @@ class _ProjectBatchesEngine:
         if "metadata" in sheet:
             if not isinstance(sheet["metadata"], Mapping):
                 raise WorkValidationError("metadata must be a mapping")
+            existing_supervision = project_payload.get("metadata", {}).get("otto_orchestrator") if isinstance(project_payload.get("metadata", {}), Mapping) else None
+            incoming_supervision = sheet["metadata"].get("otto_orchestrator")
+            if incoming_supervision is not None and incoming_supervision != existing_supervision:
+                raise WorkValidationError("otto_orchestrator supervision is owner-controlled; use the transfer command")
             project_payload["metadata"] = dict(project_payload.get("metadata", {}), **dict(sheet["metadata"]))
         if "metadata_namespace" in sheet:
             if not isinstance(sheet["metadata_namespace"], Mapping):
