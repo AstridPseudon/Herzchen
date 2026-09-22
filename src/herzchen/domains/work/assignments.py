@@ -153,21 +153,33 @@ class _ResponsibilityAssignmentsEngine:
         self.reader = self.__writer.consumer()
         self.default_actor = actor
 
-    def assign(
+    def _create_in_transaction(
         self,
-        scope: Any,
         *,
+        tx: Any,
+        scope: Any,
         role: str,
         principal: Any,
+        pins: Sequence[Any],
+        logical_request_key: str,
+        actor: AuthenticatedActor,
         reporter: Any = None,
         launcher: Any = None,
         agent: Any = None,
         session: Any = None,
         manager: Any = None,
-        pins: Sequence[Any] = (),
-        logical_request_key: Optional[str] = None,
-        actor: Optional[AuthenticatedActor] = None,
-    ) -> ResponsibilityAssignment:
+    ) -> tuple[ResponsibilityAssignment, Any]:
+        """Create one assignment in a caller-owned transaction.
+
+        This is intentionally private: only a trusted lifecycle engine may
+        supply the transaction used to compose an assignment with another
+        WRK mutation.  The payload and replay path stay identical to
+        :meth:`assign`.
+        """
+        if not hasattr(tx, "_active") or not tx._active:
+            raise WorkValidationError("an active transaction is required")
+        if not isinstance(actor, AuthenticatedActor):
+            raise TypeError("actor must be an FND AuthenticatedActor")
         role = _opaque(role, "role")
         request_key = self._request_key(logical_request_key)
         scope_ref = self._as_ref(scope)
@@ -192,14 +204,58 @@ class _ResponsibilityAssignmentsEngine:
             "history": [{"generation": 1, "principal": _json_safe(principal), "agent": _json_safe(agent), "session": _json_safe(session), "reason": "initial"}],
             "responsibility_ref": _json_safe(responsibility_ref),
         }
+        envelope = self._envelope("work.assignment.create", ref, payload, request_key, actor, expected_version=0)
+        prior = self.__writer.get_receipt(request_key)
+        receipt = self.__writer.mutate(
+            envelope,
+            event_type="work.assignment.created",
+            result_ref=ResourceRef(ref.authority, ref.kind, ref.id, "rev-1"),
+            effects={"responsibility": responsibility_ref, "generation": 1},
+            stream="assignment:" + assignment_id,
+            transaction=tx,
+        )
+        if prior is None:
+            self.__writer.put_identity(
+                responsibility_ref,
+                {"record_type": "work.responsibility", "assignment": ref, "role": role, "principal": _json_safe(principal)},
+                version=0,
+                transaction=tx,
+            )
+            self.__writer.put_reference(responsibility_ref, transaction=tx)
+        return self.get(ref), receipt
+
+    def assign(
+        self,
+        scope: Any,
+        *,
+        role: str,
+        principal: Any,
+        reporter: Any = None,
+        launcher: Any = None,
+        agent: Any = None,
+        session: Any = None,
+        manager: Any = None,
+        pins: Sequence[Any] = (),
+        logical_request_key: Optional[str] = None,
+        actor: Optional[AuthenticatedActor] = None,
+    ) -> ResponsibilityAssignment:
+        request_key = self._request_key(logical_request_key)
         with self.__writer.transaction() as tx:
-            envelope = self._envelope("work.assignment.create", ref, payload, request_key, actor, expected_version=0)
-            prior = self.__writer.get_receipt(request_key)
-            receipt = self.__writer.mutate(envelope, event_type="work.assignment.created", result_ref=ResourceRef(ref.authority, ref.kind, ref.id, "rev-1"), effects={"responsibility": responsibility_ref, "generation": 1}, stream="assignment:" + assignment_id, transaction=tx)
-            if prior is None:
-                self.__writer.put_identity(responsibility_ref, {"record_type": "work.responsibility", "assignment": ref, "role": role, "principal": _json_safe(principal)}, version=0, transaction=tx)
-                self.__writer.put_reference(responsibility_ref, transaction=tx)
-        return self.get(ref)
+            assignment, _receipt = self._create_in_transaction(
+                tx=tx,
+                scope=scope,
+                role=role,
+                principal=principal,
+                pins=pins,
+                logical_request_key=request_key,
+                actor=actor or self.default_actor,
+                reporter=reporter,
+                launcher=launcher,
+                agent=agent,
+                session=session,
+                manager=manager,
+            )
+        return assignment
 
     create = assign
     assign_responsibility = assign
